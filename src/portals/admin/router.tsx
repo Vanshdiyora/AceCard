@@ -12,7 +12,7 @@ import TeamPage from "./pages/Team/TeamPage";
 
 export const adminRouter = createBrowserRouter([
   {
-    path: "/",
+    path: "/admin",
     element: <AdminLayout />,
     children: [
       { index: true, element: <DashboardPage /> },

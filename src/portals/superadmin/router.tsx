@@ -12,7 +12,7 @@ import SeatsPage from "./pages/SeatsKeysPage/SeatsKeysPage";
 
 export const superAdminRouter = createBrowserRouter([
   {
-    path: "/",
+    path: "/super",
     element: <SuperAdminLayout />,
     children: [
       { index: true, element: <SuperDashboardPage /> },
