@@ -16,7 +16,8 @@ export interface DashboardState {
     leadsCaptured: number;
     totalCardTaps: number;
     ratio: number;
-  };
+  } | null;
   pipeline: PipelinePoint[];
   leadDistribution: PiePoint[];
+  loading: boolean;
 }
