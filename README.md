@@ -71,3 +71,68 @@ export default defineConfig([
   },
 ])
 ```
+
+
+src/
+ ├── app/                      # Global app entry, providers, routing setup
+ │    ├── hooks.ts            # App-level hooks (auth, loader, theme)
+ │    └── store.ts            # Redux store (global)
+ │
+ ├── common/                  # Shared across entire project
+ │    ├── components/         # Reusable generic components
+ │    │    ├── activity/
+ │    │    ├── cards/
+ │    │    ├── charts/
+ │    │    ├── layout/ 
+ │    │    └── skeleton/
+ │    ├── ui/                 # UI building blocks
+ │    │    ├── Modal.tsx
+ │    │    └── UtilizationBar.tsx
+ │    └── utils/              # (Add this) helpers/formatters (optional)
+ │
+ ├── features/                # Domain-level business modules
+ │    ├── campaigns/
+ │    │    ├── pages/
+ │    │    ├── components/
+ │    │    ├── services/      # API calls
+ │    │    ├── slice.ts       # Redux slice (if feature-scoped)
+ │    │    └── types.ts
+ │    ├── leads/
+ │    ├── insights/
+ │    ├── team/
+ │    ├── settings/
+ │    └── support/
+ │
+ ├── portals/                 # Role-based shells (Admin, SuperAdmin, etc.)
+ │    ├── admin/
+ │    │    ├── pages/
+ │    │    ├── layout/
+ │    │    └── index.ts
+ │    ├── superadmin/
+ │    │    ├── pages/
+ │    │    ├── layout/
+ │    │    └── index.ts
+ │    └── shared/             # Shared portal components (navigation, layout)
+ │
+ ├── services/                # Global services (axios, auth, tokens)
+ │    ├── axiosClient.ts
+ │    ├── auth.service.ts
+ │    └── user.service.ts
+ │
+ ├── store/                   # Central Redux slices (recommended)
+ │    ├── campaign.slice.ts
+ │    ├── team.slice.ts
+ │    ├── app.slice.ts
+ │    └── index.ts
+ │
+ ├── types/                   # Global TS interfaces
+ │    ├── api.ts
+ │    ├── common.ts
+ │    └── index.ts
+ │
+ ├── assets/                  # Images, SVGs, icons
+ │
+ ├── styles/                  # Global CSS and Tailwind config
+ │
+ ├── main.tsx
+ └── index.html
