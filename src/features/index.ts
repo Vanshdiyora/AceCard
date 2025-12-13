@@ -5,5 +5,7 @@ import DashboardPage from "./dashboard/pages/DashBoardPage";
 import CampaignsPage from "./campaigns/pages/CampaignsPage";
 import VendorsPage from "./vendors/pages/VendorsPage";
 import SupportAdmin from "./support/pages/SupportAdmin";
+import LoginPage from "./auth/pages/LoginPage";
+import LeadPage from "./leads/pages/LeadsPage";
 
-export { ProductsPage, SupportPage, TeamPage, DashboardPage, CampaignsPage, VendorsPage, SupportAdmin };
+export { ProductsPage, SupportPage, TeamPage, DashboardPage, CampaignsPage, VendorsPage, LoginPage, SupportAdmin ,LeadPage};

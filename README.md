@@ -108,10 +108,12 @@ src/
  │    │    ├── pages/
  │    │    ├── layout/
  │    │    └── index.ts
+                router.tsx
  │    ├── superadmin/
  │    │    ├── pages/
  │    │    ├── layout/
  │    │    └── index.ts
+                router.tsx
  │    └── shared/             # Shared portal components (navigation, layout)
  │
  ├── services/                # Global services (axios, auth, tokens)

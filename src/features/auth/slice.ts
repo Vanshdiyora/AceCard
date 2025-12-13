@@ -1,16 +1,33 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { loginRequest } from "./services/auth.service";
 
+// Decode token if available
+function decodeToken(token: string | null) {
+  if (!token) return { user: null, role: null };
+
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    return { user: payload, role: payload.role };
+  } catch {
+    return { user: null, role: null };
+  }
+}
+
+const savedToken = localStorage.getItem("token");
+const decoded = decodeToken(savedToken);
+
 interface AuthState {
   token: string | null;
   user: any | null;
+  role: string | null;
   loading: boolean;
   error: string | null;
 }
 
 const initialState: AuthState = {
-  token: localStorage.getItem("token"),
-  user: null,
+  token: savedToken,
+  user: decoded.user,
+  role: decoded.role,
   loading: false,
   error: null,
 };
@@ -30,6 +47,7 @@ const authSlice = createSlice({
     logout(state) {
       state.token = null;
       state.user = null;
+      state.role = null;
       localStorage.removeItem("token");
     },
   },
@@ -46,12 +64,13 @@ const authSlice = createSlice({
         state.token = token;
         localStorage.setItem("token", token);
 
-        // Decode JWT to get vendor_id, user_id, role
         try {
           const payload = JSON.parse(atob(token.split(".")[1]));
-          state.user = payload; // contains vendor_id, user_id, role
+          state.user = payload;
+          state.role = payload.role;
         } catch {
           state.user = null;
+          state.role = null;
         }
       })
       .addCase(login.rejected, (state) => {
@@ -62,5 +81,4 @@ const authSlice = createSlice({
 });
 
 export const { logout } = authSlice.actions;
-
 export default authSlice.reducer;

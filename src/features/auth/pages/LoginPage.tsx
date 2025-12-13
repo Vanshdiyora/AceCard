@@ -1,10 +1,13 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../../app/hooks";
 import { login } from "../slice";
 
 export default function LoginPage() {
   const dispatch = useAppDispatch();
-  const { loading, error } = useAppSelector((s) => s.auth);
+  const navigate = useNavigate();
+
+  const { loading, error, role, token } = useAppSelector((s) => s.auth);
 
   const [form, setForm] = useState({
     email: "admin@acecard.com",
@@ -18,18 +21,24 @@ export default function LoginPage() {
     }
 
     await dispatch(login(form));
-
-    window.location.href = "/super"; // Or wherever you want
   };
+
+  useEffect(() => {
+    if (!token || !role) return;
+
+    if (role === "super_admin") {
+      navigate("/super");
+    } else {
+      navigate("/admin");
+    }
+  }, [role, token, navigate]); 
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <div className="bg-white w-[400px] p-6 rounded-xl shadow-lg space-y-5">
         <h2 className="text-xl font-semibold text-center">Login</h2>
 
-        {error && (
-          <p className="text-red-600 text-center text-sm">{error}</p>
-        )}
+        {error && <p className="text-red-600 text-center text-sm">{error}</p>}
 
         <div className="space-y-4">
           <div>
