@@ -3,6 +3,7 @@ import {
   getVendorSupportTickets,
   createSupportTicket,
   replyToSupportTicket,
+  getAllSupportTickets
 } from "./services/support.service";
 
 // ---------------------------
@@ -30,8 +31,24 @@ export const addTicket = createAsyncThunk(
 // ---------------------------
 export const replyTicket = createAsyncThunk(
   "support/reply",
-  async ({ ticketId, message }: { ticketId: number; message: string }) => {
-    return await replyToSupportTicket(ticketId, { message });
+  async ({
+    ticketId,
+    message,
+    status,
+  }: {
+    ticketId: number;
+    message: string;
+    status: string;
+  }) => {
+    return await replyToSupportTicket(ticketId, { message, status });
+  }
+);
+
+
+export const fetchAllTickets = createAsyncThunk(
+  "support/fetchAll",
+  async () => {
+    return await getAllSupportTickets();
   }
 );
 
@@ -76,14 +93,27 @@ const supportSlice = createSlice({
       .addCase(replyTicket.fulfilled, (state, action) => {
         const reply = action.payload.data ?? action.payload;
 
-        // backend returns reply including ticket_id
         const ticket = state.tickets.find((t) => t.id === reply.ticket_id);
 
         if (ticket) {
           if (!ticket.replies) ticket.replies = [];
           ticket.replies.push(reply);
+
+          // Update ticket status on UI immediately
+          if (reply.status) {
+            ticket.status = reply.status;
+          }
         }
-      });
+      })
+
+      .addCase(fetchAllTickets.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(fetchAllTickets.fulfilled, (state, action) => {
+        state.loading = false;
+        state.tickets = action.payload.data ?? action.payload;
+      })
+
   },
 });
 

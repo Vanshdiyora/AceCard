@@ -1,7 +1,16 @@
 import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../../app/hooks";
-import { fetchVendors } from "../slice";
-import { Users, Clock, CheckCircle2, Archive } from "lucide-react";
+import {
+  fetchVendors,
+  archiveVendor,
+} from "../slice";
+
+import {
+  Users,
+  Clock,
+  CheckCircle2,
+  Archive,
+} from "lucide-react";
 
 import PageHeader from "../../../common/components/layout/PageHeader";
 import PageFilters from "../../../common/components/layout/PageFilter";
@@ -10,6 +19,7 @@ import StatsGrid from "../../../common/components/cards/StatsGrid";
 import AddVendorModal from "../components/AddVendorModal";
 import EditVendorModal from "../components/EditVendorModal";
 import UpdateSeatsModal from "../components/UpdateSeatModal";
+import ArchiveVendorModal from "../components/ArchiveVendorModal";
 import RowActionsDropdown from "../components/RowActionsDropdown";
 
 export default function VendorsPage() {
@@ -22,6 +32,7 @@ export default function VendorsPage() {
   const [addOpen, setAddOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [seatsOpen, setSeatsOpen] = useState(false);
+  const [archiveOpen, setArchiveOpen] = useState(false);
 
   const [selectedVendor, setSelectedVendor] = useState<any>(null);
 
@@ -35,10 +46,12 @@ export default function VendorsPage() {
     archive: <Archive className="text-red-500" />,
   };
 
+  // Fetch vendor list
   useEffect(() => {
     dispatch(fetchVendors());
   }, []);
 
+  // Filter vendors
   const filtered = vendors.filter((v) => {
     const searchMatch =
       v.legal_name.toLowerCase().includes(search.toLowerCase()) ||
@@ -59,7 +72,7 @@ export default function VendorsPage() {
   return (
     <div className="space-y-8">
 
-      {/* PAGE HEADER */}
+      {/* HEADER */}
       <PageHeader
         title="Vendor Management"
         description="Manage vendor onboarding & verification"
@@ -69,6 +82,7 @@ export default function VendorsPage() {
 
       {/* MODALS */}
       <AddVendorModal open={addOpen} onClose={() => setAddOpen(false)} />
+
       {selectedVendor && (
         <>
           <EditVendorModal
@@ -76,10 +90,22 @@ export default function VendorsPage() {
             open={editOpen}
             onClose={() => setEditOpen(false)}
           />
+
           <UpdateSeatsModal
             vendor={selectedVendor}
             open={seatsOpen}
             onClose={() => setSeatsOpen(false)}
+          />
+
+          <ArchiveVendorModal
+            vendor={selectedVendor}
+            open={archiveOpen}
+            onClose={() => setArchiveOpen(false)}
+            onConfirm={async () => {
+              await dispatch(archiveVendor(selectedVendor.id));
+              dispatch(fetchVendors());
+              setArchiveOpen(false);
+            }}
           />
         </>
       )}
@@ -149,10 +175,8 @@ export default function VendorsPage() {
 
                 <td>{v.created_at.split("T")[0]}</td>
 
-                {/* ACTIONS DROPDOWN */}
                 <td>
                   <RowActionsDropdown
-                    onView={() => console.log("View", v)}
                     onEdit={() => {
                       setSelectedVendor(v);
                       setEditOpen(true);
@@ -161,8 +185,11 @@ export default function VendorsPage() {
                       setSelectedVendor(v);
                       setSeatsOpen(true);
                     }}
-                    onArchive={() => console.log("Archive vendor", v.id)}
-                    onNotify={() => console.log("Notify vendor", v.id)}
+                    onArchive={() => {
+                      setSelectedVendor(v);
+                      setArchiveOpen(true);
+                    }}
+                    onNotify={() => console.log("Notify", v.id)}
                   />
                 </td>
               </tr>

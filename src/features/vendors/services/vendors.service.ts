@@ -20,7 +20,7 @@ export const vendorsService = {
   },
 
   async updateSeats(id: number, seats: number): Promise<VendorItem> {
-    const res = await axios.patch(`${BASE}/${id}/seats`, { seats });
+    const res = await axios.patch(`${BASE}/${id}/seats`, { seats_appointed:seats });
     return res.data;
   },
 

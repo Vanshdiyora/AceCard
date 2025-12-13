@@ -3,8 +3,7 @@ import {
   Edit3,
   SlidersHorizontal,
   Trash2,
-  Bell,
-  Eye,
+  Bell
 } from "lucide-react";
 
 interface RowActionsDropdownProps {
@@ -12,7 +11,6 @@ interface RowActionsDropdownProps {
   onSeats?: () => void;
   onArchive?: () => void;
   onNotify?: () => void;
-  onView?: () => void;
 }
 
 export default function RowActionsDropdown({
@@ -20,7 +18,6 @@ export default function RowActionsDropdown({
   onSeats,
   onArchive,
   onNotify,
-  onView,
 }: RowActionsDropdownProps) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement | null>(null);
@@ -54,8 +51,6 @@ export default function RowActionsDropdown({
           overflow-hidden animate-fadeIn z-40
         "
         >
-          <MenuItem icon={<Eye size={16} />} label="View Details" onClick={onView} />
-
           <MenuItem icon={<Edit3 size={16} />} label="Edit Vendor" onClick={onEdit} />
 
           <MenuItem

@@ -61,12 +61,6 @@ export default function EditVendorModal({
       type: "text",
       placeholder: "Ex: Net 30 / Monthly / Quarterly",
     },
-    {
-      name: "seats_appointed",
-      label: "Seats Appointed",
-      type: "number",
-      placeholder: "Enter seat allotment",
-    },
   ];
 
   const update = (key: string, value: any) => {

@@ -13,7 +13,20 @@ export const createSupportTicket = async (payload: any) => {
 };
 
 // POST — Reply to a support ticket
-export const replyToSupportTicket = async (ticketId: number, payload: any) => {
-  const res = await axiosClient.post(`/admin/support/${ticketId}/reply`, payload);
+export const replyToSupportTicket = async (
+  ticketId: number,
+  payload: { message: string; status: string }
+) => {
+  const res = await axiosClient.post(
+    `/admin/support/${ticketId}/reply`,
+    payload
+  );
+  return res.data;
+};
+
+
+// GET — Admin fetch all support tickets
+export const getAllSupportTickets = async () => {
+  const res = await axiosClient.get(`/admin/support/requests`);
   return res.data;
 };
