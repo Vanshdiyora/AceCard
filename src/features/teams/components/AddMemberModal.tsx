@@ -1,4 +1,5 @@
 import { useState } from "react";
+import DynamicForm, { type FieldConfig } from "../../../common/ui/DynamicForm";
 
 export default function AddMemberModal({
   open,
@@ -19,49 +20,69 @@ export default function AddMemberModal({
 
   if (!open) return null;
 
+  const update = (key: string, value: any) => {
+    const field = fields.find((f) => f.name === key);
+
+    // auto convert number fields (phone is string, so no conversion)
+    if (field?.type === "number") value = Number(value);
+
+    setForm((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
+  };
+
+  const fields: FieldConfig[] = [
+    {
+      name: "name",
+      label: "Full Name",
+      type: "text",
+      placeholder: "Enter full name",
+    },
+    {
+      name: "email",
+      label: "Email",
+      type: "email",
+      placeholder: "Enter email",
+    },
+    {
+      name: "phone",
+      label: "Phone",
+      type: "text", // ✔ keep as text (phone numbers shouldn't be numeric)
+      placeholder: "Enter phone number",
+    },
+    {
+      name: "password",
+      label: "Password",
+      type: "text", // if you want masked password, I can add type="password" support
+      placeholder: "Enter password",
+    },
+    {
+      name: "role",
+      label: "Role",
+      type: "select",
+      placeholder: "Select role",
+      options: [
+        { label: "Manager", value: "manager" },
+        { label: "Salesperson", value: "sales_rep" },
+      ],
+    },
+  ];
+
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-      <div className="bg-white p-6 rounded-xl w-96 shadow-lg">
-        <h2 className="text-xl font-semibold mb-4">Add Team Member</h2>
+      <div className="bg-white w-[400px] max-h-[80vh] rounded-xl shadow-lg flex flex-col">
 
-        <input
-          className="w-full border p-2 rounded mb-2"
-          placeholder="Name"
-          value={form.name}
-          onChange={(e) => setForm({ ...form, name: e.target.value })}
-        />
+        {/* Header */}
+        <div className="p-5 border-b">
+          <h2 className="text-xl font-semibold">Add Team Member</h2>
+        </div>
 
-        <input
-          className="w-full border p-2 rounded mb-2"
-          placeholder="Email"
-          value={form.email}
-          onChange={(e) => setForm({ ...form, email: e.target.value })}
-        />
+        {/* Dynamic Form */}
+        <DynamicForm fields={fields} form={form} onChange={update} />
 
-        <input
-          className="w-full border p-2 rounded mb-2"
-          placeholder="Phone"
-          value={form.phone}
-          onChange={(e) => setForm({ ...form, phone: e.target.value })}
-        />
-
-        <input
-          className="w-full border p-2 rounded mb-2"
-          placeholder="Password"
-          value={form.password}
-          onChange={(e) => setForm({ ...form, password: e.target.value })}
-        />
-
-        <select
-          className="w-full border p-2 rounded mb-4"
-          value={form.role}
-          onChange={(e) => setForm({ ...form, role: e.target.value })}
-        >
-          <option value="manager">Manager</option>
-          <option value="sales_rep">Salesperson</option>
-        </select>
-
-        <div className="flex justify-end gap-2">
+        {/* Footer */}
+        <div className="p-4 border-t flex justify-end gap-2">
           <button className="px-4 py-2 border rounded" onClick={onClose}>
             Cancel
           </button>
@@ -72,6 +93,7 @@ export default function AddMemberModal({
             Add
           </button>
         </div>
+
       </div>
     </div>
   );

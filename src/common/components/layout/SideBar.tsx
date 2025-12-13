@@ -26,7 +26,6 @@ export default function Sidebar({ type }: SidebarProps) {
     { icon: BarChart2, label: "Campaigns", path: `${adminBase}/campaigns` },
     { icon: Users, label: "Team", path: `${adminBase}/team` },
     { icon: Building2, label: "Products", path: `${adminBase}/products` },
-    { icon: BarChart2, label: "Insights", path: `${adminBase}/insights` },
     { icon: LifeBuoy, label: "Support", path: `${adminBase}/support` },
     { icon: Settings, label: "Settings", path: `${adminBase}/settings` },
   ];

@@ -44,9 +44,12 @@ export default function SupportPage() {
 
   const [showModal, setShowModal] = useState(false);
 
+  // Reply dropdown states
+  const [expandedTicket, setExpandedTicket] = useState<number | null>(null);
+
   const openTickets = tickets.filter((t) => t.status === "open").length;
-  const inProgress = tickets.filter((t) => t.status === "in-progress").length;
-  const resolved = tickets.filter((t) => t.status === "resolved").length;
+  const inProgress = tickets.filter((t) => t.status === "pending").length;
+  const resolved = tickets.filter((t) => t.status === "closed").length;
 
   const priorityColors: any = {
     high: "bg-red-100 text-red-600",
@@ -57,8 +60,8 @@ export default function SupportPage() {
 
   const statusColors: any = {
     open: "bg-blue-100 text-blue-700",
-    resolved: "bg-green-100 text-green-700",
-    "in-progress": "bg-yellow-100 text-yellow-700",
+    closed: "bg-green-100 text-green-700",
+    pending: "bg-yellow-100 text-yellow-700",
   };
 
   const icons: any = {
@@ -72,21 +75,20 @@ export default function SupportPage() {
   return (
     <div className="p-6 space-y-6">
 
-      {/* 🌟 Reusable Page Header */}
-    <PageHeader
-      title="Support Center"
-      description="Get help and manage your support requests"
-      addButtonLabel="New Ticket"
-      onAdd={() => setShowModal(true)}
-    />
-
+      {/* 🌟 Page Header */}
+      <PageHeader
+        title="Support Center"
+        description="Get help and manage your support requests"
+        addButtonLabel="New Ticket"
+        onAdd={() => setShowModal(true)}
+      />
 
       <div className="grid grid-cols-12 gap-6">
 
         {/* LEFT CONTENT */}
         <div className="col-span-8 space-y-5">
 
-          {/* Tabs Section */}
+          {/* Tickets Tab */}
           <div className="bg-white rounded-xl p-5 border">
             <div className="flex gap-8 border-b">
               <button className="text-purple-600 font-medium border-b-2 border-purple-600 pb-2">
@@ -100,44 +102,83 @@ export default function SupportPage() {
             {tickets.map((t: any) => (
               <div
                 key={t.id}
-                className="bg-white p-5 border rounded-xl shadow-sm flex justify-between hover:shadow-md transition"
+                className="bg-white p-5 border rounded-xl shadow-sm hover:shadow-md transition"
               >
-                <div className="flex gap-4">
-                  {icons[t.category]}
+                {/* Ticket Header */}
+                <div className="flex justify-between">
+                  <div className="flex gap-4">
+                    {icons[t.category]}
 
-                  <div>
-                    <div className="flex gap-3 items-center mb-1">
-                      <span className="text-sm text-gray-500 font-medium">
-                        TKT-{t.id}
-                      </span>
+                    <div>
+                      <div className="flex gap-3 items-center mb-1">
+                        <span className="text-sm text-gray-500 font-medium">
+                          TKT-{t.id}
+                        </span>
 
-                      <span
-                        className={`px-2 py-0.5 rounded-full text-xs ${statusColors[t.status]}`}
-                      >
-                        {t.status}
-                      </span>
+                        <span
+                          className={`px-2 py-0.5 rounded-full text-xs ${statusColors[t.status]}`}
+                        >
+                          {t.status}
+                        </span>
 
-                      <span
-                        className={`px-2 py-0.5 rounded-full text-xs ${priorityColors[t.priority]}`}
-                      >
-                        {t.priority}
-                      </span>
-                    </div>
+                        <span
+                          className={`px-2 py-0.5 rounded-full text-xs ${priorityColors[t.priority]}`}
+                        >
+                          {t.priority}
+                        </span>
+                      </div>
 
-                    <h3 className="font-semibold text-lg">{t.subject}</h3>
+                      <h3 className="font-semibold text-lg">{t.subject}</h3>
 
-                    <p className="text-gray-600 text-sm">{t.description}</p>
+                      <p className="text-gray-600 text-sm">{t.description}</p>
 
-                    <div className="flex items-center gap-6 text-sm text-gray-500 mt-2">
-                      <span className="flex items-center gap-1">
-                        <Clock size={14} /> {t.created_at ?? "Just now"}
-                      </span>
-                      <span>Category: {t.category}</span>
+                      <div className="flex items-center gap-6 text-sm text-gray-500 mt-2">
+                        <span className="flex items-center gap-1">
+                          <Clock size={14} /> {t.created_at ?? "Just now"}
+                        </span>
+                        <span>Category: {t.category}</span>
+                      </div>
                     </div>
                   </div>
+
+                  {/* TOGGLE REPLY PANEL */}
+                  <MessageSquareMore
+                    className="text-gray-400 hover:text-gray-600 cursor-pointer"
+                    onClick={() => {
+                      setExpandedTicket(expandedTicket === t.id ? null : t.id);
+                    }}
+                  />
                 </div>
 
-                <MessageSquareMore className="text-gray-400 hover:text-gray-600 cursor-pointer" />
+                {/* REPLY DROPDOWN */}
+                {expandedTicket === t.id && (
+                  <div className="mt-4 border-t pt-4 space-y-4">
+
+                    {/* If no replies → show message */}
+                    {(!t.replies || t.replies.length === 0) && (
+                      <div className="bg-yellow-50 text-yellow-700 p-3 rounded-lg text-sm">
+                        <strong>No replies yet.</strong> Your ticket is under review by our support team.
+                      </div>
+                    )}
+
+                    {/* Show Replies */}
+                    {t.replies?.length > 0 && (
+                      <div className="space-y-3">
+                        {t.replies.map((r: any) => (
+                          <div
+                            key={r.id}
+                            className="bg-gray-50 p-3 rounded-lg text-sm"
+                          >
+                            <p className="font-medium text-gray-700">Admin Reply:</p>
+                            <p className="text-gray-600">{r.message}</p>
+                            <p className="text-xs text-gray-400 mt-1">{r.created_at}</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
               </div>
             ))}
           </div>
@@ -207,6 +248,7 @@ export default function SupportPage() {
         </div>
       </div>
 
+      {/* Ticket Modal */}
       <NewTicketModal open={showModal} onClose={() => setShowModal(false)} />
     </div>
   );

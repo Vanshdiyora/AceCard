@@ -1,7 +1,13 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { getVendorSupportTickets, createSupportTicket } from "./services/support.service";
+import {
+  getVendorSupportTickets,
+  createSupportTicket,
+  replyToSupportTicket,
+} from "./services/support.service";
 
+// ---------------------------
 // FETCH vendor tickets
+// ---------------------------
 export const fetchTickets = createAsyncThunk(
   "support/fetch",
   async (vendorId: number) => {
@@ -9,11 +15,23 @@ export const fetchTickets = createAsyncThunk(
   }
 );
 
-// ADD ticket
+// ---------------------------
+// CREATE a new ticket
+// ---------------------------
 export const addTicket = createAsyncThunk(
   "support/add",
   async (payload: any) => {
     return await createSupportTicket(payload);
+  }
+);
+
+// ---------------------------
+// REPLY to a ticket
+// ---------------------------
+export const replyTicket = createAsyncThunk(
+  "support/reply",
+  async ({ ticketId, message }: { ticketId: number; message: string }) => {
+    return await replyToSupportTicket(ticketId, { message });
   }
 );
 
@@ -33,6 +51,9 @@ const supportSlice = createSlice({
   reducers: {},
   extraReducers: (builder) => {
     builder
+      // ---------------------------
+      // FETCH TICKETS
+      // ---------------------------
       .addCase(fetchTickets.pending, (state) => {
         state.loading = true;
       })
@@ -40,8 +61,28 @@ const supportSlice = createSlice({
         state.loading = false;
         state.tickets = action.payload.data ?? action.payload;
       })
+
+      // ---------------------------
+      // ADD NEW TICKET
+      // ---------------------------
       .addCase(addTicket.fulfilled, (state, action) => {
-        state.tickets.unshift(action.payload.data ?? action.payload);
+        const ticket = action.payload.data ?? action.payload;
+        state.tickets.unshift(ticket);
+      })
+
+      // ---------------------------
+      // REPLY TO TICKET
+      // ---------------------------
+      .addCase(replyTicket.fulfilled, (state, action) => {
+        const reply = action.payload.data ?? action.payload;
+
+        // backend returns reply including ticket_id
+        const ticket = state.tickets.find((t) => t.id === reply.ticket_id);
+
+        if (ticket) {
+          if (!ticket.replies) ticket.replies = [];
+          ticket.replies.push(reply);
+        }
       });
   },
 });

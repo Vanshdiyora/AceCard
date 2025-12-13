@@ -7,8 +7,8 @@ export default function LoginPage() {
   const { loading, error } = useAppSelector((s) => s.auth);
 
   const [form, setForm] = useState({
-    email: "vanshadiyora@gmail.com",
-    password: "Vansh@#518900",
+    email: "admin@acecard.com",
+    password: "itshivam",
   });
 
   const submit = async () => {
@@ -19,7 +19,7 @@ export default function LoginPage() {
 
     await dispatch(login(form));
 
-    window.location.href = "/admin"; // Or wherever you want
+    window.location.href = "/super"; // Or wherever you want
   };
 
   return (

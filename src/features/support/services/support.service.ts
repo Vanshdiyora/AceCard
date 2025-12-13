@@ -11,3 +11,9 @@ export const createSupportTicket = async (payload: any) => {
   const res = await axiosClient.post("/vendor/support", payload);
   return res.data;
 };
+
+// POST — Reply to a support ticket
+export const replyToSupportTicket = async (ticketId: number, payload: any) => {
+  const res = await axiosClient.post(`/admin/support/${ticketId}/reply`, payload);
+  return res.data;
+};

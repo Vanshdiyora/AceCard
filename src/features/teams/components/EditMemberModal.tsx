@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import DynamicForm, { type FieldConfig } from "../../../common/ui/DynamicForm";
+
 export default function EditMemberModal({
   open,
   member,
@@ -12,47 +14,84 @@ export default function EditMemberModal({
 }) {
   if (!open || !member) return null;
 
+  // Initialize form state from member
   const [form, setForm] = useState({
-    name: member.name,
-    email: member.email,
-    phone: member.phone,
-    role: member.role,
+    name: member.name || "",
+    email: member.email || "",
+    phone: member.phone || "",
+    role: member.role || "manager",
   });
+
+  // Sync if user opens modal for another member
+  useEffect(() => {
+    if (member) {
+      setForm({
+        name: member.name,
+        email: member.email,
+        phone: member.phone,
+        role: member.role,
+      });
+    }
+  }, [member]);
+
+  // Update handler
+  const update = (key: string, value: any) => {
+    const f = fields.find((x) => x.name === key);
+    if (f?.type === "number") value = Number(value);
+
+    setForm((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
+  };
+
+  // Dynamic form fields
+  const fields: FieldConfig[] = [
+    {
+      name: "name",
+      label: "Full Name",
+      type: "text",
+      placeholder: "Enter full name",
+    },
+    {
+      name: "email",
+      label: "Email",
+      type: "email",
+      placeholder: "Enter email address",
+    },
+    {
+      name: "phone",
+      label: "Phone",
+      type: "text",
+      placeholder: "Enter phone number",
+    },
+    {
+      name: "role",
+      label: "Role",
+      type: "select",
+      placeholder: "Select role",
+      options: [
+        { label: "Manager", value: "manager" },
+        { label: "Salesperson", value: "salesperson" },
+        { label: "Vendor", value: "vendor" },
+      ],
+    },
+  ];
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-      <div className="bg-white p-6 rounded-xl w-96 shadow-lg">
-        <h2 className="text-xl font-semibold mb-4">Edit Member</h2>
+      <div className="bg-white w-[400px] max-h-[80vh] rounded-xl shadow-lg flex flex-col">
 
-        <input
-          className="w-full border p-2 rounded mb-2"
-          value={form.name}
-          onChange={(e) => setForm({ ...form, name: e.target.value })}
-        />
+        {/* Header */}
+        <div className="p-5 border-b">
+          <h2 className="text-xl font-semibold">Edit Member</h2>
+        </div>
 
-        <input
-          className="w-full border p-2 rounded mb-2"
-          value={form.email}
-          onChange={(e) => setForm({ ...form, email: e.target.value })}
-        />
+        {/* Dynamic Form */}
+        <DynamicForm fields={fields} form={form} onChange={update} />
 
-        <input
-          className="w-full border p-2 rounded mb-2"
-          value={form.phone}
-          onChange={(e) => setForm({ ...form, phone: e.target.value })}
-        />
-
-        <select
-          className="w-full border p-2 rounded mb-4"
-          value={form.role}
-          onChange={(e) => setForm({ ...form, role: e.target.value })}
-        >
-          <option value="manager">Manager</option>
-          <option value="salesperson">Salesperson</option>
-          <option value="vendor">Vendor</option>
-        </select>
-
-        <div className="flex justify-end gap-2">
+        {/* Footer */}
+        <div className="p-4 border-t flex justify-end gap-2">
           <button className="px-4 py-2 border rounded" onClick={onClose}>
             Cancel
           </button>
@@ -63,6 +102,7 @@ export default function EditMemberModal({
             Save
           </button>
         </div>
+
       </div>
     </div>
   );

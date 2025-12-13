@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useAppDispatch } from "../../../app/hooks";
 import { createCampaign, fetchCampaigns } from "../slice";
 import type { CampaignStatus } from "../types";
+import DynamicForm, { type FieldConfig } from "../../../common/ui/DynamicForm";
 
 const STATUS_OPTIONS = [
   "planned",
@@ -18,31 +19,33 @@ interface CreateCampaignModalProps {
   onClose: () => void;
 }
 
-export default function CreateCampaignModal({ open, onClose } : CreateCampaignModalProps) {
+export default function CreateCampaignModal({ open, onClose }: CreateCampaignModalProps) {
   const dispatch = useAppDispatch();
 
- const [form, setForm] = useState<{
-  name: string;
-  description: string;
-  status: CampaignStatus;
-  budget: number;
-  targets: { tt: number | string };
-  leads_generated: number;
-  conversion_rate: number;
-  pipeline_value: number;
-}>({
-  name: "",
-  description: "",
-  status: "planned",
-  budget: 0,
-  targets: { tt: "" },
-  leads_generated: 0,
-  conversion_rate: 0,
-  pipeline_value: 0,
-});
+  // 🔹 Removed targets.tt completely
+  const [form, setForm] = useState({
+    name: "",
+    description: "",
+    status: "planned" as CampaignStatus,
+    budget: 0,
+    leads_generated: 0,
+    conversion_rate: 0,
+    pipeline_value: 0,
+  });
 
-  const handleChange = (field: string, value: any) => {
-    setForm({ ...form, [field]: value });
+  if (!open) return null;
+
+  // Simple update (no nested fields)
+  const update = (key: string, value: any) => {
+    const field = fields.find((f) => f.name === key);
+
+    // Auto convert number fields
+    if (field?.type === "number") value = Number(value);
+
+    setForm((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
   };
 
   const handleSubmit = async () => {
@@ -52,104 +55,75 @@ export default function CreateCampaignModal({ open, onClose } : CreateCampaignMo
       leads_generated: Number(form.leads_generated),
       conversion_rate: Number(form.conversion_rate),
       pipeline_value: Number(form.pipeline_value),
-      targets: { tt: Number(form.targets.tt) },
     };
 
     await dispatch(createCampaign(payload));
-    await dispatch(fetchCampaigns()); // refresh list
+    await dispatch(fetchCampaigns());
     onClose();
   };
 
-  if (!open) return null;
+  // 🔹 Fields config WITHOUT target.tt
+  const fields: FieldConfig[] = [
+    {
+      name: "name",
+      label: "Campaign Name",
+      type: "text",
+      placeholder: "Enter campaign name",
+    },
+    {
+      name: "description",
+      label: "Description",
+      type: "textarea",
+      placeholder: "Write description",
+    },
+    {
+      name: "status",
+      label: "Status",
+      type: "select",
+      placeholder: "Select status",
+      options: STATUS_OPTIONS.map((s) => ({ label: s, value: s })),
+    },
+    {
+      name: "budget",
+      label: "Budget",
+      type: "number",
+      placeholder: "Enter budget",
+    },
+    {
+      name: "leads_generated",
+      label: "Leads Generated",
+      type: "number",
+      placeholder: "Enter leads generated",
+    },
+    {
+      name: "conversion_rate",
+      label: "Conversion Rate",
+      type: "number",
+      placeholder: "Enter conversion rate",
+    },
+    {
+      name: "pipeline_value",
+      label: "Pipeline Value",
+      type: "number",
+      placeholder: "Enter pipeline value",
+    },
+  ];
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-      <div className="bg-white w-[500px] p-6 rounded-xl shadow-lg space-y-4">
+      <div className="bg-white w-[500px] max-h-[85vh] rounded-xl shadow-lg flex flex-col">
 
-        <h2 className="text-xl font-semibold">Create Campaign</h2>
+        {/* Header */}
+        <div className="p-5 border-b">
+          <h2 className="text-xl font-semibold">Create Campaign</h2>
+        </div>
 
-        {/* Name */}
-        <input
-          className="border p-2 w-full rounded"
-          placeholder="Campaign name"
-          value={form.name}
-          onChange={(e) => handleChange("name", e.target.value)}
-        />
+        {/* Form */}
+        <DynamicForm fields={fields} form={form} onChange={update} />
 
-        {/* Description */}
-        <textarea
-          className="border p-2 w-full rounded"
-          placeholder="Description"
-          value={form.description}
-          onChange={(e) => handleChange("description", e.target.value)}
-        />
-
-        {/* Status */}
-        <select
-          className="border p-2 w-full rounded"
-          value={form.status}
-          onChange={(e) => handleChange("status", e.target.value)}
-        >
-          {STATUS_OPTIONS.map((s) => (
-            <option key={s} value={s}>
-              {s}
-            </option>
-          ))}
-        </select>
-
-        {/* Budget */}
-        <input
-          className="border p-2 w-full rounded"
-          placeholder="Budget"
-          type="number"
-          value={form.budget}
-          onChange={(e) => handleChange("budget", e.target.value)}
-        />
-
-        {/* Targets (tt) */}
-        <input
-          className="border p-2 w-full rounded"
-          placeholder="Target (tt)"
-          type="number"
-          value={form.targets.tt}
-          onChange={(e) =>
-            setForm({ ...form, targets: { tt: e.target.value } })
-          }
-        />
-
-        {/* Leads generated */}
-        <input
-          className="border p-2 w-full rounded"
-          placeholder="Leads generated"
-          type="number"
-          value={form.leads_generated}
-          onChange={(e) => handleChange("leads_generated", e.target.value)}
-        />
-
-        {/* Conversion rate */}
-        <input
-          className="border p-2 w-full rounded"
-          placeholder="Conversion rate"
-          type="number"
-          value={form.conversion_rate}
-          onChange={(e) => handleChange("conversion_rate", e.target.value)}
-        />
-
-        {/* Pipeline value */}
-        <input
-          className="border p-2 w-full rounded"
-          placeholder="Pipeline value"
-          type="number"
-          value={form.pipeline_value}
-          onChange={(e) => handleChange("pipeline_value", e.target.value)}
-        />
-
-        {/* Buttons */}
-        <div className="flex justify-end gap-3 pt-2">
-          <button
-            className="px-4 py-2 bg-gray-200 rounded"
-            onClick={onClose}
-          >
+        {/* Footer */}
+        <div className="p-4 border-t flex justify-end gap-3">
+          <button className="px-4 py-2 bg-gray-200 rounded" onClick={onClose}>
             Cancel
           </button>
 

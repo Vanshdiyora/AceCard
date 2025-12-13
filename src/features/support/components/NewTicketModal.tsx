@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useAppDispatch } from "../../../app/hooks";
 import { addTicket } from "../slice";
+import DynamicForm, { type FieldConfig } from "../../../common/ui/DynamicForm";
 
 export default function NewTicketModal({ open, onClose }: any) {
   const dispatch = useAppDispatch();
@@ -14,8 +15,53 @@ export default function NewTicketModal({ open, onClose }: any) {
     description: "",
   });
 
-  const update = (key: string, value: any) =>
-    setForm({ ...form, [key]: value });
+  // DynamicForm update handler
+  const update = (key: string, value: any) => {
+    const field = fields.find((f) => f.name === key);
+    if (field?.type === "number") value = Number(value);
+    setForm((prev) => ({ ...prev, [key]: value }));
+  };
+
+  // DynamicForm field config
+  const fields: FieldConfig[] = [
+    {
+      name: "subject",
+      label: "Subject",
+      type: "text",
+      placeholder: "Enter subject",
+    },
+    {
+      name: "priority",
+      label: "Priority",
+      type: "select",
+      placeholder: "Select priority",
+      options: [
+        { label: "Low", value: "low" },
+        { label: "Medium", value: "medium" },
+        { label: "High", value: "high" },
+        { label: "Critical", value: "critical" },
+      ],
+    },
+    {
+      name: "category",
+      label: "Category",
+      type: "select",
+      placeholder: "Select category",
+      options: [
+        { label: "Technical", value: "technical" },
+        { label: "Billing", value: "billing" },
+        { label: "Feature Request", value: "feature_request" },
+        { label: "General", value: "general" },
+        { label: "Others", value: "others" },
+      ],
+    },
+    {
+      name: "description",
+      label: "Description",
+      type: "textarea",
+      placeholder: "Describe the issue...",
+    },
+  ];
 
   const submit = async () => {
     if (!form.subject || !form.description) {
@@ -29,62 +75,14 @@ export default function NewTicketModal({ open, onClose }: any) {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-      <div className="bg-white w-[480px] rounded-xl p-6 shadow-xl">
+      <div className="bg-white w-[480px] rounded-xl p-6 shadow-xl flex flex-col">
+
         <h2 className="text-xl font-semibold mb-4">Create Support Ticket</h2>
 
-        <div className="space-y-4">
-          <div>
-            <label className="text-sm font-medium">Subject</label>
-            <input
-              type="text"
-              value={form.subject}
-              onChange={(e) => update("subject", e.target.value)}
-              className="w-full border rounded-lg p-2 mt-1"
-              placeholder="Enter subject"
-            />
-          </div>
+        {/* DynamicForm */}
+        <DynamicForm fields={fields} form={form} onChange={update} />
 
-          <div>
-            <label className="text-sm font-medium">Priority</label>
-            <select
-              value={form.priority}
-              onChange={(e) => update("priority", e.target.value)}
-              className="w-full border rounded-lg p-2 mt-1"
-            >
-              <option value="low">Low</option>
-              <option value="medium">Medium</option>
-              <option value="high">High</option>
-              <option value="critical">Critical</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="text-sm font-medium">Category</label>
-            <select
-              value={form.category}
-              onChange={(e) => update("category", e.target.value)}
-              className="w-full border rounded-lg p-2 mt-1"
-            >
-              <option value="technical">Technical</option>
-              <option value="billing">Billing</option>
-              <option value="feature_request">Feature Request</option>
-              <option value="general">General</option>
-              <option value="others">Others</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="text-sm font-medium">Description</label>
-            <textarea
-              value={form.description}
-              onChange={(e) => update("description", e.target.value)}
-              className="w-full border rounded-lg p-2 mt-1"
-              rows={4}
-              placeholder="Describe the issue..."
-            ></textarea>
-          </div>
-        </div>
-
+        {/* Footer */}
         <div className="flex justify-end gap-3 mt-6">
           <button
             onClick={onClose}
@@ -100,6 +98,7 @@ export default function NewTicketModal({ open, onClose }: any) {
             Create Ticket
           </button>
         </div>
+
       </div>
     </div>
   );
