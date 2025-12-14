@@ -5,14 +5,14 @@ import dashboardReducer from "../features/dashboard/slice";
 import leadsReducer from "../features/leads/slice";
 import teamReducer from "../features/teams/slice";
 import productsReducer from "../features/products/slice";
-import settingsReducer from "../features/admin/Settings/SettingsSlice";
 import supportReducer from "../features/support/slice";
 import authReducer from "../features/auth/slice";
-
+import notificationsReducer from "../features/notification/slice";
 import superDashboardReducer from "../features/superadmin/DashBoard/SuperDashBoardSlice";
 import vendorsReducer from "../features/vendors/slice";
 import salespersonReducer from "../features/superadmin/Salesperson/SalespersonSlice";
 import seatskeysSlice from "../features/superadmin/SeatsKeys/SeatsKeysSlice"
+import settingsReducer from "../features/settings/slice";
 
 export const store = configureStore({
   reducer: {
@@ -28,6 +28,7 @@ export const store = configureStore({
     vendors: vendorsReducer, 
     superSalespersons: salespersonReducer,
     superSeats: seatskeysSlice,
+    notifications: notificationsReducer
   },
 });
 

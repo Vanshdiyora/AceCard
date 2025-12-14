@@ -8,6 +8,7 @@ export interface Lead {
   stage: string;
   deal_amount: number;
   source: string;
+  age?: number;
   last_interaction_at: string;
   archived: boolean;
   created_at: string;
@@ -22,6 +23,7 @@ export interface CreateLeadDto {
   stage: string;
   deal_amount: number;
   source: string;
+  age?: number;
 }
 
 export interface UpdateLeadDto extends CreateLeadDto {}

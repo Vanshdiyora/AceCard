@@ -7,5 +7,7 @@ import VendorsPage from "./vendors/pages/VendorsPage";
 import SupportAdmin from "./support/pages/SupportAdmin";
 import LoginPage from "./auth/pages/LoginPage";
 import LeadPage from "./leads/pages/LeadsPage";
+import LeadDetailsPage from "./leads/pages/LeadDetailsPage";
+import SettingsPage from "./settings/pages/SettingsPage";
 
-export { ProductsPage, SupportPage, TeamPage, DashboardPage, CampaignsPage, VendorsPage, LoginPage, SupportAdmin ,LeadPage};
+export { ProductsPage, SupportPage, TeamPage, DashboardPage, CampaignsPage, VendorsPage, LoginPage, SupportAdmin ,LeadPage, LeadDetailsPage, SettingsPage};

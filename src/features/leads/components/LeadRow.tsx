@@ -1,13 +1,13 @@
 import type { Lead } from "../types";
 import LeadActionsMenu from "./LeadsActionMenu";
-
+import { useNavigate } from "react-router-dom";
 export default function LeadRow({ lead, onEdit, onArchive }: {
   lead: Lead;
   onEdit: () => void;
   onArchive: () => void;
 }) {
   const avatar = lead.lead_name.charAt(0).toUpperCase();
-
+const navigate = useNavigate();
   const stageBadge: Record<string, string> = {
     new: "bg-blue-100 text-blue-700",
     qualified: "bg-orange-100 text-orange-700",
@@ -19,7 +19,7 @@ export default function LeadRow({ lead, onEdit, onArchive }: {
 
   return (
     <tr className="border-b hover:bg-gray-50 text-sm">
-      <td className="py-3 px-4 flex items-center gap-3">
+      <td className="py-3 px-4 flex items-center gap-3" onClick={() => navigate(`${lead.id}`)} style={{cursor: 'pointer'}}>
         <div className="w-10 h-10 flex items-center justify-center bg-gray-200 rounded-full font-semibold">
           {avatar}
         </div>

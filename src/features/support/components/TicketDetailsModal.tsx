@@ -14,120 +14,143 @@ export default function TicketDetailsModal({ open, onClose, ticket, onReply }: a
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
-      <div className="bg-white w-full max-w-2xl rounded-2xl shadow-xl p-6 relative">
+      <div className="bg-white w-full max-w-3xl rounded-2xl shadow-xl relative flex flex-col h-[90vh]">
 
         {/* Close Button */}
-        <button className="absolute top-3 right-3" onClick={onClose}>
+        <button className="absolute top-3 right-3 z-20" onClick={onClose}>
           <X size={22} className="text-gray-500 hover:text-black" />
         </button>
 
         {/* Header */}
-        <h2 className="text-xl font-bold mb-1">
-          Ticket #{ticket.id}
-        </h2>
-        <p className="text-gray-600 mb-4">{ticket.subject}</p>
+        <div className="p-6 border-b">
+          <h2 className="text-xl font-bold mb-1">Ticket #{ticket.id}</h2>
+          <p className="text-gray-600">{ticket.subject}</p>
+        </div>
 
-        {/* Info Grid */}
-        <div className="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-xl border">
+        {/* SCROLLABLE CONTENT AREA */}
+        <div className="p-5 space-y-6 overflow-y-auto custom-scrollbar flex-1">
 
-          <div>
-            <p className="text-xs text-gray-500">Vendor</p>
-            <p className="font-medium">{ticket.vendorName}</p>
-          </div>
+          {/* Info Grid */}
+          <div className="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-xl border">
+            <div>
+              <p className="text-xs text-gray-500">Vendor</p>
+              <p className="font-medium">{ticket.vendorName}</p>
+            </div>
 
-          <div>
-            <p className="text-xs text-gray-500">Contact Person</p>
-            <p className="font-medium">{ticket.vendorContact}</p>
-          </div>
+            <div>
+              <p className="text-xs text-gray-500">Contact Person</p>
+              <p className="font-medium">{ticket.vendorContact}</p>
+            </div>
 
-          <div>
-            <p className="text-xs text-gray-500">Issue Type</p>
-            <span className="px-2 py-1 rounded-md text-xs bg-gray-200 inline-block">
-              {ticket.category}
-            </span>
-          </div>
+            <div>
+              <p className="text-xs text-gray-500">Issue Type</p>
+              <span className="px-2 py-1 rounded-md text-xs bg-gray-200 inline-block">
+                {ticket.category}
+              </span>
+            </div>
 
-          <div>
-            <p className="text-xs text-gray-500">Priority</p>
-            <span
-              className={`px-2 py-1 rounded-md text-xs
-                ${
+            <div>
+              <p className="text-xs text-gray-500">Priority</p>
+              <span
+                className={`px-2 py-1 rounded-md text-xs ${
                   ticket.priority === "high"
                     ? "bg-red-100 text-red-600"
                     : ticket.priority === "medium"
                     ? "bg-yellow-100 text-yellow-600"
                     : "bg-blue-100 text-blue-600"
-                }
-              `}
+                }`}
+              >
+                {ticket.priority}
+              </span>
+            </div>
+
+            <div>
+              <p className="text-xs text-gray-500">Status</p>
+              <span
+                className={`px-2 py-1 rounded-md text-xs ${
+                  ticket.status === "open"
+                    ? "bg-blue-100 text-blue-600"
+                    : ticket.status === "pending"
+                    ? "bg-yellow-100 text-yellow-600"
+                    : "bg-green-100 text-green-600"
+                }`}
+              >
+                {ticket.status}
+              </span>
+            </div>
+
+            <div>
+              <p className="text-xs text-gray-500">Assigned To</p>
+              <p className="font-medium">{ticket.assigned_to || "—"}</p>
+            </div>
+
+            <div>
+              <p className="text-xs text-gray-500">Created</p>
+              <p className="font-medium">{ticket.created_at}</p>
+            </div>
+
+            <div>
+              <p className="text-xs text-gray-500">Last Update</p>
+              <p className="font-medium">{ticket.updated_at}</p>
+            </div>
+          </div>
+
+          {/* Description */}
+          <div>
+            <p className="font-medium mb-1">Description</p>
+            <div className="bg-gray-50 border rounded-xl p-3 text-gray-700">
+              {ticket.description || "No details provided."}
+            </div>
+          </div>
+
+          {/* Replies */}
+          <div>
+            <p className="font-semibold mb-2">Responses</p>
+
+            {(!ticket.replies || ticket.replies.length === 0) && (
+              <div className="bg-yellow-50 text-yellow-700 p-3 rounded-lg text-sm">
+                <strong>No responses yet.</strong> This ticket has not been updated.
+              </div>
+            )}
+
+            {ticket.replies?.length > 0 && (
+              <div className="space-y-4">
+                {ticket.replies.map((r: any) => (
+                  <div key={r.id} className="bg-gray-50 p-3 rounded-lg border text-sm">
+                    <p className="font-medium text-gray-700">Support Response:</p>
+                    <p className="text-gray-600">{r.message}</p>
+                    <p className="text-xs text-gray-400 mt-1">{r.created_at}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Response Input */}
+          <div>
+            <p className="font-medium mb-1">Add Response</p>
+            <textarea
+              className="w-full border rounded-lg p-3 h-24"
+              placeholder="Type your response..."
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+            />
+
+            {/* Status Dropdown */}
+            <select
+              className="mt-3 border rounded-lg px-3 py-2 text-sm"
+              value={status}
+              onChange={(e) => setStatus(e.target.value)}
             >
-              {ticket.priority}
-            </span>
-          </div>
-
-          <div>
-            <p className="text-xs text-gray-500">Status</p>
-            <span
-              className={`px-2 py-1 rounded-md text-xs
-              ${
-                ticket.status === "open"
-                  ? "bg-blue-100 text-blue-600"
-                  : ticket.status === "pending"
-                  ? "bg-yellow-100 text-yellow-600"
-                  : "bg-green-100 text-green-600"
-              }`}
-            >
-              {ticket.status}
-            </span>
-          </div>
-
-          <div>
-            <p className="text-xs text-gray-500">Assigned To</p>
-            <p className="font-medium">{ticket.assigned_to || "—"}</p>
-          </div>
-
-          <div>
-            <p className="text-xs text-gray-500">Created</p>
-            <p className="font-medium">{ticket.created_at}</p>
-          </div>
-
-          <div>
-            <p className="text-xs text-gray-500">Last Update</p>
-            <p className="font-medium">{ticket.updated_at}</p>
+              <option value="open">Open</option>
+              <option value="pending">Pending</option>
+              <option value="closed">Closed</option>
+            </select>
           </div>
         </div>
 
-        {/* Description */}
-        <div className="mt-5">
-          <p className="font-medium mb-1">Description</p>
-          <div className="bg-gray-50 border rounded-xl p-3 text-gray-700">
-            {ticket.description || "No details provided."}
-          </div>
-        </div>
-
-        {/* Response Box */}
-        <div className="mt-6">
-          <p className="font-medium mb-1">Your Response</p>
-          <textarea
-            className="w-full border rounded-lg p-3 h-24"
-            placeholder="Type your response..."
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-          />
-
-          {/* Status Dropdown */}
-          <select
-            className="mt-3 border rounded-lg px-3 py-2 text-sm"
-            value={status}
-            onChange={(e) => setStatus(e.target.value)}
-          >
-            <option value="open">Open</option>
-            <option value="pending">Pending</option>
-            <option value="closed">Closed</option>
-          </select>
-        </div>
-
-        {/* Buttons */}
-        <div className="flex justify-end mt-6 gap-3">
+        {/* Footer Buttons */}
+        <div className="p-5 border-t flex justify-end gap-3">
           <button
             onClick={onClose}
             className="px-4 py-2 bg-gray-200 rounded-lg"
@@ -143,6 +166,7 @@ export default function TicketDetailsModal({ open, onClose, ticket, onReply }: a
             Send Response
           </button>
         </div>
+
       </div>
     </div>
   );

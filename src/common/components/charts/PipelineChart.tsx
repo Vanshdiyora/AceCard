@@ -2,7 +2,7 @@ import { useAppSelector } from "../../../app/hooks";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
 
 export default function PipelineChart() {
-  const data = useAppSelector((s) => s.dashboard.pipeline);
+  const data = useAppSelector((s) => s.dashboard.data?.tap_lead_ratio_over_time) || [];
 
   return (
     <LineChart width={500} height={250} data={data}>

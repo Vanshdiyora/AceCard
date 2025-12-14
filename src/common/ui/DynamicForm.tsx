@@ -1,7 +1,7 @@
 export interface FieldConfig {
   name: string;
   label: string;
-  type: "text" | "number" | "email" | "select" | "textarea" | "date" | "checkbox";
+  type: "text" | "number" | "email" | "select" | "textarea" | "date" | "checkbox" | "multiselect";
   placeholder?: string;
   options?: { label: string; value: any }[];
 }
@@ -17,7 +17,6 @@ interface DynamicFormProps {
   onExtraAdd?: () => void;
   onExtraRemove?: (index: number) => void;
 }
-
 export default function DynamicForm({
   fields,
   form,
@@ -37,6 +36,7 @@ export default function DynamicForm({
             {field.label}
           </label>
 
+          {/* TEXT / NUMBER / EMAIL / DATE */}
           {["text", "number", "email", "date"].includes(field.type) && (
             <input
               type={field.type}
@@ -47,6 +47,7 @@ export default function DynamicForm({
             />
           )}
 
+          {/* TEXTAREA */}
           {field.type === "textarea" && (
             <textarea
               rows={3}
@@ -57,6 +58,7 @@ export default function DynamicForm({
             />
           )}
 
+          {/* SELECT */}
           {field.type === "select" && (
             <select
               className="border rounded-lg w-full p-2 text-sm"
@@ -72,6 +74,51 @@ export default function DynamicForm({
             </select>
           )}
 
+          {/* MULTISELECT WITH CHECKBOXES */}
+{field.type === "multiselect" && (
+  <div className="border rounded-lg p-2 space-y-1 max-h-40 overflow-y-auto">
+
+    {/* Placeholder */}
+    {(!form[field.name] || form[field.name].length === 0) && (
+      <p className="text-xs text-gray-400 italic">
+        {field.placeholder || "Select one or more options"}
+      </p>
+    )}
+
+    {field.options?.map((opt) => {
+      const isSelected = (form[field.name] || []).includes(opt.value);
+
+      return (
+        <label
+          key={opt.value}
+          className="flex items-center gap-2 p-1 rounded hover:bg-gray-100 cursor-pointer"
+        >
+          <input
+            type="checkbox"
+            checked={isSelected}
+            onChange={(e) => {
+              let updatedValues = [...(form[field.name] || [])];
+
+              if (e.target.checked) {
+                updatedValues.push(opt.value);
+              } else {
+                updatedValues = updatedValues.filter((v) => v !== opt.value);
+              }
+
+              onChange(field.name, updatedValues);
+            }}
+            className="h-4 w-4"
+          />
+
+          <span className="text-sm">{opt.label}</span>
+        </label>
+      );
+    })}
+  </div>
+)}
+
+
+          {/* CHECKBOX */}
           {field.type === "checkbox" && (
             <input
               type="checkbox"
@@ -83,7 +130,7 @@ export default function DynamicForm({
         </div>
       ))}
 
-      {/* Extra Properties Section (optional) */}
+      {/* Extra dynamic properties */}
       {extraProps && (
         <div className="mt-4">
           <h3 className="font-medium mb-2">Extra Properties</h3>

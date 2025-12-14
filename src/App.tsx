@@ -10,10 +10,9 @@ import SuperDashboardPage from "./portals/superadmin/pages/DashBoard/SuperDashBo
 import SalespersonPage from "./portals/superadmin/pages/Salesperson/SalespersonPage";
 import SeatsPage from "./portals/superadmin/pages/SeatsKeysPage/SeatsKeysPage";
 import { SupportAdmin, VendorsPage } from "./features";
-
+import LeadDetailsPage from "./features/leads/pages/LeadDetailsPage";
 // ADMIN PAGES
-import { SupportPage, DashboardPage, TeamPage , ProductsPage ,CampaignsPage ,LeadPage} from "./features/index";
-import SettingsPage from "./portals/admin/pages/Settings/SettingsPage";
+import { SupportPage, DashboardPage, TeamPage , ProductsPage ,CampaignsPage ,LeadPage, SettingsPage} from "./features/index";
 
 export default function App() {
   return (
@@ -50,6 +49,7 @@ export default function App() {
         >
           <Route index element={<DashboardPage />} />
           <Route path="leads" element={<LeadPage />} />
+          <Route path="leads/:id" element={<LeadDetailsPage />} />
           <Route path="campaigns" element={<CampaignsPage />} />
           <Route path="team" element={<TeamPage />} />
           <Route path="products" element={<ProductsPage />} />

@@ -88,6 +88,8 @@ export default function TeamPage() {
                     { label: "All", value: "all" },
                     { label: "Manager", value: "manager" },
                     { label: "Salesperson", value: "sales_rep" },
+                    { label: "Active", value: "active" },
+                    { label: "Suspended", value: "suspended" },
                 ]}
                 activeTab={filter}
                 onTabChange={setFilter}

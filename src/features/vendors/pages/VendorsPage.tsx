@@ -16,6 +16,7 @@ import PageHeader from "../../../common/components/layout/PageHeader";
 import PageFilters from "../../../common/components/layout/PageFilter";
 import StatsGrid from "../../../common/components/cards/StatsGrid";
 
+import NotifyVendorModal from "../components/NotifyVendorModal";
 import AddVendorModal from "../components/AddVendorModal";
 import EditVendorModal from "../components/EditVendorModal";
 import UpdateSeatsModal from "../components/UpdateSeatModal";
@@ -33,6 +34,7 @@ export default function VendorsPage() {
   const [editOpen, setEditOpen] = useState(false);
   const [seatsOpen, setSeatsOpen] = useState(false);
   const [archiveOpen, setArchiveOpen] = useState(false);
+  const [notifyOpen, setNotifyOpen] = useState(false);
 
   const [selectedVendor, setSelectedVendor] = useState<any>(null);
 
@@ -70,7 +72,7 @@ export default function VendorsPage() {
   });
 
   return (
-    <div className="space-y-8">
+    <div className="p-6 flex flex-col gap-8">
 
       {/* HEADER */}
       <PageHeader
@@ -107,6 +109,11 @@ export default function VendorsPage() {
               setArchiveOpen(false);
             }}
           />
+           <NotifyVendorModal
+              vendor={selectedVendor}
+              open={notifyOpen}
+              onClose={() => setNotifyOpen(false)}
+            />
         </>
       )}
 
@@ -189,7 +196,11 @@ export default function VendorsPage() {
                       setSelectedVendor(v);
                       setArchiveOpen(true);
                     }}
-                    onNotify={() => console.log("Notify", v.id)}
+                    onNotify={() => {
+                      setSelectedVendor(v);
+                      setNotifyOpen(true);
+                    }}
+
                   />
                 </td>
               </tr>

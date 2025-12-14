@@ -1,6 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useAppDispatch, useAppSelector } from "../../../app/hooks";
-
 import {
   fetchLeads,
   createLead,
@@ -18,53 +17,82 @@ import type { Lead } from "../types";
 
 // Tabs
 const tabs: TabItem[] = [
-  { label: "All Leads", value: "all" },
-  { label: "My Leads", value: "mine" },
-  { label: "Hot Leads", value: "hot" },
-  { label: "New This Week", value: "new_week" },
-  { label: "Needs Follow-up", value: "follow_up" },
+  { label: "All", value: "all" },
+  { label: "New", value: "new" },
+  { label: "Contacted", value: "contacted" },
+  { label: "Engaged", value: "engaged" },
+  { label: "Qualified", value: "qualified" },
+  { label: "Proposal Sent", value: "proposal_sent" },
+  { label: "Negotiation", value: "negotiation" },
+  { label: "Converted", value: "converted" },
+  { label: "Lost", value: "lost" },
 ];
 
 export default function LeadsPage() {
   const dispatch = useAppDispatch();
   const { leads } = useAppSelector((s) => s.leads);
-
   const [activeTab, setActiveTab] = useState<string>("all");
   const [search, setSearch] = useState("");
   const [addOpen, setAddOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
 
+  // ⭐ Sorting state
+  const [sort, setSort] = useState("recent");
+
+  // ⭐ Controls visibility of Sort dropdown
+  const [showSortDropdown, setShowSortDropdown] = useState(false);
+
   useEffect(() => {
     dispatch(fetchLeads());
   }, []);
 
-  // Filtering Logic
-  const filteredLeads = leads.filter((l) => {
-    const matchesSearch =
-      l.lead_name.toLowerCase().includes(search.toLowerCase()) ||
-      l.company.toLowerCase().includes(search.toLowerCase());
+  // 🔍 Filter logic
+  const filteredLeads = useMemo(() => {
+    return leads.filter((l) => {
+      const searchMatch =
+        l.lead_name.toLowerCase().includes(search.toLowerCase()) ||
+        l.company.toLowerCase().includes(search.toLowerCase()) ||
+        l.email.toLowerCase().includes(search.toLowerCase());
 
-    if (!matchesSearch) return false;
+      if (!searchMatch) return false;
+      if (activeTab !== "all" && l.stage !== activeTab) return false;
 
-    if (activeTab === "hot") return l.stage === "hot";
+      return true;
+    });
+  }, [leads, search, activeTab]);
 
-    if (activeTab === "new_week") {
-      const diffDays =
-        (new Date().getTime() - new Date(l.created_at).getTime()) /
-        (1000 * 60 * 60 * 24);
-      return diffDays <= 7;
+  // 🔥 Optimized Sorting
+  const finalLeads = useMemo(() => {
+    const list = [...filteredLeads];
+
+    switch (sort) {
+      case "recent":
+        return list.sort(
+          (a, b) =>
+            new Date(b.updated_at).getTime() -
+            new Date(a.updated_at).getTime()
+        );
+
+      case "name_asc":
+        return list.sort((a, b) =>
+          a.lead_name.localeCompare(b.lead_name)
+        );
+
+      case "pipeline_desc":
+        return list.sort(
+          (a, b) => (b.deal_amount || 0) - (a.deal_amount || 0)
+        );
+
+      case "stage":
+        return list.sort((a, b) =>
+          a.stage.localeCompare(b.stage)
+        );
+
+      default:
+        return list;
     }
-
-    if (activeTab === "follow_up") {
-      const diffDays =
-        (new Date().getTime() - new Date(l.last_interaction_at).getTime()) /
-        (1000 * 60 * 60 * 24);
-      return diffDays > 3;
-    }
-
-    return true;
-  });
+  }, [filteredLeads, sort]);
 
   return (
     <div className="p-6 space-y-6">
@@ -76,18 +104,62 @@ export default function LeadsPage() {
         onAdd={() => setAddOpen(true)}
       />
 
-      {/* Tabs + Search + Filter/Export */}
-      <PageFilters
-        tabs={tabs}
-        activeTab={activeTab}
-        onTabChange={(v) => setActiveTab(v)}
-        searchPlaceholder="Search leads..."
-        onSearch={(value) => setSearch(value)}
-        onFilter={() => console.log("Filter action")}
-        onExport={() => console.log("Export action")}
-      />
+      {/* FILTERS + SORT DROPDOWN */}
+      <div className="relative">
+        <PageFilters
+          tabs={tabs}
+          activeTab={activeTab}
+          onTabChange={(v) => setActiveTab(v)}
+          searchPlaceholder="Search leads..."
+          onSearch={(value) => setSearch(value)}
+          onFilter={() => setShowSortDropdown((prev) => !prev)} // ⭐ Toggle dropdown
+          onExport={() => console.log("Export action")}
+        />
 
-      {/* Table */}
+        {/* ⭐ SORT DROPDOWN UNDER FILTER BUTTON */}
+        {showSortDropdown && (
+          <div className="absolute right-6 mt-2 w-48 bg-white border rounded-lg shadow-lg z-20 text-sm">
+            <div
+              className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+              onClick={() => {
+                setSort("recent");
+                setShowSortDropdown(false);
+              }}
+            >
+              Recent
+            </div>
+            <div
+              className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+              onClick={() => {
+                setSort("name_asc");
+                setShowSortDropdown(false);
+              }}
+            >
+              Name A–Z
+            </div>
+            <div
+              className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+              onClick={() => {
+                setSort("pipeline_desc");
+                setShowSortDropdown(false);
+              }}
+            >
+              Pipeline High–Low
+            </div>
+            <div
+              className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+              onClick={() => {
+                setSort("stage");
+                setShowSortDropdown(false);
+              }}
+            >
+              Stage
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* TABLE */}
       <div className="bg-white rounded-xl border shadow-sm">
         <table className="w-full">
           <thead>
@@ -103,7 +175,7 @@ export default function LeadsPage() {
           </thead>
 
           <tbody>
-            {filteredLeads.map((lead) => (
+            {finalLeads.map((lead) => (
               <LeadRow
                 key={lead.id}
                 lead={lead}
@@ -115,7 +187,7 @@ export default function LeadsPage() {
               />
             ))}
 
-            {filteredLeads.length === 0 && (
+            {finalLeads.length === 0 && (
               <tr>
                 <td colSpan={7} className="text-center py-6 text-gray-500">
                   No leads found
