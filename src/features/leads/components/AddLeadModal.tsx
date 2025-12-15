@@ -6,6 +6,7 @@ import { fetchProducts } from "../../products/slice";
 import { fetchCampaigns } from "../../campaigns/slice";
 
 import DynamicForm, { type FieldConfig } from "../../../common/ui/DynamicForm";
+import { LEAD_STAGES } from "../constants";
 
 export default function AddLeadModal({ open, onClose, onSubmit }: any) {
   const dispatch = useAppDispatch();
@@ -111,6 +112,15 @@ export default function AddLeadModal({ open, onClose, onSubmit }: any) {
       label: m.name,
       value: m.id,
     })),
+  },
+
+  // Stage
+  {
+    name: "stage",
+    label: "Stage",
+    type: "select",
+    placeholder: "Select stage",
+    options: LEAD_STAGES,
   },
 
   // Campaigns

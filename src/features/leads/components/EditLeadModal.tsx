@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import type { Lead } from "../types";
 import DynamicForm, { type FieldConfig } from "../../../common/ui/DynamicForm";
+import { LEAD_STAGES } from "../constants";
 
 export default function EditLeadModal({
   open,
@@ -52,15 +53,11 @@ export default function EditLeadModal({
       placeholder: "Enter company name",
     },
     {
-      name: "status",
-      label: "Status",
+      name: "stage",
+      label: "stage",
       type: "select",
-      placeholder: "Select status",
-      options: [
-        { label: "New", value: "new" },
-        { label: "Contacted", value: "contacted" },
-        { label: "Converted", value: "converted" },
-      ],
+      placeholder: "Select stage",
+      options: LEAD_STAGES,
     },
   ];
 

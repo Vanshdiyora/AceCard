@@ -165,7 +165,6 @@ export default function LeadsPage() {
           <thead>
             <tr className="border-b bg-gray-50 text-left text-sm text-gray-600">
               <th className="py-3 px-4">Name</th>
-              <th className="py-3 px-4">Status</th>
               <th className="py-3 px-4">Owner</th>
               <th className="py-3 px-4">Product</th>
               <th className="py-3 px-4">Stage</th>

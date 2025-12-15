@@ -29,16 +29,14 @@ const navigate = useNavigate();
         </div>
       </td>
 
+      
+      <td className="py-3 px-4">-</td>
+      <td className="py-3 px-4">-</td>
+     
       <td className="py-3 px-4">
         <span className={`px-3 py-1 text-xs rounded-full ${stageBadge[lead.stage] ?? "bg-gray-100"}`}>
           {lead.stage.charAt(0).toUpperCase() + lead.stage.slice(1)}
         </span>
-      </td>
-
-      <td className="py-3 px-4">-</td>
-      <td className="py-3 px-4">-</td>
-      <td className="py-3 px-4 font-medium">
-        {lead.stage.toUpperCase()}
       </td>
 
       <td className="py-3 px-4 text-gray-500">
