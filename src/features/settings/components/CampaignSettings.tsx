@@ -1,8 +1,8 @@
 import { useState } from "react";
 
 export default function CampaignSettings() {
-  const [duration, setDuration] = useState(30);
-  const [autoArchive, setAutoArchive] = useState(true);
+  const [duration, setDuration] = useState<number>(30);
+  const [autoArchive, setAutoArchive] = useState<boolean>(true);
 
   return (
     <div className="bg-white shadow p-8 rounded-xl border">
@@ -14,7 +14,7 @@ export default function CampaignSettings() {
           type="number"
           className="border rounded-lg w-full px-3 py-2 mt-1"
           value={duration}
-          onChange={(e) => setDuration(e.target.value)}
+          onChange={(e) => setDuration(Number(e.target.value))}
         />
       </label>
 
@@ -22,7 +22,7 @@ export default function CampaignSettings() {
         <input
           type="checkbox"
           checked={autoArchive}
-          onChange={() => setAutoArchive(!autoArchive)}
+          onChange={() => setAutoArchive((prev) => !prev)}
         />
         Auto-archive expired campaigns
       </label>

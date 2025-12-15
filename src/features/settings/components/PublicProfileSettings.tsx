@@ -1,7 +1,25 @@
 import { useState } from "react";
 
+type VisibleFields = {
+  name: boolean;
+  photo: boolean;
+  bio: boolean;
+  contact: boolean;
+  products: boolean;
+};
+
+const visibleKeys = [
+  "name",
+  "photo",
+  "bio",
+  "contact",
+  "products",
+] as const;
+
+type DisplayMode = "carousel" | "grid" | "list";
+
 export default function PublicProfileSettings() {
-  const [visible, setVisible] = useState({
+  const [visible, setVisible] = useState<VisibleFields>({
     name: true,
     photo: true,
     bio: true,
@@ -9,23 +27,30 @@ export default function PublicProfileSettings() {
     products: false,
   });
 
-  const [display, setDisplay] = useState("carousel");
-  const [theme, setTheme] = useState("#7c3aed");
+  const [display, setDisplay] = useState<DisplayMode>("carousel");
+  const [theme, setTheme] = useState<string>("#7c3aed");
 
   return (
     <div className="bg-white shadow p-8 rounded-xl border">
-      <h2 className="text-xl font-semibold mb-6">Public Profile Settings</h2>
+      <h2 className="text-xl font-semibold mb-6">
+        Public Profile Settings
+      </h2>
 
       {/* Visible Fields */}
       <h3 className="font-semibold mb-3">Visible Fields</h3>
-      {Object.keys(visible).map((k) => (
-        <label key={k} className="flex items-center gap-2 mb-2">
+      {visibleKeys.map((key) => (
+        <label key={key} className="flex items-center gap-2 mb-2 capitalize">
           <input
             type="checkbox"
-            checked={visible[k]}
-            onChange={() => setVisible({ ...visible, [k]: !visible[k] })}
+            checked={visible[key]}
+            onChange={() =>
+              setVisible((prev) => ({
+                ...prev,
+                [key]: !prev[key],
+              }))
+            }
           />
-          {k}
+          {key}
         </label>
       ))}
 
@@ -34,7 +59,7 @@ export default function PublicProfileSettings() {
       <select
         className="border rounded-lg w-full px-3 py-2"
         value={display}
-        onChange={(e) => setDisplay(e.target.value)}
+        onChange={(e) => setDisplay(e.target.value as DisplayMode)}
       >
         <option value="carousel">Carousel</option>
         <option value="grid">Grid</option>
@@ -51,7 +76,9 @@ export default function PublicProfileSettings() {
       />
 
       <div className="mt-6 flex gap-3">
-        <button className="px-6 py-2 bg-gray-300 rounded-lg">Preview</button>
+        <button className="px-6 py-2 bg-gray-300 rounded-lg">
+          Preview
+        </button>
         <button className="px-6 py-2 bg-purple-600 text-white rounded-lg">
           Save
         </button>

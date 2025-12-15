@@ -1,14 +1,28 @@
 import { useState } from "react";
 
+type RequiredFields = {
+  name: boolean;
+  phone: boolean;
+  email: boolean;
+  product: boolean;
+};
+
+const requiredKeys = ["name", "phone", "email", "product"] as const;
+
 export default function LeadConfiguration() {
-  const [required, setRequired] = useState({
+  const [required, setRequired] = useState<RequiredFields>({
     name: true,
     phone: true,
     email: false,
     product: false,
   });
 
-  const [stages, setStages] = useState(["New", "Contacted", "Qualified", "Won"]);
+  const [stages, setStages] = useState<string[]>([
+    "New",
+    "Contacted",
+    "Qualified",
+    "Won",
+  ]);
 
   const [newStage, setNewStage] = useState("");
 
@@ -19,13 +33,16 @@ export default function LeadConfiguration() {
       {/* Mandatory Fields */}
       <h3 className="font-semibold mb-3">Mandatory Fields</h3>
       <div className="space-y-2 mb-6">
-        {Object.keys(required).map((key) => (
+        {requiredKeys.map((key) => (
           <label key={key} className="flex items-center gap-2">
             <input
               type="checkbox"
               checked={required[key]}
               onChange={() =>
-                setRequired({ ...required, [key]: !required[key] })
+                setRequired((prev) => ({
+                  ...prev,
+                  [key]: !prev[key],
+                }))
               }
             />
             {key.toUpperCase()}
@@ -37,15 +54,17 @@ export default function LeadConfiguration() {
       <h3 className="font-semibold mb-3">Lead Stages</h3>
 
       <div className="space-y-2 mb-4">
-        {stages.map((s, i) => (
+        {stages.map((stage, i) => (
           <div
             key={i}
             className="flex items-center justify-between px-4 py-2 border rounded-lg"
           >
-            <span>{s}</span>
+            <span>{stage}</span>
             <button
               className="text-red-500"
-              onClick={() => setStages(stages.filter((st) => st !== s))}
+              onClick={() =>
+                setStages((prev) => prev.filter((s) => s !== stage))
+              }
             >
               Delete
             </button>
@@ -64,8 +83,10 @@ export default function LeadConfiguration() {
         <button
           className="px-6 py-2 bg-purple-600 text-white rounded-lg"
           onClick={() => {
-            if (newStage) setStages([...stages, newStage]);
-            setNewStage("");
+            if (newStage.trim()) {
+              setStages((prev) => [...prev, newStage.trim()]);
+              setNewStage("");
+            }
           }}
         >
           Add

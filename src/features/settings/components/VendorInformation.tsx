@@ -1,9 +1,17 @@
 import { useState } from "react";
 
+type VendorForm = {
+  company: string;
+  industry: string;
+  address: string;
+};
+
+const fields = ["company", "industry", "address"] as const;
+
 export default function VendorInformation() {
   const [editing, setEditing] = useState(false);
 
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<VendorForm>({
     company: "Acme Corp",
     industry: "Technology",
     address: "123 Corporate Road, Mumbai",
@@ -28,9 +36,12 @@ export default function VendorInformation() {
         </>
       ) : (
         <>
-          {Object.keys(form).map((key) => (
+          {fields.map((key) => (
             <div className="mb-4" key={key}>
-              <label className="block text-sm mb-1 capitalize">{key}</label>
+              <label className="block text-sm mb-1 capitalize">
+                {key}
+              </label>
+
               <input
                 className="border rounded-lg w-full px-3 py-2"
                 value={form[key]}
