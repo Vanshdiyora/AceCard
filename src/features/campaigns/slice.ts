@@ -18,6 +18,14 @@ export const createCampaign = createAsyncThunk(
   }
 );
 
+// Fetch single campaign
+export const fetchCampaignById = createAsyncThunk(
+  "campaigns/fetchById",
+  async (id: number) => {
+    return await CampaignService.getById(id);
+  }
+);
+
 // Update a campaign
 export const updateCampaign = createAsyncThunk(
   "campaigns/update",
@@ -85,6 +93,34 @@ const campaignSlice = createSlice({
       const idx = state.items.findIndex(c => c.id === action.payload.id);
       if (idx !== -1) state.items[idx] = action.payload; // new archived status
     });
+
+    // -----------------------------
+// FETCH CAMPAIGN BY ID
+// -----------------------------
+builder.addCase(fetchCampaignById.pending, (state) => {
+  state.loading = true;
+});
+
+builder.addCase(fetchCampaignById.fulfilled, (state, action) => {
+  state.loading = false;
+
+  const idx = state.items.findIndex(
+    (c) => c.id === action.payload.id
+  );
+
+  if (idx !== -1) {
+    state.items[idx] = action.payload;
+  } else {
+    state.items.push(action.payload);
+  }
+});
+
+builder.addCase(fetchCampaignById.rejected, (state, action) => {
+  state.loading = false;
+  state.error =
+    action.error.message ?? "Failed to fetch campaign";
+});
+
   },
 });
 

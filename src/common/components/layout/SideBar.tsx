@@ -33,9 +33,6 @@ export default function Sidebar({ type }: SidebarProps) {
   const superMenu = [
     { icon: LayoutDashboard, label: "Dashboard", path: `${superBase}` },
     { icon: Building2, label: "Vendors", path: `${superBase}/vendors` },
-    { icon: Users, label: "Salespersons", path: `${superBase}/salespersons` },
-    { icon: Key, label: "Seats & Keys", path: `${superBase}/seats` },
-    { icon: BarChart2, label: "Usage & Analytics", path: `${superBase}/analytics` },
     { icon: LifeBuoy, label: "Tickets & Support", path: `${superBase}/support` },
     { icon: Settings, label: "System Settings", path: `${superBase}/system-settings` },
     { icon: Bell, label: "Notifications", path: `${superBase}/notifications` },

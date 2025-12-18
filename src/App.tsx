@@ -12,7 +12,10 @@ import SeatsPage from "./portals/superadmin/pages/SeatsKeysPage/SeatsKeysPage";
 import { SupportAdmin, VendorsPage } from "./features";
 import LeadDetailsPage from "./features/leads/pages/LeadDetailsPage";
 // ADMIN PAGES
-import { SupportPage, DashboardPage, TeamPage , ProductsPage ,CampaignsPage ,LeadPage, SettingsPage} from "./features/index";
+import { SupportPage, DashboardPage, TeamPage , ProductsPage ,CampaignsPage ,LeadPage, SettingsPage, CampaignDetailsPage 
+  ,TeamMemberDetailsPage,
+
+} from "./features/index";
 
 export default function App() {
   return (
@@ -33,8 +36,6 @@ export default function App() {
         >
           <Route index element={<SuperDashboardPage />} />
           <Route path="vendors" element={<VendorsPage />} />
-          <Route path="salespersons" element={<SalespersonPage />} />
-          <Route path="seats" element={<SeatsPage />} />
           <Route path="support" element={<SupportAdmin />} />
         </Route>
 
@@ -51,7 +52,9 @@ export default function App() {
           <Route path="leads" element={<LeadPage />} />
           <Route path="leads/:id" element={<LeadDetailsPage />} />
           <Route path="campaigns" element={<CampaignsPage />} />
+          <Route path="campaigns/:id" element={<CampaignDetailsPage />} />
           <Route path="team" element={<TeamPage />} />
+          <Route path="team/:id" element={<TeamMemberDetailsPage />} />
           <Route path="products" element={<ProductsPage />} />
           <Route path="settings" element={<SettingsPage />} />
           <Route path="support" element={<SupportPage />} />

@@ -9,5 +9,10 @@ import LoginPage from "./auth/pages/LoginPage";
 import LeadPage from "./leads/pages/LeadsPage";
 import LeadDetailsPage from "./leads/pages/LeadDetailsPage";
 import SettingsPage from "./settings/pages/SettingsPage";
+import CampaignDetailsPage from "./campaigns/pages/CampaignDetailsPage";
+import TeamMemberDetailsPage from "./teams/pages/TeamMemberDetailsPage";
 
-export { ProductsPage, SupportPage, TeamPage, DashboardPage, CampaignsPage, VendorsPage, LoginPage, SupportAdmin ,LeadPage, LeadDetailsPage, SettingsPage};
+export { ProductsPage, SupportPage, TeamPage, DashboardPage, CampaignsPage, VendorsPage, LoginPage, SupportAdmin ,LeadPage, LeadDetailsPage, SettingsPage,
+CampaignDetailsPage,
+TeamMemberDetailsPage
+};

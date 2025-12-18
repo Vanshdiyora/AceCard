@@ -1,34 +1,35 @@
 export default function SuspendMemberModal({
   open,
-  name,
+  member,
   onClose,
   onConfirm,
-}: {
-  open: boolean;
-  name: string;
-  onClose: () => void;
-  onConfirm: () => void;
-}) {
-  if (!open) return null;
+}: any) {
+  if (!open || !member) return null;
+
+  const isActive = member.status === "active";
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-      <div className="bg-white p-6 rounded-xl w-96 shadow-lg">
-        <h2 className="text-xl font-semibold mb-4">Suspend Member</h2>
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
+      <div className="bg-white p-6 rounded-xl w-[420px]">
+        <h2 className="text-lg font-semibold mb-2">
+          {isActive ? "Suspend Member" : "Activate Member"}
+        </h2>
 
-        <p className="text-gray-600">
-          Are you sure you want to suspend <b>{name}</b>?
+        <p className="text-sm text-gray-600 mb-4">
+          {isActive
+            ? "This will disable login and hide from active roster."
+            : "This will restore access immediately."}
         </p>
 
-        <div className="flex justify-end gap-2 mt-6">
-          <button className="px-4 py-2 border rounded" onClick={onClose}>
-            Cancel
-          </button>
+        <div className="flex justify-end gap-2">
+          <button onClick={onClose}>Cancel</button>
           <button
-            className="px-4 py-2 bg-red-600 text-white rounded"
-            onClick={onConfirm}
+            className={isActive ? "btn-danger" : "btn-success"}
+            onClick={() =>
+              onConfirm(isActive ? "suspended" : "active")
+            }
           >
-            Suspend
+            {isActive ? "Suspend" : "Activate"}
           </button>
         </div>
       </div>

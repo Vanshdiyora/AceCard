@@ -23,4 +23,10 @@ export const LeadsService = {
     const res = await axiosClient.post(`${BASE}/${id}/archive`);
     return res.data;
   },
+  // services/leads.service.ts
+  addNote: async (id: number, note: string) => {
+    const res = await axiosClient.post(`${BASE}/vendor/leads/${id}/notes`, { note });
+    return res.data;
+  }
+
 };

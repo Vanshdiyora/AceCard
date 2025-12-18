@@ -51,6 +51,14 @@ export const archiveLead = createAsyncThunk(
   }
 );
 
+export const addLeadNote = createAsyncThunk(
+  "leads/addNote",
+  async ({ id, note }: { id: number; note: string }) => {
+    return LeadsService.addNote(id, note);
+  }
+);
+
+
 /* -----------------------------------------------------
    SLICE
 ----------------------------------------------------- */
@@ -68,8 +76,11 @@ const leadsSlice = createSlice({
       })
       .addCase(fetchLeads.fulfilled, (state, action) => {
         state.loading = false;
-        state.leads = action.payload; // array of leads
+        state.leads = Array.isArray(action.payload)
+          ? action.payload
+          : [];
       })
+
       .addCase(fetchLeads.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message ?? "Failed to load leads";

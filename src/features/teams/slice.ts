@@ -7,61 +7,103 @@ import type {
   UpdatePermissionsDTO,
 } from "./types";
 
+/* ------------------ STATE ------------------ */
+
 interface TeamState {
   members: TeamMember[];
   loading: boolean;
-  error: string | null;
+  error?: string;
 }
 
 const initialState: TeamState = {
   members: [],
   loading: false,
-  error: null,
+  error: undefined,
 };
 
-// Fetch Team
-export const fetchTeam = createAsyncThunk("team/fetch", async () => {
-  const data = await teamService.getTeam();
-  return data.map((m) => ({
-    ...m,
-    leads: 0,
-    pipeline: "$0",
-    conversion: "0%",
-    lastActive: "Active now",
-  }));
-});
+/* ------------------ THUNKS ------------------ */
 
-// Create Member
+export const fetchTeam = createAsyncThunk(
+  "team/fetch",
+  async (_, { rejectWithValue }) => {
+    try {
+      const data = await teamService.getTeam();
+      return data.map((m) => ({
+        ...m,
+        leads: 0,
+        pipeline: "$0",
+        conversion: "0%",
+        lastActive: "Recently",
+      }));
+    } catch (err: any) {
+      return rejectWithValue(err?.message ?? "Failed to fetch team");
+    }
+  }
+);
+
 export const createMember = createAsyncThunk(
   "team/create",
-  async (body: CreateTeamMemberDTO) => {
-    return await teamService.createMember(body);
+  async (body: CreateTeamMemberDTO, { rejectWithValue }) => {
+    try {
+      return await teamService.createMember(body);
+    } catch (err: any) {
+      return rejectWithValue(err?.message ?? "Failed to create member");
+    }
   }
 );
 
-// Update Member
+export const fetchMemberById = createAsyncThunk(
+  "team/fetchById",
+  async (id: number, { rejectWithValue }) => {
+    try {
+      return await teamService.getMemberById(id);
+    } catch (err: any) {
+      return rejectWithValue(err?.message ?? "Failed to fetch member");
+    }
+  }
+);
+
 export const updateMember = createAsyncThunk(
   "team/update",
-  async ({ id, data }: { id: number; data: UpdateTeamMemberDTO }) => {
-    return await teamService.updateMember(id, data);
+  async (
+    { id, data }: { id: number; data: UpdateTeamMemberDTO },
+    { rejectWithValue }
+  ) => {
+    try {
+      return await teamService.updateMember(id, data);
+    } catch (err: any) {
+      return rejectWithValue(err?.message ?? "Failed to update member");
+    }
   }
 );
 
-// Update Permissions
 export const updatePermissions = createAsyncThunk(
   "team/permissions",
-  async ({ id, data }: { id: number; data: UpdatePermissionsDTO }) => {
-    return await teamService.updatePermissions(id, data);
+  async (
+    { id, data }: { id: number; data: UpdatePermissionsDTO },
+    { rejectWithValue }
+  ) => {
+    try {
+      return await teamService.updatePermissions(id, data);
+    } catch (err: any) {
+      return rejectWithValue(err?.message ?? "Failed to update permissions");
+    }
   }
 );
 
-// Suspend Member
-export const suspendMember = createAsyncThunk(
-  "team/suspend",
-  async (id: number) => {
-    return await teamService.suspendMember(id);
+export const deleteMember = createAsyncThunk(
+  "team/delete",
+  async (id: number, { rejectWithValue }) => {
+    try {
+      await teamService.deleteMember(id);
+      return id;
+    } catch (err: any) {
+      return rejectWithValue(err?.message ?? "Failed to delete member");
+    }
   }
 );
+
+/* ------------------ SLICE ------------------ */
 
 const teamSlice = createSlice({
   name: "team",
@@ -69,57 +111,89 @@ const teamSlice = createSlice({
   reducers: {},
   extraReducers: (builder) => {
     builder
-      // ----- FETCH TEAM -----
+
+      /* -------- FETCH TEAM -------- */
       .addCase(fetchTeam.pending, (state) => {
         state.loading = true;
+        state.error = undefined;
       })
       .addCase(fetchTeam.fulfilled, (state, action) => {
         state.loading = false;
         state.members = action.payload;
       })
-      .addCase(fetchTeam.rejected, (state) => {
+      .addCase(fetchTeam.rejected, (state, action) => {
         state.loading = false;
+        state.error = action.payload as string;
       })
 
-      // ----- CREATE MEMBER -----
+      /* -------- CREATE MEMBER -------- */
       .addCase(createMember.fulfilled, (state, action) => {
         state.members.push({
           ...action.payload,
           leads: 0,
           pipeline: "$0",
           conversion: "0%",
-          lastActive: "Active now",
+          lastActive: "Just now",
         });
       })
 
-      // ----- UPDATE MEMBER -----
-      .addCase(updateMember.fulfilled, (state, action) => {
-        const index = state.members.findIndex(
+      /* -------- FETCH MEMBER BY ID -------- */
+      .addCase(fetchMemberById.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(fetchMemberById.fulfilled, (state, action) => {
+        state.loading = false;
+
+        const idx = state.members.findIndex(
           (m) => m.id === action.payload.id
         );
-        if (index !== -1) {
-          state.members[index] = {
-            ...state.members[index],
+
+        if (idx !== -1) {
+          state.members[idx] = {
+            ...state.members[idx],
+            ...action.payload,
+          };
+        } else {
+          state.members.push({
+            ...action.payload,
+            leads: 0,
+            pipeline: "$0",
+            conversion: "0%",
+            lastActive: "Recently",
+          });
+        }
+      })
+      .addCase(fetchMemberById.rejected, (state) => {
+        state.loading = false;
+      })
+
+      /* -------- UPDATE MEMBER -------- */
+      .addCase(updateMember.fulfilled, (state, action) => {
+        const idx = state.members.findIndex(
+          (m) => m.id === action.payload.id
+        );
+        if (idx !== -1) {
+          state.members[idx] = {
+            ...state.members[idx],
             ...action.payload,
           };
         }
       })
 
-      // ----- UPDATE PERMISSIONS -----
+      /* -------- UPDATE PERMISSIONS -------- */
       .addCase(updatePermissions.fulfilled, (state, action) => {
-        const index = state.members.findIndex(
+        const idx = state.members.findIndex(
           (m) => m.id === action.payload.id
         );
-        if (index !== -1) {
-          state.members[index].permissions = action.payload.permissions;
+        if (idx !== -1) {
+          state.members[idx].permissions = action.payload.permissions;
         }
       })
 
-      // ----- SUSPEND MEMBER -----
-      .addCase(suspendMember.fulfilled, (state, action) => {
-        // Remove suspended user from list
+      /* -------- DELETE MEMBER -------- */
+      .addCase(deleteMember.fulfilled, (state, action) => {
         state.members = state.members.filter(
-          (m) => m.id !== action.meta.arg
+          (m) => m.id !== action.payload
         );
       });
   },

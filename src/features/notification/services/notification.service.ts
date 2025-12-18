@@ -1,32 +1,27 @@
-import axios from "../../../services/axiosClient";
+import axiosClient from "../../../services/axiosClient";
 import type { Notification } from "../types";
 
-const BASE_URL = "/notifications"; // vendor/admin default
+const BASE = "/notifications";
 
 export const notificationService = {
-  async getMyNotifications(): Promise<Notification[]> {
-    const res = await axios.get(BASE_URL);
+  getMyNotifications: async (): Promise<Notification[]> => {
+    const res = await axiosClient.get(BASE);
     return res.data;
   },
 
-  async markAsRead(id: number): Promise<void> {
-    await axios.post(`${BASE_URL}/${id}/read`);
+  markAsRead: async (id: number) => {
+    await axiosClient.post(`${BASE}/${id}/read`);
   },
 
-  async markAsUnread(id: number): Promise<void> {
-    await axios.post(`${BASE_URL}/${id}/unread`);
+  markAsUnread: async (id: number) => {
+    await axiosClient.post(`${BASE}/${id}/unread`);
   },
 
-  async markAllAsRead(): Promise<void> {
-    await axios.post(`${BASE_URL}/mark-all-read`);
+  markAllAsRead: async () => {
+    await axiosClient.post(`${BASE}/read-all`);
   },
 
-  async delete(id: number): Promise<void> {
-    await axios.delete(`${BASE_URL}/${id}`);
-  },
-
-  // SUPERADMIN: send notifications
-  async sendToTeam(payload: any) {
-    await axios.post("/vendor/notifications/send", payload);
+  delete: async (id: number) => {
+    await axiosClient.delete(`${BASE}/${id}`);
   },
 };

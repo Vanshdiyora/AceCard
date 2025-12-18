@@ -8,6 +8,10 @@ export const CampaignService = {
     return axiosClient.get(BASE).then((res) => res.data);
   },
 
+  getById(id: number): Promise<Campaign> {
+    return axiosClient.get(`${BASE}/${id}`).then((res) => res.data);
+  },
+
   create(data: Partial<Campaign>): Promise<Campaign> {
     return axiosClient.post(BASE, data).then((res) => res.data);
   },

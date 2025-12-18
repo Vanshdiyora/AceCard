@@ -10,9 +10,11 @@ import StatsGrid from "../../../common/components/cards/StatsGrid";
 export default function CampaignsPage() {
   const dispatch = useAppDispatch();
   const [openCreate, setOpenCreate] = useState(false);
-  const { items: campaigns, loading } = useAppSelector(
-    (state) => state.campaigns
-  );
+const { items = [], loading } = useAppSelector(
+  (state) => state.campaigns ?? {}
+);
+
+const campaigns = Array.isArray(items) ? items : [];
 
   useEffect(() => {
     dispatch(fetchCampaigns());
@@ -20,29 +22,30 @@ export default function CampaignsPage() {
 
   // ----- Compute Stats -----
   const totalLeads = campaigns.reduce(
-    (sum, c) => sum + c.leads_generated,
+    (sum, c) => sum + (c?.leads_generated ?? 0),
     0
   );
 
   const totalPipeline = campaigns.reduce(
-    (sum, c) => sum + c.pipeline_value,
+    (sum, c) => sum + (c.pipeline_value ?? 0),
     0
   );
 
   const avgConversion =
     campaigns.length > 0
       ? (
-          campaigns.reduce(
-            (sum, c) => sum + c.conversion_rate,
-            0
-          ) / campaigns.length
-        ).toFixed(2)
-      : 0;
+        campaigns.reduce(
+          (sum, c) => sum + (c?.conversion_rate ?? 0),
+          0
+        ) / campaigns.length
+      ).toFixed(2)
+      : "0";
 
   const totalBudget = campaigns.reduce(
-    (sum, c) => sum + c.budget,
+    (sum, c) => sum + (c?.budget ?? 0),
     0
   );
+
 
   const statItems = [
     { title: "Total Leads", value: totalLeads },
@@ -78,8 +81,10 @@ export default function CampaignsPage() {
       />
 
       {/* Loader */}
-      {loading && (
-        <p className="text-center text-gray-500">Loading campaigns...</p>
+      {!loading && campaigns.length === 0 && (
+        <p className="text-center text-gray-500">
+          No campaigns found
+        </p>
       )}
 
       {/* Campaign list */}

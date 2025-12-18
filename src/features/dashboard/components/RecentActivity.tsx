@@ -10,7 +10,7 @@ export default function RecentActivity({ items }: Props) {
       <h3 className="font-semibold mb-4">Recent Activity</h3>
 
       <div className="space-y-3">
-        {items.map((i, idx) => (
+        {items && items.map((i, idx) => (
           <div key={idx} className="p-3 rounded-lg border bg-gray-50">
             <p className="font-medium">{i.title}</p>
             <p className="text-sm text-gray-600">{i.name}</p>

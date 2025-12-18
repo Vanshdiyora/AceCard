@@ -1,4 +1,6 @@
 import type { Campaign } from "../types";
+import { useNavigate } from "react-router-dom";
+
 function getStatusStyle(status: string) {
   switch (status) {
     case "active":
@@ -21,8 +23,12 @@ function getStatusStyle(status: string) {
 }
 
 export default function CampaignCard({ data }: { data: Campaign }) {
+  const navigate = useNavigate();
+
   return (
-    <div className="bg-white p-6 rounded-xl border shadow-sm hover:shadow-md transition">
+    <div className="bg-white p-6 rounded-xl border shadow-sm hover:shadow-md transition" 
+      onClick={() => navigate(`/admin/campaigns/${data.id}`)}
+    >
       <div className="flex justify-between">
         <h2 className="text-lg font-semibold">{data.name}</h2>
 

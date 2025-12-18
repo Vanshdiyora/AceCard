@@ -56,33 +56,28 @@ const notificationSlice = createSlice({
   initialState,
   reducers: {},
   extraReducers: (builder) => {
-    builder.addCase(fetchNotifications.pending, (state) => {
-      state.loading = true;
-    });
-
-    builder.addCase(fetchNotifications.fulfilled, (state, action) => {
-      state.list = action.payload;
-      console.log(state.list);
-      state.loading = false;
-    });
-
-    builder.addCase(markRead.fulfilled, (state, action) => {
-      const n = state.list.find((i) => i.id === action.payload);
-      if (n) n.is_read = true;
-    });
-
-    builder.addCase(markUnread.fulfilled, (state, action) => {
-      const n = state.list.find((i) => i.id === action.payload);
-      if (n) n.is_read = false;
-    });
-
-    builder.addCase(deleteNotification.fulfilled, (state, action) => {
-      state.list = state.list.filter((n) => n.id !== action.payload);
-    });
-
-    builder.addCase(markAll.fulfilled, (state) => {
-      state.list.forEach((n) => (n.is_read = true));
-    });
+    builder
+      .addCase(fetchNotifications.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(fetchNotifications.fulfilled, (state, action) => {
+        state.list = action.payload ?? [];
+        state.loading = false;
+      })
+      .addCase(markRead.fulfilled, (state, action) => {
+        const n = state.list.find((i) => i.id === action.payload);
+        if (n) n.is_read = true;
+      })
+      .addCase(markUnread.fulfilled, (state, action) => {
+        const n = state.list.find((i) => i.id === action.payload);
+        if (n) n.is_read = false;
+      })
+      .addCase(deleteNotification.fulfilled, (state, action) => {
+        state.list = state.list.filter((n) => n.id !== action.payload);
+      })
+      .addCase(markAll.fulfilled, (state) => {
+        state.list.forEach((n) => (n.is_read = true));
+      });
   },
 });
 

@@ -11,7 +11,12 @@ import { InfoCard } from "../../../common/components/cards/InfoCard";
 
 export default function ProductsPage() {
   const dispatch = useAppDispatch();
-  const { products, loading } = useAppSelector((state) => state.products);
+  const { products: rawProducts = [], loading } = useAppSelector(
+    (state) => state.products ?? {}
+  );
+
+  const products = Array.isArray(rawProducts) ? rawProducts : [];
+
 
   const [open, setOpen] = useState(false);
   const [editProduct, setEditProduct] = useState<any | null>(null);
@@ -78,8 +83,8 @@ export default function ProductsPage() {
               <button
                 onClick={() => setViewMode("grid")}
                 className={`px-3 py-2 border rounded-lg flex items-center gap-2 ${viewMode === "grid"
-                    ? "bg-purple-600 text-white"
-                    : "bg-white"
+                  ? "bg-purple-600 text-white"
+                  : "bg-white"
                   }`}
               >
                 <Grid size={16} /> Grid
@@ -88,8 +93,8 @@ export default function ProductsPage() {
               <button
                 onClick={() => setViewMode("list")}
                 className={`px-3 py-2 border rounded-lg flex items-center gap-2 ${viewMode === "list"
-                    ? "bg-purple-600 text-white"
-                    : "bg-white"
+                  ? "bg-purple-600 text-white"
+                  : "bg-white"
                   }`}
               >
                 <List size={16} /> List
@@ -99,6 +104,8 @@ export default function ProductsPage() {
 
           {/* PRODUCT LIST AREA */}
           <div className="mt-6">
+
+            {/* LOADING */}
             {loading && (
               <div className="grid grid-cols-2 gap-5">
                 <SkeletonProductCard />
@@ -107,7 +114,21 @@ export default function ProductsPage() {
               </div>
             )}
 
-            {!loading && viewMode === "grid" && (
+            {/* EMPTY STATE */}
+            {!loading && filtered.length === 0 && (
+              <div className="bg-white border rounded-xl p-10 text-center text-gray-500">
+                <div className="text-4xl mb-4">📦</div>
+                <h3 className="text-lg font-semibold mb-1">
+                  No products found
+                </h3>
+                <p className="text-sm mb-4">
+                  You haven’t added any products yet.
+                </p>
+              </div>
+            )}
+
+            {/* GRID VIEW */}
+            {!loading && filtered.length > 0 && viewMode === "grid" && (
               <div className="grid grid-cols-2 gap-5">
                 {filtered.map((p) => (
                   <InfoCard
@@ -122,12 +143,12 @@ export default function ProductsPage() {
                       dispatch(fetchProducts());
                     }}
                   />
-
                 ))}
               </div>
             )}
 
-            {!loading && viewMode === "list" && (
+            {/* LIST VIEW */}
+            {!loading && filtered.length > 0 && viewMode === "list" && (
               <table className="w-full bg-white rounded-xl shadow-sm">
                 <thead>
                   <tr className="bg-gray-50 border-b text-left text-sm">
@@ -139,7 +160,6 @@ export default function ProductsPage() {
                     <th className="p-3">Actions</th>
                   </tr>
                 </thead>
-
                 <tbody>
                   {filtered.map((p) => (
                     <tr key={p.id} className="border-b hover:bg-gray-50 text-sm">
@@ -165,6 +185,7 @@ export default function ProductsPage() {
               </table>
             )}
           </div>
+
 
         </div>
 
@@ -212,10 +233,10 @@ export default function ProductsPage() {
                       <p className="text-gray-500 -mb-1 text-sm">Leads</p>
                       <p
                         className={`font-semibold text-md ${i === 0
-                            ? "text-purple-700"
-                            : i === 1
-                              ? "text-orange-600"
-                              : "text-purple-500"
+                          ? "text-purple-700"
+                          : i === 1
+                            ? "text-orange-600"
+                            : "text-purple-500"
                           }`}
                       >
                         {0}

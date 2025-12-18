@@ -10,8 +10,8 @@ export default function LoginPage() {
   const { loading, error, role, token } = useAppSelector((s) => s.auth);
 
   const [form, setForm] = useState({
-    email: "",
-    password: "",
+    email: "admin@acecard.com",
+    password: "itshivam",
   });
 
   const submit = async () => {

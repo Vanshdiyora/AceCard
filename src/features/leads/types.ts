@@ -5,15 +5,23 @@ export interface Lead {
   phone: string;
   email: string;
   company: string;
+
+  assigned_rep_id?: number;
+
   stage: string;
+
+  /** ✅ ADD THIS */
+  products?: number[];   // array of product IDs
+
   deal_amount: number;
   source: string;
-  age?: number;
+
   last_interaction_at: string;
   archived: boolean;
   created_at: string;
   updated_at: string;
 }
+
 
 export interface CreateLeadDto {
   lead_name: string;

@@ -1,19 +1,20 @@
 import { useEffect, useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../../app/hooks";
 import {
   fetchLeads,
   createLead,
   updateLead,
-  archiveLead,
+  // archiveLead,
 } from "../slice";
 
 import PageHeader from "../../../common/components/layout/PageHeader";
 import PageFilters, { type TabItem } from "../../../common/components/layout/PageFilter";
 
-import LeadRow from "../components/LeadRow";
 import AddLeadModal from "../components/AddLeadModal";
 import EditLeadModal from "../components/EditLeadModal";
 import type { Lead } from "../types";
+import DataTable, { type Column } from "../../../common/components/table/DataTable";
 
 // Tabs
 const tabs: TabItem[] = [
@@ -28,9 +29,13 @@ const tabs: TabItem[] = [
   { label: "Lost", value: "lost" },
 ];
 
+
+
 export default function LeadsPage() {
   const dispatch = useAppDispatch();
-  const { leads } = useAppSelector((s) => s.leads);
+  const navigate = useNavigate();
+
+  const { leads } = useAppSelector((s) => s.leads ?? []);
   const [activeTab, setActiveTab] = useState<string>("all");
   const [search, setSearch] = useState("");
   const [addOpen, setAddOpen] = useState(false);
@@ -47,13 +52,64 @@ export default function LeadsPage() {
     dispatch(fetchLeads());
   }, []);
 
+
+  const columns: Column<Lead>[] = [
+    {
+      header: "Name",
+      render: (lead) => lead.lead_name,
+    },
+    {
+      header: "Owner",
+      render: (lead) => lead.company ?? "—",
+    },
+    {
+      header: "Product",
+      render: (lead) => lead.products?.join(", ") ?? "—",
+    },
+    {
+      header: "Stage",
+      render: (lead) => (
+        <span className="px-2 py-1 rounded bg-gray-100 text-sm">
+          {lead.stage}
+        </span>
+      ),
+    },
+    {
+      header: "Updated At",
+      render: (lead) => lead.updated_at,
+    },
+    {
+      header: "",
+      align: "right",
+      render: (lead) => (
+        <button
+          className="text-purple-600"
+          onClick={(e) => {
+            e.stopPropagation();
+            setSelectedLead(lead);
+            setEditOpen(true);
+          }}
+        >
+          Edit
+        </button>
+      ),
+    },
+  ];
+
+
   // 🔍 Filter logic
   const filteredLeads = useMemo(() => {
-    return leads.filter((l) => {
+    return (leads ?? []).filter((l) => {
+      const name = l.lead_name?.toLowerCase() ?? "";
+      const company = l.company?.toLowerCase() ?? "";
+      const email = l.email?.toLowerCase() ?? "";
+
+      const searchValue = search.toLowerCase();
+
       const searchMatch =
-        l.lead_name.toLowerCase().includes(search.toLowerCase()) ||
-        l.company.toLowerCase().includes(search.toLowerCase()) ||
-        l.email.toLowerCase().includes(search.toLowerCase());
+        name.includes(searchValue) ||
+        company.includes(searchValue) ||
+        email.includes(searchValue);
 
       if (!searchMatch) return false;
       if (activeTab !== "all" && l.stage !== activeTab) return false;
@@ -160,42 +216,13 @@ export default function LeadsPage() {
       </div>
 
       {/* TABLE */}
-      <div className="bg-white rounded-xl border shadow-sm">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b bg-gray-50 text-left text-sm text-gray-600">
-              <th className="py-3 px-4">Name</th>
-              <th className="py-3 px-4">Owner</th>
-              <th className="py-3 px-4">Product</th>
-              <th className="py-3 px-4">Stage</th>
-              <th className="py-3 px-4">Updated At</th>
-              <th className="py-3 px-4"></th>
-            </tr>
-          </thead>
+      <DataTable
+        columns={columns}
+        data={finalLeads}
+        emptyText="No leads found"
+        onRowClick={(lead) => navigate(`${lead.id}`)}
+      />
 
-          <tbody>
-            {finalLeads.map((lead) => (
-              <LeadRow
-                key={lead.id}
-                lead={lead}
-                onEdit={() => {
-                  setSelectedLead(lead);
-                  setEditOpen(true);
-                }}
-                onArchive={() => dispatch(archiveLead(lead.id))}
-              />
-            ))}
-
-            {finalLeads.length === 0 && (
-              <tr>
-                <td colSpan={7} className="text-center py-6 text-gray-500">
-                  No leads found
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
 
       {/* Add Lead Modal */}
       <AddLeadModal

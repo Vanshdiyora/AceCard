@@ -10,26 +10,31 @@ import { LEAD_STAGES } from "../constants";
 
 export default function AddLeadModal({ open, onClose, onSubmit }: any) {
   const dispatch = useAppDispatch();
+  const safeArray = <T,>(v: T[] | undefined | null): T[] =>
+    Array.isArray(v) ? v : [];
 
-  // Team
-  const { members } = useAppSelector((s) => s.team);
+  const campaigns = safeArray(
+    useAppSelector((s) => s.campaigns.items)
+  );
 
-  // Products
-  const { products } = useAppSelector((s) => s.products);
+  const members = safeArray(
+    useAppSelector((s) => s.team.members)
+  );
 
-  // Campaigns
-  const { items: campaigns } = useAppSelector((s) => s.campaigns);
+  const products = safeArray(
+    useAppSelector((s) => s.products.products)
+  );
 
   useEffect(() => {
-    if(open){
+    if (open) {
 
       dispatch(fetchTeam());
       dispatch(fetchProducts());
       dispatch(fetchCampaigns());
     }
-  }, [dispatch,open]);
+  }, [dispatch, open]);
 
-  
+
   /* --------------------------------------------
   FORM STATE
   -------------------------------------------- */
@@ -45,17 +50,17 @@ export default function AddLeadModal({ open, onClose, onSubmit }: any) {
     deal_amount: 0,
     source: "manual"
   });
-  
+
   const [productDetails, setProductDetails] = useState<
-  { product_id: number }[]
+    { product_id: number }[]
   >([]);
-  
+
   /* --------------------------------------------
   FORM UPDATER
   -------------------------------------------- */
   const update = (key: string, value: any) => {
     if (key === "deal_amount") value = Number(value);
-    
+
     if (key === "product_ids") {
       const updated = value.map((id: number) => {
         const match = productDetails.find((p) => p.product_id === id);
@@ -69,140 +74,140 @@ export default function AddLeadModal({ open, onClose, onSubmit }: any) {
       });
       setProductDetails(updated);
     }
-    
+
     setForm({ ...form, [key]: value });
   };
-  
+
   /* --------------------------------------------
   FORM FIELDS
   -------------------------------------------- */
- const fields: FieldConfig[] = [
-  {
-    name: "lead_name",
-    label: "Lead Name",
-    type: "text",
-    placeholder: "Enter lead name",
-  },
-  {
-    name: "company",
-    label: "Company",
-    type: "text",
-    placeholder: "Enter company name",
-  },
-  {
-    name: "email",
-    label: "Email",
-    type: "email",
-    placeholder: "Enter email address",
-  },
-  {
-    name: "phone",
-    label: "Phone",
-    type: "text",
-    placeholder: "Enter phone number",
-  },
+  const fields: FieldConfig[] = [
+    {
+      name: "lead_name",
+      label: "Lead Name",
+      type: "text",
+      placeholder: "Enter lead name",
+    },
+    {
+      name: "company",
+      label: "Company",
+      type: "text",
+      placeholder: "Enter company name",
+    },
+    {
+      name: "email",
+      label: "Email",
+      type: "email",
+      placeholder: "Enter email address",
+    },
+    {
+      name: "phone",
+      label: "Phone",
+      type: "text",
+      placeholder: "Enter phone number",
+    },
 
-  // Assigned Representative
-  {
-    name: "assigned_rep_id",
-    label: "Assigned Representative",
-    type: "select",
-    placeholder: "Select representative",
-    options: members.map((m) => ({
-      label: m.name,
-      value: m.id,
-    })),
-  },
+    // Assigned Representative
+    {
+      name: "assigned_rep_id",
+      label: "Assigned Representative",
+      type: "select",
+      placeholder: "Select representative",
+      options: members.map((m) => ({
+        label: m.name,
+        value: m.id,
+      })),
+    },
 
-  // Stage
-  {
-    name: "stage",
-    label: "Stage",
-    type: "select",
-    placeholder: "Select stage",
-    options: LEAD_STAGES,
-  },
+    // Stage
+    {
+      name: "stage",
+      label: "Stage",
+      type: "select",
+      placeholder: "Select stage",
+      options: LEAD_STAGES,
+    },
 
-  // Campaigns
-  {
-    name: "campaign_ids",
-    label: "Campaigns",
-    type: "multiselect",
-    placeholder: "Select campaign(s)",
-    options: campaigns.map((c: any) => ({
-      label: c.name,
-      value: c.id,
-    })),
-  },
+    // Campaigns
+    {
+      name: "campaign_ids",
+      label: "Campaigns",
+      type: "multiselect",
+      placeholder: "Select campaign(s)",
+      options: campaigns.map((c: any) => ({
+        label: c.name,
+        value: c.id,
+      })),
+    },
 
-  // Products
-  {
-    name: "product_ids",
-    label: "Products",
-    type: "multiselect",
-    placeholder: "Select product(s)",
-    options: products.map((p: any) => ({
-      label: p.name,
-      value: p.id,
-    })),
-  },
+    // Products
+    {
+      name: "product_ids",
+      label: "Products",
+      type: "multiselect",
+      placeholder: "Select product(s)",
+      options: products.map((p: any) => ({
+        label: p.name,
+        value: p.id,
+      })),
+    },
 
-  {
-    name: "deal_amount",
-    label: "Deal Amount",
-    type: "number",
-    placeholder: "Enter deal value",
-  },
+    {
+      name: "deal_amount",
+      label: "Deal Amount",
+      type: "number",
+      placeholder: "Enter deal value",
+    },
 
-  {
-    name: "source",
-    label: "Source",
-    type: "select",
-    placeholder: "Select source",
-    options: [
-      { label: "Manual", value: "manual" },
-      { label: "Voice", value: "voice" },
-      { label: "OCR", value: "ocr" },
-      { label: "Tap Event", value: "tap" },
-      { label: "CSV Import", value: "csv" },
-    ],
-  },
-];
+    {
+      name: "source",
+      label: "Source",
+      type: "select",
+      placeholder: "Select source",
+      options: [
+        { label: "Manual", value: "manual" },
+        { label: "Voice", value: "voice" },
+        { label: "OCR", value: "ocr" },
+        { label: "Tap Event", value: "tap" },
+        { label: "CSV Import", value: "csv" },
+      ],
+    },
+  ];
 
-  
+
   /* --------------------------------------------
   SUBMIT HANDLER
   -------------------------------------------- */
- const handleSubmit = () => {
-  const payload = {
-    lead_name: form.lead_name,
-    phone: form.phone,
-    email: form.email,
-    company: form.company,
-    assigned_rep_id: Number(form.assigned_rep_id) || null,  // ensure integer
-    stage: "new",
+  const handleSubmit = () => {
+    const payload = {
+      lead_name: form.lead_name,
+      phone: form.phone,
+      email: form.email,
+      company: form.company,
+      assigned_rep_id: Number(form.assigned_rep_id) || null,  // ensure integer
+      stage: "new",
 
-    // only integer array of product IDs
-    products: form.product_ids.map(Number),
+      // only integer array of product IDs
+      products: form.product_ids.map(Number),
 
-    // only integer array of campaign IDs
-    campaigns: form.campaign_ids.map(Number),
+      // only integer array of campaign IDs
+      campaigns: form.campaign_ids.map(Number),
 
-    deal_amount: Number(form.deal_amount) || 0,
+      deal_amount: Number(form.deal_amount) || 0,
 
-    source: form.source,
+      source: form.source,
+    };
+
+    onSubmit(payload);
   };
 
-  onSubmit(payload);
-};
 
-  
   if (!open) return null;
   /* --------------------------------------------
       COMPONENT UI
       -------------------------------------------- */
-      return (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center p-4 z-50">
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center p-4 z-50">
       <div className="bg-white w-[550px] max-h-[90vh] overflow-y-auto rounded-xl shadow-xl p-6 space-y-6">
 
         {/* Header */}
