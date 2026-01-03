@@ -1,3 +1,4 @@
+/* ---------- VENDOR ---------- */
 export interface VendorItem {
   id: number;
   legal_name: string;
@@ -30,6 +31,22 @@ export interface VendorItem {
   updated_at: string;
 }
 
+/* ---------- PAGINATION ---------- */
+export interface VendorMeta {
+  total_count: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
+  has_next: boolean;
+  has_previous: boolean;
+}
+
+export interface VendorListResponse {
+  data: VendorItem[];
+  meta: VendorMeta;
+}
+
+/* ---------- STATS ---------- */
 export interface VendorStat {
   title: string;
   value: number;

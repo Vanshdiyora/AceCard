@@ -7,14 +7,19 @@ export type NotificationCategory =
 
 export interface Notification {
   id: number;
-  title: string;
+
+  // Backend fields
   message_title: string;
   message_body: string;
-  category: "assignment" | "campaign" | "crm" | "credit" | "general";
-  is_read: boolean;          
+  status: "sent" | "read";     // ✅ backend truth
   created_at: string;
+  read_at?: string;
 
-  // Optional fields for navigation
+  // UI helper (derived from status)
+  is_read: boolean;            // ✅ status === "read"
+
+  // Optional metadata
+  category?: NotificationCategory;
   reference_id?: number;
   reference_slug?: string;
 }

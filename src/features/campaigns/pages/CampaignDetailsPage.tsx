@@ -8,7 +8,7 @@ import { fetchCampaignById, archiveCampaign } from "../slice";
 import CampaignOverviewTab from "../components/details/CampaignOverviewTab";
 import CampaignSalespersonsTab from "../components/details/CampaignSalespersonsTab";
 
-const TABS = ["overview", "salespersons", "products", "activity"] as const;
+const TABS = ["overview", "salespersons"] as const;
 
 export default function CampaignDetailsPage() {
   const { id } = useParams<{ id: string }>();
@@ -128,19 +128,6 @@ export default function CampaignDetailsPage() {
     {activeTab === "salespersons" && (
         <CampaignSalespersonsTab campaignId={campaign.id} />
     )}
-
-
-      {activeTab === "products" && (
-        <div className="text-sm text-gray-500 py-10 text-center">
-          This section will be available soon.
-        </div>
-      )}
-
-      {activeTab === "activity" && (
-        <div className="text-sm text-gray-500 py-10 text-center">
-          This section will be available soon.
-        </div>
-      )}
     </div>
   );
 }

@@ -1,17 +1,18 @@
 import axios from "../../../services/axiosClient";
 import type {
-  CreateTeamMemberDTO,
-  UpdatePermissionsDTO,
-  UpdateTeamMemberDTO,
   TeamMember,
+  TeamListResponse,
+  CreateTeamMemberDTO,
+  UpdateTeamMemberDTO,
+  UpdatePermissionsDTO,
 } from "../types";
-
+import type { PaginationParams } from "../../../common/types";
 const BASE_URL = "/vendor/team";
 
 export const teamService = {
-  async getTeam(): Promise<TeamMember[]> {
-    const res = await axios.get(BASE_URL);
-    return res.data;
+  async getTeam( params: PaginationParams = { page: 1, page_size: 10 }): Promise<TeamListResponse> {
+    const res = await axios.get(BASE_URL,{params});
+    return res.data; // { data, meta }
   },
 
   async getMemberById(id: number): Promise<TeamMember> {
@@ -19,12 +20,17 @@ export const teamService = {
     return res.data;
   },
 
-  async createMember(data: CreateTeamMemberDTO): Promise<TeamMember> {
+  async createMember(
+    data: CreateTeamMemberDTO
+  ): Promise<TeamMember> {
     const res = await axios.post(BASE_URL, data);
     return res.data;
   },
 
-  async updateMember(id: number, data: UpdateTeamMemberDTO): Promise<TeamMember> {
+  async updateMember(
+    id: number,
+    data: UpdateTeamMemberDTO
+  ): Promise<TeamMember> {
     const res = await axios.put(`${BASE_URL}/${id}`, data);
     return res.data;
   },
@@ -33,7 +39,10 @@ export const teamService = {
     id: number,
     data: UpdatePermissionsDTO
   ): Promise<TeamMember> {
-    const res = await axios.put(`${BASE_URL}/${id}/permissions`, data);
+    const res = await axios.put(
+      `${BASE_URL}/${id}/permissions`,
+      data
+    );
     return res.data;
   },
 
@@ -41,4 +50,3 @@ export const teamService = {
     await axios.delete(`${BASE_URL}/${id}`);
   },
 };
-

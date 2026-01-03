@@ -1,26 +1,43 @@
 import axios from "../../../services/axiosClient";
-import type { VendorItem } from "../types";
+import type {
+  VendorItem,
+  VendorListResponse,
+} from "../types";
 
 const BASE = "/admin/vendors";
 
 export const vendorsService = {
-  async list(): Promise<VendorItem[]> {
-    const res = await axios.get(BASE);
-    return res.data;
+  async list(
+    params: { page?: number; page_size?: number } = {
+      page: 1,
+      page_size: 1,
+    }
+  ): Promise<VendorListResponse> {
+    const res = await axios.get(BASE, { params });
+    return res.data; // { data, meta }
   },
 
-  async create(data: any): Promise<VendorItem> {
+  async create(data: Partial<VendorItem>): Promise<VendorItem> {
     const res = await axios.post(BASE, data);
     return res.data;
   },
 
-  async update(id: number, data: any): Promise<VendorItem> {
+  async update(
+    id: number,
+    data: Partial<VendorItem>
+  ): Promise<VendorItem> {
     const res = await axios.put(`${BASE}/${id}`, data);
     return res.data;
   },
 
-  async updateSeats(id: number, seats: number): Promise<VendorItem> {
-    const res = await axios.patch(`${BASE}/${id}/seats`, { seats_appointed:seats });
+  async updateSeats(
+    id: number,
+    seats: number
+  ): Promise<VendorItem> {
+    const res = await axios.patch(
+      `${BASE}/${id}/seats`,
+      { seats_appointed: seats }
+    );
     return res.data;
   },
 
@@ -31,5 +48,5 @@ export const vendorsService = {
   async notify(payload: any): Promise<any> {
     const res = await axios.post(`${BASE}/notify`, payload);
     return res.data;
-  }
+  },
 };

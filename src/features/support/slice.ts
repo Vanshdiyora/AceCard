@@ -5,27 +5,48 @@ import {
   replyToSupportTicket,
   getAllSupportTickets,
 } from "./services/support.service";
+import type {
+  SupportState,
+  SupportTicket,
+} from "./types";
 
 /* ---------------- THUNKS ---------------- */
 
 export const fetchTickets = createAsyncThunk(
-  "support/fetch",
+  "support/fetchVendor",
   async (vendorId: number, { rejectWithValue }) => {
     try {
       return await getVendorSupportTickets(vendorId);
     } catch (err: any) {
-      return rejectWithValue(err?.message ?? "Failed to fetch tickets");
+      return rejectWithValue(
+        err?.message ?? "Failed to fetch tickets"
+      );
+    }
+  }
+);
+
+export const fetchAllTickets = createAsyncThunk(
+  "support/fetchAll",
+  async (_, { rejectWithValue }) => {
+    try {
+      return await getAllSupportTickets();
+    } catch (err: any) {
+      return rejectWithValue(
+        err?.message ?? "Failed to fetch all tickets"
+      );
     }
   }
 );
 
 export const addTicket = createAsyncThunk(
   "support/add",
-  async (payload: any, { rejectWithValue }) => {
+  async (payload: Partial<SupportTicket>, { rejectWithValue }) => {
     try {
       return await createSupportTicket(payload);
     } catch (err: any) {
-      return rejectWithValue(err?.message ?? "Failed to create ticket");
+      return rejectWithValue(
+        err?.message ?? "Failed to create ticket"
+      );
     }
   }
 );
@@ -41,34 +62,23 @@ export const replyTicket = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      return await replyToSupportTicket(ticketId, { message, status });
+      return await replyToSupportTicket(ticketId, {
+        message,
+        status,
+      });
     } catch (err: any) {
-      return rejectWithValue(err?.message ?? "Failed to reply");
-    }
-  }
-);
-
-export const fetchAllTickets = createAsyncThunk(
-  "support/fetchAll",
-  async (_, { rejectWithValue }) => {
-    try {
-      return await getAllSupportTickets();
-    } catch (err: any) {
-      return rejectWithValue(err?.message ?? "Failed to fetch all tickets");
+      return rejectWithValue(
+        err?.message ?? "Failed to reply"
+      );
     }
   }
 );
 
 /* ---------------- STATE ---------------- */
 
-interface SupportState {
-  tickets: any[];
-  loading: boolean;
-  error?: string;
-}
-
 const initialState: SupportState = {
   tickets: [],
+  meta: null,
   loading: false,
   error: undefined,
 };
@@ -89,30 +99,14 @@ const supportSlice = createSlice({
       })
       .addCase(fetchTickets.fulfilled, (state, action) => {
         state.loading = false;
-        state.tickets = action.payload?.data ?? action.payload ?? [];
+        state.tickets = action.payload.data ?? [];
+        state.meta = action.payload.meta ?? null;
       })
       .addCase(fetchTickets.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
         state.tickets = [];
-      })
-
-      /* -------- ADD TICKET -------- */
-      .addCase(addTicket.fulfilled, (state, action) => {
-        const ticket = action.payload?.data ?? action.payload;
-        if (ticket) state.tickets.unshift(ticket);
-      })
-
-      /* -------- REPLY TICKET -------- */
-      .addCase(replyTicket.fulfilled, (state, action) => {
-        const reply = action.payload?.data ?? action.payload;
-        const ticket = state.tickets.find((t) => t.id === reply.ticket_id);
-
-        if (ticket) {
-          ticket.replies ??= [];
-          ticket.replies.push(reply);
-          if (reply.status) ticket.status = reply.status;
-        }
+        state.meta = null;
       })
 
       /* -------- FETCH ALL TICKETS (ADMIN) -------- */
@@ -122,12 +116,43 @@ const supportSlice = createSlice({
       })
       .addCase(fetchAllTickets.fulfilled, (state, action) => {
         state.loading = false;
-        state.tickets = action.payload?.data ?? action.payload ?? [];
+        state.tickets = action.payload.data ?? [];
+        state.meta = action.payload.meta ?? null;
       })
       .addCase(fetchAllTickets.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
         state.tickets = [];
+        state.meta = null;
+      })
+
+      /* -------- ADD TICKET -------- */
+      .addCase(addTicket.fulfilled, (state, action) => {
+        if (!action.payload) return;
+
+        state.tickets.unshift({
+          ...action.payload,
+          replies: [],
+        });
+      })
+
+      /* -------- REPLY TICKET -------- */
+      .addCase(replyTicket.fulfilled, (state, action) => {
+        const reply = action.payload;
+        if (!reply) return;
+
+        const ticket = state.tickets.find(
+          (t) => t.id === reply.ticket_id
+        );
+
+        if (!ticket) return;
+
+        ticket.replies ??= [];
+        ticket.replies.push(reply);
+
+        if (reply.status) {
+          ticket.status = reply.status;
+        }
       });
   },
 });

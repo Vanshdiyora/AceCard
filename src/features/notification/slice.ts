@@ -5,30 +5,21 @@ import type { Notification } from "./types";
 export const fetchNotifications = createAsyncThunk(
   "notifications/fetch",
   async () => {
-    return await notificationService.getMyNotifications();
+    const data = await notificationService.getMyNotifications();
+
+    // ✅ normalize backend response
+    return data.map((n: any) => ({
+      ...n,
+      is_read: n.status === "read",
+    }));
   }
 );
+
 
 export const markRead = createAsyncThunk(
   "notifications/markRead",
   async (id: number) => {
     await notificationService.markAsRead(id);
-    return id;
-  }
-);
-
-export const markUnread = createAsyncThunk(
-  "notifications/markUnread",
-  async (id: number) => {
-    await notificationService.markAsUnread(id);
-    return id;
-  }
-);
-
-export const deleteNotification = createAsyncThunk(
-  "notifications/delete",
-  async (id: number) => {
-    await notificationService.delete(id);
     return id;
   }
 );
@@ -65,19 +56,20 @@ const notificationSlice = createSlice({
         state.loading = false;
       })
       .addCase(markRead.fulfilled, (state, action) => {
-        const n = state.list.find((i) => i.id === action.payload);
-        if (n) n.is_read = true;
-      })
-      .addCase(markUnread.fulfilled, (state, action) => {
-        const n = state.list.find((i) => i.id === action.payload);
-        if (n) n.is_read = false;
-      })
-      .addCase(deleteNotification.fulfilled, (state, action) => {
-        state.list = state.list.filter((n) => n.id !== action.payload);
-      })
+  const n = state.list.find((i) => i.id === action.payload);
+  if (n) {
+    n.is_read = true;
+    n.status = "read"; // ✅ keep in sync
+  }
+})
+
       .addCase(markAll.fulfilled, (state) => {
-        state.list.forEach((n) => (n.is_read = true));
-      });
+  state.list.forEach((n) => {
+    n.is_read = true;
+    n.status = "read";
+  });
+});
+
   },
 });
 

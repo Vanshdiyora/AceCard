@@ -1,4 +1,4 @@
-import { Filter, Download, Search } from "lucide-react";
+import { Filter, Download, Search, Upload } from "lucide-react";
 
 export interface TabItem {
   label: string;
@@ -15,6 +15,7 @@ export interface PageFiltersProps {
 
   onFilter?: () => void;
   onExport?: () => void;
+  onImport?: () => void; // ✅ Added
 }
 
 export default function PageFilters({
@@ -27,6 +28,7 @@ export default function PageFilters({
 
   onFilter,
   onExport,
+  onImport, // ✅ Added
 }: PageFiltersProps) {
   return (
     <div className="bg-white p-5 rounded-2xl border space-y-4">
@@ -71,6 +73,15 @@ export default function PageFilters({
               className="flex items-center gap-2 px-4 py-2 border rounded-lg text-sm bg-white hover:bg-gray-100 shadow-sm"
             >
               <Filter size={16} /> Filter
+            </button>
+          )}
+
+          {onImport && (
+            <button
+              onClick={onImport}
+              className="flex items-center gap-2 px-4 py-2 border rounded-lg text-sm bg-white hover:bg-gray-100 shadow-sm"
+            >
+              <Upload size={16} /> Import
             </button>
           )}
 

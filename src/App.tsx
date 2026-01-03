@@ -7,14 +7,12 @@ import AdminLayout from "./portals/admin/layout/AdminLayout";
 
 // SUPER ADMIN PAGES
 import SuperDashboardPage from "./portals/superadmin/pages/DashBoard/SuperDashBoard";
-import SalespersonPage from "./portals/superadmin/pages/Salesperson/SalespersonPage";
-import SeatsPage from "./portals/superadmin/pages/SeatsKeysPage/SeatsKeysPage";
 import { SupportAdmin, VendorsPage } from "./features";
 import LeadDetailsPage from "./features/leads/pages/LeadDetailsPage";
 // ADMIN PAGES
 import { SupportPage, DashboardPage, TeamPage , ProductsPage ,CampaignsPage ,LeadPage, SettingsPage, CampaignDetailsPage 
   ,TeamMemberDetailsPage,
-
+  ProductDetailsPage
 } from "./features/index";
 
 export default function App() {
@@ -56,6 +54,7 @@ export default function App() {
           <Route path="team" element={<TeamPage />} />
           <Route path="team/:id" element={<TeamMemberDetailsPage />} />
           <Route path="products" element={<ProductsPage />} />
+          <Route path="products/:id" element={<ProductDetailsPage />} />
           <Route path="settings" element={<SettingsPage />} />
           <Route path="support" element={<SupportPage />} />
         </Route>

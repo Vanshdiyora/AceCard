@@ -1,9 +1,15 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { vendorsService } from "./services/vendors.service";
-import type { VendorItem, VendorStat } from "./types";
+import type {
+  VendorItem,
+  VendorStat,
+  VendorMeta,
+} from "./types";
 
+/* ---------- STATE ---------- */
 interface VendorsState {
   vendors: VendorItem[];
+  meta: VendorMeta | null;
   stats: VendorStat[];
   loading: boolean;
   error?: string;
@@ -11,76 +17,110 @@ interface VendorsState {
 
 const initialState: VendorsState = {
   vendors: [],
+  meta: null,
   stats: [],
   loading: false,
 };
 
-// ---------------------------------------------------
-// 🔹 GET ALL VENDORS
-// ---------------------------------------------------
-export const fetchVendors = createAsyncThunk("vendors/fetchAll", async () => {
-  return await vendorsService.list();
-});
+/* ---------- THUNKS ---------- */
 
-// ---------------------------------------------------
-// 🔹 CREATE VENDOR
-// ---------------------------------------------------
+export const fetchVendors = createAsyncThunk(
+  "vendors/fetchAll",
+  async (
+    params: { page?: number; page_size?: number } | undefined,
+    { rejectWithValue }
+  ) => {
+    try {
+      return await vendorsService.list(
+        params ?? { page: 1, page_size: 1 }
+      );
+    } catch (err: any) {
+      return rejectWithValue(
+        err?.message ?? "Failed to fetch vendors"
+      );
+    }
+  }
+);
+
 export const createVendor = createAsyncThunk(
   "vendors/create",
-  async (data: any) => {
-    return await vendorsService.create(data);
+  async (data: Partial<VendorItem>, { rejectWithValue }) => {
+    try {
+      return await vendorsService.create(data);
+    } catch (err: any) {
+      return rejectWithValue(
+        err?.message ?? "Failed to create vendor"
+      );
+    }
   }
 );
 
-// ---------------------------------------------------
-// 🔹 UPDATE VENDOR INFO
-// ---------------------------------------------------
 export const updateVendor = createAsyncThunk(
   "vendors/update",
-  async ({ id, data }: { id: number; data: any }) => {
-    return await vendorsService.update(id, data);
+  async (
+    { id, data }: { id: number; data: Partial<VendorItem> },
+    { rejectWithValue }
+  ) => {
+    try {
+      return await vendorsService.update(id, data);
+    } catch (err: any) {
+      return rejectWithValue(
+        err?.message ?? "Failed to update vendor"
+      );
+    }
   }
 );
 
-// ---------------------------------------------------
-// 🔹 UPDATE SEATS
-// ---------------------------------------------------
 export const updateSeats = createAsyncThunk(
   "vendors/updateSeats",
-  async ({ id, seats }: { id: number; seats: number }) => {
-    return await vendorsService.updateSeats(id, seats);
+  async (
+    { id, seats }: { id: number; seats: number },
+    { rejectWithValue }
+  ) => {
+    try {
+      return await vendorsService.updateSeats(id, seats);
+    } catch (err: any) {
+      return rejectWithValue(
+        err?.message ?? "Failed to update seats"
+      );
+    }
   }
 );
 
-// ---------------------------------------------------
-// 🔹 ARCHIVE VENDOR
-// ---------------------------------------------------
 export const archiveVendor = createAsyncThunk(
   "vendors/archive",
-  async (id: number) => {
-    await vendorsService.archive(id);
-    return id; // return deleted vendor ID
+  async (id: number, { rejectWithValue }) => {
+    try {
+      await vendorsService.archive(id);
+      return id;
+    } catch (err: any) {
+      return rejectWithValue(
+        err?.message ?? "Failed to archive vendor"
+      );
+    }
   }
 );
 
-// ---------------------------------------------------
-// 🔹 NOTIFY VENDOR
-// ---------------------------------------------------
 export const notifyVendor = createAsyncThunk(
   "vendors/notify",
-  async (payload: any) => {
-    return await vendorsService.notify(payload);
+  async (payload: any, { rejectWithValue }) => {
+    try {
+      return await vendorsService.notify(payload);
+    } catch (err: any) {
+      return rejectWithValue(
+        err?.message ?? "Failed to notify vendor"
+      );
+    }
   }
 );
 
-// ---------------------------------------------------
-// Helper: Recalculate Stats
-// ---------------------------------------------------
+/* ---------- HELPERS ---------- */
+
 function computeStats(vendors: VendorItem[]): VendorStat[] {
   const total = vendors.length;
-  const active = vendors.filter((x) => x.status === "active").length;
-  const pending = vendors.filter((x) => x.status === "pending").length;
-  const archived = vendors.filter((x) => x.status === "archived").length;
+  const active = vendors.filter((v) => v.status === "active").length;
+  const pending = vendors.filter((v) => v.status === "pending").length;
+  const archived = vendors.filter((v) => v.status === "archived").length;
 
   return [
     { title: "Total Vendors", value: total, icon: "users", positive: true },
@@ -90,81 +130,72 @@ function computeStats(vendors: VendorItem[]): VendorStat[] {
   ];
 }
 
-// ---------------------------------------------------
-// 🔥 SLICE
-// ---------------------------------------------------
+/* ---------- SLICE ---------- */
+
 const vendorsSlice = createSlice({
   name: "vendors",
   initialState,
   reducers: {},
   extraReducers: (builder) => {
-    // ----------------------------
-    // Fetch Vendors
-    // ----------------------------
-    builder.addCase(fetchVendors.pending, (state) => {
-      state.loading = true;
-    });
+    builder
 
-    builder.addCase(fetchVendors.fulfilled, (state, action) => {
-      state.loading = false;
-      state.vendors = action.payload;
-      state.stats = computeStats(state.vendors);
-    });
+      /* FETCH VENDORS */
+      .addCase(fetchVendors.pending, (state) => {
+        state.loading = true;
+        state.error = undefined;
+      })
+      .addCase(fetchVendors.fulfilled, (state, action) => {
+        state.loading = false;
+        state.vendors = action.payload.data ?? [];
+        state.meta = action.payload.meta ?? null;
+        state.stats = computeStats(state.vendors);
+      })
+      .addCase(fetchVendors.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+        state.vendors = [];
+        state.meta = null;
+        state.stats = [];
+      })
 
-    builder.addCase(fetchVendors.rejected, (state, action) => {
-      state.loading = false;
-      state.error = action.error.message;
-    });
+      /* CREATE */
+      .addCase(createVendor.fulfilled, (state, action) => {
+        state.vendors.unshift(action.payload);
+        state.stats = computeStats(state.vendors);
+      })
 
-    // ----------------------------
-    // Create Vendor
-    // ----------------------------
-    builder.addCase(createVendor.fulfilled, (state, action) => {
-      state.vendors.push(action.payload);
-      state.stats = computeStats(state.vendors);
-    });
+      /* UPDATE */
+      .addCase(updateVendor.fulfilled, (state, action) => {
+        const idx = state.vendors.findIndex(
+          (v) => v.id === action.payload.id
+        );
+        if (idx !== -1) {
+          state.vendors[idx] = action.payload;
+        }
+        state.stats = computeStats(state.vendors);
+      })
 
-    // ----------------------------
-    // Update Vendor
-    // ----------------------------
-    builder.addCase(updateVendor.fulfilled, (state, action) => {
-      const index = state.vendors.findIndex((v) => v.id === action.payload.id);
-      if (index !== -1) {
-        state.vendors[index] = action.payload;
-      }
-      state.stats = computeStats(state.vendors);
-    });
+      /* UPDATE SEATS */
+      .addCase(updateSeats.fulfilled, (state, action) => {
+        const idx = state.vendors.findIndex(
+          (v) => v.id === action.payload.id
+        );
+        if (idx !== -1) {
+          state.vendors[idx] = action.payload;
+        }
+        state.stats = computeStats(state.vendors);
+      })
 
-    // ----------------------------
-    // Update Seats
-    // ----------------------------
-    builder.addCase(updateSeats.fulfilled, (state, action) => {
-      const index = state.vendors.findIndex((v) => v.id === action.payload.id);
-      if (index !== -1) {
-        state.vendors[index] = action.payload;
-      }
-      state.stats = computeStats(state.vendors);
-    });
-
-    // ----------------------------
-    // Archive Vendor
-    // ----------------------------
-    builder.addCase(archiveVendor.fulfilled, (state, action) => {
-      state.vendors = state.vendors.map((v) =>
-        v.id === action.payload ? { ...v, status: "archived" } : v
-      );
-
-      state.stats = computeStats(state.vendors);
-    });
-
-    // ----------------------------
-    // Notify Vendor (no UI change)
-    // ----------------------------
-    builder.addCase(notifyVendor.fulfilled, () => {
-      // No state updates needed unless required
-    });
+      /* ARCHIVE */
+      .addCase(archiveVendor.fulfilled, (state, action) => {
+        state.vendors = state.vendors.map((v) =>
+          v.id === action.payload
+            ? { ...v, status: "archived" }
+            : v
+        );
+        state.stats = computeStats(state.vendors);
+      });
   },
 });
 
-// ---------------------------------------------------
 export default vendorsSlice.reducer;

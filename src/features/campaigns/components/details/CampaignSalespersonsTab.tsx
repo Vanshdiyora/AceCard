@@ -34,7 +34,7 @@ export default function CampaignSalespersonsTab({ campaignId }: Props) {
     }
 
     if (leads.length === 0) {
-      dispatch(fetchLeads());
+      dispatch(fetchLeads({ page: 1, pageSize:100 }));
     }
   }, [dispatch, members.length, leads.length]);
 

@@ -1,15 +1,46 @@
-export interface SupportTicket {
+/* ---------- SUPPORT REPLY ---------- */
+export interface SupportReply {
   id: number;
-  title: string;
-  category: string;
-  created: string;
-  ticketNumber: string;
-  priority: "high" | "medium" | "low";
-  status: "open" | "resolved" | "in progress";
+  ticket_id: number;
+  message: string;
+  status?: "open" | "resolved" | "in_progress";
+  created_at: string;
 }
 
-export interface SubscriptionStatus {
-  plan: string;
-  billingDate: string;
-  active: boolean;
+/* ---------- SUPPORT TICKET ---------- */
+export interface SupportTicket {
+  id: number;
+  vendor_id: number;
+  title: string;
+  category: string;
+  priority: "high" | "medium" | "low";
+  status: "open" | "resolved" | "in_progress";
+
+  replies?: SupportReply[];
+
+  created_at: string;
+  updated_at: string;
+}
+
+/* ---------- PAGINATION ---------- */
+export interface SupportMeta {
+  total_count: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
+  has_next: boolean;
+  has_previous: boolean;
+}
+
+export interface SupportListResponse {
+  data: SupportTicket[];
+  meta: SupportMeta;
+}
+
+/* ---------- STATE ---------- */
+export interface SupportState {
+  tickets: SupportTicket[];
+  meta: SupportMeta | null;
+  loading: boolean;
+  error?: string;
 }

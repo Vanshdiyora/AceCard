@@ -10,18 +10,10 @@ export const notificationService = {
   },
 
   markAsRead: async (id: number) => {
-    await axiosClient.post(`${BASE}/${id}/read`);
-  },
-
-  markAsUnread: async (id: number) => {
-    await axiosClient.post(`${BASE}/${id}/unread`);
+    await axiosClient.put(`${BASE}/${id}/read`);
   },
 
   markAllAsRead: async () => {
-    await axiosClient.post(`${BASE}/read-all`);
-  },
-
-  delete: async (id: number) => {
-    await axiosClient.delete(`${BASE}/${id}`);
+    await axiosClient.put(`${BASE}/read-all`);
   },
 };

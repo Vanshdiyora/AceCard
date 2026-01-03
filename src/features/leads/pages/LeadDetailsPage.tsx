@@ -1,10 +1,10 @@
 // pages/LeadDetailsPage.tsx
 import { useParams, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ArrowLeft, Edit, Trash2 } from "lucide-react";
 
 import { useAppDispatch, useAppSelector } from "../../../app/hooks";
-import { updateLead, archiveLead } from "../slice";
+import { updateLead, archiveLead, fetchLeadById } from "../slice";
 
 import EditLeadModal from "../components/EditLeadModal";
 import LeadOverviewTab from "../components/details/LeadOverviewTab";
@@ -13,26 +13,37 @@ import LeadNotesTab from "../components/details/LeadNotesTab";
 import LeadFollowupsTab from "../components/details/LeadFollowupsTab";
 import LeadProductsTab from "../components/details/LeadProductsTab";
 
-const TABS = [
-  "overview",
-  "timeline",
-  "notes",
-  "followups",
-  "products",
-] as const;
+const TABS = ["overview", "timeline", "notes", "followups", "products"] as const;
 
 export default function LeadDetailsPage() {
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
 
-  const [activeTab, setActiveTab] = useState<typeof TABS[number]>("overview");
+  const [activeTab, setActiveTab] =
+    useState<typeof TABS[number]>("overview");
   const [editOpen, setEditOpen] = useState(false);
 
-  const { leads } = useAppSelector((s) => s.leads);
+  const { leads, loading } = useAppSelector((s) => s.leads);
+
   const lead = leads.find((l) => l.id === Number(id));
 
-  if (!lead) return <div className="p-6">Lead not found</div>;
+  // 🔁 Fetch lead on refresh or direct load
+  useEffect(() => {
+    if (id) {
+      dispatch(fetchLeadById(Number(id)));
+    }
+  }, [id, dispatch]);
+
+  if (loading && !lead) {
+    return <div className="p-6">Loading lead...</div>;
+  }
+
+  if (!loading && !lead) {
+    return <div className="p-6 text-red-500">Lead not found</div>;
+  }
+
+  if (!lead) return null;
 
   const archive = async () => {
     if (confirm("Archive this lead?")) {
@@ -43,14 +54,15 @@ export default function LeadDetailsPage() {
 
   return (
     <div className="p-6 space-y-6">
-        {/* Back Button */}
-<button
-  onClick={() => navigate(-1)}
-  className="flex items-center gap-2 text-sm text-gray-500 hover:text-black"
->
-  <ArrowLeft size={16} />
-  Back to Leads
-</button>
+      {/* Back Button */}
+      <button
+        onClick={() => navigate(-1)}
+        className="flex items-center gap-2 text-sm text-gray-500 hover:text-black"
+      >
+        <ArrowLeft size={16} />
+        Back to Leads
+      </button>
+
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
@@ -90,7 +102,7 @@ export default function LeadDetailsPage() {
       {activeTab === "timeline" && <LeadTimelineTab lead={lead} />}
       {activeTab === "notes" && <LeadNotesTab leadId={lead.id} />}
       {activeTab === "followups" && <LeadFollowupsTab />}
-     {activeTab === "products" && <LeadProductsTab lead={lead} />}
+      {activeTab === "products" && <LeadProductsTab lead={lead} />}
 
       {/* Edit Modal */}
       <EditLeadModal

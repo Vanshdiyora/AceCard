@@ -1,69 +1,78 @@
 import { useState, useRef, useEffect } from "react";
-import NotificationBell from "./NotificationBell"; 
-// <-- Make sure path is correct
+import { useNavigate } from "react-router-dom";
+import NotificationBell from "./NotificationBell";
+import GlobalSearch from "../../components/global-search/GlobalSearch";
+import { useGlobalSearchPrefetch } from "../../hooks/useGlobalSearchPrefetch";
+import { useAppDispatch } from "../../../app/hooks";
+import { logout } from "../../../features/auth/slice";
 
 type TopbarProps = {
   username?: string;
-  type: "admin" | "superadmin";
+  type: "admin" | "super_admin";
 };
 
 export default function Topbar({ username = "User", type }: TopbarProps) {
+  // ✅ ROLE-AWARE PREFETCH (THIS FIXES THE REDIRECT ISSUE)
+  useGlobalSearchPrefetch(type);
+
+  const dispatch = useAppDispatch();
+  const navigate = useNavigate();
+
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
 
-  // Close dropdown when clicking outside
+  // Close dropdown on outside click
   useEffect(() => {
-    function handler(e: MouseEvent) {
+    const handler = (e: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
         setOpen(false);
       }
-    }
+    };
+
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  const logout = () => {
-    localStorage.removeItem("token");
-    window.location.href = "/login";
+  const handleLogout = () => {
+    dispatch(logout());
+    navigate("/login", { replace: true });
   };
 
   const Dropdown = (
     <div className="absolute right-0 mt-2 bg-white border shadow-lg rounded-lg w-40 z-50">
       <button
         className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
-        onClick={logout}
+        onClick={handleLogout}
       >
         Sign Out
       </button>
     </div>
   );
 
-  // ---------------- SUPERADMIN TOPBAR ----------------
-  if (type === "superadmin") {
+  // ================= SUPERADMIN TOPBAR =================
+  if (type === "super_admin") {
     return (
       <header className="h-20 bg-white border-b px-6 flex items-center justify-between shadow-sm relative">
-        {/* Search Box */}
-        <input
-          className="w-[420px] border rounded-lg px-4 py-2 text-sm shadow-sm"
-          placeholder="Search vendors, reps, leads, campaigns..."
-        />
+        {/* 🔍 Global Search (VENDORS ONLY) */}
+        <div className="w-96">
+          <GlobalSearch mode="super_admin" />
+        </div>
 
         <div className="flex items-center gap-6">
-
-          {/* 🔔 Notification Component Added */}
           <NotificationBell />
 
-          {/* Avatar + Name */}
           <div
             className="relative flex items-center gap-2 cursor-pointer"
-            onClick={() => setOpen((prev) => !prev)}
+            onClick={() => setOpen(prev => !prev)}
             ref={menuRef}
           >
             <div className="w-10 h-10 bg-purple-600 text-white rounded-full flex items-center justify-center font-medium">
               SA
             </div>
 
-            <span className="text-gray-700 font-medium">Super Admin</span>
+            <span className="text-gray-700 font-medium">
+              Super Admin
+            </span>
 
             {open && Dropdown}
           </div>
@@ -72,25 +81,22 @@ export default function Topbar({ username = "User", type }: TopbarProps) {
     );
   }
 
-  // ---------------- ADMIN (VENDOR) TOPBAR ----------------
+  // ================= ADMIN TOPBAR =================
   return (
     <header className="h-16 bg-white border-b px-6 flex items-center justify-between shadow-sm relative">
       <h3 className="text-xl font-medium">Hi, {username}</h3>
 
-      <input
-        className="w-96 border rounded-lg px-4 py-2 text-sm"
-        placeholder="Search people, leads, campaigns..."
-      />
+      {/* 🔍 Global Search (ADMIN DATA) */}
+      <div className="w-96">
+        <GlobalSearch mode="admin" />
+      </div>
 
       <div className="flex items-center gap-6">
-
-        {/* 🔔 Notification Component Added */}
         <NotificationBell />
 
-        {/* Avatar */}
         <div
           className="relative cursor-pointer"
-          onClick={() => setOpen((prev) => !prev)}
+          onClick={() => setOpen(prev => !prev)}
           ref={menuRef}
         >
           <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center">

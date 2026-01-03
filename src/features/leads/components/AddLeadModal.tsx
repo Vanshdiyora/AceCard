@@ -6,81 +6,134 @@ import { fetchProducts } from "../../products/slice";
 import { fetchCampaigns } from "../../campaigns/slice";
 
 import DynamicForm, { type FieldConfig } from "../../../common/ui/DynamicForm";
-import { LEAD_STAGES } from "../constants";
+
+/* ------------------------------------------------------------------
+   CUSTOM FORM CONFIG (ONLY CUSTOM FIELDS)
+------------------------------------------------------------------ */
+type CustomFieldConfig = {
+  fieldId: string;
+  label: string;
+  type: FieldConfig["type"];
+  required: boolean;
+  archived: boolean;
+  options?: { label: string; value: any }[];
+};
+
+const leadFormConfig: { customFields: CustomFieldConfig[] } = {
+  customFields: [
+    {
+      fieldId: "radio_type",
+      label: "Radio type",
+      type: "radio",
+      required: true,
+      archived: false,
+      options: [
+        { label: "op1", value: "op1" },
+        { label: "op2", value: "op2" },
+      ],
+    },
+    {
+      fieldId: "dropdown_type_field",
+      label: "Dropdown Type field",
+      type: "select",
+      required: true,
+      archived: false,
+      options: [{ label: "OP1", value: "op1" }],
+    },
+    {
+      fieldId: "field_checkboxes",
+      label: "Field Checkboxes",
+      type: "multiselect",
+      required: false,
+      archived: false,
+      options: [
+        { label: "OP1", value: "op1" },
+        { label: "OP2", value: "op2" },
+        { label: "OP3", value: "op3" },
+      ],
+    },
+    {
+      fieldId: "type_date_time",
+      label: "Type Date Time",
+      type: "datetime",
+      required: true,
+      archived: false,
+    },
+    {
+      fieldId: "type_text",
+      label: "Type Text",
+      type: "text",
+      required: false,
+      archived: false,
+    },
+  ],
+};
 
 export default function AddLeadModal({ open, onClose, onSubmit }: any) {
   const dispatch = useAppDispatch();
+
   const safeArray = <T,>(v: T[] | undefined | null): T[] =>
     Array.isArray(v) ? v : [];
 
-  const campaigns = safeArray(
-    useAppSelector((s) => s.campaigns.items)
-  );
-
-  const members = safeArray(
-    useAppSelector((s) => s.team.members)
-  );
-
-  const products = safeArray(
-    useAppSelector((s) => s.products.products)
-  );
+  const campaigns = safeArray(useAppSelector((s) => s.campaigns.items));
+  const members = safeArray(useAppSelector((s) => s.team.members));
+  const products = safeArray(useAppSelector((s) => s.products.products));
 
   useEffect(() => {
     if (open) {
-
       dispatch(fetchTeam());
       dispatch(fetchProducts());
       dispatch(fetchCampaigns());
     }
   }, [dispatch, open]);
 
-
-  /* --------------------------------------------
-  FORM STATE
-  -------------------------------------------- */
-  const [form, setForm] = useState({
+  /* ------------------------------------------------------------------
+     FORM STATE (CUSTOM FIELDS STORED AT TOP LEVEL)
+  ------------------------------------------------------------------ */
+  const [form, setForm] = useState<Record<string, any>>({
     lead_name: "",
     phone: "",
     email: "",
     company: "",
     assigned_rep_id: null,
-    stage: "new",
     product_ids: [],
     campaign_ids: [],
     deal_amount: 0,
-    source: "manual"
+    source: "manual",
   });
 
-  const [productDetails, setProductDetails] = useState<
-    { product_id: number }[]
-  >([]);
-
-  /* --------------------------------------------
-  FORM UPDATER
-  -------------------------------------------- */
+  /* ------------------------------------------------------------------
+     FORM UPDATER (🔥 FIXED)
+  ------------------------------------------------------------------ */
   const update = (key: string, value: any) => {
-    if (key === "deal_amount") value = Number(value);
-
-    if (key === "product_ids") {
-      const updated = value.map((id: number) => {
-        const match = productDetails.find((p) => p.product_id === id);
-        return (
-          match || {
-            product_id: id,
-            quantity: 1,
-            price: products.find((p: any) => p.id === id)?.price || 0,
-          }
-        );
-      });
-      setProductDetails(updated);
+    if (key === "deal_amount") {
+      value = Number(value);
     }
 
-    setForm({ ...form, [key]: value });
+    setForm((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
   };
 
-  /* --------------------------------------------
-  FORM FIELDS
-  -------------------------------------------- */
+  /* ------------------------------------------------------------------
+     CUSTOM FIELD CONFIG → DynamicForm Fields
+  ------------------------------------------------------------------ */
+  const customFieldConfigs: FieldConfig[] =
+    leadFormConfig.customFields
+      .filter((f) => !f.archived)
+      .map((f) => ({
+        name: `custom_${f.fieldId}`,
+        label: f.label,
+        type: f.type,
+        required: f.required,
+        options: f.options,
+        placeholder: `Enter ${f.label}`,
+      }));
+
+  /* ------------------------------------------------------------------
+     BASE + CUSTOM FIELDS
+  ------------------------------------------------------------------ */
   const fields: FieldConfig[] = [
     {
       name: "lead_name",
@@ -106,64 +159,42 @@ export default function AddLeadModal({ open, onClose, onSubmit }: any) {
       type: "text",
       placeholder: "Enter phone number",
     },
-
-    // Assigned Representative
     {
       name: "assigned_rep_id",
       label: "Assigned Representative",
       type: "select",
-      placeholder: "Select representative",
       options: members.map((m) => ({
         label: m.name,
         value: m.id,
       })),
     },
-
-    // Stage
-    {
-      name: "stage",
-      label: "Stage",
-      type: "select",
-      placeholder: "Select stage",
-      options: LEAD_STAGES,
-    },
-
-    // Campaigns
     {
       name: "campaign_ids",
       label: "Campaigns",
       type: "multiselect",
-      placeholder: "Select campaign(s)",
       options: campaigns.map((c: any) => ({
         label: c.name,
         value: c.id,
       })),
     },
-
-    // Products
     {
       name: "product_ids",
       label: "Products",
       type: "multiselect",
-      placeholder: "Select product(s)",
       options: products.map((p: any) => ({
         label: p.name,
         value: p.id,
       })),
     },
-
     {
       name: "deal_amount",
       label: "Deal Amount",
       type: "number",
-      placeholder: "Enter deal value",
     },
-
     {
       name: "source",
       label: "Source",
       type: "select",
-      placeholder: "Select source",
       options: [
         { label: "Manual", value: "manual" },
         { label: "Voice", value: "voice" },
@@ -172,57 +203,59 @@ export default function AddLeadModal({ open, onClose, onSubmit }: any) {
         { label: "CSV Import", value: "csv" },
       ],
     },
+
+    // ✅ append custom fields
+    // ...customFieldConfigs,
   ];
 
-
-  /* --------------------------------------------
-  SUBMIT HANDLER
-  -------------------------------------------- */
+  /* ------------------------------------------------------------------
+     SUBMIT HANDLER (🔥 EXTRACT CUSTOM FIELDS HERE)
+  ------------------------------------------------------------------ */
   const handleSubmit = () => {
+    const customFields: Record<string, any> = {};
+
+    Object.keys(form).forEach((key) => {
+      if (key.startsWith("custom_")) {
+        customFields[key.replace("custom_", "")] = form[key];
+      }
+    });
+
     const payload = {
       lead_name: form.lead_name,
       phone: form.phone,
       email: form.email,
       company: form.company,
-      assigned_rep_id: Number(form.assigned_rep_id) || null,  // ensure integer
-      stage: "new",
+      assigned_rep_id: Number(form.assigned_rep_id) || null,
 
-      // only integer array of product IDs
       products: form.product_ids.map(Number),
-
-      // only integer array of campaign IDs
       campaigns: form.campaign_ids.map(Number),
 
       deal_amount: Number(form.deal_amount) || 0,
-
       source: form.source,
+
+      // custom_fields: customFields,
     };
 
     onSubmit(payload);
   };
 
-
   if (!open) return null;
-  /* --------------------------------------------
-      COMPONENT UI
-      -------------------------------------------- */
+
+  /* ------------------------------------------------------------------
+     UI
+  ------------------------------------------------------------------ */
   return (
     <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center p-4 z-50">
       <div className="bg-white w-[550px] max-h-[90vh] overflow-y-auto rounded-xl shadow-xl p-6 space-y-6">
-
-        {/* Header */}
         <div className="flex justify-between items-center pb-3 border-b">
           <h2 className="text-xl font-semibold">Create Lead</h2>
           <button onClick={onClose}>✕</button>
         </div>
 
-        {/* Dynamic Form */}
         <DynamicForm form={form} fields={fields} onChange={update} />
 
-        {/* Footer */}
         <div className="pt-4 border-t flex justify-end gap-2">
-          <button className="px-4 py-2" onClick={onClose}>Cancel</button>
-
+          <button onClick={onClose}>Cancel</button>
           <button
             className="px-4 py-2 bg-purple-600 text-white rounded"
             onClick={handleSubmit}

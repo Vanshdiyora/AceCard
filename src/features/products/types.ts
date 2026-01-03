@@ -1,3 +1,4 @@
+/* ---------- PRODUCT ---------- */
 export interface Product {
   id: number;
   vendor_id: number;
@@ -7,16 +8,34 @@ export interface Product {
   category: string;
   sku: string;
   status: "active" | "inactive";
+  created_at: string;
+  updated_at: string;
 }
 
-export interface ProductStats {
-  totalProducts: number;
-  activeProducts: number;
-  totalOpportunities: number; // backend does NOT give this
-  totalRevenue: string;
+/* ---------- PAGINATION ---------- */
+export interface ProductMeta {
+  total_count: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
+  has_next: boolean;
+  has_previous: boolean;
 }
 
+export interface ProductListResponse {
+  data: Product[];
+  meta: ProductMeta;
+}
+
+/* ---------- STATE ---------- */
 export interface ProductState {
   products: Product[];
+  meta: ProductMeta | null;
+
+  /**
+   * Single product for details page
+   */
+  selectedProduct: Product | null;
+
   loading: boolean;
 }

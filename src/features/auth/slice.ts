@@ -1,7 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { loginRequest } from "./services/auth.service";
 
-// Decode token if available
 function decodeToken(token: string | null) {
   if (!token) return { user: null, role: null };
 
@@ -35,8 +34,7 @@ const initialState: AuthState = {
 export const login = createAsyncThunk(
   "auth/login",
   async (payload: { email: string; password: string }) => {
-    const data = await loginRequest(payload);
-    return data;
+    return await loginRequest(payload);
   }
 );
 
@@ -64,14 +62,9 @@ const authSlice = createSlice({
         state.token = token;
         localStorage.setItem("token", token);
 
-        try {
-          const payload = JSON.parse(atob(token.split(".")[1]));
-          state.user = payload;
-          state.role = payload.role;
-        } catch {
-          state.user = null;
-          state.role = null;
-        }
+        const decoded = decodeToken(token);
+        state.user = decoded.user;
+        state.role = decoded.role;
       })
       .addCase(login.rejected, (state) => {
         state.loading = false;

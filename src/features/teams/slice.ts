@@ -2,41 +2,49 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { teamService } from "./services/teams.service";
 import type {
   TeamMember,
+  TeamMeta,
   CreateTeamMemberDTO,
   UpdateTeamMemberDTO,
   UpdatePermissionsDTO,
 } from "./types";
 
-/* ------------------ STATE ------------------ */
-
+/* ---------- STATE ---------- */
 interface TeamState {
   members: TeamMember[];
+  meta: TeamMeta | null;
   loading: boolean;
   error?: string;
 }
 
 const initialState: TeamState = {
   members: [],
+  meta: null,
   loading: false,
   error: undefined,
 };
 
-/* ------------------ THUNKS ------------------ */
+/* ---------- THUNKS ---------- */
 
 export const fetchTeam = createAsyncThunk(
   "team/fetch",
   async (_, { rejectWithValue }) => {
     try {
-      const data = await teamService.getTeam();
-      return data.map((m) => ({
-        ...m,
-        leads: 0,
-        pipeline: "$0",
-        conversion: "0%",
-        lastActive: "Recently",
-      }));
+      const res = await teamService.getTeam();
+
+      return {
+        members: res.data.map((m) => ({
+          ...m,
+          leads: 0,
+          pipeline: "$0",
+          conversion: "0%",
+          lastActive: "Recently",
+        })),
+        meta: res.meta,
+      };
     } catch (err: any) {
-      return rejectWithValue(err?.message ?? "Failed to fetch team");
+      return rejectWithValue(
+        err?.message ?? "Failed to fetch team"
+      );
     }
   }
 );
@@ -47,7 +55,9 @@ export const createMember = createAsyncThunk(
     try {
       return await teamService.createMember(body);
     } catch (err: any) {
-      return rejectWithValue(err?.message ?? "Failed to create member");
+      return rejectWithValue(
+        err?.message ?? "Failed to create member"
+      );
     }
   }
 );
@@ -58,7 +68,9 @@ export const fetchMemberById = createAsyncThunk(
     try {
       return await teamService.getMemberById(id);
     } catch (err: any) {
-      return rejectWithValue(err?.message ?? "Failed to fetch member");
+      return rejectWithValue(
+        err?.message ?? "Failed to fetch member"
+      );
     }
   }
 );
@@ -72,7 +84,9 @@ export const updateMember = createAsyncThunk(
     try {
       return await teamService.updateMember(id, data);
     } catch (err: any) {
-      return rejectWithValue(err?.message ?? "Failed to update member");
+      return rejectWithValue(
+        err?.message ?? "Failed to update member"
+      );
     }
   }
 );
@@ -86,7 +100,9 @@ export const updatePermissions = createAsyncThunk(
     try {
       return await teamService.updatePermissions(id, data);
     } catch (err: any) {
-      return rejectWithValue(err?.message ?? "Failed to update permissions");
+      return rejectWithValue(
+        err?.message ?? "Failed to update permissions"
+      );
     }
   }
 );
@@ -98,12 +114,14 @@ export const deleteMember = createAsyncThunk(
       await teamService.deleteMember(id);
       return id;
     } catch (err: any) {
-      return rejectWithValue(err?.message ?? "Failed to delete member");
+      return rejectWithValue(
+        err?.message ?? "Failed to delete member"
+      );
     }
   }
 );
 
-/* ------------------ SLICE ------------------ */
+/* ---------- SLICE ---------- */
 
 const teamSlice = createSlice({
   name: "team",
@@ -112,23 +130,24 @@ const teamSlice = createSlice({
   extraReducers: (builder) => {
     builder
 
-      /* -------- FETCH TEAM -------- */
+      /* FETCH TEAM */
       .addCase(fetchTeam.pending, (state) => {
         state.loading = true;
         state.error = undefined;
       })
       .addCase(fetchTeam.fulfilled, (state, action) => {
         state.loading = false;
-        state.members = action.payload;
+        state.members = action.payload.members;
+        state.meta = action.payload.meta;
       })
       .addCase(fetchTeam.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       })
 
-      /* -------- CREATE MEMBER -------- */
+      /* CREATE MEMBER */
       .addCase(createMember.fulfilled, (state, action) => {
-        state.members.push({
+        state.members.unshift({
           ...action.payload,
           leads: 0,
           pipeline: "$0",
@@ -137,13 +156,8 @@ const teamSlice = createSlice({
         });
       })
 
-      /* -------- FETCH MEMBER BY ID -------- */
-      .addCase(fetchMemberById.pending, (state) => {
-        state.loading = true;
-      })
+      /* FETCH MEMBER BY ID */
       .addCase(fetchMemberById.fulfilled, (state, action) => {
-        state.loading = false;
-
         const idx = state.members.findIndex(
           (m) => m.id === action.payload.id
         );
@@ -163,11 +177,8 @@ const teamSlice = createSlice({
           });
         }
       })
-      .addCase(fetchMemberById.rejected, (state) => {
-        state.loading = false;
-      })
 
-      /* -------- UPDATE MEMBER -------- */
+      /* UPDATE MEMBER */
       .addCase(updateMember.fulfilled, (state, action) => {
         const idx = state.members.findIndex(
           (m) => m.id === action.payload.id
@@ -180,17 +191,18 @@ const teamSlice = createSlice({
         }
       })
 
-      /* -------- UPDATE PERMISSIONS -------- */
+      /* UPDATE PERMISSIONS */
       .addCase(updatePermissions.fulfilled, (state, action) => {
         const idx = state.members.findIndex(
           (m) => m.id === action.payload.id
         );
         if (idx !== -1) {
-          state.members[idx].permissions = action.payload.permissions;
+          state.members[idx].permissions =
+            action.payload.permissions;
         }
       })
 
-      /* -------- DELETE MEMBER -------- */
+      /* DELETE MEMBER */
       .addCase(deleteMember.fulfilled, (state, action) => {
         state.members = state.members.filter(
           (m) => m.id !== action.payload

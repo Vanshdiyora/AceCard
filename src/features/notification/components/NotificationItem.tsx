@@ -1,76 +1,54 @@
-import { Trash2 } from "lucide-react";
 import { useAppDispatch } from "../../../app/hooks";
-import { markRead, markUnread, deleteNotification } from "../slice";
-// import { useNavigate } from "react-router-dom";
+import { markRead } from "../slice";
 
-export default function NotificationItem({ item }: any) {
+interface NotificationItemProps {
+  item: {
+    id: number;
+    message_title: string;
+    message_body: string;
+    created_at: string;
+    status: "sent" | "read";
+  };
+}
+
+export default function NotificationItem({ item }: NotificationItemProps) {
   const dispatch = useAppDispatch();
-  // const navigate = useNavigate();
 
-  const openFlow = () => {
-    dispatch(markRead(item.id));
+  // unread = status === "sent"
+  const isUnread = item.status === "sent";
 
-    // Optional navigation depending on type
-    switch (item.source) {
-      case "admin_vendor":
-        // No navigation required unless you want something specific
-        break;
+  const handleClick = () => {
+    if (isUnread) {
+      dispatch(markRead(item.id)); // ✅ mark as read
     }
   };
 
-  // Format date (simple)
   const formattedDate = new Date(item.created_at).toLocaleString();
 
   return (
     <div
-      className={`p-3 border rounded-md hover:bg-gray-50 cursor-pointer relative group ${
-        item.status !== "read" ? "bg-blue-50 border-blue-200" : "bg-white"
-      }`}
-      onClick={openFlow}
+      onClick={handleClick}
+      className={`p-3 border rounded-md cursor-pointer relative group transition
+        ${isUnread ? "bg-blue-50 border-blue-200" : "bg-white"}`}
     >
       {/* Title */}
-      <h4 className={`font-medium ${item.status !== "read" && "font-bold"}`}>
+      <h4
+        className={`text-sm ${
+          isUnread ? "font-semibold" : "font-medium"
+        }`}
+      >
         {item.message_title}
       </h4>
 
-      {/* Message Body */}
-      <p className="text-sm text-gray-600">{item.message_body}</p>
+      {/* Body */}
+      <p className="text-sm text-gray-600">
+        {item.message_body}
+      </p>
 
-      {/* Created date */}
-      <span className="text-xs text-gray-400">{formattedDate}</span>
-
-      {/* Hover actions */}
-      <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100">
-        {item.status === "read" ? (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              dispatch(markUnread(item.id));
-            }}
-            className="text-xs text-blue-600"
-          >
-            Unread
-          </button>
-        ) : (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              dispatch(markRead(item.id));
-            }}
-            className="text-xs text-blue-600"
-          >
-            Read
-          </button>
-        )}
-
-        <Trash2
-          className="w-4 h-4 text-red-500 hover:text-red-700"
-          onClick={(e) => {
-            e.stopPropagation();
-            dispatch(deleteNotification(item.id));
-          }}
-        />
-      </div>
+      {/* Date */}
+      <span className="text-xs text-gray-400">
+        {formattedDate}
+      </span>
     </div>
   );
 }

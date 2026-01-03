@@ -1,7 +1,7 @@
 export interface FieldConfig {
   name: string;
   label: string;
-  type: "text" | "number" | "email" | "select" | "textarea" | "date" | "checkbox" | "multiselect";
+  type: "text" | "number" | "email" | "select" | "textarea" | "date" | "checkbox" | "multiselect" | "radio" | "datetime";
   placeholder?: string;
   options?: { label: string; value: any }[];
 }
@@ -10,21 +10,11 @@ interface DynamicFormProps {
   fields: FieldConfig[];
   form: any;
   onChange: (key: string, value: any) => void;
-
-  // Optional extra properties
-  extraProps?: { key: string; value: string }[];
-  onExtraChange?: (index: number, field: "key" | "value", value: string) => void;
-  onExtraAdd?: () => void;
-  onExtraRemove?: (index: number) => void;
 }
 export default function DynamicForm({
   fields,
   form,
   onChange,
-  extraProps,
-  onExtraChange,
-  onExtraAdd,
-  onExtraRemove
 }: DynamicFormProps) {
   return (
     <div className="p-5 space-y-4 overflow-y-auto custom-scrollbar flex-1">
@@ -74,49 +64,80 @@ export default function DynamicForm({
             </select>
           )}
 
+          {/* RADIO */}
+          {field.type === "radio" && (
+            <div className="flex flex-col gap-2">
+              {field.options?.map((opt) => (
+                <label
+                  key={opt.value}
+                  className="flex items-center gap-2 cursor-pointer"
+                >
+                  <input
+                    type="radio"
+                    name={field.name}
+                    value={opt.value}
+                    checked={form[field.name] === opt.value}
+                    onChange={() => onChange(field.name, opt.value)}
+                    className="h-4 w-4"
+                  />
+                  <span className="text-sm">{opt.label}</span>
+                </label>
+              ))}
+            </div>
+          )}
+
           {/* MULTISELECT WITH CHECKBOXES */}
-{field.type === "multiselect" && (
-  <div className="border rounded-lg p-2 space-y-1 max-h-40 overflow-y-auto">
+          {field.type === "multiselect" && (
+            <div className="border rounded-lg p-2 space-y-1 max-h-40 overflow-y-auto">
 
-    {/* Placeholder */}
-    {(!form[field.name] || form[field.name].length === 0) && (
-      <p className="text-xs text-gray-400 italic">
-        {field.placeholder || "Select one or more options"}
-      </p>
-    )}
+              {/* Placeholder */}
+              {(!form[field.name] || form[field.name].length === 0) && (
+                <p className="text-xs text-gray-400 italic">
+                  {field.placeholder || "Select one or more options"}
+                </p>
+              )}
 
-    {field.options?.map((opt) => {
-      const isSelected = (form[field.name] || []).includes(opt.value);
+              {field.options?.map((opt) => {
+                const isSelected = (form[field.name] || []).includes(opt.value);
 
-      return (
-        <label
-          key={opt.value}
-          className="flex items-center gap-2 p-1 rounded hover:bg-gray-100 cursor-pointer"
-        >
-          <input
-            type="checkbox"
-            checked={isSelected}
-            onChange={(e) => {
-              let updatedValues = [...(form[field.name] || [])];
+                return (
+                  <label
+                    key={opt.value}
+                    className="flex items-center gap-2 p-1 rounded hover:bg-gray-100 cursor-pointer"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={(e) => {
+                        let updatedValues = [...(form[field.name] || [])];
 
-              if (e.target.checked) {
-                updatedValues.push(opt.value);
-              } else {
-                updatedValues = updatedValues.filter((v) => v !== opt.value);
-              }
+                        if (e.target.checked) {
+                          updatedValues.push(opt.value);
+                        } else {
+                          updatedValues = updatedValues.filter((v) => v !== opt.value);
+                        }
 
-              onChange(field.name, updatedValues);
-            }}
-            className="h-4 w-4"
-          />
+                        onChange(field.name, updatedValues);
+                      }}
+                      className="h-4 w-4"
+                    />
 
-          <span className="text-sm">{opt.label}</span>
-        </label>
-      );
-    })}
-  </div>
-)}
+                    <span className="text-sm">{opt.label}</span>
+                  </label>
+                );
+              })}
+            </div>
+          )}
 
+          {/* DATETIME */}
+          {field.type === "datetime" && (
+            <input
+              type="datetime-local"
+              className="border rounded-lg w-full p-2 text-sm"
+              value={form[field.name] ?? ""}
+              onChange={(e) => onChange(field.name, e.target.value)}
+            />
+          )}
 
           {/* CHECKBOX */}
           {field.type === "checkbox" && (
@@ -128,50 +149,9 @@ export default function DynamicForm({
             />
           )}
         </div>
+
+
       ))}
-
-      {/* Extra dynamic properties */}
-      {extraProps && (
-        <div className="mt-4">
-          <h3 className="font-medium mb-2">Extra Properties</h3>
-
-          {extraProps.map((prop, idx) => (
-            <div key={idx} className="flex items-center gap-2 mb-2">
-
-              <input
-                placeholder="Field name"
-                value={prop.key}
-                onChange={(e) => onExtraChange?.(idx, "key", e.target.value)}
-                className="border rounded-lg px-3 py-2 w-1/2"
-              />
-
-              <input
-                placeholder="Value"
-                value={prop.value}
-                onChange={(e) => onExtraChange?.(idx, "value", e.target.value)}
-                className="border rounded-lg px-3 py-2 w-1/2"
-              />
-
-              {extraProps.length > 1 && (
-                <button
-                  className="text-red-500"
-                  onClick={() => onExtraRemove?.(idx)}
-                >
-                  ✕
-                </button>
-              )}
-            </div>
-          ))}
-
-          <button 
-            onClick={onExtraAdd} 
-            className="text-purple-600 font-medium"
-          >
-            + Add another field
-          </button>
-        </div>
-      )}
-
     </div>
   );
 }

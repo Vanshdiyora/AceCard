@@ -1,63 +1,83 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import type { Lead, CreateLeadDto, UpdateLeadDto } from "./types";
+import type {
+  Lead,
+  CreateLeadDto,
+  UpdateLeadDto,
+  PaginationMeta,
+  LeadsApiResponse,
+  LeadNote
+} from "./types";
 import { LeadsService } from "./services/leads.service";
+
+/* -----------------------------------------------------
+   STATE
+----------------------------------------------------- */
 
 interface LeadsState {
   leads: Lead[];
+  meta: PaginationMeta | null;
+  notes: Record<number, LeadNote[]>; // keyed by leadId
   loading: boolean;
   error: string | null;
 }
 
 const initialState: LeadsState = {
   leads: [],
+  meta: null,
+  notes: {},
   loading: false,
   error: null,
 };
-
 /* -----------------------------------------------------
-   ASYNC THUNKS
+   THUNKS
 ----------------------------------------------------- */
 
-// GET /vendor/leads
-export const fetchLeads = createAsyncThunk("leads/fetch", async () => {
-  const data = await LeadsService.getLeads();
-  return data;
+export const fetchLeads = createAsyncThunk<
+  LeadsApiResponse,
+  { page?: number; pageSize?: number }
+>("leads/fetch", async ({ page = 1, pageSize = 10 }) => {
+  return await LeadsService.getLeads(page, pageSize);
 });
 
-// POST /vendor/leads
-export const createLead = createAsyncThunk(
+export const createLead = createAsyncThunk<Lead, CreateLeadDto>(
   "leads/create",
-  async (payload: CreateLeadDto) => {
-    const data = await LeadsService.createLead(payload);
-    return data;
-  }
+  async (payload) => LeadsService.createLead(payload)
 );
 
-// PUT /vendor/leads/:id
-export const updateLead = createAsyncThunk(
-  "leads/update",
-  async ({ id, data }: { id: number; data: UpdateLeadDto }) => {
-    const updated = await LeadsService.updateLead(id, data);
-    return updated;
-  }
+export const updateLead = createAsyncThunk<
+  Lead,
+  { id: number; data: UpdateLeadDto }
+>("leads/update", async ({ id, data }) =>
+  LeadsService.updateLead(id, data)
 );
 
-// POST /vendor/leads/:id/archive
-export const archiveLead = createAsyncThunk(
+export const archiveLead = createAsyncThunk<number, number>(
   "leads/archive",
-  async (id: number) => {
+  async (id) => {
     await LeadsService.archiveLead(id);
-    return id; // return the archived ID so reducer can remove it
+    return id;
   }
 );
 
-export const addLeadNote = createAsyncThunk(
-  "leads/addNote",
-  async ({ id, note }: { id: number; note: string }) => {
-    return LeadsService.addNote(id, note);
+export const fetchLeadNotes = createAsyncThunk<
+  { leadId: number; notes: LeadNote[] },
+  number
+>("leads/fetchNotes", async (leadId) => {
+  const notes = await LeadsService.getNotes(leadId);
+  return { leadId, notes };
+});
+
+export const fetchLeadById = createAsyncThunk(
+  "leads/fetchById",
+  async (id: number, { rejectWithValue }) => {
+    try {
+      const res = await LeadsService.getLeadById(id);
+      return res.data;
+    } catch (err: any) {
+      return rejectWithValue(err?.message ?? "Failed to fetch lead");
+    }
   }
 );
-
 
 /* -----------------------------------------------------
    SLICE
@@ -69,42 +89,69 @@ const leadsSlice = createSlice({
   reducers: {},
   extraReducers: (builder) => {
     builder
-      /* ----- FETCH LEADS ----- */
+
+      /* FETCH */
       .addCase(fetchLeads.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
       .addCase(fetchLeads.fulfilled, (state, action) => {
         state.loading = false;
-        state.leads = Array.isArray(action.payload)
-          ? action.payload
-          : [];
+        state.leads = action.payload.data;
+        state.meta = action.payload.meta;
       })
-
       .addCase(fetchLeads.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message ?? "Failed to load leads";
       })
 
-      /* ----- CREATE LEAD ----- */
+      /* CREATE */
       .addCase(createLead.fulfilled, (state, action) => {
-        state.leads.unshift(action.payload); // add to top
+        state.leads.unshift(action.payload);
       })
 
-      /* ----- UPDATE LEAD ----- */
+      /* UPDATE */
       .addCase(updateLead.fulfilled, (state, action) => {
-        const updated = action.payload;
-        const index = state.leads.findIndex((l) => l.id === updated.id);
-        if (index !== -1) {
-          state.leads[index] = updated;
-        }
+        const i = state.leads.findIndex((l) => l.id === action.payload.id);
+        if (i !== -1) state.leads[i] = action.payload;
       })
 
-      /* ----- ARCHIVE LEAD ----- */
+      .addCase(fetchLeadById.pending, (state) => {
+  state.loading = true;
+})
+
+.addCase(fetchLeadById.fulfilled, (state, action) => {
+  state.loading = false;
+
+  const idx = state.leads.findIndex(l => l.id === action.payload.id);
+  if (idx !== -1) {
+    state.leads[idx] = action.payload;
+  } else {
+    state.leads.push(action.payload);
+  }
+})
+
+.addCase(fetchLeadById.rejected, (state, action) => {
+  state.loading = false;
+  state.error = action.payload as string;
+})
+
+
+      /* ARCHIVE */
       .addCase(archiveLead.fulfilled, (state, action) => {
-        const id = action.payload;
-        state.leads = state.leads.filter((l) => l.id !== id);
+        state.leads = state.leads.filter((l) => l.id !== action.payload);
+      })
+       .addCase(fetchLeadNotes.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(fetchLeadNotes.fulfilled, (state, action) => {
+        state.loading = false;
+        state.notes[action.payload.leadId] = action.payload.notes;
+      })
+      .addCase(fetchLeadNotes.rejected, (state) => {
+        state.loading = false;
       });
+
   },
 });
 

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAppSelector, useAppDispatch } from "../../../app/hooks";
 import { fetchProducts } from "../slice";
 import { ProductsAPI } from "../services/products.service";
@@ -11,6 +12,8 @@ import { InfoCard } from "../../../common/components/cards/InfoCard";
 
 export default function ProductsPage() {
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
+
   const { products: rawProducts = [], loading } = useAppSelector(
     (state) => state.products ?? {}
   );
@@ -131,18 +134,26 @@ export default function ProductsPage() {
             {!loading && filtered.length > 0 && viewMode === "grid" && (
               <div className="grid grid-cols-2 gap-5">
                 {filtered.map((p) => (
-                  <InfoCard
+                  <div
                     key={p.id}
-                    product={p}
-                    onEdit={() => {
-                      setEditProduct(p);
-                      setOpen(true);
-                    }}
-                    onToggleArchive={async () => {
-                      await ProductsAPI.toggleArchive(p.id);
-                      dispatch(fetchProducts());
-                    }}
-                  />
+                    className="cursor-pointer"
+                    onClick={() => navigate(`/admin/products/${p.id}`)}
+                  >
+                    <InfoCard
+                      product={p}
+                      onEdit={(e?: React.MouseEvent) => {
+                        e?.stopPropagation();
+                        setEditProduct(p);
+                        setOpen(true);
+                      }}
+                      onToggleArchive={async (e?: React.MouseEvent) => {
+                        e?.stopPropagation();
+                        await ProductsAPI.toggleArchive(p.id);
+                        dispatch(fetchProducts());
+                      }}
+                    />
+                  </div>
+
                 ))}
               </div>
             )}
@@ -162,7 +173,12 @@ export default function ProductsPage() {
                 </thead>
                 <tbody>
                   {filtered.map((p) => (
-                    <tr key={p.id} className="border-b hover:bg-gray-50 text-sm">
+                    <tr
+                      key={p.id}
+                      className="border-b hover:bg-gray-50 text-sm cursor-pointer"
+                      onClick={() => navigate(`/admin/products/${p.id}`)}
+                    >
+
                       <td className="p-3">{p.name}</td>
                       <td className="p-3">{p.category}</td>
                       <td className="p-3">₹{p.price}</td>
@@ -170,7 +186,8 @@ export default function ProductsPage() {
                       <td className="p-3">{p.status}</td>
                       <td className="p-3">
                         <button
-                          onClick={() => {
+                          onClick={(e) => {
+                            e.stopPropagation();
                             setEditProduct(p);
                             setOpen(true);
                           }}

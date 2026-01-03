@@ -16,7 +16,7 @@ const SuperAdminLayout = () => {
       <Sidebar type="superadmin" />
 
       <div className="flex-1 flex flex-col bg-gray-50">
-        <Topbar type="superadmin" />
+        <Topbar type="super_admin" />
 
         <main className="p-4 bg-[#F7F8FC]">
           <Outlet />

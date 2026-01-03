@@ -1,39 +1,41 @@
 import type { Campaign } from "../../types";
 
 type Props = {
-  campaign: Campaign;
+  campaign: Campaign & {
+    owner_name?: string;
+    salespersons?: { id: number; name: string }[];
+    products?: { id: number; name: string }[];
+    start_date?: string;
+    end_date?: string | null;
+  };
 };
 
 export default function CampaignOverviewTab({ campaign }: Props) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
-      <Field label="Campaign Name" value={campaign.name} />
 
+      {/* Basic */}
+      <Field label="Campaign Name" value={campaign.name} />
       <StatusField status={campaign.status} />
 
-      <Field label="Budget" value={`$${campaign.budget}K`} />
+      <Field label="Budget / Target" value={`$${campaign.budget}K`} />
+      <Field label="Owner (Manager)" value={campaign.owner_name ?? "—"} />
 
       <Field
-        label="Leads Generated"
-        value={campaign.leads_generated}
+        label="Start Date"
+        value={campaign.start_date?.split("T")[0] ?? "—"}
       />
 
       <Field
-        label="Conversion Rate"
-        value={`${campaign.conversion_rate}%`}
+        label="End Date"
+        value={campaign.end_date?.split("T")[0] ?? "—"}
       />
 
-      <Field
-        label="Pipeline Value"
-        value={`$${campaign.pipeline_value}K`}
-      />
-
+      {/* Description full width */}
       <div className="md:col-span-2">
-        <Field
-          label="Description"
-          value={campaign.description}
-        />
+        <Field label="Description" value={campaign.description} />
       </div>
+
     </div>
   );
 }
@@ -50,7 +52,7 @@ function Field({
   return (
     <div>
       <div className="text-gray-500">{label}</div>
-      <div className="font-medium">{value ?? "-"}</div>
+      <div className="font-medium break-words">{value || "—"}</div>
     </div>
   );
 }

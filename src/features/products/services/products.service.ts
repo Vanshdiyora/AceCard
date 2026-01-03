@@ -1,48 +1,51 @@
 import axiosClient from "../../../services/axiosClient";
-import type { Product } from "../types";
+import type {
+  Product,
+  ProductListResponse,
+} from "../types";
+import type { PaginationParams } from "../../../common/types";
 
 export const ProductsAPI = {
-  /**
-   * Get all products
-   */
-  async getAll(): Promise<Product[]> {
-    const res = await axiosClient.get("/vendor/products");
+  /* -------- GET ALL PRODUCTS -------- */
+  async getAll( params: PaginationParams = { page: 1, page_size: 10 }): Promise<ProductListResponse> {
+    const res = await axiosClient.get("/vendor/products",{params});
+    return res.data; // { data, meta }
+  },
+
+  /* -------- GET PRODUCT BY ID -------- */
+  async getById(id: number): Promise<Product> {
+    const res = await axiosClient.get(
+      `/vendor/products/${id}`
+    );
     return res.data;
   },
 
-  /**
-   * Create product
-   * Requires:
-   * {
-   *   name, price, category, sku, description,
-   *   extra_properties: {}
-   * }
-   */
-  async createProduct(data: any) {
-    const res = await axiosClient.post("/vendor/products", data);
+  /* -------- CREATE PRODUCT -------- */
+  async createProduct(data: Partial<Product>): Promise<Product> {
+    const res = await axiosClient.post(
+      "/vendor/products",
+      data
+    );
     return res.data;
   },
 
-  /**
-   * Update product by ID
-   * PUT /vendor/products/:id
-   * Must send the FULL product object as backend requires:
-   * {
-   *   id, vendor_id, name, price, category, sku, status,
-   *   created_at, updated_at, description, extra_properties
-   * }
-   */
-  async updateProduct(id: number, data: any) {
-    const res = await axiosClient.put(`/vendor/products/${id}`, data);
+  /* -------- UPDATE PRODUCT -------- */
+  async updateProduct(
+    id: number,
+    data: Partial<Product>
+  ): Promise<Product> {
+    const res = await axiosClient.put(
+      `/vendor/products/${id}`,
+      data
+    );
     return res.data;
   },
 
-  /**
-   * NEW — Archive OR Activate product
-   * POST /vendor/products/{id}/archive
-   */
-  async toggleArchive(id: number) {
-    const res = await axiosClient.post(`/vendor/products/${id}/archive`);
+  /* -------- ARCHIVE / ACTIVATE -------- */
+  async toggleArchive(id: number): Promise<Product> {
+    const res = await axiosClient.post(
+      `/vendor/products/${id}/archive`
+    );
     return res.data;
-  }
+  },
 };

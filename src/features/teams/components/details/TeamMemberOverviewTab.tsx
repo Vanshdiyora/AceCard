@@ -1,7 +1,9 @@
 // components/details/TeamMemberOverviewTab.tsx
 import type { TeamMember } from "../../types";
-import { useAppSelector } from "../../../../app/hooks";
+import { useAppDispatch, useAppSelector } from "../../../../app/hooks";
 import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
+import { fetchCampaignsByTeamMember } from "../../../campaigns/slice";
 
 export default function TeamMemberOverviewTab({
   member,
@@ -9,16 +11,19 @@ export default function TeamMemberOverviewTab({
   member: TeamMember;
 }) {
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
 
   const { items: campaigns, loading } = useAppSelector(
     (s) => s.campaigns
   );
 
-  // Filter campaigns assigned to this member
-  const assignedCampaigns = campaigns.filter(
-    (c) =>
-      c.assigned_to_id === member.id
-  );
+  // ✅ FETCH CAMPAIGNS FOR THIS MEMBER
+  useEffect(() => {
+    if (member?.id) {
+      console.log(member.id)
+      dispatch(fetchCampaignsByTeamMember({ memberId: member.id }));
+    }
+  }, [member.id, dispatch]);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -37,12 +42,14 @@ export default function TeamMemberOverviewTab({
       <div className="lg:col-span-2 bg-white border rounded-xl p-5">
         <div className="flex justify-between items-center mb-4">
           <h3 className="font-medium">
-            Campaigns Assigned ({assignedCampaigns.length})
+            Campaigns Assigned ({campaigns.length})
           </h3>
 
           <button
             onClick={() =>
-              navigate(`/admin/campaigns?assignedTo=${member.id}`)
+              navigate(
+                `/admin/campaigns?teams_member_ids=${member.id}`
+              )
             }
             className="text-sm text-purple-600"
           >
@@ -58,16 +65,16 @@ export default function TeamMemberOverviewTab({
         )}
 
         {/* Empty */}
-        {!loading && assignedCampaigns.length === 0 && (
+        {!loading && campaigns.length === 0 && (
           <div className="text-sm text-gray-500">
             No campaigns assigned
           </div>
         )}
 
         {/* List */}
-        {assignedCampaigns.length > 0 && (
+        {campaigns.length > 0 && (
           <div className="divide-y">
-            {assignedCampaigns.map((c) => (
+            {campaigns.map((c) => (
               <div
                 key={c.id}
                 onClick={() =>
