@@ -5,10 +5,11 @@ import type { Notification } from "./types";
 export const fetchNotifications = createAsyncThunk(
   "notifications/fetch",
   async () => {
-    const data = await notificationService.getMyNotifications();
+    const res = await notificationService.getMyNotifications();
 
-    // ✅ normalize backend response
-    return data.map((n: any) => ({
+    const list = res.data ?? [];
+
+    return list.map((n: any) => ({
       ...n,
       is_read: n.status === "read",
     }));
@@ -56,20 +57,18 @@ const notificationSlice = createSlice({
         state.loading = false;
       })
       .addCase(markRead.fulfilled, (state, action) => {
-  const n = state.list.find((i) => i.id === action.payload);
-  if (n) {
-    n.is_read = true;
-    n.status = "read"; // ✅ keep in sync
-  }
-})
-
+        const n = state.list.find((i) => i.id === action.payload);
+        if (n) {
+          n.is_read = true;
+          n.status = "read";
+        }
+      })
       .addCase(markAll.fulfilled, (state) => {
-  state.list.forEach((n) => {
-    n.is_read = true;
-    n.status = "read";
-  });
-});
-
+        state.list.forEach((n) => {
+          n.is_read = true;
+          n.status = "read";
+        });
+      });
   },
 });
 

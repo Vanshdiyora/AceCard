@@ -24,7 +24,15 @@ export default function CampaignsPage() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
 
-  const { items, meta, loading } = useAppSelector((s) => s.campaigns);
+  const campaignsState = useAppSelector((s) => s.campaigns);
+
+const items: Campaign[] = Array.isArray(campaignsState?.items)
+  ? campaignsState!.items
+  : [];
+
+const meta = campaignsState?.meta ?? null;
+const loading = campaignsState?.loading ?? false;
+
 
   const [activeTab, setActiveTab] = useState("all");
   const [search, setSearch] = useState("");

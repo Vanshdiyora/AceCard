@@ -14,16 +14,27 @@ export interface Campaign {
   vendor_id: number;
   name: string;
   description: string;
+  manager_id?: number;
+  assigned_reps?: number[];
+  products?: number[];
+  start_date?: string;
+  end_date?: string | null;
   status: CampaignStatus;
   budget: number;
-
   leads_generated: number;
   conversion_rate: number;
   pipeline_value: number;
-
   created_at: string;
   updated_at: string;
 }
+
+
+export type EnrichedCampaign = Campaign & {
+  owner_name?: string;
+  salespersons?: { id: number; name: string }[];
+  product_details?: { id: number; name: string }[];
+};
+
 
 // Pagination metadata
 export interface CampaignMeta {

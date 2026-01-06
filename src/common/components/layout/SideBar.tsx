@@ -3,7 +3,6 @@ import {
   LayoutDashboard,
   Users,
   Building2,
-  Key,
   BarChart2,
   LifeBuoy,
   Settings,
@@ -31,7 +30,6 @@ export default function Sidebar({ type }: SidebarProps) {
   ];
 
   const superMenu = [
-    { icon: LayoutDashboard, label: "Dashboard", path: `${superBase}` },
     { icon: Building2, label: "Vendors", path: `${superBase}/vendors` },
     { icon: LifeBuoy, label: "Tickets & Support", path: `${superBase}/support` },
     { icon: Settings, label: "System Settings", path: `${superBase}/system-settings` },
@@ -48,17 +46,21 @@ export default function Sidebar({ type }: SidebarProps) {
 
       <nav className="space-y-2">
         {menu.map((item) => {
-          const isActive = location.pathname === item.path;
+         const isRoot =
+    item.path === adminBase || item.path === superBase;
 
-          return (
+  const isActive = isRoot
+    ? location.pathname === item.path
+    : location.pathname === item.path ||
+      location.pathname.startsWith(item.path + "/");
+                return (
             <Link
               key={item.path}
               to={item.path}
               className={`flex items-center gap-3 px-3 py-2 rounded-md transition
-                ${
-                  isActive
-                    ? "bg-purple-50 text-purple-700 font-medium"
-                    : "text-gray-700 hover:bg-gray-100"
+                ${isActive
+                  ? "bg-purple-50 text-purple-700 font-medium"
+                  : "text-gray-700 hover:bg-gray-100"
                 }`}
             >
               <item.icon size={18} />

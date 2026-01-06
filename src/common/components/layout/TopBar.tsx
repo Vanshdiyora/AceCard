@@ -1,8 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import NotificationBell from "./NotificationBell";
-import GlobalSearch from "../../components/global-search/GlobalSearch";
-import { useGlobalSearchPrefetch } from "../../hooks/useGlobalSearchPrefetch";
+import GlobalSearch from "../../../features/globalSearch/components/GlobalSearch";
 import { useAppDispatch } from "../../../app/hooks";
 import { logout } from "../../../features/auth/slice";
 
@@ -13,8 +12,6 @@ type TopbarProps = {
 
 export default function Topbar({ username = "User", type }: TopbarProps) {
   // ✅ ROLE-AWARE PREFETCH (THIS FIXES THE REDIRECT ISSUE)
-  useGlobalSearchPrefetch(type);
-
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
 

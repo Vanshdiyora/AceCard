@@ -32,7 +32,7 @@ export const fetchVendors = createAsyncThunk(
   ) => {
     try {
       return await vendorsService.list(
-        params ?? { page: 1, page_size: 1 }
+        params ?? { page: 1, page_size: 10 }
       );
     } catch (err: any) {
       return rejectWithValue(

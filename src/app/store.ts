@@ -13,6 +13,7 @@ import vendorsReducer from "../features/vendors/slice";
 import salespersonReducer from "../features/superadmin/Salesperson/SalespersonSlice";
 import seatskeysSlice from "../features/superadmin/SeatsKeys/SeatsKeysSlice"
 import settingsReducer from "../features/settings/slice";
+import globalSearchReducer from "../features/globalSearch/slice"; 
 
 export const store = configureStore({
   reducer: {
@@ -28,7 +29,8 @@ export const store = configureStore({
     vendors: vendorsReducer, 
     superSalespersons: salespersonReducer,
     superSeats: seatskeysSlice,
-    notifications: notificationsReducer
+    notifications: notificationsReducer,
+    globalSearch: globalSearchReducer, 
   },
 });
 

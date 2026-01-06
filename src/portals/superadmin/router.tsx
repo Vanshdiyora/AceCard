@@ -1,9 +1,6 @@
-import { createBrowserRouter } from "react-router-dom";
+import { createBrowserRouter, Navigate } from "react-router-dom";
 import ProtectedRoute from "../../utils/ProtectedRoute";
 import SuperAdminLayout from "./layout/SuperAdminLayout";
-import SuperDashboardPage from "./pages/DashBoard/SuperDashBoard";
-import SalespersonPage from "./pages/Salesperson/SalespersonPage";
-import SeatsPage from "./pages/SeatsKeysPage/SeatsKeysPage";
 import { SupportAdmin, VendorsPage } from "../../features";
 
 export const superAdminRouter = createBrowserRouter([
@@ -17,19 +14,11 @@ export const superAdminRouter = createBrowserRouter([
     children: [
       {
         index: true,
-        element: <SuperDashboardPage />,
+        element: <Navigate to="vendors" replace />,
       },
       {
         path: "vendors",
         element: <VendorsPage />,
-      },
-      {
-        path: "salespersons",
-        element: <SalespersonPage />,
-      },
-      {
-        path: "seats",
-        element: <SeatsPage />,
       },
       {
         path: "support",

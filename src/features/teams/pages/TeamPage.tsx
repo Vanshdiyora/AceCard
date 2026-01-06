@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useAppDispatch, useAppSelector } from "../../../app/hooks";
 import { useNavigate } from "react-router-dom";
 
@@ -32,7 +32,33 @@ export default function TeamPage() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
 
-  const { members, loading } = useAppSelector((s) => s.team);
+  const teamState = useAppSelector((s) => s.team);
+  const authState = useAppSelector((s) => s.auth);
+
+  const members: TeamMember[] = Array.isArray(teamState?.members)
+    ? teamState.members
+    : [];
+
+  const loading = teamState?.loading ?? false;
+  type UserRole = "vendor_admin" | "manager" | "sales_rep";
+
+  const ROLES = ["vendor_admin", "manager", "sales_rep"] as const;
+
+  const rawRole = authState?.role ?? "";
+
+  const currentRole: UserRole = ROLES.includes(rawRole as UserRole)
+    ? (rawRole as UserRole)
+    : "sales_rep";
+
+  const currentUserId = authState?.user?.user_id;
+
+  const canCreateManager = currentRole === "vendor_admin";
+  const canCreateSalesRep = currentRole === "vendor_admin" || currentRole === "manager";
+
+  const managers = useMemo(
+    () => members.filter((m) => m.role === "manager"),
+    [members]
+  );
 
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
@@ -49,10 +75,9 @@ export default function TeamPage() {
     dispatch(fetchTeam());
   }, [dispatch]);
 
-  /* ---------------- SAFE FILTERING ---------------- */
-  const filtered = (members ?? [])
-    .filter(Boolean)
-    .filter((m) => {
+  /* ---------------- FILTERING ---------------- */
+  const filtered = useMemo(() => {
+    return members.filter((m) => {
       if (!m) return false;
 
       if (filter === "active" && m.status !== "active") return false;
@@ -65,10 +90,12 @@ export default function TeamPage() {
         return false;
 
       if (!m.name?.toLowerCase().includes(search.toLowerCase())) return false;
+
       return true;
     });
+  }, [members, filter, search]);
 
-  /* ---------------- LOADING STATE ---------------- */
+  /* ---------------- LOADING ---------------- */
   if (loading) {
     return (
       <div className="p-6 text-gray-500 text-sm">
@@ -80,15 +107,24 @@ export default function TeamPage() {
   /* ---------------- RENDER ---------------- */
   return (
     <div className="p-6 space-y-6">
-      {/* Header */}
       <PageHeader
         title="Team"
         description="Manage your team members"
-        addButtonLabel="Add Member"
-        onAdd={() => setAddOpen(true)}
+        addButtonLabel={
+  currentRole === "vendor_admin"
+    ? "Add Member"
+    : currentRole === "manager"
+      ? "Add Sales Rep"
+      : undefined
+}
+
+      onAdd={() => {
+  if (!canCreateManager && !canCreateSalesRep) return;
+  setAddOpen(true);
+}}
+
       />
 
-      {/* Filters */}
       <PageFilters
         tabs={[
           { label: "All", value: "all" },
@@ -103,14 +139,12 @@ export default function TeamPage() {
         onSearch={setSearch}
       />
 
-      {/* Empty State */}
       {filtered.length === 0 && (
         <div className="text-center text-gray-500 text-sm py-12">
           No team members found
         </div>
       )}
 
-      {/* Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         {filtered.map((m) => (
           <TeamMemberCard
@@ -130,12 +164,10 @@ export default function TeamPage() {
               setSuspendOpen(true);
             }}
           />
-
         ))}
       </div>
 
       {/* ---------------- MODALS ---------------- */}
-
       <AddMemberModal
         open={addOpen}
         onClose={() => setAddOpen(false)}
@@ -143,7 +175,11 @@ export default function TeamPage() {
           dispatch(createMember(data));
           setAddOpen(false);
         }}
+        currentRole={currentRole}
+        currentUserId={currentUserId}
+        managers={managers}
       />
+
 
       <EditMemberModal
         open={editOpen}
@@ -154,10 +190,22 @@ export default function TeamPage() {
         }}
         onSubmit={(data) => {
           if (!selected) return;
+
+          if (
+            selected.role === "sales_rep" &&
+            data.manager_id !== selected.manager_id &&
+            currentRole !== "vendor_admin"
+          ) {
+            alert("Only vendor can reassign sales reps.");
+            return;
+          }
+
           dispatch(updateMember({ id: selected.id, data }));
           setEditOpen(false);
           setSelected(null);
         }}
+        currentRole={currentRole}
+        managers={managers}
       />
 
       <PermissionsModal
@@ -184,12 +232,7 @@ export default function TeamPage() {
         }}
         onConfirm={(status: any) => {
           if (!selected) return;
-          dispatch(
-            updateMember({
-              id: selected.id,
-              data: { status },
-            })
-          );
+          dispatch(updateMember({ id: selected.id, data: { status } }));
           setSuspendOpen(false);
           setSelected(null);
         }}

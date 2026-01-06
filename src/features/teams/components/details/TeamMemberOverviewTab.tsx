@@ -1,8 +1,7 @@
-// components/details/TeamMemberOverviewTab.tsx
 import type { TeamMember } from "../../types";
 import { useAppDispatch, useAppSelector } from "../../../../app/hooks";
 import { useNavigate } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { fetchCampaignsByTeamMember } from "../../../campaigns/slice";
 
 export default function TeamMemberOverviewTab({
@@ -13,17 +12,27 @@ export default function TeamMemberOverviewTab({
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
 
-  const { items: campaigns, loading } = useAppSelector(
+  const { items: allCampaigns, loading } = useAppSelector(
     (s) => s.campaigns
   );
 
-  // ✅ FETCH CAMPAIGNS FOR THIS MEMBER
+  // Always fetch by team member id (existing API)
   useEffect(() => {
-    if (member?.id) {
-      console.log(member.id)
+    if (member?.id && member.role!= "manager") {
       dispatch(fetchCampaignsByTeamMember({ memberId: member.id }));
     }
   }, [member.id, dispatch]);
+
+  // Frontend-only filtering for manager
+  const campaigns = useMemo(() => {
+    if (member.role === "manager") {
+      return allCampaigns.filter(
+        (c) => c.manager_id === member.id
+      );
+    }
+
+    return allCampaigns;
+  }, [allCampaigns, member.role, member.id]);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -47,9 +56,7 @@ export default function TeamMemberOverviewTab({
 
           <button
             onClick={() =>
-              navigate(
-                `/admin/campaigns?teams_member_ids=${member.id}`
-              )
+              navigate(`/admin/campaigns?teams_member_ids=${member.id}`)
             }
             className="text-sm text-purple-600"
           >
@@ -57,21 +64,18 @@ export default function TeamMemberOverviewTab({
           </button>
         </div>
 
-        {/* Loading */}
         {loading && (
           <div className="text-sm text-gray-500">
             Loading campaigns…
           </div>
         )}
 
-        {/* Empty */}
         {!loading && campaigns.length === 0 && (
           <div className="text-sm text-gray-500">
             No campaigns assigned
           </div>
         )}
 
-        {/* List */}
         {campaigns.length > 0 && (
           <div className="divide-y">
             {campaigns.map((c) => (
@@ -82,15 +86,12 @@ export default function TeamMemberOverviewTab({
                 }
                 className="py-3 cursor-pointer hover:bg-gray-50 rounded-md px-2"
               >
-                <div className="font-medium">
-                  {c.name}
-                </div>
+                <div className="font-medium">{c.name}</div>
 
                 <div className="text-xs text-gray-500 flex gap-4 mt-1">
                   <span>Status: {c.status}</span>
                   <span>
-                    Budget: ₹
-                    {c.budget?.toLocaleString() ?? "-"}
+                    Budget: ₹{c.budget?.toLocaleString() ?? "-"}
                   </span>
                 </div>
               </div>

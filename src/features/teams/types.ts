@@ -9,10 +9,11 @@ export interface TeamPermissions {
 export interface TeamMember {
   id: number;
   vendor_id: number;
+  manager_id?: number | null; 
   name: string;
   email: string;
   phone: string;
-  role: "manager" | "sales_rep" | "vendor" | string;
+  role: "manager" | "sales_rep" | "vendor_admin" | string;
   status: "active" | "pending" | "suspended";
 
   permissions?: TeamPermissions;
@@ -49,6 +50,7 @@ export interface CreateTeamMemberDTO {
   password: string;
   phone: string;
   role: string;
+  manager_id?: number; 
 }
 
 export interface UpdateTeamMemberDTO {

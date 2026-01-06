@@ -25,29 +25,26 @@ export const createCampaign = createAsyncThunk<
 
 export const fetchCampaignsByTeamMember = createAsyncThunk<
   CampaignListResponse,
-  { memberId?: number; page?: number; page_size?: number }
+  { memberId?: number; page?: number; page_size?: number },
+  { rejectValue: string }
 >(
   "campaigns/fetchByTeamMember",
-  async ({ memberId, page = 1, page_size = 10 }) => {
-    // ✅ Always return CampaignListResponse
+  async ({ memberId, page, page_size }, { rejectWithValue }) => {
     if (!memberId) {
-      return {
-        data: [],
-        meta: {
-          total_count: 0,
-          page,
-          page_size,
-          total_pages: 0,
-          has_next: false,
-          has_previous: false,
-        },
-      };
+      return rejectWithValue("Member ID is required to fetch campaigns");
     }
 
-    return await CampaignService.getByTeamMember(memberId, {
-      page,
-      page_size,
-    });
+    const params: { page?: number; page_size?: number } = {};
+    if (page !== undefined) params.page = page;
+    if (page_size !== undefined) params.page_size = page_size;
+
+    try {
+      return await CampaignService.getByTeamMember(memberId, params);
+    } catch (err: any) {
+      return rejectWithValue(
+        err?.message ?? "Failed to fetch campaigns for team member"
+      );
+    }
   }
 );
 

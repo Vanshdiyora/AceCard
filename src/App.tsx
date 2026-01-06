@@ -6,12 +6,12 @@ import SuperAdminLayout from "./portals/superadmin/layout/SuperAdminLayout";
 import AdminLayout from "./portals/admin/layout/AdminLayout";
 
 // SUPER ADMIN PAGES
-import SuperDashboardPage from "./portals/superadmin/pages/DashBoard/SuperDashBoard";
 import { SupportAdmin, VendorsPage } from "./features";
 import LeadDetailsPage from "./features/leads/pages/LeadDetailsPage";
 // ADMIN PAGES
-import { SupportPage, DashboardPage, TeamPage , ProductsPage ,CampaignsPage ,LeadPage, SettingsPage, CampaignDetailsPage 
-  ,TeamMemberDetailsPage,
+import {
+  SupportPage, DashboardPage, TeamPage, ProductsPage, CampaignsPage, LeadPage, SettingsPage, CampaignDetailsPage
+  , TeamMemberDetailsPage,
   ProductDetailsPage
 } from "./features/index";
 
@@ -32,10 +32,11 @@ export default function App() {
             </ProtectedRoute>
           }
         >
-          <Route index element={<SuperDashboardPage />} />
+          <Route index element={<Navigate to="vendors" replace />} />
           <Route path="vendors" element={<VendorsPage />} />
           <Route path="support" element={<SupportAdmin />} />
         </Route>
+
 
         {/* ADMIN ROUTES */}
         <Route

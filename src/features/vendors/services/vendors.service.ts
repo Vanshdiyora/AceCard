@@ -10,7 +10,7 @@ export const vendorsService = {
   async list(
     params: { page?: number; page_size?: number } = {
       page: 1,
-      page_size: 1,
+      page_size: 10,
     }
   ): Promise<VendorListResponse> {
     const res = await axios.get(BASE, { params });

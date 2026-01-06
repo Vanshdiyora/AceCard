@@ -4,9 +4,14 @@ import { ArrowLeft, Edit, Trash2 } from "lucide-react";
 
 import { useAppDispatch, useAppSelector } from "../../../app/hooks";
 import { fetchCampaignById, archiveCampaign } from "../slice";
-
+import { fetchTeam } from "../../teams/slice";
+import { fetchProducts } from "../../products/slice";
+import EditCampaignModal from "../components/EditCampaignModal";
 import CampaignOverviewTab from "../components/details/CampaignOverviewTab";
 import CampaignSalespersonsTab from "../components/details/CampaignSalespersonsTab";
+import { selectEnrichedCampaignById } from "../selectors";
+import type { EnrichedCampaign } from "../types";
+
 
 const TABS = ["overview", "salespersons"] as const;
 
@@ -14,19 +19,27 @@ export default function CampaignDetailsPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
+  const [openEdit, setOpenEdit] = useState(false);
 
   const [activeTab, setActiveTab] =
     useState<typeof TABS[number]>("overview");
 
-  const { items, loading } = useAppSelector((s) => s.campaigns);
 
-  const campaign = items.find((c) => c.id === Number(id));
+  const campaign = useAppSelector(
+    selectEnrichedCampaignById(Number(id))
+  ) as EnrichedCampaign | null;
+  const loading = useAppSelector((s) => s.campaigns.loading);
+
 
   // ✅ FETCH ON LOAD / REFRESH
+
   useEffect(() => {
     if (id) {
       dispatch(fetchCampaignById(Number(id)));
     }
+
+    dispatch(fetchTeam());
+    dispatch(fetchProducts());
   }, [id, dispatch]);
 
   // ✅ LOADING STATE
@@ -84,19 +97,18 @@ export default function CampaignDetailsPage() {
         <div className="flex gap-2">
           <button
             disabled={isReadOnly}
-            className={`btn-outline ${
-              isReadOnly ? "opacity-50 cursor-not-allowed" : ""
-            }`}
+            onClick={() => setOpenEdit(true)}
+            className={`btn-outline ${isReadOnly ? "opacity-50 cursor-not-allowed" : ""}`}
           >
             <Edit size={16} /> Edit
           </button>
 
+
           <button
             onClick={archive}
             disabled={isReadOnly}
-            className={`btn-danger ${
-              isReadOnly ? "opacity-50 cursor-not-allowed" : ""
-            }`}
+            className={`btn-danger ${isReadOnly ? "opacity-50 cursor-not-allowed" : ""
+              }`}
           >
             <Trash2 size={16} /> Archive
           </button>
@@ -109,11 +121,10 @@ export default function CampaignDetailsPage() {
           <button
             key={t}
             onClick={() => setActiveTab(t)}
-            className={`pb-2 capitalize ${
-              activeTab === t
+            className={`pb-2 capitalize ${activeTab === t
                 ? "border-b-2 border-purple-600 text-purple-600 font-medium"
                 : "text-gray-500"
-            }`}
+              }`}
           >
             {t}
           </button>
@@ -125,9 +136,19 @@ export default function CampaignDetailsPage() {
         <CampaignOverviewTab campaign={campaign} />
       )}
 
-    {activeTab === "salespersons" && (
-        <CampaignSalespersonsTab campaignId={campaign.id} />
-    )}
+      {activeTab === "salespersons" && campaign && (
+        <CampaignSalespersonsTab
+          campaignId={campaign.id}
+          assignedReps={campaign.assigned_reps ?? []}
+        />
+      )}
+
+      <EditCampaignModal
+        open={openEdit}
+        onClose={() => setOpenEdit(false)}
+        campaign={campaign}
+      />
+
     </div>
   );
 }

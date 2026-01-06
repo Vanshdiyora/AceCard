@@ -1,17 +1,14 @@
 export type GlobalSearchType =
   | "campaign"
   | "lead"
+  | "vendor"
   | "team"
-  | "product"
-  | "vendor";
+  | "product";
 
 export interface GlobalSearchItem {
-  id: number | string;
+  id: string;
   label: string;
   type: GlobalSearchType;
   route: string;
+  description?: string;
 }
-
-export type GroupedSearchResults = Partial<
-  Record<GlobalSearchType, GlobalSearchItem[]>
->;

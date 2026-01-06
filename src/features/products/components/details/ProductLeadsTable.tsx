@@ -1,5 +1,10 @@
 import { useNavigate } from "react-router-dom";
-import { useAppSelector } from "../../../../app/hooks";
+import { useEffect } from "react";
+import { useAppDispatch, useAppSelector } from "../../../../app/hooks";
+
+import { fetchLeads } from "../../../leads/slice";
+import { fetchTeam } from "../../../teams/slice";
+import { fetchCampaigns } from "../../../campaigns/slice";
 
 type Props = {
   productId: number;
@@ -7,16 +12,44 @@ type Props = {
 
 export default function ProductLeadsTable({ productId }: Props) {
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
 
-  /**
-   * TEMP:
-   * Backend does not yet provide leads per product.
-   * Using full leads list for now.
-   * Replace with API: /products/:id/leads later.
-   */
-  const { leads } = useAppSelector((s) => s.leads);
+  const { leads, loading: leadsLoading } = useAppSelector((s) => s.leads);
+  const { members } = useAppSelector((s) => s.team);
+  const { items: campaigns } = useAppSelector((s) => s.campaigns);
 
-  if (!leads.length) {
+  // Load required data
+  useEffect(() => {
+    if (leads.length === 0) dispatch(fetchLeads({ page: 1, pageSize: 1000 }));
+    if (members.length === 0) dispatch(fetchTeam());
+    if (campaigns.length === 0) dispatch(fetchCampaigns());
+  }, [dispatch, leads.length, members.length, campaigns.length]);
+
+  // Filter leads by product and enrich them
+  const enrichedLeads = leads
+    .filter((l) => l.products?.includes(productId))
+    .map((l) => {
+      const owner = members.find((m) => m.id === l.assigned_rep_id);
+      const campaign = campaigns.find((c) => c.id === l.campaign_id);
+      const manager = members.find((m) => m.id === campaign?.manager_id);
+
+      return {
+        ...l,
+        owner_name: owner?.name,
+        campaign_name: campaign?.name,
+        manager_name: manager?.name,
+      };
+    });
+
+  if (leadsLoading) {
+    return (
+      <div className="bg-white p-8 rounded-xl text-center text-gray-500">
+        Loading leads...
+      </div>
+    );
+  }
+
+  if (!enrichedLeads.length) {
     return (
       <div className="bg-white p-8 rounded-xl text-center text-gray-500">
         No leads associated with this product.
@@ -42,7 +75,7 @@ export default function ProductLeadsTable({ productId }: Props) {
           </thead>
 
           <tbody>
-            {leads.map((l) => (
+            {enrichedLeads.map((l) => (
               <tr
                 key={l.id}
                 className="border-t hover:bg-gray-50 transition cursor-pointer"
