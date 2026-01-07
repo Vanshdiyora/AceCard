@@ -1,6 +1,5 @@
-// components/details/LeadProductsTab.tsx
 import { useEffect } from "react";
-import { Plus } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "../../../../app/hooks";
 import { fetchProducts } from "../../../products/slice";
@@ -12,6 +11,8 @@ interface Props {
 
 export default function LeadProductsTab({ lead }: Props) {
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
+
   const { products, loading } = useAppSelector((s) => s.products);
 
   useEffect(() => {
@@ -25,28 +26,29 @@ export default function LeadProductsTab({ lead }: Props) {
   );
 
   return (
-    <div className="p-6 space-y-4">
-      <div className="flex justify-between items-center">
-        <h3 className="font-semibold">Products</h3>
-        <button className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm flex items-center gap-2">
-          <Plus size={14} /> Add Product
-        </button>
-      </div>
+    <div className="space-y-6">
+      <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-500">
+        Products
+      </h3>
 
       {loading && (
         <div className="text-sm text-gray-500">Loading products...</div>
       )}
 
       {!loading && leadProducts.length === 0 && (
-        <div className="bg-white border rounded-xl p-6 text-sm text-gray-500 text-center">
+        <div className="bg-white border border-gray-100 rounded-2xl p-6 text-sm text-gray-500 text-center">
           No products added to this lead yet.
         </div>
       )}
 
       {!loading && leadProducts.length > 0 && (
-        <div className="bg-white border rounded-xl divide-y">
+        <div className="space-y-3">
           {leadProducts.map((product) => (
-            <ProductRow key={product.id} product={product} />
+            <ProductRow
+              key={product.id}
+              product={product}
+              onClick={() => navigate(`/admin/products/${product.id}`)}
+            />
           ))}
         </div>
       )}
@@ -54,19 +56,43 @@ export default function LeadProductsTab({ lead }: Props) {
   );
 }
 
-const ProductRow = ({ product }: any) => (
-  <div className="px-5 py-4">
-    {/* Top Row: Name + Price */}
-    <div className="flex justify-between items-center">
-      <p className="font-medium text-sm">{product.name}</p>
-      <p className="font-medium text-sm">
-        ${product.price?.toLocaleString()}
-      </p>
-    </div>
+const ProductRow = ({
+  product,
+  onClick,
+}: {
+  product: any;
+  onClick: () => void;
+}) => {
+  const currencySymbol =
+    product.currency === "INR"
+      ? "₹"
+      : product.currency === "RUB"
+      ? "₽"
+      : "$";
 
-    {/* Description */}
-    <p className="text-xs text-gray-500 mt-1">
-      {product.description || "No description available"}
-    </p>
-  </div>
-);
+  return (
+    <div
+      onClick={onClick}
+      className="
+        cursor-pointer bg-white border border-gray-100 rounded-2xl
+        px-5 py-4 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition
+      "
+    >
+      <div className="flex justify-between items-start gap-4">
+        <div className="flex flex-col">
+          <span className="text-sm font-semibold text-gray-900">
+            {product.name}
+          </span>
+          <span className="text-xs text-gray-500 mt-1 line-clamp-2">
+            {product.description || "No description available"}
+          </span>
+        </div>
+
+        <div className="text-sm font-semibold text-gray-900 whitespace-nowrap">
+          {currencySymbol}
+          {product.price?.toLocaleString()}
+        </div>
+      </div>
+    </div>
+  );
+};

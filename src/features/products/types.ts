@@ -6,8 +6,7 @@ export interface Product {
   price: number;
   description: string;
   category: string;
-  sku: string;
-  status: "active" | "inactive";
+  status: "active" | "archived";
   created_at: string;
   updated_at: string;
 }

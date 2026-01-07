@@ -10,7 +10,6 @@ export function InfoCard({ product, onEdit, onToggleArchive }: any) {
 
           <div className="mt-2 text-sm">
             <p><b>Price:</b> ₹{product.price}</p>
-            <p><b>SKU:</b> {product.sku}</p>
           </div>
         </div>
 

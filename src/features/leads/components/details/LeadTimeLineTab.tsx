@@ -1,4 +1,5 @@
 import type { Lead } from "../../types";
+import { Clock } from "lucide-react";
 
 interface Props {
   lead: Lead;
@@ -6,7 +7,10 @@ interface Props {
 
 export default function LeadTimeLineTab({ lead }: Props) {
   return (
-    <div className="p-6 space-y-4">
+    <div className="relative pl-6 space-y-8">
+      {/* Vertical line */}
+      <div className="absolute left-2 top-0 bottom-0 w-px bg-gradient-to-b from-purple-200 via-purple-100 to-transparent" />
+
       <TimelineItem
         title="Lead Created"
         desc="Lead was added to the system"
@@ -23,11 +27,22 @@ export default function LeadTimeLineTab({ lead }: Props) {
 }
 
 const TimelineItem = ({ title, desc, time }: any) => (
-  <div className="bg-white border rounded-xl p-4">
-    <p className="font-medium text-sm">{title}</p>
-    <p className="text-sm text-gray-500">{desc}</p>
-    <p className="text-xs text-gray-400 mt-1">
-      {new Date(time).toLocaleString()}
-    </p>
+  <div className="relative flex gap-5 items-start">
+
+    {/* Card */}
+    <div className="
+      flex-1 bg-white rounded-2xl border border-gray-100
+      px-5 py-4 shadow-sm hover:shadow-md transition
+    ">
+      <div className="flex items-center justify-between">
+        <p className="text-sm font-semibold text-gray-900">{title}</p>
+        <div className="flex items-center gap-1 text-xs text-gray-400">
+          <Clock size={12} />
+          {new Date(time).toLocaleString()}
+        </div>
+      </div>
+
+      <p className="text-sm text-gray-500 mt-1">{desc}</p>
+    </div>
   </div>
 );

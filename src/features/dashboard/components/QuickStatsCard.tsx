@@ -1,82 +1,93 @@
 import type { QuickStats } from "../types";
+import { useNavigate } from "react-router-dom";
+
+interface Performer {
+  name: string;
+  leads: number;
+  conversion: string;
+}
 
 interface Props {
   stats: QuickStats;
 }
 
 export default function QuickStatsCard({ stats }: Props) {
-  const items = [
-    {
-      label: "Active Campaigns",
-      value: stats.active_campaigns,
-      change: "+3",
-    },
-    {
-      label: "Team Members",
-      value: stats.team_members,
-      change: "+5",
-    },
-    {
-      label: "Products in Catalog",
-      value: stats.products,
-      change: "+2",
-    },
-    {
-      label: "Avg. Deal Size",
-      value: `$${(stats.avg_deal_size / 1000).toFixed(1)}K`,
-      change: "+12%",
-    },
-    {
-      label: "Win Rate",
-      value: `${stats.win_rate}%`,
-      change: "+1.8%",
-    },
-  ];
+  const performers: Performer[] = stats.top_performers || [];
+  const navigate = useNavigate();
 
   return (
-    <div className="space-y-6">
+    <div className="flex w-full gap-6">
+      {/* Top Performers — 70% */}
+      <div
+        className="w-[70%] bg-white rounded-2xl border p-6"
+        style={{ boxShadow: "5px 3px 14.6px 0px #2D1A5340" }}
+      >
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="font-semibold text-[#2d1a53]">Top Performers</h3>
+          <div className="flex gap-12 text-sm text-gray-300">
+            <span>Lead Count</span>
+            <span>Conversion%</span>
+          </div>
+        </div>
 
-      {/* QUICK STATS CARD */}
-      <div className="bg-white p-6 rounded-2xl shadow-sm border">
-        <h3 className="font-semibold text-lg mb-4">Quick Stats</h3>
-
-        <div className="space-y-4">
-          {items.map((item, i) => (
-            <div key={i} className="flex justify-between items-center">
-              
-              {/* LABEL */}
-              <p className="text-gray-600">{item.label}</p>
-
-              {/* VALUE + CHANGE */}
-              <div className="flex items-center gap-3">
-                <span className="font-semibold text-gray-900">{item.value}</span>
-                <span className="text-green-600 font-semibold">{item.change}</span>
+        <div className="divide-y divide-purple-100">
+          {performers.map((p, idx) => (
+            <div
+              key={idx}
+              className="grid grid-cols-[1fr_120px_120px] items-center py-4"
+            >
+              <div className="flex items-center gap-4">
+                <div className="w-9 h-9 rounded-full bg-purple-200 text-purple-700 font-semibold flex items-center justify-center">
+                  {p.name.charAt(0)}
+                </div>
+                <span className="font-medium text-[#2d1a53]">
+                  {p.name}
+                </span>
               </div>
 
+              <div className="flex justify-center">
+                <span className="px-4 py-1 rounded-full bg-purple-200 text-purple-700 text-xs font-semibold">
+                  {p.leads}
+                </span>
+              </div>
+
+              <div className="flex justify-center">
+                <span className="px-4 py-1 rounded-full bg-purple-200 text-purple-700 text-xs font-semibold">
+                  {p.conversion}
+                </span>
+              </div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* QUICK ACTIONS */}
-      <div className="bg-gradient-to-br from-purple-600 to-purple-800 p-6 rounded-2xl text-white space-y-4 shadow-md">
+      {/* Quick Action — 30% */}
+      <div className="w-[30%] bg-purple-300/60 rounded-2xl p-6 text-[#2d1a53] space-y-4"  style={{ boxShadow: "5px 3px 14.6px 0px #2D1A5340" }}>
+        <h3 className="font-semibold">Quick Action</h3>
 
-        <h3 className="font-semibold text-lg">Quick Actions</h3>
+        <ActionButton label="Add Campaign" onClick={() => navigate("/admin/campaigns?open=create")} />
 
-        <button className="w-full px-4 py-3 bg-white/10 hover:bg-white/20 rounded-xl text-left font-medium">
-          + Add New Lead
-        </button>
-
-        <button className="w-full px-4 py-3 bg-white/10 hover:bg-white/20 rounded-xl text-left font-medium">
-          + Create Campaign
-        </button>
-
-        <button className="w-full px-4 py-3 bg-white/10 hover:bg-white/20 rounded-xl text-left font-medium">
-          + Invite Team Member
-        </button>
-
+         <ActionButton
+        label="Add New Member"
+        onClick={() => navigate("/admin/team?open=create")}
+      />
+        <ActionButton label="Import Products" />
       </div>
-
     </div>
   );
 }
+
+function ActionButton({ label, onClick }: { label: string; onClick?: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className="w-full px-4 py-3 bg-white/50 hover:bg-white/70 rounded-xl text-left font-medium flex items-center gap-3 transition"
+    >
+      <span className="w-6 h-6 rounded-full bg-white text-purple-600 flex items-center justify-center font-bold">
+        +
+      </span>
+      {label}
+    </button>
+  );
+}
+

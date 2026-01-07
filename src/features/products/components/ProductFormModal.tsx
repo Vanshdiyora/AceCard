@@ -19,7 +19,6 @@ export default function ProductFormModal({
     name: "",
     price: 0,
     category: "",
-    sku: "",
     description: "",
   });
 
@@ -36,7 +35,6 @@ export default function ProductFormModal({
         name: product.name,
         price: product.price,
         category: product.category,
-        sku: product.sku,
         description: product.description,
       });
 
@@ -57,13 +55,30 @@ export default function ProductFormModal({
         name: "",
         price: 0,
         category: "",
-        sku: "",
         description: "",
       });
       setExtraProps([{ key: "", value: "" }]);
       setMeta({});
     }
   }, [product]);
+
+  useEffect(() => {
+  if (!open) return;
+
+  const scrollY = window.scrollY;
+
+  document.body.style.position = "fixed";
+  document.body.style.top = `-${scrollY}px`;
+  document.body.style.width = "100%";
+
+  return () => {
+    document.body.style.position = "";
+    document.body.style.top = "";
+    document.body.style.width = "";
+    window.scrollTo(0, scrollY);
+  };
+}, [open]);
+
 
   if (!open) return null;
 
@@ -88,12 +103,6 @@ export default function ProductFormModal({
       placeholder: "Enter category",
     },
     {
-      name: "sku",
-      label: "SKU",
-      type: "text",
-      placeholder: "Enter SKU code",
-    },
-    {
       name: "description",
       label: "Description",
       type: "textarea",
@@ -112,21 +121,6 @@ export default function ProductFormModal({
       ...prev,
       [key]: value,
     }));
-  };
-
-  // Extra properties handlers
-  const handleExtraChange = (idx: number, field: "key" | "value", value: string) => {
-    const updated = [...extraProps];
-    updated[idx][field] = value;
-    setExtraProps(updated);
-  };
-
-  const addExtraField = () => {
-    setExtraProps([...extraProps, { key: "", value: "" }]);
-  };
-
-  const removeExtraField = (idx: number) => {
-    setExtraProps(extraProps.filter((_, i) => i !== idx));
   };
 
   // Build final extra_properties object
@@ -156,10 +150,10 @@ export default function ProductFormModal({
           fields={fields}
           form={base}
           onChange={update}
-          extraProps={extraProps}
-          onExtraAdd={addExtraField}
-          onExtraChange={handleExtraChange}
-          onExtraRemove={removeExtraField}
+          // extraProps={extraProps}
+          // onExtraAdd={addExtraField}
+          // onExtraChange={handleExtraChange}
+          // onExtraRemove={removeExtraField}
         />
 
         {/* ACTION BUTTONS */}

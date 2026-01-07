@@ -1,306 +1,222 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppSelector, useAppDispatch } from "../../../app/hooks";
 import { fetchProducts } from "../slice";
 import { ProductsAPI } from "../services/products.service";
 import ProductFormModal from "../components/ProductFormModal";
-import ProductAnalyticsChart from "../components/ProductAnalysisChart";
-import SkeletonProductCard from "../components/SkeletonProductCard";
-import { Edit2, Grid, List } from "lucide-react";
-import StatCard from "../../../common/components/cards/StatCard";
-import { InfoCard } from "../../../common/components/cards/InfoCard";
+import PageHeader from "../../../common/components/layout/PageHeader";
+import PageFilters from "../../../common/components/layout/PageFilter";
+import DataTable, { type Column } from "../../../common/components/table/DataTable";
+import TableLoader from "../../../common/ui/TableLoader";
+import { Edit2 } from "lucide-react";
+
+type SortBy = "recent" | "name" | "price";
+type StatusFilter = "all" | "active" | "archived";
 
 export default function ProductsPage() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
 
   const { products: rawProducts = [], loading } = useAppSelector(
-    (state) => state.products ?? {}
+    s => s.products ?? {}
   );
 
   const products = Array.isArray(rawProducts) ? rawProducts : [];
 
-
   const [open, setOpen] = useState(false);
   const [editProduct, setEditProduct] = useState<any | null>(null);
+
   const [search, setSearch] = useState("");
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const [sortBy, setSortBy] = useState<SortBy>("recent");
 
   useEffect(() => {
     dispatch(fetchProducts());
-  }, []);
+  }, [dispatch]);
 
-  const filtered = products.filter((p) =>
-    p.name.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = useMemo(() => {
+    let list = [...products];
+
+    if (statusFilter !== "all") {
+      list = list.filter(p => p.status === statusFilter);
+    }
+
+    if (search) {
+      const q = search.toLowerCase();
+      list = list.filter(
+        p =>
+          p.name.toLowerCase().includes(q) ||
+          p.description?.toLowerCase().includes(q)
+      );
+    }
+
+    if (sortBy === "name") {
+      list.sort((a, b) => a.name.localeCompare(b.name));
+    } else if (sortBy === "price") {
+      list.sort((a, b) => a.price - b.price);
+    } else {
+      list.sort(
+        (a, b) =>
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+    }
+
+    return list;
+  }, [products, statusFilter, sortBy, search]);
+
+  const handleExport = () => {
+    const rows = filtered.map(p => ({
+      Name: p.name,
+      Description: p.description || "",
+      Price: p.price,
+      Category: p.category || "",
+      Status: p.status,
+    }));
+
+    if (!rows.length) return;
+
+    const csv = [
+      Object.keys(rows[0]).join(","),
+      ...rows.map(r => Object.values(r).join(",")),
+    ].join("\n");
+
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "products.csv";
+    a.click();
+  };
+
+  const handleImport = async () => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".csv";
+    input.onchange = async () => {
+      const file = input.files?.[0];
+      if (!file) return;
+
+      const text = await file.text();
+      const [header, ...lines] = text.split("\n");
+      const keys = header.split(",");
+
+      for (const line of lines) {
+        if (!line.trim()) continue;
+        const values = line.split(",");
+        const row: any = {};
+        keys.forEach((k, i) => (row[k.trim()] = values[i]?.trim()));
+
+        await ProductsAPI.createProduct({
+          name: row.Name,
+          description: row.Description,
+          price: Number(row.Price),
+          category: row.Category,
+        });
+      }
+
+      dispatch(fetchProducts());
+    };
+    input.click();
+  };
+
+  const columns: Column<any>[] = [
+    { header: "Name", accessor: "name", width: "minmax(200px,2fr)" },
+    { header: "Category", accessor: "category", width: "minmax(160px,1.5fr)" },
+    {
+      header: "Price",
+      width: "minmax(120px,1fr)",
+      render: p => `₹${p.price}`,
+    },
+    {
+      header: "Status",
+      width: "minmax(120px,1fr)",
+      render: p => (
+        <span
+          className={`px-2 py-1 rounded text-xs ${p.status === "active"
+            ? "bg-green-100 text-green-700"
+            : "bg-gray-200 text-gray-600"
+            }`}
+        >
+          {p.status}
+        </span>
+      ),
+    },
+    {
+      header: "Actions",
+      width: "minmax(120px,1fr)",
+      align: "right",
+      render: p => (
+        <button
+          onClick={e => {
+            e.stopPropagation();
+            setEditProduct(p);
+            setOpen(true);
+          }}
+          className="text-purple-600 text-sm flex items-center gap-1 hover:underline"
+        >
+          <Edit2 size={14} /> Edit
+        </button>
+      ),
+    },
+  ];
 
   return (
-    <div className="p-6 space-y-6 bg-[#F7F8FC]">
+    <div className="p-6">
+      <PageHeader
+        title="Products"
+        description="Manage your product catalog"
+        addButtonLabel="Add Product"
+        onAdd={() => {
+          setEditProduct(null);
+          setOpen(true);
+        }}
+      />
 
-      {/* HEADER */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-3xl font-semibold">Product Catalog</h2>
-          <p className="text-gray-500">
-            Manage your product catalog and track performance
-          </p>
+     <PageFilters
+  tabs={[
+    { label: "All", value: "all" },
+    { label: "Active", value: "active" },
+    { label: "Archived", value: "archived" },
+  ]}
+  activeTab={statusFilter}
+  onTabChange={(v) => setStatusFilter(v as StatusFilter)}
+  searchPlaceholder="Search products..."
+  onSearch={setSearch}
+  filters={[
+    {
+      key: "sort",
+      placeholder: "Sort by",
+      value: sortBy,
+      onChange: (v) => setSortBy(v as SortBy),
+      options: [
+        { label: "Recent", value: "recent" },
+        { label: "Name A–Z", value: "name" },
+        { label: "Price", value: "price" },
+      ],
+    },
+  ]}
+  onExport={handleExport}
+  onImport={handleImport}
+/>
+
+
+      {loading && (
+        <div className="bg-white rounded-xl border p-6">
+          <TableLoader />
         </div>
+      )}
 
-        <div className="flex gap-3">
-          <button className="border px-4 py-2 rounded-lg bg-white shadow-sm">
-            Import Products
-          </button>
-          <button
-            onClick={() => {
-              setEditProduct(null);
-              setOpen(true);
-            }}
-            className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg shadow"
-          >
-            + Add Product
-          </button>
+      {!loading && (
+        <div className="mt-6" >
+        <DataTable
+        columns={columns}
+        data={filtered}
+        emptyText="No products found"
+        onRowClick={p => navigate(`/admin/products/${p.id}`)}
+        />
         </div>
-      </div>
-      <div className="flex gap-6">
+      )}
 
-        {/* LEFT SIDE — takes 65% width */}
-        <div className="w-[65%]">
-
-          {/* STATS */}
-          <div className="grid grid-cols-3 gap-4">
-            <StatCard title="Total Products" value={products.length} icon="📦" />
-            <StatCard title="Total Leads" value="483" icon="👥" />
-            <StatCard title="Opportunities" value="103" icon="📈" />
-          </div>
-
-          {/* SEARCH + FILTER */}
-          <div className="flex items-center justify-between bg-white p-4 rounded-xl shadow-sm mt-4">
-            <input
-              className="w-1/2 border rounded-lg px-4 py-2 bg-gray-50"
-              placeholder="Search products..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-
-            <div className="flex gap-2">
-              <button
-                onClick={() => setViewMode("grid")}
-                className={`px-3 py-2 border rounded-lg flex items-center gap-2 ${viewMode === "grid"
-                  ? "bg-purple-600 text-white"
-                  : "bg-white"
-                  }`}
-              >
-                <Grid size={16} /> Grid
-              </button>
-
-              <button
-                onClick={() => setViewMode("list")}
-                className={`px-3 py-2 border rounded-lg flex items-center gap-2 ${viewMode === "list"
-                  ? "bg-purple-600 text-white"
-                  : "bg-white"
-                  }`}
-              >
-                <List size={16} /> List
-              </button>
-            </div>
-          </div>
-
-          {/* PRODUCT LIST AREA */}
-          <div className="mt-6">
-
-            {/* LOADING */}
-            {loading && (
-              <div className="grid grid-cols-2 gap-5">
-                <SkeletonProductCard />
-                <SkeletonProductCard />
-                <SkeletonProductCard />
-              </div>
-            )}
-
-            {/* EMPTY STATE */}
-            {!loading && filtered.length === 0 && (
-              <div className="bg-white border rounded-xl p-10 text-center text-gray-500">
-                <div className="text-4xl mb-4">📦</div>
-                <h3 className="text-lg font-semibold mb-1">
-                  No products found
-                </h3>
-                <p className="text-sm mb-4">
-                  You haven’t added any products yet.
-                </p>
-              </div>
-            )}
-
-            {/* GRID VIEW */}
-            {!loading && filtered.length > 0 && viewMode === "grid" && (
-              <div className="grid grid-cols-2 gap-5">
-                {filtered.map((p) => (
-                  <div
-                    key={p.id}
-                    className="cursor-pointer"
-                    onClick={() => navigate(`/admin/products/${p.id}`)}
-                  >
-                    <InfoCard
-                      product={p}
-                      onEdit={(e?: React.MouseEvent) => {
-                        e?.stopPropagation();
-                        setEditProduct(p);
-                        setOpen(true);
-                      }}
-                      onToggleArchive={async (e?: React.MouseEvent) => {
-                        e?.stopPropagation();
-                        await ProductsAPI.toggleArchive(p.id);
-                        dispatch(fetchProducts());
-                      }}
-                    />
-                  </div>
-
-                ))}
-              </div>
-            )}
-
-            {/* LIST VIEW */}
-            {!loading && filtered.length > 0 && viewMode === "list" && (
-              <table className="w-full bg-white rounded-xl shadow-sm">
-                <thead>
-                  <tr className="bg-gray-50 border-b text-left text-sm">
-                    <th className="p-3">Name</th>
-                    <th className="p-3">Category</th>
-                    <th className="p-3">Price</th>
-                    <th className="p-3">SKU</th>
-                    <th className="p-3">Status</th>
-                    <th className="p-3">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filtered.map((p) => (
-                    <tr
-                      key={p.id}
-                      className="border-b hover:bg-gray-50 text-sm cursor-pointer"
-                      onClick={() => navigate(`/admin/products/${p.id}`)}
-                    >
-
-                      <td className="p-3">{p.name}</td>
-                      <td className="p-3">{p.category}</td>
-                      <td className="p-3">₹{p.price}</td>
-                      <td className="p-3">{p.sku}</td>
-                      <td className="p-3">{p.status}</td>
-                      <td className="p-3">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setEditProduct(p);
-                            setOpen(true);
-                          }}
-                          className="text-purple-600 flex gap-1 items-center"
-                        >
-                          <Edit2 size={16} /> Edit
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </div>
-
-
-        </div>
-
-        {/* RIGHT SIDE — takes 35% width (wider) */}
-        <div className="w-[35%] space-y-6">
-
-          {/* CHART */}
-          <div className="bg-white p-6 rounded-2xl shadow-sm">
-            <h3 className="font-semibold text-xl mb-4">Product Analytics</h3>
-
-            <div className="h-[220px]">
-              <ProductAnalyticsChart products={products} />
-            </div>
-          </div>
-
-          {/* TOP PERFORMERS */}
-          <div className="bg-white p-6 rounded-2xl shadow-sm">
-            <h3 className="font-semibold text-xl mb-5">Top Performers</h3>
-
-            {filtered
-              .slice()
-              .sort((a, b) => b.price - a.price) // or revenue (your choice)
-              .slice(0, 3)
-              .map((p, i) => (
-                <div
-                  key={p.id}
-                  className="flex justify-between items-center bg-purple-50 rounded-2xl px-5 py-4 mb-4"
-                >
-                  {/* LEFT SIDE */}
-                  <div className="flex items-center gap-4">
-                    {/* Rank badge */}
-                    <div
-                      className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold
-              ${i === 0 && "bg-purple-600"}
-              ${i === 1 && "bg-orange-500"}
-              ${i === 2 && "bg-purple-400"}
-            `}
-                    >
-                      #{i + 1}
-                    </div>
-
-                    {/* Product name + leads */}
-                    <div>
-                      <p className="font-semibold text-lg">{p.name}</p>
-                      <p className="text-gray-500 -mb-1 text-sm">Leads</p>
-                      <p
-                        className={`font-semibold text-md ${i === 0
-                          ? "text-purple-700"
-                          : i === 1
-                            ? "text-orange-600"
-                            : "text-purple-500"
-                          }`}
-                      >
-                        {0}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* RIGHT SIDE — Revenue */}
-                  <div className="text-right">
-                    <p className="text-gray-500 text-sm">Revenue</p>
-                    <p className="font-semibold text-lg">
-                      ₹{p.price}
-                    </p>
-                  </div>
-                </div>
-              ))}
-          </div>
-
-          {/* QUICK ACTIONS */}
-          <div className="bg-gradient-to-br from-purple-500 to-purple-700 p-5 rounded-xl shadow-sm text-white space-y-3">
-            <h3 className="font-semibold text-lg">Quick Actions</h3>
-
-            <button
-              onClick={() => {
-                setEditProduct(null);
-                setOpen(true);
-              }}
-              className="bg-white text-purple-700 w-full py-2 rounded-lg font-medium"
-            >
-              + Add New Product
-            </button>
-
-            <button className="bg-white text-purple-700 w-full py-2 rounded-lg font-medium">
-              Import from Excel
-            </button>
-
-            <button className="bg-white text-purple-700 w-full py-2 rounded-lg font-medium">
-              View Full Analytics
-            </button>
-          </div>
-
-        </div>
-
-      </div>
-
-
-      {/* MODAL */}
       <ProductFormModal
         open={open}
         product={editProduct}
@@ -308,7 +224,7 @@ export default function ProductsPage() {
           setOpen(false);
           setEditProduct(null);
         }}
-        onSubmit={async (data) => {
+        onSubmit={async data => {
           if (editProduct) {
             await ProductsAPI.updateProduct(editProduct.id, data);
           } else {

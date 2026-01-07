@@ -51,7 +51,7 @@ export default function ProductDetailsPage() {
       <div>
         <h2 className="text-3xl font-semibold">{product.name}</h2>
         <p className="text-gray-500">
-          {product.category} • SKU: {product.sku}
+          {product.category}
         </p>
       </div>
 

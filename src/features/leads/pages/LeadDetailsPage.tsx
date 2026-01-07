@@ -1,4 +1,3 @@
-// pages/LeadDetailsPage.tsx
 import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { ArrowLeft, Edit, Trash2 } from "lucide-react";
@@ -25,10 +24,8 @@ export default function LeadDetailsPage() {
   const [editOpen, setEditOpen] = useState(false);
 
   const { leads, loading } = useAppSelector((s) => s.leads);
-
   const lead = leads.find((l) => l.id === Number(id));
 
-  // 🔁 Fetch lead on refresh or direct load
   useEffect(() => {
     if (id) {
       dispatch(fetchLeadById(Number(id)));
@@ -36,11 +33,11 @@ export default function LeadDetailsPage() {
   }, [id, dispatch]);
 
   if (loading && !lead) {
-    return <div className="p-6">Loading lead...</div>;
+    return <div className="p-8 text-sm text-gray-500">Loading lead…</div>;
   }
 
   if (!loading && !lead) {
-    return <div className="p-6 text-red-500">Lead not found</div>;
+    return <div className="p-8 text-sm text-red-500">Lead not found</div>;
   }
 
   if (!lead) return null;
@@ -53,56 +50,74 @@ export default function LeadDetailsPage() {
   };
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Back Button */}
+    <div className="max-w-6xl mx-auto px-6 py-8 space-y-8">
+      {/* Back */}
       <button
         onClick={() => navigate(-1)}
-        className="flex items-center gap-2 text-sm text-gray-500 hover:text-black"
+        className="flex items-center gap-2 text-xs text-gray-400 hover:text-gray-700 transition"
       >
-        <ArrowLeft size={16} />
+        <ArrowLeft size={14} />
         Back to Leads
       </button>
 
       {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-2xl font-semibold">{lead.lead_name}</h2>
-          <p className="text-gray-500">{lead.company}</p>
+      <div className="bg-white border border-gray-100 rounded-3xl px-6 py-5 shadow-sm flex justify-between items-center">
+        <div className="flex flex-col">
+          <span className="text-xs uppercase tracking-wide text-gray-400">
+            Lead
+          </span>
+          <h2 className="text-xl font-semibold text-gray-900">
+            {lead.lead_name}
+          </h2>
+          <span className="text-sm text-gray-500">{lead.company}</span>
         </div>
 
         <div className="flex gap-2">
-          <button onClick={() => setEditOpen(true)} className="btn-outline">
-            <Edit size={16} /> Edit
+          <button
+            onClick={() => setEditOpen(true)}
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-xl border border-gray-200 hover:bg-gray-50 transition"
+          >
+            <Edit size={14} />
+            Edit
           </button>
-          <button onClick={archive} className="btn-danger">
-            <Trash2 size={16} /> Archive
+          <button
+            onClick={archive}
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-xl border border-red-200 text-red-600 hover:bg-red-50 transition"
+          >
+            <Trash2 size={14} />
+            Archive
           </button>
         </div>
       </div>
 
       {/* Tabs */}
       <div className="flex gap-6 border-b text-sm">
-        {TABS.map((t) => (
-          <button
-            key={t}
-            onClick={() => setActiveTab(t)}
-            className={`pb-2 capitalize ${
-              activeTab === t
-                ? "border-b-2 border-purple-600 text-purple-600 font-medium"
-                : "text-gray-500"
-            }`}
-          >
-            {t.replace("_", " ")}
-          </button>
-        ))}
+        {TABS.map((t) => {
+          const active = activeTab === t;
+          return (
+            <button
+              key={t}
+              onClick={() => setActiveTab(t)}
+              className={`pb-3 capitalize transition ${
+                active
+                  ? "border-b-2 border-purple-600 text-purple-600 font-semibold"
+                  : "text-gray-400 hover:text-gray-600"
+              }`}
+            >
+              {t.replace("_", " ")}
+            </button>
+          );
+        })}
       </div>
 
-      {/* Tab Content */}
-      {activeTab === "overview" && <LeadOverviewTab lead={lead} />}
-      {activeTab === "timeline" && <LeadTimelineTab lead={lead} />}
-      {activeTab === "notes" && <LeadNotesTab leadId={lead.id} />}
-      {activeTab === "followups" && <LeadFollowupsTab />}
-      {activeTab === "products" && <LeadProductsTab lead={lead} />}
+      {/* Content */}
+      <div>
+        {activeTab === "overview" && <LeadOverviewTab lead={lead} />}
+        {activeTab === "timeline" && <LeadTimelineTab lead={lead} />}
+        {activeTab === "notes" && <LeadNotesTab leadId={lead.id} />}
+        {activeTab === "followups" && <LeadFollowupsTab />}
+        {activeTab === "products" && <LeadProductsTab lead={lead} />}
+      </div>
 
       {/* Edit Modal */}
       <EditLeadModal

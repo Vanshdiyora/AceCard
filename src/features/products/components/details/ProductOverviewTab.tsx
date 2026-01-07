@@ -23,11 +23,6 @@ export default function ProductOverviewTab({
           {product.status}
         </p>
       </div>
-
-      <div className="bg-white p-6 rounded-xl shadow-sm">
-        <p className="text-gray-500 text-sm">SKU</p>
-        <p className="text-2xl font-semibold">{product.sku}</p>
-      </div>
     </div>
   );
 }

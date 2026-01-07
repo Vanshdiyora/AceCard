@@ -1,12 +1,11 @@
 import { useEffect, useState, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../../app/hooks";
 import { fetchCampaigns } from "../slice";
 
 import PageHeader from "../../../common/components/layout/PageHeader";
 import PageFilters, { type TabItem } from "../../../common/components/layout/PageFilter";
 import DataTable, { type Column } from "../../../common/components/table/DataTable";
-import StatsGrid from "../../../common/components/cards/StatsGrid";
 import CreateCampaignModal from "../components/CreateCampaignModal";
 import type { Campaign } from "../types";
 
@@ -23,16 +22,12 @@ const tabs: TabItem[] = [
 export default function CampaignsPage() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const campaignsState = useAppSelector((s) => s.campaigns);
-
-const items: Campaign[] = Array.isArray(campaignsState?.items)
-  ? campaignsState!.items
-  : [];
-
-const meta = campaignsState?.meta ?? null;
-const loading = campaignsState?.loading ?? false;
-
+  const items: Campaign[] = Array.isArray(campaignsState?.items) ? campaignsState.items : [];
+  const meta = campaignsState?.meta ?? null;
+  const loading = campaignsState?.loading ?? false;
 
   const [activeTab, setActiveTab] = useState("all");
   const [search, setSearch] = useState("");
@@ -40,6 +35,33 @@ const loading = campaignsState?.loading ?? false;
   const [showSortDropdown, setShowSortDropdown] = useState(false);
   const [openCreate, setOpenCreate] = useState(false);
 
+  useEffect(() => {
+  if (!openCreate) return;
+
+  const scrollY = window.scrollY;
+
+  document.body.style.position = "fixed";
+  document.body.style.top = `-${scrollY}px`;
+  document.body.style.width = "100%";
+
+  return () => {
+    document.body.style.position = "";
+    document.body.style.top = "";
+    document.body.style.width = "";
+    window.scrollTo(0, scrollY);
+  };
+}, [openCreate]);
+
+
+  /* -------- Auto open from redirect -------- */
+  useEffect(() => {
+    if (searchParams.get("open") === "create") {
+      setOpenCreate(true);
+      setSearchParams({}, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
+
+  /* -------- Fetch -------- */
   useEffect(() => {
     dispatch(fetchCampaigns());
   }, [dispatch]);
@@ -62,48 +84,18 @@ const loading = campaignsState?.loading ?? false;
   /* -------- Sorting -------- */
   const finalData = useMemo(() => {
     const list = [...filtered];
-
     switch (sort) {
       case "name_asc":
         return list.sort((a, b) => a.name.localeCompare(b.name));
       case "pipeline_desc":
-        return list.sort(
-          (a, b) => (b.pipeline_value || 0) - (a.pipeline_value || 0)
-        );
+        return list.sort((a, b) => (b.pipeline_value || 0) - (a.pipeline_value || 0));
       case "recent":
       default:
         return list.sort(
-          (a, b) =>
-            new Date(b.updated_at).getTime() -
-            new Date(a.updated_at).getTime()
+          (a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
         );
     }
   }, [filtered, sort]);
-
-  /* -------- Stats -------- */
-  const stats = [
-    {
-      title: "Total Leads",
-      value: items.reduce((s, c) => s + (c.leads_generated || 0), 0),
-    },
-    {
-      title: "Total Pipeline",
-      value: `$${items.reduce((s, c) => s + (c.pipeline_value || 0), 0)}K`,
-    },
-    {
-      title: "Avg Conversion",
-      value: items.length
-        ? `${(
-            items.reduce((s, c) => s + (c.conversion_rate || 0), 0) /
-            items.length
-          ).toFixed(2)}%`
-        : "0%",
-    },
-    {
-      title: "Total Budget",
-      value: `$${items.reduce((s, c) => s + (c.budget || 0), 0)}K`,
-    },
-  ];
 
   /* -------- Table Columns -------- */
   const columns: Column<Campaign>[] = [
@@ -118,7 +110,7 @@ const loading = campaignsState?.loading ?? false;
   ];
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6">
       <PageHeader
         title="Campaigns"
         description="Manage and track your marketing campaigns"
@@ -128,9 +120,7 @@ const loading = campaignsState?.loading ?? false;
 
       <CreateCampaignModal open={openCreate} onClose={() => setOpenCreate(false)} />
 
-      <StatsGrid items={stats} />
-
-      <div className="relative">  
+      <div className="relative my-6">
         <PageFilters
           tabs={tabs}
           activeTab={activeTab}
@@ -144,42 +134,38 @@ const loading = campaignsState?.loading ?? false;
 
         {showSortDropdown && (
           <div className="absolute right-6 mt-2 w-48 bg-white border rounded-lg shadow-lg z-20 text-sm">
-            {[
-              ["recent", "Recent"],
-              ["name_asc", "Name A-Z"],
-              ["pipeline_desc", "Pipeline High-Low"],
-            ].map(([v, l]) => (
-              <div
-                key={v}
-                className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                onClick={() => {
-                  setSort(v as any);
-                  setShowSortDropdown(false);
-                }}
-              >
-                {l}
-              </div>
-            ))}
+            {[["recent", "Recent"], ["name_asc", "Name A-Z"], ["pipeline_desc", "Pipeline High-Low"]].map(
+              ([v, l]) => (
+                <div
+                  key={v}
+                  className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                  onClick={() => {
+                    setSort(v as any);
+                    setShowSortDropdown(false);
+                  }}
+                >
+                  {l}
+                </div>
+              )
+            )}
           </div>
         )}
       </div>
+      <div className="w-full overflow-x-auto my-6">
 
-      <DataTable
-        columns={columns}
-        data={finalData}
-        emptyText={loading ? "Loading..." : "No campaigns found"}
-        onRowClick={(c) => navigate(`${c.id}`)}
-      />
-
-      {/* Pagination */}
+        <DataTable
+          columns={columns}
+          data={finalData}
+          emptyText={loading ? "Loading..." : "No campaigns found"}
+          onRowClick={(c) => navigate(`${c.id}`)}
+        />
+      </div>
       {meta && (
         <div className="flex justify-end items-center gap-4 text-sm">
           <button
             disabled={!meta.has_previous}
             className="px-3 py-1 border rounded disabled:opacity-40"
-            onClick={() =>
-              dispatch(fetchCampaigns())
-            }
+            onClick={() => dispatch(fetchCampaigns())}
           >
             Prev
           </button>
@@ -189,9 +175,7 @@ const loading = campaignsState?.loading ?? false;
           <button
             disabled={!meta.has_next}
             className="px-3 py-1 border rounded disabled:opacity-40"
-            onClick={() =>
-              dispatch(fetchCampaigns())
-            }
+            onClick={() => dispatch(fetchCampaigns())}
           >
             Next
           </button>

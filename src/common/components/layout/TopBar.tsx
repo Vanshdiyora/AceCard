@@ -11,14 +11,12 @@ type TopbarProps = {
 };
 
 export default function Topbar({ username = "User", type }: TopbarProps) {
-  // ✅ ROLE-AWARE PREFETCH (THIS FIXES THE REDIRECT ISSUE)
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
 
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
 
-  // Close dropdown on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
@@ -46,28 +44,26 @@ export default function Topbar({ username = "User", type }: TopbarProps) {
     </div>
   );
 
-  // ================= SUPERADMIN TOPBAR =================
   if (type === "super_admin") {
     return (
-      <header className="h-20 bg-white border-b px-6 flex items-center justify-between shadow-sm relative">
-        {/* 🔍 Global Search (VENDORS ONLY) */}
-        <div className="w-96">
+      <header className="h-20 bg-[#E6E4F2] border-b px-4 sm:px-6 flex items-center justify-between min-w-0">
+        <div className="flex-1 min-w-0 max-w-md">
           <GlobalSearch mode="super_admin" />
         </div>
 
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-4 shrink-0">
           <NotificationBell />
 
           <div
             className="relative flex items-center gap-2 cursor-pointer"
-            onClick={() => setOpen(prev => !prev)}
+            onClick={() => setOpen(p => !p)}
             ref={menuRef}
           >
             <div className="w-10 h-10 bg-purple-600 text-white rounded-full flex items-center justify-center font-medium">
               SA
             </div>
 
-            <span className="text-gray-700 font-medium">
+            <span className="hidden sm:block text-gray-700 font-medium">
               Super Admin
             </span>
 
@@ -78,22 +74,22 @@ export default function Topbar({ username = "User", type }: TopbarProps) {
     );
   }
 
-  // ================= ADMIN TOPBAR =================
   return (
-    <header className="h-16 bg-white border-b px-6 flex items-center justify-between shadow-sm relative">
-      <h3 className="text-xl font-medium">Hi, {username}</h3>
+    <header className="h-16 bg-[#E6E4F2] px-4 sm:px-6 flex items-center justify-between min-w-0">
+      <h3 className="text-base sm:text-xl font-medium truncate">
+        Hi, {username}
+      </h3>
 
-      {/* 🔍 Global Search (ADMIN DATA) */}
-      <div className="w-96">
+      <div className="flex-1 mx-4 min-w-0 max-w-md">
         <GlobalSearch mode="admin" />
       </div>
 
-      <div className="flex items-center gap-6">
+      <div className="flex items-center gap-4 shrink-0">
         <NotificationBell />
 
         <div
           className="relative cursor-pointer"
-          onClick={() => setOpen(prev => !prev)}
+          onClick={() => setOpen(p => !p)}
           ref={menuRef}
         >
           <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center">

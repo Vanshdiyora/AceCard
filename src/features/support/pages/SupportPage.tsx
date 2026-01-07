@@ -73,7 +73,7 @@ export default function SupportPage() {
   };
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6">
 
       {/* 🌟 Page Header */}
       <PageHeader
@@ -100,16 +100,16 @@ export default function SupportPage() {
           {/* Ticket List */}
           <div className="space-y-5">
             {/* EMPTY STATE */}
-  {tickets.length === 0 && (
-    <div className="bg-white border rounded-xl p-10 text-center text-gray-500">
-      <MessageSquare size={40} className="mx-auto mb-4 text-gray-400" />
-      <h3 className="text-lg font-semibold mb-1">No support tickets yet</h3>
-      <p className="text-sm mb-4">
-        You haven’t raised any support requests.
-      </p>
-     
-    </div>
-  )}
+            {tickets.length === 0 && (
+              <div className="bg-white border rounded-xl p-10 text-center text-gray-500">
+                <MessageSquare size={40} className="mx-auto mb-4 text-gray-400" />
+                <h3 className="text-lg font-semibold mb-1">No support tickets yet</h3>
+                <p className="text-sm mb-4">
+                  You haven’t raised any support requests.
+                </p>
+
+              </div>
+            )}
             {tickets.map((t: any) => (
               <div
                 key={t.id}

@@ -12,7 +12,7 @@ type Props<T> = {
   columns: Column<T>[];
   data: T[];
   emptyText?: string;
-  onRowClick?: (row: T) => void; // ⭐ added
+  onRowClick?: (row: T) => void;
 };
 
 export default function DataTable<T>({
@@ -22,72 +22,71 @@ export default function DataTable<T>({
   onRowClick,
 }: Props<T>) {
   return (
-    <div className="bg-white rounded-xl border shadow-sm overflow-x-auto">
-      <table className="w-full">
-        <thead>
-          <tr className="border-b bg-gray-50 text-left text-sm text-gray-600">
-            {columns.map((col, idx) => (
-              <th
-                key={idx}
-                className={`py-3 px-4 ${
-                  col.align === "right"
-                    ? "text-right"
-                    : col.align === "center"
-                    ? "text-center"
-                    : ""
-                }`}
-                style={{ width: col.width }}
-              >
-                {col.header}
-              </th>
-            ))}
-          </tr>
-        </thead>
-
-        <tbody>
-          {data.length === 0 && (
-            <tr>
-              <td
-                colSpan={columns.length}
-                className="text-center py-6 text-gray-500"
-              >
-                {emptyText}
-              </td>
-            </tr>
-          )}
-
-          {data.map((row, rowIndex) => (
-            <tr
-              key={rowIndex}
-              onClick={() => onRowClick?.(row)} // ⭐ row click
-              className={`border-b last:border-0 ${
-                onRowClick
-                  ? "cursor-pointer hover:bg-gray-50 transition"
-                  : ""
+    <div className="w-full">
+      {/* Header */}
+      <div
+        className="grid text-xs font-semibold uppercase tracking-wide text-gray-500 px-4 mb-2"
+        style={{
+          gridTemplateColumns: columns.map((c) => c.width || "1fr").join(" "),
+        }}
+      >
+        {columns.map((c, i) => (
+          <div
+            key={i}
+            className={`py-2 ${c.align === "right"
+                ? "text-right"
+                : c.align === "center"
+                  ? "text-center"
+                  : "text-left"
               }`}
-            >
-              {columns.map((col, colIndex) => (
-                <td
-                  key={colIndex}
-                  className={`py-3 px-4 ${
-                    col.align === "right"
-                      ? "text-right"
-                      : col.align === "center"
-                      ? "text-center"
-                      : ""
+          >
+            {c.header}
+          </div>
+        ))}
+      </div>
+
+      {/* Empty */}
+      {data.length === 0 && (
+        <div className="bg-white rounded-xl border p-10 text-center text-gray-400">
+          {emptyText}
+        </div>
+      )}
+
+      {/* Rows */}
+      <div className="space-y-3">
+        {data.map((row, rowIndex) => (
+          <div
+            key={rowIndex}
+            onClick={() => onRowClick?.(row)}
+            className={`grid items-center bg-white rounded-2xl border px-4 py-3 shadow-sm transition ${onRowClick
+                ? "cursor-pointer hover:shadow-md hover:bg-gray-50"
+                : ""
+              }`}
+            style={{
+              gridTemplateColumns: columns.map((c) => c.width || "1fr").join(" "),
+            }}
+          >
+            {columns.map((col, colIndex) => (
+              <div
+                key={colIndex}
+                className={`flex items-center max-w-full overflow-hidden ${col.align === "right"
+                    ? "justify-end text-right"
+                    : col.align === "center"
+                      ? "justify-center text-center"
+                      : "justify-start text-left"
                   }`}
-                >
-                  {col.render
-                    ? col.render(row)
-                    : col.accessor
+              >
+
+                {col.render
+                  ? col.render(row)
+                  : col.accessor
                     ? String(row[col.accessor] ?? "—")
                     : "—"}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

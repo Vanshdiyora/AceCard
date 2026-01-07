@@ -1,20 +1,11 @@
 import { useEffect, useMemo } from "react";
 import { useAppDispatch, useAppSelector } from "../../../../app/hooks";
 import { fetchLeadNotes } from "../../slice";
+import { fetchTeam } from "../../../teams/slice";
 
 interface Props {
   leadId: number;
 }
-
-const Note = ({ authorName, time, text }: any) => (
-  <div className="px-5 py-4">
-    <div className="flex justify-between text-sm">
-      <p className="font-medium">{authorName}</p>
-      <p className="text-xs text-gray-400">{time}</p>
-    </div>
-    <p className="text-sm text-gray-600 mt-1">{text}</p>
-  </div>
-);
 
 export default function LeadNotesTab({ leadId }: Props) {
   const dispatch = useAppDispatch();
@@ -24,10 +15,18 @@ export default function LeadNotesTab({ leadId }: Props) {
   const teamMembers = useAppSelector((s) => s.team.members);
 
   useEffect(() => {
+    dispatch(fetchTeam());
     dispatch(fetchLeadNotes(leadId));
   }, [dispatch, leadId]);
 
-  // Create map: { [id]: name }
+  useEffect(() => {
+  console.log("Team members:", teamMembers);
+}, [teamMembers]);
+
+useEffect(() => {
+  console.log("Notes:", notes);
+}, [notes]);
+
   const memberMap = useMemo(() => {
     const map: Record<number, string> = {};
     teamMembers.forEach((m) => {
@@ -37,27 +36,63 @@ export default function LeadNotesTab({ leadId }: Props) {
   }, [teamMembers]);
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-4">
-        <h3 className="font-semibold">Notes</h3>
-      </div>
+    <div className="space-y-6">
+      <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-500">
+        Notes
+      </h3>
 
-      <div className="bg-white border rounded-xl divide-y">
-        {loading && <p className="p-4 text-sm text-gray-400">Loading…</p>}
-
-        {!loading && notes.length === 0 && (
-          <p className="p-4 text-sm text-gray-500">No notes yet</p>
+      <div className="space-y-3">
+        {loading && (
+          <div className="bg-white border border-gray-100 rounded-2xl p-4 text-sm text-gray-400">
+            Loading notes…
+          </div>
         )}
 
-        {notes.map((n) => (
-          <Note
-            key={n.id}
-            authorName={memberMap[n.author_id] || `User #${n.author_id}`}
-            time={new Date(n.created_at).toLocaleString()}
-            text={n.body}
-          />
-        ))}
+        {!loading && notes.length === 0 && (
+          <div className="bg-white border border-gray-100 rounded-2xl p-4 text-sm text-gray-500">
+            No notes yet
+          </div>
+        )}
+
+        {!loading &&
+          notes.map((n) => (
+            <NoteCard
+              key={n.id}
+              authorName={memberMap[n.author_id] || `User #${n.author_id}`}
+              time={new Date(n.created_at).toLocaleString()}
+              text={n.body}
+            />
+          ))}
       </div>
     </div>
   );
 }
+
+
+const NoteCard = ({
+  authorName,
+  time,
+  text,
+}: {
+  authorName: string;
+  time: string;
+  text: string;
+}) => (
+  <div className="
+    bg-white border border-gray-100 rounded-2xl
+    px-5 py-4 shadow-sm hover:shadow-md transition
+  ">
+    <div className="flex items-center justify-between mb-1">
+      <span className="text-sm font-semibold text-gray-900">
+        {authorName}
+      </span>
+      <span className="text-xs text-gray-400">
+        {time}
+      </span>
+    </div>
+
+    <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-line">
+      {text}
+    </p>
+  </div>
+);
