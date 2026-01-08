@@ -10,64 +10,64 @@ import DynamicForm, { type FieldConfig } from "../../../common/ui/DynamicForm";
 /* ------------------------------------------------------------------
    CUSTOM FORM CONFIG (ONLY CUSTOM FIELDS)
 ------------------------------------------------------------------ */
-type CustomFieldConfig = {
-  fieldId: string;
-  label: string;
-  type: FieldConfig["type"];
-  required: boolean;
-  archived: boolean;
-  options?: { label: string; value: any }[];
-};
+// type CustomFieldConfig = {
+//   fieldId: string;
+//   label: string;
+//   type: FieldConfig["type"];
+//   required: boolean;
+//   archived: boolean;
+//   options?: { label: string; value: any }[];
+// };
 
-const leadFormConfig: { customFields: CustomFieldConfig[] } = {
-  customFields: [
-    {
-      fieldId: "radio_type",
-      label: "Radio type",
-      type: "radio",
-      required: true,
-      archived: false,
-      options: [
-        { label: "op1", value: "op1" },
-        { label: "op2", value: "op2" },
-      ],
-    },
-    {
-      fieldId: "dropdown_type_field",
-      label: "Dropdown Type field",
-      type: "select",
-      required: true,
-      archived: false,
-      options: [{ label: "OP1", value: "op1" }],
-    },
-    {
-      fieldId: "field_checkboxes",
-      label: "Field Checkboxes",
-      type: "multiselect",
-      required: false,
-      archived: false,
-      options: [
-        { label: "OP1", value: "op1" },
-        { label: "OP2", value: "op2" },
-        { label: "OP3", value: "op3" },
-      ],
-    },
-    {
-      fieldId: "type_date_time",
-      label: "Type Date Time",
-      type: "datetime",
-      required: true,
-      archived: false,
-    },
-    {
-      fieldId: "type_text",
-      label: "Type Text",
-      type: "text",
-      required: false,
-      archived: false,
-    },
-  ],
-};
+// const leadFormConfig: { customFields: CustomFieldConfig[] } = {
+//   customFields: [
+//     {
+//       fieldId: "radio_type",
+//       label: "Radio type",
+//       type: "radio",
+//       required: true,
+//       archived: false,
+//       options: [
+//         { label: "op1", value: "op1" },
+//         { label: "op2", value: "op2" },
+//       ],
+//     },
+//     {
+//       fieldId: "dropdown_type_field",
+//       label: "Dropdown Type field",
+//       type: "select",
+//       required: true,
+//       archived: false,
+//       options: [{ label: "OP1", value: "op1" }],
+//     },
+//     {
+//       fieldId: "field_checkboxes",
+//       label: "Field Checkboxes",
+//       type: "multiselect",
+//       required: false,
+//       archived: false,
+//       options: [
+//         { label: "OP1", value: "op1" },
+//         { label: "OP2", value: "op2" },
+//         { label: "OP3", value: "op3" },
+//       ],
+//     },
+//     {
+//       fieldId: "type_date_time",
+//       label: "Type Date Time",
+//       type: "datetime",
+//       required: true,
+//       archived: false,
+//     },
+//     {
+//       fieldId: "type_text",
+//       label: "Type Text",
+//       type: "text",
+//       required: false,
+//       archived: false,
+//     },
+//   ],
+// };
 
 export default function AddLeadModal({ open, onClose, onSubmit }: any) {
   const dispatch = useAppDispatch();
@@ -119,17 +119,17 @@ export default function AddLeadModal({ open, onClose, onSubmit }: any) {
   /* ------------------------------------------------------------------
      CUSTOM FIELD CONFIG → DynamicForm Fields
   ------------------------------------------------------------------ */
-  const customFieldConfigs: FieldConfig[] =
-    leadFormConfig.customFields
-      .filter((f) => !f.archived)
-      .map((f) => ({
-        name: `custom_${f.fieldId}`,
-        label: f.label,
-        type: f.type,
-        required: f.required,
-        options: f.options,
-        placeholder: `Enter ${f.label}`,
-      }));
+  // const customFieldConfigs: FieldConfig[] =
+  //   leadFormConfig.customFields
+  //     .filter((f) => !f.archived)
+  //     .map((f) => ({
+  //       name: `custom_${f.fieldId}`,
+  //       label: f.label,
+  //       type: f.type,
+  //       required: f.required,
+  //       options: f.options,
+  //       placeholder: `Enter ${f.label}`,
+  //     }));
 
   /* ------------------------------------------------------------------
      BASE + CUSTOM FIELDS

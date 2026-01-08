@@ -122,11 +122,10 @@ export default function TeamPage() {
   }, [members, filter, search]);
 
 const columns: Column<TeamMember>[] = [
-  { header: "Name", accessor: "name", width: "minmax(160px, 1.5fr)" },
-  { header: "Email", accessor: "email", width: "minmax(220px, 2fr)" },
+  { header: "Name", accessor: "name" },
+  { header: "Email", accessor: "email" },
   {
     header: "Status",
-    width: "minmax(120px, 1fr)",
     render: (m) => (
       <span className={`px-2 py-1 rounded text-xs ${
         m.status === "active"
@@ -139,24 +138,20 @@ const columns: Column<TeamMember>[] = [
   },
   {
     header: "Role",
-    width: "minmax(140px, 1.2fr)",
     render: (m) => m.role.replace("_", " "),
   },
   {
     header: "Manager",
-    width: "minmax(160px, 1.5fr)",
     render: (m) =>
       m.manager_id ? managerMap.get(m.manager_id) ?? "—" : "—",
   },
   {
     header: "Leads",
-    width: "minmax(90px, 0.8fr)",
     align: "right",
     render: (m) => m.leads_count ?? 0,
   },
   {
     header: "Last Active",
-    width: "minmax(140px, 1.2fr)",
     align: "right",
     render: (m) =>
       m.last_active_at

@@ -48,12 +48,30 @@ export default function ProductDetailsPage() {
       </button>
 
       {/* Header */}
-      <div>
-        <h2 className="text-3xl font-semibold">{product.name}</h2>
-        <p className="text-gray-500">
-          {product.category}
-        </p>
+      <div className="bg-white rounded-2xl border p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+
+        {/* Identity */}
+        <div>
+          <h2 className="text-2xl font-semibold leading-tight">
+            {product.name}
+          </h2>
+        </div>
+
+        {/* Status */}
+        <div className="flex items-center">
+          <span
+            className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-medium ${product.status === "active"
+                ? "bg-green-100 text-green-700"
+                : "bg-gray-300 text-gray-800"
+              }`}
+          >
+            <span className="h-2 w-2 rounded-full bg-current opacity-70" />
+            {product.status}
+          </span>
+        </div>
+
       </div>
+
 
       {/* Overview */}
       <ProductOverviewTab product={product} />

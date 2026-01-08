@@ -6,23 +6,55 @@ export default function ProductOverviewTab({
   product: Product;
 }) {
   return (
-    <div className="grid grid-cols-4 gap-4">
-      <div className="bg-white p-6 rounded-xl shadow-sm">
-        <p className="text-gray-500 text-sm">Price</p>
-        <p className="text-2xl font-semibold">₹{product.price}</p>
-      </div>
+    <div className="bg-white rounded-2xl border p-8 space-y-6">
 
-      <div className="bg-white p-6 rounded-xl shadow-sm">
-        <p className="text-gray-500 text-sm">Category</p>
-        <p className="text-2xl font-semibold">{product.category}</p>
-      </div>
+      {/* Description + Status */}
+      <div className="relative">
 
-      <div className="bg-white p-6 rounded-xl shadow-sm">
-        <p className="text-gray-500 text-sm">Status</p>
-        <p className="text-2xl font-semibold capitalize">
-          {product.status}
+        <p className="text-xs uppercase tracking-wide text-gray-400">
+          Description
         </p>
+
+        <p className="text-sm text-gray-700 mt-2 pr-24">
+          {product.description || "No description provided."}
+        </p>
+      </div>
+
+      <Divider />
+
+      {/* Bottom row: Price + Category */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <OverviewItem label="Price">
+          <span className="text-xl font-medium">₹{product.price}</span>
+        </OverviewItem>
+
+        <OverviewItem label="Category">
+          <span className="text-xl font-medium">
+            {product.category || "-"}
+          </span>
+        </OverviewItem>
       </div>
     </div>
   );
+}
+
+function OverviewItem({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex flex-col gap-1">
+      <span className="text-xs uppercase tracking-wide text-gray-400">
+        {label}
+      </span>
+      {children}
+    </div>
+  );
+}
+
+function Divider() {
+  return <div className="w-full h-px bg-gray-200" />;
 }

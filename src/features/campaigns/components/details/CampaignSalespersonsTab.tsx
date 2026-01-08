@@ -4,10 +4,18 @@ import { useAppDispatch, useAppSelector } from "../../../../app/hooks";
 
 import { fetchTeam } from "../../../teams/slice";
 import { updateCampaign } from "../../slice";
+import DataTable, { type Column } from "../../../../common/components/table/DataTable";
 
 type Props = {
   campaignId: number;
   assignedReps?: number[];
+};
+
+type SalespersonRow = {
+  id: number;
+  name: string;
+  totalLeads: number;
+  totalDealAmount: number;
 };
 
 export default function CampaignSalespersonsTab({
@@ -16,16 +24,13 @@ export default function CampaignSalespersonsTab({
 }: Props) {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-
   const { members, loading } = useAppSelector((s) => s.team);
 
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState<number[]>([]);
 
   useEffect(() => {
-    if (members.length === 0) {
-      dispatch(fetchTeam());
-    }
+    if (members.length === 0) dispatch(fetchTeam());
   }, [dispatch, members.length]);
 
   const allSalesReps = useMemo(
@@ -33,10 +38,16 @@ export default function CampaignSalespersonsTab({
     [members]
   );
 
-  const salespersons = useMemo(
-    () => allSalesReps.filter((m) => assignedReps.includes(m.id)),
-    [allSalesReps, assignedReps]
-  );
+  const salespersons = useMemo(() => {
+    return allSalesReps
+      .filter((m) => assignedReps.includes(m.id))
+      .map((m) => ({
+        id: m.id,
+        name: m.name,
+        totalLeads: m.leads_count ?? 0,
+        totalDealAmount: m.deal_amount ?? 0,
+      }));
+  }, [allSalesReps, assignedReps]);
 
   const available = useMemo(
     () => allSalesReps.filter((m) => !assignedReps.includes(m.id)),
@@ -53,105 +64,117 @@ export default function CampaignSalespersonsTab({
     if (!selected.length) return;
 
     const updated = Array.from(new Set([...assignedReps, ...selected]));
-
     await dispatch(updateCampaign({ id: campaignId, data: { assigned_reps: updated } }));
+
     setSelected([]);
     setOpen(false);
   };
 
+  const columns: Column<SalespersonRow>[] = [
+    { header: "Salesperson Name", accessor: "name" },
+    { header: "Total Leads", accessor: "totalLeads", align: "center", width: "120px" },
+    {
+      header: "Total Deal Amount",
+      accessor: "totalDealAmount",
+      align: "right",
+      width: "160px",
+      render: (row) => `$${row.totalDealAmount.toLocaleString()}`,
+    },
+  ];
+
   if (loading) return <div className="py-6 text-gray-500">Loading…</div>;
 
-  return (
-    <div className="space-y-4">
+return (
+  <div className="space-y-6">
 
-      {/* Assign Button */}
+    {/* Header */}
+    <div className="flex items-center justify-between">
+      <div>
+        <h3 className="text-lg font-semibold">Assigned Salespersons</h3>
+        <p className="text-sm text-gray-500">
+          People currently working on this campaign
+        </p>
+      </div>
+
       <button
         onClick={() => setOpen(true)}
-        className="px-4 py-1 bg-purple-600 text-white rounded text-sm"
+        className="px-4 py-2 rounded-lg text-sm font-medium bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow hover:shadow-md transition"
       >
-        Assign Salespersons
+        + Assign
       </button>
+    </div>
 
-      {/* Assigned Table */}
-      {salespersons.length === 0 ? (
-        <div className="py-6 text-gray-500 text-center">
-          No salespersons assigned to this campaign
-        </div>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm border">
-            <thead className="bg-gray-50 text-left">
-              <tr>
-                <th className="p-3">Salesperson</th>
-                <th className="p-3">Role</th>
-                <th className="p-3">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {salespersons.map((sp) => (
-                <tr
-                  key={sp.id}
-                  onClick={() => navigate(`/admin/team/${sp.id}`)}
-                  className="cursor-pointer hover:bg-gray-50 border-t"
-                >
-                  <td className="p-3 font-medium">{sp.name}</td>
-                  <td className="p-3 capitalize">{sp.role}</td>
-                  <td className="p-3 capitalize">{sp.status}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+    {/* Table Card */}
+    <div className="rounded-2xl border">
+      <DataTable<SalespersonRow>
+        columns={columns}
+        data={salespersons}
+        emptyText="No salespersons assigned to this campaign"
+        onRowClick={(row) => navigate(`/admin/team/${row.id}`)}
+      />
+    </div>
 
-      {/* Modal */}
-      {open && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white w-[420px] max-h-[80vh] rounded-xl shadow-lg flex flex-col">
-            <div className="p-4 border-b text-lg font-medium">
-              Assign Salespersons
-            </div>
+    {/* Modal */}
+    {open && (
+      <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+        <div className=" w-[420px] max-h-[80vh] rounded-2xl shadow-xl flex flex-col overflow-hidden">
 
-            <div className="p-4 space-y-2 overflow-y-auto">
-              {available.length === 0 && (
-                <div className="text-sm text-gray-500 text-center">
-                  All salespersons are already assigned
-                </div>
-              )}
+          {/* Modal Header */}
+          <div className="p-5 border-b">
+            <h4 className="text-lg font-semibold">Assign Salespersons</h4>
+            <p className="text-sm text-gray-500">
+              Select active sales reps to add to this campaign
+            </p>
+          </div>
 
-              {available.map((sp) => (
-                <label key={sp.id} className="flex items-center gap-2 text-sm">
-                  <input
-                    type="checkbox"
-                    checked={selected.includes(sp.id)}
-                    onChange={() => toggle(sp.id)}
-                  />
-                  <span>{sp.name}</span>
-                </label>
-              ))}
-            </div>
+          {/* Modal Content */}
+          <div className="p-5 space-y-2 overflow-y-auto">
+            {available.length === 0 && (
+              <div className="text-sm text-gray-400 text-center py-6">
+                All salespersons are already assigned
+              </div>
+            )}
 
-            <div className="p-4 border-t flex justify-end gap-3">
-              <button
-                className="px-4 py-1 bg-gray-200 rounded"
-                onClick={() => {
-                  setSelected([]);
-                  setOpen(false);
-                }}
+            {available.map((sp) => (
+              <label
+                key={sp.id}
+                className="flex items-center justify-between px-3 py-2 rounded-lg border hover:bg-gray-50 cursor-pointer"
               >
-                Cancel
-              </button>
-              <button
-                disabled={!selected.length}
-                onClick={assignSelected}
-                className="px-4 py-1 bg-purple-600 text-white rounded disabled:opacity-40"
-              >
-                Assign Selected
-              </button>
-            </div>
+                <span className="text-sm">{sp.name}</span>
+                <input
+                  type="checkbox"
+                  checked={selected.includes(sp.id)}
+                  onChange={() => toggle(sp.id)}
+                  className="h-4 w-4 accent-purple-600"
+                />
+              </label>
+            ))}
+          </div>
+
+          {/* Modal Footer */}
+          <div className="p-4 border-t flex justify-end gap-3 bg-gray-50">
+            <button
+              className="px-4 py-2 rounded-lg text-sm border hover:bg-gray-100"
+              onClick={() => {
+                setSelected([]);
+                setOpen(false);
+              }}
+            >
+              Cancel
+            </button>
+            <button
+              disabled={!selected.length}
+              onClick={assignSelected}
+              className="px-4 py-2 rounded-lg text-sm bg-purple-600 text-white disabled:opacity-40 hover:bg-purple-700 transition"
+            >
+              Assign Selected
+            </button>
           </div>
         </div>
-      )}
-    </div>
-  );
+      </div>
+    )}
+
+  </div>
+);
+
 }

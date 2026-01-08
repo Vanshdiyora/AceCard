@@ -65,7 +65,7 @@ export default function LeadsPage() {
       render: (lead) =>
         lead.assigned_rep_id ? ownerMap.get(lead.assigned_rep_id) ?? "—" : "—",
     },
-    { header: "Deal", render: (lead) => lead.deal_amount ?? "—" },
+    { header: "Deal Amount", render: (lead) => lead.deal_amount ?? "—" },
     {
       header: "Stage",
       render: (lead) => (

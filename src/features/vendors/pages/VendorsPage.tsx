@@ -131,10 +131,22 @@ export default function VendorsPage() {
         }}
         searchPlaceholder="Search vendors..."
         onSearch={setSearch}
-        onFilter={() => setShowSortDropdown((p) => !p)}
+        filters={[
+          {
+            key: "sort",
+            placeholder: "Sort by",
+            value: sort,
+            onChange: (v) => setSort(v as "recent" | "name"),
+            options: [
+              { label: "Recent", value: "recent" },
+              { label: "Name A–Z", value: "name" },
+            ],
+          },
+        ]}
         onExport={() => console.log("Export CSV")}
         onImport={() => console.log("Import CSV")}
       />
+
 
       {showSortDropdown && (
         <div className="bg-white border rounded-xl shadow p-4 w-64">
@@ -145,11 +157,10 @@ export default function VendorsPage() {
               setSort("recent");
               setShowSortDropdown(false);
             }}
-            className={`block w-full text-left px-3 py-2 rounded-lg text-sm ${
-              sort === "recent"
+            className={`block w-full text-left px-3 py-2 rounded-lg text-sm ${sort === "recent"
                 ? "bg-purple-100 text-purple-700"
                 : "hover:bg-gray-100"
-            }`}
+              }`}
           >
             Recent
           </button>
@@ -159,18 +170,17 @@ export default function VendorsPage() {
               setSort("name");
               setShowSortDropdown(false);
             }}
-            className={`block w-full text-left px-3 py-2 rounded-lg text-sm ${
-              sort === "name"
+            className={`block w-full text-left px-3 py-2 rounded-lg text-sm ${sort === "name"
                 ? "bg-purple-100 text-purple-700"
                 : "hover:bg-gray-100"
-            }`}
+              }`}
           >
             Name A–Z
           </button>
         </div>
       )}
 
- <div className="bg-white p-5 rounded-xl shadow overflow-x-auto overflow-y-visible">
+      <div className="bg-white p-5 rounded-xl shadow overflow-x-auto overflow-y-visible">
 
 
         <table className="w-full text-sm">
@@ -198,11 +208,10 @@ export default function VendorsPage() {
 
                 <td>
                   <span
-                    className={`px-2 py-1 rounded-full text-xs ${
-                      v.status === "active"
+                    className={`px-2 py-1 rounded-full text-xs ${v.status === "active"
                         ? "bg-green-100 text-green-700"
                         : "bg-gray-100 text-gray-600"
-                    }`}
+                      }`}
                   >
                     {v.status === "active" ? "Active" : "Inactive"}
                   </span>

@@ -26,13 +26,9 @@ export default function LeadProductsTab({ lead }: Props) {
   );
 
   return (
-    <div className="space-y-6">
-      <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-500">
-        Products
-      </h3>
-
+    <div className="space-y-4">
       {loading && (
-        <div className="text-sm text-gray-500">Loading products...</div>
+        <div className="text-sm text-gray-500">Loading products ...</div>
       )}
 
       {!loading && leadProducts.length === 0 && (

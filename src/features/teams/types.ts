@@ -15,9 +15,11 @@ export interface TeamMember {
   phone: string;
   role: "manager" | "sales_rep" | "vendor_admin" | string;
   status: "active" | "pending" | "suspended";
-
+  leads_count?: number;
   permissions?: TeamPermissions;
+  deal_amount?: number;
 
+  last_active_at?: string;
   created_at: string;
   updated_at: string;
 

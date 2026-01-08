@@ -37,11 +37,7 @@ useEffect(() => {
 
   return (
     <div className="space-y-6">
-      <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-500">
-        Notes
-      </h3>
-
-      <div className="space-y-3">
+      <div className="space-y-4">
         {loading && (
           <div className="bg-white border border-gray-100 rounded-2xl p-4 text-sm text-gray-400">
             Loading notes…

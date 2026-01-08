@@ -3,7 +3,8 @@ export interface SupportReply {
   id: number;
   ticket_id: number;
   message: string;
-  status?: "open" | "resolved" | "in_progress";
+  status?: "open" | "closed" | "pending";
+  // status?: "open" | "resolved" | "in_progress";
   created_at: string;
 }
 
@@ -14,13 +15,17 @@ export interface SupportTicket {
   title: string;
   category: string;
   priority: "high" | "medium" | "low";
-  status: "open" | "resolved" | "in_progress";
+  status?: "open" | "closed" | "pending";
+  // status: "open" | "resolved" | "in_progress";
 
   replies?: SupportReply[];
 
   created_at: string;
   updated_at: string;
 }
+
+
+
 
 /* ---------- PAGINATION ---------- */
 export interface SupportMeta {
@@ -43,4 +48,14 @@ export interface SupportState {
   meta: SupportMeta | null;
   loading: boolean;
   error?: string;
+}
+
+export type NewSupportTicket = Omit<
+  SupportTicket,
+  "id" | "vendor_id" | "created_at" | "updated_at" | "replies" | "status"
+>;
+
+
+export interface NewSupportTicketForm extends NewSupportTicket {
+  description: string;
 }

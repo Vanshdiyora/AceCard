@@ -11,9 +11,10 @@ import CampaignOverviewTab from "../components/details/CampaignOverviewTab";
 import CampaignSalespersonsTab from "../components/details/CampaignSalespersonsTab";
 import { selectEnrichedCampaignById } from "../selectors";
 import type { EnrichedCampaign } from "../types";
+import CampaignProductsTab from "../components/details/CampaignProductsTab";
 
 
-const TABS = ["overview", "salespersons"] as const;
+const TABS = ["overview", "salespersons", "products"] as const;
 
 export default function CampaignDetailsPage() {
   const { id } = useParams<{ id: string }>();
@@ -73,7 +74,8 @@ export default function CampaignDetailsPage() {
   };
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="min-h-screen p-8">
+
       {/* Back */}
       <button
         onClick={() => navigate(-1)}
@@ -83,31 +85,33 @@ export default function CampaignDetailsPage() {
         Back to Campaigns
       </button>
 
-      {/* Header */}
-      <div className="flex justify-between items-center">
+      {/* Header Card */}
+      <div className="bg-white rounded-2xl p-6 shadow-sm flex justify-between items-center mt-6">
         <div>
-          <h2 className="text-2xl font-semibold">
-            {campaign.name}
-          </h2>
-          <p className="text-gray-500">
-            {campaign.description || "-"}
+          <h2 className="text-2xl font-semibold">{campaign.name}</h2>
+          <p className="text-gray-500 mt-1">
+            {campaign.description || "No description provided"}
           </p>
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex gap-3">
           <button
             disabled={isReadOnly}
             onClick={() => setOpenEdit(true)}
-            className={`btn-outline ${isReadOnly ? "opacity-50 cursor-not-allowed" : ""}`}
+            className={`px-4 py-2 rounded-xl border flex items-center gap-2 text-sm ${isReadOnly
+                ? "opacity-50 cursor-not-allowed"
+                : "hover:bg-purple-50"
+              }`}
           >
             <Edit size={16} /> Edit
           </button>
 
-
           <button
             onClick={archive}
             disabled={isReadOnly}
-            className={`btn-danger ${isReadOnly ? "opacity-50 cursor-not-allowed" : ""
+            className={`px-4 py-2 rounded-xl bg-red-50 text-red-600 flex items-center gap-2 text-sm ${isReadOnly
+                ? "opacity-50 cursor-not-allowed"
+                : "hover:bg-red-100"
               }`}
           >
             <Trash2 size={16} /> Archive
@@ -116,39 +120,51 @@ export default function CampaignDetailsPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-6 border-b text-sm">
+      <div className="flex gap-8 border-b border-gray-200 my-6">
         {TABS.map((t) => (
           <button
             key={t}
             onClick={() => setActiveTab(t)}
-            className={`pb-2 capitalize ${activeTab === t
-                ? "border-b-2 border-purple-600 text-purple-600 font-medium"
-                : "text-gray-500"
+            className={`relative pb-3 text-sm capitalize transition ${activeTab === t
+                ? "text-purple-600 font-medium"
+                : "text-gray-400 hover:text-gray-600"
               }`}
           >
             {t}
+
+            {activeTab === t && (
+              <span className="absolute left-0 -bottom-[1px] h-[2px] w-full bg-purple-600 rounded-full" />
+            )}
           </button>
         ))}
       </div>
 
       {/* Content */}
-      {activeTab === "overview" && (
-        <CampaignOverviewTab campaign={campaign} />
-      )}
+        {activeTab === "overview" && (
+      <div className="bg-white rounded-2xl p-6 shadow-sm">
+          <CampaignOverviewTab campaign={campaign} />
 
-      {activeTab === "salespersons" && campaign && (
-        <CampaignSalespersonsTab
-          campaignId={campaign.id}
-          assignedReps={campaign.assigned_reps ?? []}
-        />
-      )}
+      </div>
+        )}
+        {activeTab === "salespersons" && (
+          <CampaignSalespersonsTab
+            campaignId={campaign.id}
+            assignedReps={campaign.assigned_reps ?? []}
+          />
+        )}
+        {activeTab === "products" && (
+  <CampaignProductsTab
+    assignedProducts={campaign.products ?? []}
+  />
+)}
+
 
       <EditCampaignModal
         open={openEdit}
         onClose={() => setOpenEdit(false)}
         campaign={campaign}
       />
-
     </div>
   );
+
 }

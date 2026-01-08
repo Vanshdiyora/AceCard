@@ -1,6 +1,15 @@
-// components/details/TeamMemberLeadsTab.tsx
 import { useNavigate } from "react-router-dom";
 import { useAppSelector } from "../../../../app/hooks";
+import DataTable, { type Column } from "../../../../common/components/table/DataTable";
+
+type LeadRow = {
+  id: number;
+  lead_name: string;
+  company: string;
+  stage: string;
+  deal_amount?: number;
+  last_interaction_at?: string;
+};
 
 export default function TeamMemberLeadsTab({
   memberId,
@@ -8,84 +17,77 @@ export default function TeamMemberLeadsTab({
   memberId: number;
 }) {
   const navigate = useNavigate();
-
   const { leads } = useAppSelector((s) => s.leads);
 
   const assignedLeads = leads.filter(
     (l) => l.assigned_rep_id === memberId && !l.archived
   );
 
+  const rows: LeadRow[] = assignedLeads.map((l) => ({
+    id: l.id,
+    lead_name: l.lead_name,
+    company: l.company,
+    stage: l.stage,
+    deal_amount: l.deal_amount,
+    last_interaction_at: l.last_interaction_at,
+  }));
+
+  const columns: Column<LeadRow>[] = [
+    { header: "Lead", accessor: "lead_name" },
+    { header: "Company", accessor: "company" },
+    { header: "Stage", accessor: "stage", align: "center", width: "120px" },
+    {
+      header: "Deal",
+      accessor: "deal_amount",
+      align: "right",
+      width: "140px",
+      render: (row) => `₹${row.deal_amount?.toLocaleString() ?? "-"}`,
+    },
+    {
+      header: "Last Activity",
+      accessor: "last_interaction_at",
+      width: "160px",
+      align: "right",
+      render: (row) =>
+        row.last_interaction_at
+          ? new Date(row.last_interaction_at).toLocaleDateString()
+          : "-",
+    },
+  ];
+
   return (
-    <div className="bg-white border rounded-xl p-5">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-4">
-        <h3 className="font-medium">
-          Leads Captured ({assignedLeads.length})
-        </h3>
+    <div className="space-y-4">
+
+      {/* Header (white only here) */}
+      <div className=" rounded-2xl border flex justify-between items-center">
+        <div>
+          <h3 className="text-base font-semibold">
+            Leads Captured
+            <span className="ml-2 text-sm text-gray-400">
+              ({rows.length})
+            </span>
+          </h3>
+          <p className="text-sm text-gray-500">
+            Leads currently assigned to this member
+          </p>
+        </div>
 
         <button
-          className="text-sm text-purple-600"
-          onClick={() =>
-            navigate(`/admin/leads?assignedTo=${memberId}`)
-          }
+          className="text-sm text-purple-600 hover:underline"
+          onClick={() => navigate(`/admin/leads?assignedTo=${memberId}`)}
         >
-          View all leads →
+          View all →
         </button>
       </div>
 
-      {/* Empty State */}
-      {assignedLeads.length === 0 && (
-        <div className="text-sm text-gray-500 py-6 text-center">
-          No leads assigned to this member
-        </div>
-      )}
+      {/* Table (no background wrapper) */}
+      <DataTable<LeadRow>
+        columns={columns}
+        data={rows}
+        emptyText="No leads assigned to this member"
+        onRowClick={(row) => navigate(`/admin/leads/${row.id}`)}
+      />
 
-      {/* Leads Table */}
-      {assignedLeads.length > 0 && (
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="text-gray-500 border-b">
-              <tr>
-                <th className="text-left py-2">Lead</th>
-                <th className="text-left py-2">Company</th>
-                <th className="text-left py-2">Stage</th>
-                <th className="text-left py-2">Deal</th>
-                <th className="text-left py-2">Last Activity</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {assignedLeads.map((lead) => (
-                <tr
-                  key={lead.id}
-                  className="border-b hover:bg-gray-50 cursor-pointer"
-                  onClick={() =>
-                    navigate(`/admin/leads/${lead.id}`)
-                  }
-                >
-                  <td className="py-3 font-medium">
-                    {lead.lead_name}
-                  </td>
-                  <td className="py-3">{lead.company}</td>
-                  <td className="py-3 capitalize">
-                    {lead.stage}
-                  </td>
-                  <td className="py-3">
-                    ₹{lead.deal_amount?.toLocaleString() ?? "-"}
-                  </td>
-                  <td className="py-3 text-gray-500">
-                    {lead.last_interaction_at
-                      ? new Date(
-                          lead.last_interaction_at
-                        ).toLocaleDateString()
-                      : "-"}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
     </div>
   );
 }

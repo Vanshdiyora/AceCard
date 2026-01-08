@@ -35,79 +35,106 @@ export default function TeamMemberOverviewTab({
   }, [allCampaigns, member.role, member.id]);
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      {/* ================= MEMBER DETAILS ================= */}
-      <div className="bg-white border rounded-xl p-5 space-y-3">
-        <h3 className="font-medium">Member Details</h3>
+  <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
 
+    {/* ================= MEMBER DETAILS ================= */}
+    <div className="bg-white rounded-2xl border p-6 space-y-5">
+
+      <h3 className="text-base font-semibold">Member Details</h3>
+
+      <div className="space-y-4">
         <Detail label="Email" value={member.email} />
         <Detail label="Phone" value={member.phone} />
-        <Detail label="Role" value={member.role} />
+        <Detail label="Role" value={member.role.replace("_", " ")} />
         <Detail label="Status" value={member.status} />
         <Detail label="Joined On" value={member.created_at} />
       </div>
 
-      {/* ================= CAMPAIGNS ================= */}
-      <div className="lg:col-span-2 bg-white border rounded-xl p-5">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="font-medium">
-            Campaigns Assigned ({campaigns.length})
-          </h3>
+    </div>
 
-          <button
-            onClick={() =>
-              navigate(`/admin/campaigns?teams_member_ids=${member.id}`)
-            }
-            className="text-sm text-purple-600"
-          >
-            View all →
-          </button>
+    {/* ================= CAMPAIGNS ================= */}
+    <div className="xl:col-span-2 bg-white rounded-2xl border p-6">
+
+      <div className="flex justify-between items-center mb-5">
+        <div>
+          <h3 className="text-base font-semibold">
+            Campaigns Assigned
+            <span className="ml-2 text-sm text-gray-400">
+              ({campaigns.length})
+            </span>
+          </h3>
+          <p className="text-sm text-gray-500">
+            Campaigns this member is involved in
+          </p>
         </div>
 
-        {loading && (
-          <div className="text-sm text-gray-500">
-            Loading campaigns…
-          </div>
-        )}
-
-        {!loading && campaigns.length === 0 && (
-          <div className="text-sm text-gray-500">
-            No campaigns assigned
-          </div>
-        )}
-
-        {campaigns.length > 0 && (
-          <div className="divide-y">
-            {campaigns.map((c) => (
-              <div
-                key={c.id}
-                onClick={() =>
-                  navigate(`/admin/campaigns/${c.id}`)
-                }
-                className="py-3 cursor-pointer hover:bg-gray-50 rounded-md px-2"
-              >
-                <div className="font-medium">{c.name}</div>
-
-                <div className="text-xs text-gray-500 flex gap-4 mt-1">
-                  <span>Status: {c.status}</span>
-                  <span>
-                    Budget: ₹{c.budget?.toLocaleString() ?? "-"}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+        <button
+          onClick={() =>
+            navigate(`/admin/campaigns?teams_member_ids=${member.id}`)
+          }
+          className="text-sm text-purple-600 hover:underline"
+        >
+          View all →
+        </button>
       </div>
-    </div>
-  );
-}
 
+      {loading && (
+        <div className="py-8 text-sm text-gray-500">
+          Loading campaigns…
+        </div>
+      )}
+
+      {!loading && campaigns.length === 0 && (
+        <div className="py-8 text-sm text-gray-500">
+          No campaigns assigned
+        </div>
+      )}
+
+      {campaigns.length > 0 && (
+        <div className="space-y-3">
+          {campaigns.map((c) => (
+            <div
+              key={c.id}
+              onClick={() =>
+                navigate(`/admin/campaigns/${c.id}`)
+              }
+              className="p-4 rounded-xl border hover:border-purple-300 hover:bg-purple-50/40 cursor-pointer transition"
+            >
+              <div className="flex justify-between items-start">
+                <div>
+                  <div className="font-medium text-sm">{c.name}</div>
+
+                  <div className="flex gap-3 mt-1 text-xs text-gray-500">
+                    <span className="capitalize">
+                      {c.status}
+                    </span>
+                    <span>
+                      Budget: ₹{c.budget?.toLocaleString() ?? "-"}
+                    </span>
+                  </div>
+                </div>
+
+                <span className="text-xs text-gray-400">→</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+    </div>
+  </div>
+);
+
+}
 function Detail({ label, value }: { label: string; value?: string }) {
   return (
-    <div className="text-sm">
-      <div className="text-gray-500">{label}</div>
-      <div>{value || "-"}</div>
+    <div className="flex flex-col">
+      <span className="text-xs uppercase tracking-wide text-gray-400">
+        {label}
+      </span>
+      <span className="text-sm font-medium text-gray-900">
+        {value || "-"}
+      </span>
     </div>
   );
 }

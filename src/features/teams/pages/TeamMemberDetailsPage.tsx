@@ -15,9 +15,21 @@ import TeamMemberLeadsTab from "../components/details/TeamMemberLeadsTab";
 const TABS = ["overview", "leads"] as const;
 
 export default function TeamMemberDetailsPage() {
+  
   const { id } = useParams();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
+const auth = useAppSelector((s) => s.auth);
+const teamMembers = useAppSelector((s) => s.team.members);
+
+const ROLES = ["vendor_admin", "manager", "sales_rep"] as const;
+
+const rawRole = auth?.role ?? "";
+const currentRole = ROLES.includes(rawRole as any)
+  ? (rawRole as "vendor_admin" | "manager" | "sales_rep")
+  : "sales_rep";
+
+const managers = teamMembers.filter((m) => m.role === "manager");
 
   const [activeTab, setActiveTab] =
     useState<typeof TABS[number]>("overview");
@@ -69,30 +81,50 @@ export default function TeamMemberDetailsPage() {
       </button>
 
       {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-2xl font-semibold">{member.name}</h2>
-          <p className="text-gray-500">
-            {member.role} • {member.status}
-          </p>
-        </div>
+     {/* Header */}
+<div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 bg-white rounded-2xl p-6 border">
 
-        <div className="flex gap-2">
-          <button onClick={() => setEditOpen(true)} className="btn-outline">
-            <Edit size={16} /> Edit
-          </button>
+  {/* Identity */}
+  <div className="flex items-center gap-4">
+    <div className="h-14 w-14 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center text-xl font-semibold">
+      {member.name.slice(0, 1).toUpperCase()}
+    </div>
 
-          <button onClick={() => setPermOpen(true)} className="btn-outline">
-            <Shield size={16} /> Permissions
-          </button>
-
-          {member.status === "active" && (
-            <button onClick={suspend} className="btn-danger">
-              <UserX size={16} /> Suspend
-            </button>
-          )}
-        </div>
+    <div>
+      <h2 className="text-xl font-semibold leading-tight">{member.name}</h2>
+      <div className="flex items-center gap-2 text-sm text-gray-500">
+        <span className="capitalize">{member.role.replace("_", " ")}</span>
+        <span>•</span>
+        <span
+          className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+            member.status === "active"
+              ? "bg-green-100 text-green-700"
+              : "bg-gray-200 text-gray-700"
+          }`}
+        >
+          {member.status}
+        </span>
       </div>
+    </div>
+  </div>
+
+  {/* Actions */}
+  <div className="flex gap-2 flex-wrap">
+    <button onClick={() => setEditOpen(true)} className="btn-outline">
+      <Edit size={16} /> Edit
+    </button>
+
+    <button onClick={() => setPermOpen(true)} className="btn-outline">
+      <Shield size={16} /> Permissions
+    </button>
+
+    {member.status === "active" && (
+      <button onClick={suspend} className="btn-danger">
+        <UserX size={16} /> Suspend
+      </button>
+    )}
+  </div>
+</div>
 
       {/* Tabs */}
       <div className="flex gap-6 border-b text-sm">
@@ -120,15 +152,17 @@ export default function TeamMemberDetailsPage() {
       )}
 
       {/* Modals */}
-      <EditMemberModal
-        open={editOpen}
-        member={member}
-        onClose={() => setEditOpen(false)}
-        onSubmit={(data) => {
-          dispatch(updateMember({ id: member.id, data }));
-          setEditOpen(false);
-        }}
-      />
+     <EditMemberModal
+  open={editOpen}
+  member={member}
+  currentRole={currentRole}
+  managers={managers}
+  onClose={() => setEditOpen(false)}
+  onSubmit={(data) => {
+    dispatch(updateMember({ id: member.id, data }));
+    setEditOpen(false);
+  }}
+/>
 
       <PermissionsModal
         open={permOpen}

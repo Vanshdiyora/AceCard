@@ -50,7 +50,7 @@ export default function LeadDetailsPage() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-6 py-8 space-y-8">
+    <div className="mx-auto p-6 space-y-6">
       {/* Back */}
       <button
         onClick={() => navigate(-1)}

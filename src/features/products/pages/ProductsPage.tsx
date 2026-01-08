@@ -120,16 +120,14 @@ export default function ProductsPage() {
   };
 
   const columns: Column<any>[] = [
-    { header: "Name", accessor: "name", width: "minmax(200px,2fr)" },
-    { header: "Category", accessor: "category", width: "minmax(160px,1.5fr)" },
+    { header: "Name", accessor: "name" },
+    { header: "Category", accessor: "category" },
     {
       header: "Price",
-      width: "minmax(120px,1fr)",
       render: p => `₹${p.price}`,
     },
     {
       header: "Status",
-      width: "minmax(120px,1fr)",
       render: p => (
         <span
           className={`px-2 py-1 rounded text-xs ${p.status === "active"
@@ -143,7 +141,6 @@ export default function ProductsPage() {
     },
     {
       header: "Actions",
-      width: "minmax(120px,1fr)",
       align: "right",
       render: p => (
         <button

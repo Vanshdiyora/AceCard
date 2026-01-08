@@ -82,7 +82,7 @@ export default function SupportAdmin() {
       const vendorContact = vendorContactMap[t.vendor_id]?.toLowerCase() || "";
 
       return (
-        t.subject?.toLowerCase().includes(s) ||
+        t.title?.toLowerCase().includes(s) ||
         vendorName.includes(s) ||
         vendorContact.includes(s) ||
         String(t.id).includes(s)

@@ -7,9 +7,8 @@ export const selectEnrichedCampaignById = (id: number) =>
     [
       (s: RootState) => s.campaigns.items,
       (s: RootState) => s.team.members,
-      (s: RootState) => s.products.products,
     ],
-    (campaigns, members, products): EnrichedCampaign | null => {
+    (campaigns, members): EnrichedCampaign | null => {
       const campaign = campaigns.find((c) => c.id === id);
       if (!campaign) return null;
 
@@ -17,22 +16,14 @@ export const selectEnrichedCampaignById = (id: number) =>
       const salespersons = members.filter((m) =>
         campaign.assigned_reps?.includes(m.id)
       );
-      const productDetails = products.filter((p) =>
-        campaign.products?.includes(p.id)
-      );
 
       return {
-  ...campaign,
-  owner_name: owner?.name,
-  salespersons: salespersons.map((s) => ({
-    id: s.id,
-    name: s.name,
-  })),
-  product_details: productDetails.map((p) => ({
-    id: p.id,
-    name: p.name,
-  })),
-};
-
+        ...campaign,
+        owner_name: owner?.name,
+        salespersons: salespersons.map((s) => ({
+          id: s.id,
+          name: s.name,
+        })),
+      };
     }
   );

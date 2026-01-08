@@ -81,6 +81,23 @@ export default function CampaignsPage() {
     });
   }, [items, search, activeTab]);
 
+  const sortFilter = useMemo(() => {
+  return [
+    {
+      key: "sort",
+      placeholder: "Sort",
+      value: sort,
+      onChange: (v: string) => setSort(v as any),
+      options: [
+        { label: "Recent", value: "recent" },
+        { label: "Name A–Z", value: "name_asc" },
+        { label: "Pipeline High–Low", value: "pipeline_desc" },
+      ],
+    },
+  ];
+}, [sort]);
+
+
   /* -------- Sorting -------- */
   const finalData = useMemo(() => {
     const list = [...filtered];
@@ -127,7 +144,7 @@ export default function CampaignsPage() {
           onTabChange={setActiveTab}
           searchPlaceholder="Search campaigns..."
           onSearch={setSearch}
-          onFilter={() => setShowSortDropdown((p) => !p)}
+          filters={sortFilter}
           onExport={() => console.log("Export CSV")}
           onImport={() => console.log("Import CSV")}
         />

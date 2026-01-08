@@ -7,7 +7,7 @@ interface Props {
 
 export default function LeadOverviewTab({ lead }: Props) {
   return (
-    <div className="space-y-8">
+    <div className="space-y-4">
       {/* Top info cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
         <InfoCard icon={<Mail size={18} />} label="Email" value={lead.email || "Not provided"} />

@@ -1,10 +1,6 @@
 export default function LeadFollowupsTab() {
   return (
     <div className="space-y-6">
-      <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-500">
-        Follow-ups
-      </h3>
-
       <div className="space-y-4">
         <FollowupItem
           date="Friday, 20 Sep"

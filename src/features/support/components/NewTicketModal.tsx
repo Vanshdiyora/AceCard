@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useAppDispatch } from "../../../app/hooks";
 import { addTicket } from "../slice";
 import DynamicForm, { type FieldConfig } from "../../../common/ui/DynamicForm";
+import type { NewSupportTicketForm } from "../types";
 
 interface Props {
   open: boolean;
@@ -11,8 +12,8 @@ interface Props {
 export default function NewTicketModal({ open, onClose }: Props) {
   const dispatch = useAppDispatch();
 
-  const [form, setForm] = useState({
-    subject: "",
+  const [form, setForm] = useState<NewSupportTicketForm>({
+    title: "",
     priority: "medium",
     category: "technical",
     description: "",
@@ -86,8 +87,8 @@ export default function NewTicketModal({ open, onClose }: Props) {
   };
 
   const submit = async () => {
-    if (!form.subject || !form.description) {
-      alert("Subject and description are required");
+    if (!form.title || !form.description) {
+      alert("Title and description are required");
       return;
     }
 
