@@ -15,10 +15,10 @@ const SuperAdminLayout = () => {
      <div className="flex">
       <Sidebar type="superadmin" />
 
-      <div className="flex-1 flex flex-col bg-gray-50">
+      <div className="flex-1 flex flex-col">
         <Topbar type="super_admin" />
 
-        <main className="p-4 bg-[#F7F8FC]">
+        <main>
           <Outlet />
         </main>
       </div>

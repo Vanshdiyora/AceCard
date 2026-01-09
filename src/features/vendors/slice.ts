@@ -114,6 +114,18 @@ export const notifyVendor = createAsyncThunk(
   }
 );
 
+export const fetchVendorById = createAsyncThunk(
+  "vendors/fetchById",
+  async (id: number, { rejectWithValue }) => {
+    try {
+      return await vendorsService.getById(id);
+    } catch (err: any) {
+      return rejectWithValue(err?.message ?? "Failed to fetch vendor");
+    }
+  }
+);
+
+
 /* ---------- HELPERS ---------- */
 
 function computeStats(vendors: VendorItem[]): VendorStat[] {
@@ -163,6 +175,25 @@ const vendorsSlice = createSlice({
         state.vendors.unshift(action.payload);
         state.stats = computeStats(state.vendors);
       })
+
+      .addCase(fetchVendorById.pending, (state) => {
+  state.loading = true;
+})
+.addCase(fetchVendorById.fulfilled, (state, action) => {
+  state.loading = false;
+
+  const idx = state.vendors.findIndex(v => v.id === action.payload.id);
+  if (idx !== -1) {
+    state.vendors[idx] = action.payload;
+  } else {
+    state.vendors.push(action.payload);
+  }
+})
+.addCase(fetchVendorById.rejected, (state, action) => {
+  state.loading = false;
+  state.error = action.payload as string;
+})
+
 
       /* UPDATE */
       .addCase(updateVendor.fulfilled, (state, action) => {

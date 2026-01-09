@@ -12,7 +12,8 @@ import LeadDetailsPage from "./features/leads/pages/LeadDetailsPage";
 import {
   SupportPage, DashboardPage, TeamPage, ProductsPage, CampaignsPage, LeadPage, SettingsPage, CampaignDetailsPage
   , TeamMemberDetailsPage,
-  ProductDetailsPage
+  ProductDetailsPage,
+  VendorDetailsPage
 } from "./features/index";
 
 export default function App() {
@@ -34,6 +35,7 @@ export default function App() {
         >
           <Route index element={<Navigate to="vendors" replace />} />
           <Route path="vendors" element={<VendorsPage />} />
+          <Route path="vendors/:id" element={<VendorDetailsPage />} />
           <Route path="support" element={<SupportAdmin />} />
         </Route>
 

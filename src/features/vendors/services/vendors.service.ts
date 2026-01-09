@@ -17,6 +17,12 @@ export const vendorsService = {
     return res.data; // { data, meta }
   },
 
+  async getById(id: number): Promise<VendorItem> {
+  const res = await axios.get(`${BASE}/${id}`);
+  return res.data;
+},
+
+
   async create(data: Partial<VendorItem>): Promise<VendorItem> {
     const res = await axios.post(BASE, data);
     return res.data;

@@ -45,6 +45,7 @@ export default function LoginPage() {
             <label className="text-sm">Email</label>
             <input
               type="email"
+              placeholder="Enter your email"
               value={form.email}
               onChange={(e) =>
                 setForm({ ...form, email: e.target.value })
@@ -57,6 +58,7 @@ export default function LoginPage() {
             <label className="text-sm">Password</label>
             <input
               type="password"
+              placeholder="Enter your password"
               value={form.password}
               onChange={(e) =>
                 setForm({ ...form, password: e.target.value })

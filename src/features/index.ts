@@ -12,9 +12,11 @@ import SettingsPage from "./settings/pages/SettingsPage";
 import CampaignDetailsPage from "./campaigns/pages/CampaignDetailsPage";
 import TeamMemberDetailsPage from "./teams/pages/TeamMemberDetailsPage";
 import ProductDetailsPage from "./products/pages/ProductDetailsPage";
+import VendorDetailsPage from "./vendors/pages/VendorDetailsPage";
 
 export { ProductsPage, SupportPage, TeamPage, DashboardPage, CampaignsPage, VendorsPage, LoginPage, SupportAdmin ,LeadPage, LeadDetailsPage, SettingsPage,
 CampaignDetailsPage,
 TeamMemberDetailsPage,
-ProductDetailsPage
+ProductDetailsPage,
+VendorDetailsPage
 };

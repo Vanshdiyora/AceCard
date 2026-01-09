@@ -31,7 +31,7 @@ export default function Sidebar({ type }: SidebarProps) {
   const superMenu: MenuItem[] = [
     { label: "Vendors", path: `${superBase}/vendors`, icon: "/sidebar/vendors.png" },
     { label: "Tickets & Support", path: `${superBase}/support`, icon: "/sidebar/support.png" },
-    { label: "System Settings", path: `${superBase}/system-settings`, icon: "/sidebar/system-settings.png" },
+    { label: "System Settings", path: `${superBase}/system-settings`, icon: "/sidebar/settings.png" },
     { label: "Notifications", path: `${superBase}/notifications`, icon: "/sidebar/notifications.png" },
   ];
 
