@@ -7,7 +7,7 @@ import ProductFormModal from "../components/ProductFormModal";
 import PageHeader from "../../../common/components/layout/PageHeader";
 import PageFilters from "../../../common/components/layout/PageFilter";
 import DataTable, { type Column } from "../../../common/components/table/DataTable";
-import TableLoader from "../../../common/ui/TableLoader";
+// import TableLoader from "../../../common/ui/TableLoader";
 import { Edit2 } from "lucide-react";
 
 type SortBy = "recent" | "name" | "price";
@@ -197,22 +197,22 @@ export default function ProductsPage() {
 />
 
 
-      {loading && (
+      {/* {loading && (
         <div className="bg-white rounded-xl border p-6">
           <TableLoader />
         </div>
-      )}
+      )} */}
 
-      {!loading && (
+      {/* {!loading && ( */}
         <div className="mt-6" >
         <DataTable
         columns={columns}
         data={filtered}
-        emptyText="No products found"
+        emptyText={loading ? "Loading..." : "No products found"}
         onRowClick={p => navigate(`/admin/products/${p.id}`)}
         />
         </div>
-      )}
+      {/* )} */}
 
       <ProductFormModal
         open={open}

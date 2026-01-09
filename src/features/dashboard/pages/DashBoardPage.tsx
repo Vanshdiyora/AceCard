@@ -63,7 +63,8 @@ export default function DashboardPage() {
           {loading || !data ? (
             <ActivitySkeleton />
           ) : (
-            <RecentActivity items={data.recent_activity} />
+           <RecentActivity items={data?.recent_activity ?? []} />
+
           )}
         </div>
 

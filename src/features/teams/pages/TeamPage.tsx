@@ -177,12 +177,6 @@ const columns: Column<TeamMember>[] = [
   // },
 ];
 
-
-
-  if (loading) {
-    return <div className="p-6 text-gray-500 text-sm">Loading team members…</div>;
-  }
-
   return (
     <div className="p-6 space-y-6">
       <PageHeader
@@ -218,7 +212,7 @@ const columns: Column<TeamMember>[] = [
       <DataTable
         columns={columns}
         data={filtered}
-        emptyText="No team members found"
+        emptyText={loading ? "Loading..." : "No Members found"}
         onRowClick={(m) => navigate(`/admin/team/${m.id}`)}
       />
 
