@@ -1,5 +1,5 @@
 import DynamicForm, { type FieldConfig } from "../../../common/ui/DynamicForm";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAppDispatch } from "../../../app/hooks";
 import { createVendor, fetchVendors } from "../slice";
 import type { VendorItem } from "../types";
@@ -24,8 +24,21 @@ export default function AddVendorModal({ open, onClose }: AddVendorModalProps) {
     payment_terms: "",
     vendor_poc_email: "",
     crm_system: "none",
-    password: "", 
+    password: "",
   });
+
+  /* 🔒 Disable background scroll when modal is open */
+  useEffect(() => {
+    if (open) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [open]);
 
   const fields: FieldConfig[] = [
     {
@@ -52,14 +65,12 @@ export default function AddVendorModal({ open, onClose }: AddVendorModalProps) {
       type: "text",
       placeholder: "Enter main contact number",
     },
- 
     {
       name: "payment_terms",
       label: "Payment Terms",
       type: "text",
       placeholder: "Ex: Net 30 / Monthly / Quarterly",
     },
-    
     {
       name: "vendor_poc_email",
       label: "Vendor POC Email",
@@ -69,10 +80,9 @@ export default function AddVendorModal({ open, onClose }: AddVendorModalProps) {
     {
       name: "password",
       label: "Password",
-      type: "text", // ❗ I can upgrade DynamicForm to support password if you want
+      type: "text",
       placeholder: "Enter temporary vendor password",
     },
-
     {
       name: "crm_system",
       label: "CRM System",
@@ -102,7 +112,6 @@ export default function AddVendorModal({ open, onClose }: AddVendorModalProps) {
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
       <div className="bg-white w-[450px] max-h-[90vh] rounded-xl shadow-lg flex flex-col">
-
         <div className="p-5 border-b">
           <h2 className="text-xl font-semibold">Add Vendor</h2>
         </div>

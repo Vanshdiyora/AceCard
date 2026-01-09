@@ -32,7 +32,7 @@ export const vendorsService = {
     id: number,
     data: Partial<VendorItem>
   ): Promise<VendorItem> {
-    const res = await axios.put(`${BASE}/${id}`, data);
+    const res = await axios.post(`${BASE}/${id}`, data);
     return res.data;
   },
 

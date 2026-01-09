@@ -20,6 +20,19 @@ export default function EditVendorModal({
 
   const [form, setForm] = useState<Partial<VendorItem>>({});
 
+  /* 🔒 Lock background scroll when modal is open */
+  useEffect(() => {
+    if (open) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [open]);
+
   useEffect(() => {
     if (vendor) setForm(vendor);
   }, [vendor]);

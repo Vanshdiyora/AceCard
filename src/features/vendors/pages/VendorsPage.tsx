@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../../app/hooks";
-import { fetchVendors, archiveVendor } from "../slice";
+import { fetchVendors, archiveVendor, updateVendor } from "../slice";
 
 import PageHeader from "../../../common/components/layout/PageHeader";
 import PageFilters from "../../../common/components/layout/PageFilter";
@@ -20,12 +20,10 @@ import type { VendorItem } from "../types";
 
 function deriveStage(v: VendorItem): string {
   switch (v.status) {
-    case "pending":
-      return "Not Started";
     case "active":
       return "On-boarded";
     case "archived":
-      return "In Progress";
+      return "Suspended";
     default:
       return "In Progress";
   }
@@ -35,13 +33,14 @@ function deriveStage(v: VendorItem): string {
 
 export default function VendorsPage() {
   const dispatch = useAppDispatch();
-  const { vendors } = useAppSelector((s) => s.vendors);
+  const { vendors, loading } = useAppSelector((s) => s.vendors);
   const navigate = useNavigate();
 
-const [activeTab, setActiveTab] = useState<"all" | "active" | "archived">("all");
-
+  const [activeTab, setActiveTab] = useState<"all" | "active" | "archived">("all");
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<"recent" | "name">("recent");
+
+  const [page, setPage] = useState(1);
 
   const [addOpen, setAddOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
@@ -54,9 +53,13 @@ const [activeTab, setActiveTab] = useState<"all" | "active" | "archived">("all")
     dispatch(fetchVendors());
   }, [dispatch]);
 
+  useEffect(() => {
+    setPage(1);
+  }, [activeTab, search, sort]);
+
   const filtered = useMemo(() => {
     return vendors
-   .filter((v) => activeTab === "all" || v.status === activeTab)
+      .filter((v) => activeTab === "all" || v.status === activeTab)
       .filter((v) => {
         const q = search.toLowerCase();
         return (
@@ -65,13 +68,8 @@ const [activeTab, setActiveTab] = useState<"all" | "active" | "archived">("all")
         );
       })
       .sort((a, b) => {
-        if (sort === "name") {
-          return a.legal_name.localeCompare(b.legal_name);
-        }
-        return (
-          new Date(b.created_at).getTime() -
-          new Date(a.created_at).getTime()
-        );
+        if (sort === "name") return a.legal_name.localeCompare(b.legal_name);
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
       });
   }, [vendors, activeTab, search, sort]);
 
@@ -79,17 +77,8 @@ const [activeTab, setActiveTab] = useState<"all" | "active" | "archived">("all")
     { header: "Vendor Name", accessor: "legal_name", width: "2fr" },
     { header: "Vendor Email", accessor: "primary_email", width: "2fr" },
     { header: "Vendor Phone", accessor: "primary_phone", width: "1.5fr" },
-    {
-      header: "Vendor GST",
-      width: "1.5fr",
-      render: (v) => v.gst || "—",
-    },
-    {
-      header: "Seats",
-      accessor: "seats_appointed",
-      align: "center",
-      width: "1fr",
-    },
+    { header: "Vendor GST", width: "1.5fr", render: (v) => v.gst || "—" },
+    { header: "Seats", accessor: "seats_appointed", align: "center", width: "1fr" },
     {
       header: "Vendor Status",
       width: "1.5fr",
@@ -100,39 +89,41 @@ const [activeTab, setActiveTab] = useState<"all" | "active" | "archived">("all")
               : "bg-gray-100 text-gray-600"
             }`}
         >
-          {v.status === "active" ? "Active" : "Inactive"}
+          {v.status === "active" ? "Active" : "archived"}
         </span>
       ),
     },
-    {
-      header: "Stage",
-      width: "1.5fr",
-      render: (v) => <span className="font-medium">{deriveStage(v)}</span>,
-    },
+    { header: "Stage", width: "1.5fr", render: (v) => deriveStage(v) },
     {
       header: "Actions",
       width: "1fr",
       align: "right",
       render: (v) => (
-        <RowActionsDropdown
-          onEdit={() => {
-            setSelectedVendor(v);
-            setEditOpen(true);
-          }}
-          onSeats={() => {
-            setSelectedVendor(v);
-            setSeatsOpen(true);
-          }}
-          onNotify={() => {
-            setSelectedVendor(v);
-            setNotifyOpen(true);
-          }}
-          onArchive={() => {
-            setSelectedVendor(v);
-            setArchiveOpen(true);
-          }}
-        />
-      ),
+  <RowActionsDropdown
+  status={v.status} 
+    onEdit={() => {
+      setSelectedVendor(v);
+      setEditOpen(true);
+    }}
+    onSeats={() => {
+      setSelectedVendor(v);
+      setSeatsOpen(true);
+    }}
+    onNotify={() => {
+      setSelectedVendor(v);
+      setNotifyOpen(true);
+    }}
+    onArchive={() => {
+      setSelectedVendor(v);
+      setArchiveOpen(true);
+    }}
+    onUnarchive={async () => {
+      await dispatch(updateVendor({ id: v.id, data: { status: "active" } }));
+      dispatch(fetchVendors());
+    }}
+  />
+),
+
     },
   ];
 
@@ -149,21 +140,9 @@ const [activeTab, setActiveTab] = useState<"all" | "active" | "archived">("all")
 
       {selectedVendor && (
         <>
-          <EditVendorModal
-            vendor={selectedVendor}
-            open={editOpen}
-            onClose={() => setEditOpen(false)}
-          />
-          <UpdateSeatsModal
-            vendor={selectedVendor}
-            open={seatsOpen}
-            onClose={() => setSeatsOpen(false)}
-          />
-          <NotifyVendorModal
-            vendor={selectedVendor}
-            open={notifyOpen}
-            onClose={() => setNotifyOpen(false)}
-          />
+          <EditVendorModal vendor={selectedVendor} open={editOpen} onClose={() => setEditOpen(false)} />
+          <UpdateSeatsModal vendor={selectedVendor} open={seatsOpen} onClose={() => setSeatsOpen(false)} />
+          <NotifyVendorModal vendor={selectedVendor} open={notifyOpen} onClose={() => setNotifyOpen(false)} />
           <ArchiveVendorModal
             vendor={selectedVendor}
             open={archiveOpen}
@@ -184,10 +163,7 @@ const [activeTab, setActiveTab] = useState<"all" | "active" | "archived">("all")
           { label: "Archived", value: "archived" },
         ]}
         activeTab={activeTab}
-       onTabChange={(v) => {
-  if (v === "all" || v === "active" || v === "archived") setActiveTab(v);
-}}
-
+        onTabChange={(v) => (v === "all" || v === "active" || v === "archived") && setActiveTab(v)}
         searchPlaceholder="Search vendors..."
         onSearch={setSearch}
         filters={[
@@ -208,12 +184,16 @@ const [activeTab, setActiveTab] = useState<"all" | "active" | "archived">("all")
         <DataTable<VendorItem>
           columns={columns}
           data={filtered}
+          loading={loading}
+          page={page}
+          pageSize={10}
+          onPageChange={setPage}
           emptyText="No vendors found"
           onRowClick={(v) =>
             navigate(`/super/vendors/${v.id}`, { state: { vendor: v } })
           }
-
         />
+
       </div>
     </div>
   );

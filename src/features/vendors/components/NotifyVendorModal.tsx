@@ -16,6 +16,18 @@ export default function NotifyVendorModal({ open, onClose, vendor }: any) {
     }
   }, [open, vendor?.id]);
 
+  // 🔒 Disable background scroll when modal open
+  useEffect(() => {
+    if (open) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [open]);
+
   if (!open) return null;
 
   const handleSend = async () => {
@@ -50,32 +62,47 @@ export default function NotifyVendorModal({ open, onClose, vendor }: any) {
   };
 
   return (
-  <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[9999] pointer-events-auto">
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[9999]">
+      <div className="bg-white w-[420px] rounded-2xl shadow-xl overflow-hidden">
+        {/* Header */}
+        <div className="px-6 py-4 border-b">
+          <h2 className="text-lg font-semibold">
+            Notify {vendor?.legal_name || "Vendor"}
+          </h2>
+          <p className="text-xs text-gray-500 mt-1">
+            Send a message or notification to this vendor
+          </p>
+        </div>
 
-      <div className="bg-white w-[400px] p-6 rounded-xl space-y-4">
-        <h2 className="text-lg font-semibold">
-          Notify {vendor?.legal_name || "Vendor"}
-        </h2>
+        {/* Body */}
+        <div className="px-6 py-4 space-y-4">
+          <div>
+            <label className="text-xs text-gray-500">Title</label>
+            <input
+              className="w-full border rounded-lg px-3 py-2 mt-1 focus:ring-2 focus:ring-blue-500 outline-none"
+              placeholder="Enter message title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              disabled={loading}
+            />
+          </div>
 
-        <input
-          className="w-full border p-2 rounded"
-          placeholder="Title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          disabled={loading}
-        />
+          <div>
+            <label className="text-xs text-gray-500">Message</label>
+            <textarea
+              className="w-full border rounded-lg px-3 py-2 mt-1 h-28 resize-none focus:ring-2 focus:ring-blue-500 outline-none"
+              placeholder="Type your message here..."
+              value={body}
+              onChange={(e) => setBody(e.target.value)}
+              disabled={loading}
+            />
+          </div>
+        </div>
 
-        <textarea
-          className="w-full border p-2 rounded h-32"
-          placeholder="Message"
-          value={body}
-          onChange={(e) => setBody(e.target.value)}
-          disabled={loading}
-        />
-
-        <div className="flex justify-end gap-2">
+        {/* Footer */}
+        <div className="px-6 py-4 border-t flex justify-end gap-3">
           <button
-            className="px-4 py-2 bg-gray-200 rounded"
+            className="px-4 py-2 rounded-lg border hover:bg-gray-50 transition"
             onClick={onClose}
             disabled={loading}
           >
@@ -83,7 +110,7 @@ export default function NotifyVendorModal({ open, onClose, vendor }: any) {
           </button>
 
           <button
-            className="px-4 py-2 bg-blue-600 text-white rounded disabled:opacity-50"
+            className="px-4 py-2 rounded-lg bg-[#D8B4FE] text-black hover:bg-purple-700 transition disabled:opacity-50"
             onClick={handleSend}
             disabled={loading}
           >

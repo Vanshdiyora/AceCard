@@ -131,12 +131,10 @@ export const fetchVendorById = createAsyncThunk(
 function computeStats(vendors: VendorItem[]): VendorStat[] {
   const total = vendors.length;
   const active = vendors.filter((v) => v.status === "active").length;
-  const pending = vendors.filter((v) => v.status === "pending").length;
   const archived = vendors.filter((v) => v.status === "archived").length;
 
   return [
     { title: "Total Vendors", value: total, icon: "users", positive: true },
-    { title: "Pending Verification", value: pending, icon: "clock", positive: false },
     { title: "Active Vendors", value: active, icon: "check-circle", positive: true },
     { title: "Archived", value: archived, icon: "archive", positive: false },
   ];

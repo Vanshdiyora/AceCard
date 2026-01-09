@@ -1,20 +1,31 @@
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { Edit3, SlidersHorizontal, Trash2, Bell } from "lucide-react";
+import {
+  Edit3,
+  SlidersHorizontal,
+  Trash2,
+  Bell,
+  ArchiveRestore,
+} from "lucide-react";
 
 interface RowActionsDropdownProps {
+  status?: "active" | "archived";
   onEdit?: () => void;
   onSeats?: () => void;
   onArchive?: () => void;
+  onUnarchive?: () => void;
   onNotify?: () => void;
 }
 
-const DROPDOWN_HEIGHT = 176; // approx height of menu
+const DROPDOWN_HEIGHT = 176;
+const DROPDOWN_WIDTH = 176;
 
 export default function RowActionsDropdown({
+  status,
   onEdit,
   onSeats,
   onArchive,
+  onUnarchive,
   onNotify,
 }: RowActionsDropdownProps) {
   const [open, setOpen] = useState(false);
@@ -30,12 +41,11 @@ export default function RowActionsDropdown({
 
     let top = rect.bottom + 6;
     if (viewportHeight - rect.bottom < DROPDOWN_HEIGHT + 8) {
-      // not enough space below → open above
       top = rect.top - DROPDOWN_HEIGHT - 6;
     }
 
-    let left = rect.right - 176;
-    left = Math.max(8, Math.min(left, window.innerWidth - 176 - 8));
+    let left = rect.right - DROPDOWN_WIDTH;
+    left = Math.max(8, Math.min(left, window.innerWidth - DROPDOWN_WIDTH - 8));
 
     setPos({
       top: top + window.scrollY,
@@ -69,6 +79,11 @@ export default function RowActionsDropdown({
     };
   }, [open]);
 
+  const closeAndRun = (fn?: () => void) => () => {
+    fn?.();
+    setOpen(false);
+  };
+
   return (
     <>
       <button
@@ -89,15 +104,24 @@ export default function RowActionsDropdown({
             className="absolute z-[9999] w-44 bg-white border shadow-lg rounded-xl overflow-hidden animate-fadeIn"
             style={{ top: pos.top, left: pos.left }}
           >
-            <MenuItem icon={<Edit3 size={16} />} label="Edit Vendor" onClick={onEdit} />
-            <MenuItem icon={<SlidersHorizontal size={16} />} label="Update Seats" onClick={onSeats} />
-            <MenuItem icon={<Bell size={16} />} label="Notify Vendor" onClick={onNotify} />
-            <MenuItem
-              icon={<Trash2 size={16} className="text-red-500" />}
-              label="Archive Vendor"
-              danger
-              onClick={onArchive}
-            />
+            <MenuItem icon={<Edit3 size={16} />} label="Edit Vendor" onClick={closeAndRun(onEdit)} />
+            <MenuItem icon={<SlidersHorizontal size={16} />} label="Update Seats" onClick={closeAndRun(onSeats)} />
+            <MenuItem icon={<Bell size={16} />} label="Notify Vendor" onClick={closeAndRun(onNotify)} />
+
+            {status === "archived" ? (
+              <MenuItem
+                icon={<ArchiveRestore size={16} className="text-green-600" />}
+                label="Unarchive Vendor"
+                onClick={closeAndRun(onUnarchive)}
+              />
+            ) : (
+              <MenuItem
+                icon={<Trash2 size={16} className="text-red-500" />}
+                label="Archive Vendor"
+                danger
+                onClick={closeAndRun(onArchive)}
+              />
+            )}
           </div>,
           document.body
         )}

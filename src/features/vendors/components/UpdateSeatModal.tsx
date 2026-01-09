@@ -21,6 +21,15 @@ export default function UpdateSeatsModal({
     if (vendor) setSeats(vendor.seats_appointed ?? 0);
   }, [vendor]);
 
+  // 🔒 Disable background scroll
+  useEffect(() => {
+    if (open) document.body.style.overflow = "hidden";
+    else document.body.style.overflow = "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [open]);
+
   const save = async () => {
     if (!vendor) return;
 
@@ -33,36 +42,48 @@ export default function UpdateSeatsModal({
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-      <div className="bg-white w-[400px] max-h-[80vh] rounded-xl shadow-lg flex flex-col">
+      <div className="bg-white w-[420px] rounded-2xl shadow-xl overflow-hidden flex flex-col">
 
         {/* Header */}
-        <div className="p-5 border-b">
-          <h2 className="text-xl font-semibold">Update Seats</h2>
+        <div className="px-6 py-4 border-b">
+          <h2 className="text-lg font-semibold">Update Seats</h2>
+          <p className="text-xs text-gray-500">
+            Change the number of seats assigned to this vendor
+          </p>
         </div>
 
-        {/* Form Body */}
-        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
-          <label className="text-sm font-medium text-gray-700">Seats Appointed</label>
+        {/* Body */}
+        <div className="flex-1 px-6 py-5 space-y-3">
+          <label className="text-sm font-medium text-gray-700">
+            Seats Appointed
+          </label>
 
           <input
             type="number"
             value={seats}
             onChange={(e) => setSeats(Number(e.target.value))}
-            className="border rounded-lg w-full p-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-200"
+            className="border rounded-lg w-full px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
             placeholder="Enter number of seats"
           />
+
+          <p className="text-xs text-gray-400">
+            This controls how many users the vendor can onboard.
+          </p>
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t flex justify-end gap-2">
-          <button className="px-4 py-2 border rounded" onClick={onClose}>
+        <div className="px-6 py-4 border-t flex justify-end gap-3">
+          <button
+            className="px-4 py-2 border rounded-lg hover:bg-gray-50 transition"
+            onClick={onClose}
+          >
             Cancel
           </button>
           <button
-            className="px-4 py-2 bg-purple-600 text-white rounded"
+            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition"
             onClick={save}
           >
-            Save
+            Save Changes
           </button>
         </div>
 

@@ -16,7 +16,7 @@ export interface VendorItem {
   tagline?: string;
   industry_type?: string;
 
-  status: "active" | "pending" | "archived" | "suspended";
+  status: "active" | "archived";
 
   seats_appointed: number;
   pricing_per_card: number;
