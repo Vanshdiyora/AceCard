@@ -8,7 +8,10 @@ import type {
   UpdatePermissionsDTO,
 } from "./types";
 
-/* ---------- STATE ---------- */
+/* ======================================================
+   STATE
+====================================================== */
+
 interface TeamState {
   members: TeamMember[];
   meta: TeamMeta | null;
@@ -23,13 +26,19 @@ const initialState: TeamState = {
   error: undefined,
 };
 
-/* ---------- THUNKS ---------- */
+/* ======================================================
+   THUNKS
+====================================================== */
+export type FetchTeamParams = {
+  page?: number;
+  page_size?: number;
+};
 
 export const fetchTeam = createAsyncThunk(
   "team/fetch",
-  async (_, { rejectWithValue }) => {
+  async (params: FetchTeamParams | undefined, { rejectWithValue }) => {
     try {
-      const res = await teamService.getTeam();
+      const res = await teamService.getTeam(params);
 
       return {
         members: res.data.map((m) => ({
@@ -42,9 +51,7 @@ export const fetchTeam = createAsyncThunk(
         meta: res.meta,
       };
     } catch (err: any) {
-      return rejectWithValue(
-        err?.message ?? "Failed to fetch team"
-      );
+      return rejectWithValue(err?.message ?? "Failed to fetch team");
     }
   }
 );
@@ -55,9 +62,7 @@ export const createMember = createAsyncThunk(
     try {
       return await teamService.createMember(body);
     } catch (err: any) {
-      return rejectWithValue(
-        err?.message ?? "Failed to create member"
-      );
+      return rejectWithValue(err?.message ?? "Failed to create member");
     }
   }
 );
@@ -68,9 +73,7 @@ export const fetchMemberById = createAsyncThunk(
     try {
       return await teamService.getMemberById(id);
     } catch (err: any) {
-      return rejectWithValue(
-        err?.message ?? "Failed to fetch member"
-      );
+      return rejectWithValue(err?.message ?? "Failed to fetch member");
     }
   }
 );
@@ -84,9 +87,7 @@ export const updateMember = createAsyncThunk(
     try {
       return await teamService.updateMember(id, data);
     } catch (err: any) {
-      return rejectWithValue(
-        err?.message ?? "Failed to update member"
-      );
+      return rejectWithValue(err?.message ?? "Failed to update member");
     }
   }
 );
@@ -100,9 +101,7 @@ export const updatePermissions = createAsyncThunk(
     try {
       return await teamService.updatePermissions(id, data);
     } catch (err: any) {
-      return rejectWithValue(
-        err?.message ?? "Failed to update permissions"
-      );
+      return rejectWithValue(err?.message ?? "Failed to update permissions");
     }
   }
 );
@@ -114,14 +113,14 @@ export const deleteMember = createAsyncThunk(
       await teamService.deleteMember(id);
       return id;
     } catch (err: any) {
-      return rejectWithValue(
-        err?.message ?? "Failed to delete member"
-      );
+      return rejectWithValue(err?.message ?? "Failed to delete member");
     }
   }
 );
 
-/* ---------- SLICE ---------- */
+/* ======================================================
+   SLICE
+====================================================== */
 
 const teamSlice = createSlice({
   name: "team",
@@ -197,8 +196,7 @@ const teamSlice = createSlice({
           (m) => m.id === action.payload.id
         );
         if (idx !== -1) {
-          state.members[idx].permissions =
-            action.payload.permissions;
+          state.members[idx].permissions = action.payload.permissions;
         }
       })
 

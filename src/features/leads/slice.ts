@@ -39,6 +39,7 @@ export const fetchLeads = createAsyncThunk<
   return await LeadsService.getLeads(page, pageSize);
 });
 
+
 export const createLead = createAsyncThunk<Lead, CreateLeadDto>(
   "leads/create",
   async (payload) => LeadsService.createLead(payload)

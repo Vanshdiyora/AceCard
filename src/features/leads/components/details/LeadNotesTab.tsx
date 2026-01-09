@@ -19,14 +19,6 @@ export default function LeadNotesTab({ leadId }: Props) {
     dispatch(fetchLeadNotes(leadId));
   }, [dispatch, leadId]);
 
-  useEffect(() => {
-  console.log("Team members:", teamMembers);
-}, [teamMembers]);
-
-useEffect(() => {
-  console.log("Notes:", notes);
-}, [notes]);
-
   const memberMap = useMemo(() => {
     const map: Record<number, string> = {};
     teamMembers.forEach((m) => {

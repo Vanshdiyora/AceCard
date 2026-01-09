@@ -2,22 +2,21 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { ProductsAPI } from "./services/products.service";
 import type {
   ProductState,
+  ProductListResponse,
 } from "./types";
 
 /* ---------- THUNKS ---------- */
 
-export const fetchProducts = createAsyncThunk(
-  "products/fetchAll",
-  async (_, { rejectWithValue }) => {
-    try {
-      return await ProductsAPI.getAll();
-    } catch (err: any) {
-      return rejectWithValue(
-        err?.message ?? "Failed to fetch products"
-      );
-    }
+export const fetchProducts = createAsyncThunk<
+  ProductListResponse,
+  { page?: number; page_size?: number }
+>("products/fetchAll", async ({ page = 1, page_size = 10 }, { rejectWithValue }) => {
+  try {
+    return await ProductsAPI.getAll({ page, page_size });
+  } catch (err: any) {
+    return rejectWithValue(err?.message ?? "Failed to fetch products");
   }
-);
+});
 
 export const fetchProductById = createAsyncThunk(
   "products/fetchById",

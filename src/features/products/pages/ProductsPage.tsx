@@ -7,8 +7,8 @@ import ProductFormModal from "../components/ProductFormModal";
 import PageHeader from "../../../common/components/layout/PageHeader";
 import PageFilters from "../../../common/components/layout/PageFilter";
 import DataTable, { type Column } from "../../../common/components/table/DataTable";
-// import TableLoader from "../../../common/ui/TableLoader";
 import { Edit2 } from "lucide-react";
+import type { Product } from "../types";
 
 type SortBy = "recent" | "name" | "price";
 type StatusFilter = "all" | "active" | "archived";
@@ -17,55 +17,67 @@ export default function ProductsPage() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
 
-  const { products: rawProducts = [], loading } = useAppSelector(
-    s => s.products ?? {}
+  const { products: rawProducts = [], loading, meta } = useAppSelector(
+    (s) => s.products ?? {}
   );
 
-  const products = Array.isArray(rawProducts) ? rawProducts : [];
+  const products: Product[] = Array.isArray(rawProducts) ? rawProducts : [];
 
   const [open, setOpen] = useState(false);
-  const [editProduct, setEditProduct] = useState<any | null>(null);
+  const [editProduct, setEditProduct] = useState<Product | null>(null);
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [sortBy, setSortBy] = useState<SortBy>("recent");
 
+  const [page, setPage] = useState(1);
+  const pageSize = meta?.page_size ?? 10;
+
   useEffect(() => {
-    dispatch(fetchProducts());
-  }, [dispatch]);
+    dispatch(fetchProducts({ page, page_size: pageSize }));
+  }, [dispatch, page, pageSize]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [search, statusFilter, sortBy]);
 
   const filtered = useMemo(() => {
     let list = [...products];
 
     if (statusFilter !== "all") {
-      list = list.filter(p => p.status === statusFilter);
+      list = list.filter((p) => p.status === statusFilter);
     }
 
     if (search) {
       const q = search.toLowerCase();
       list = list.filter(
-        p =>
+        (p) =>
           p.name.toLowerCase().includes(q) ||
           p.description?.toLowerCase().includes(q)
       );
     }
 
-    if (sortBy === "name") {
-      list.sort((a, b) => a.name.localeCompare(b.name));
-    } else if (sortBy === "price") {
-      list.sort((a, b) => a.price - b.price);
-    } else {
-      list.sort(
-        (a, b) =>
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      );
+    switch (sortBy) {
+      case "name":
+        list.sort((a, b) => a.name.localeCompare(b.name));
+        break;
+      case "price":
+        list.sort((a, b) => a.price - b.price);
+        break;
+      case "recent":
+      default:
+        list.sort(
+          (a, b) =>
+            new Date(b.created_at).getTime() -
+            new Date(a.created_at).getTime()
+        );
     }
 
     return list;
   }, [products, statusFilter, sortBy, search]);
 
   const handleExport = () => {
-    const rows = filtered.map(p => ({
+    const rows = filtered.map((p) => ({
       Name: p.name,
       Description: p.description || "",
       Price: p.price,
@@ -77,7 +89,7 @@ export default function ProductsPage() {
 
     const csv = [
       Object.keys(rows[0]).join(","),
-      ...rows.map(r => Object.values(r).join(",")),
+      ...rows.map((r) => Object.values(r).join(",")),
     ].join("\n");
 
     const blob = new Blob([csv], { type: "text/csv" });
@@ -92,6 +104,7 @@ export default function ProductsPage() {
     const input = document.createElement("input");
     input.type = "file";
     input.accept = ".csv";
+
     input.onchange = async () => {
       const file = input.files?.[0];
       if (!file) return;
@@ -114,26 +127,25 @@ export default function ProductsPage() {
         });
       }
 
-      dispatch(fetchProducts());
+      dispatch(fetchProducts({ page, page_size: pageSize }));
     };
+
     input.click();
   };
 
-  const columns: Column<any>[] = [
+  const columns: Column<Product>[] = [
     { header: "Name", accessor: "name" },
     { header: "Category", accessor: "category" },
-    {
-      header: "Price",
-      render: p => `₹${p.price}`,
-    },
+    { header: "Price", render: (p) => `₹${p.price}` },
     {
       header: "Status",
-      render: p => (
+      render: (p) => (
         <span
-          className={`px-2 py-1 rounded text-xs ${p.status === "active"
-            ? "bg-green-100 text-green-700"
-            : "bg-gray-200 text-gray-600"
-            }`}
+          className={`px-2 py-1 rounded text-xs ${
+            p.status === "active"
+              ? "bg-green-100 text-green-700"
+              : "bg-gray-200 text-gray-600"
+          }`}
         >
           {p.status}
         </span>
@@ -142,9 +154,9 @@ export default function ProductsPage() {
     {
       header: "Actions",
       align: "right",
-      render: p => (
+      render: (p) => (
         <button
-          onClick={e => {
+          onClick={(e) => {
             e.stopPropagation();
             setEditProduct(p);
             setOpen(true);
@@ -169,50 +181,45 @@ export default function ProductsPage() {
         }}
       />
 
-     <PageFilters
-  tabs={[
-    { label: "All", value: "all" },
-    { label: "Active", value: "active" },
-    { label: "Archived", value: "archived" },
-  ]}
-  activeTab={statusFilter}
-  onTabChange={(v) => setStatusFilter(v as StatusFilter)}
-  searchPlaceholder="Search products..."
-  onSearch={setSearch}
-  filters={[
-    {
-      key: "sort",
-      placeholder: "Sort by",
-      value: sortBy,
-      onChange: (v) => setSortBy(v as SortBy),
-      options: [
-        { label: "Recent", value: "recent" },
-        { label: "Name A–Z", value: "name" },
-        { label: "Price", value: "price" },
-      ],
-    },
-  ]}
-  onExport={handleExport}
-  onImport={handleImport}
-/>
+      <PageFilters
+        tabs={[
+          { label: "All", value: "all" },
+          { label: "Active", value: "active" },
+          { label: "Archived", value: "archived" },
+        ]}
+        activeTab={statusFilter}
+        onTabChange={(v) => setStatusFilter(v as StatusFilter)}
+        searchPlaceholder="Search products..."
+        onSearch={setSearch}
+        filters={[
+          {
+            key: "sort",
+            placeholder: "Sort by",
+            value: sortBy,
+            onChange: (v) => setSortBy(v as SortBy),
+            options: [
+              { label: "Recent", value: "recent" },
+              { label: "Name A–Z", value: "name" },
+              { label: "Price", value: "price" },
+            ],
+          },
+        ]}
+        onExport={handleExport}
+        onImport={handleImport}
+      />
 
-
-      {/* {loading && (
-        <div className="bg-white rounded-xl border p-6">
-          <TableLoader />
-        </div>
-      )} */}
-
-      {/* {!loading && ( */}
-        <div className="mt-6" >
+      <div className="mt-6">
         <DataTable
-        columns={columns}
-        data={filtered}
-        emptyText={loading ? "Loading..." : "No products found"}
-        onRowClick={p => navigate(`/admin/products/${p.id}`)}
+          columns={columns}
+          data={filtered}
+          loading={loading}
+          page={meta?.page ?? page}
+          totalPages={meta?.total_pages ?? 1}
+          onPageChange={setPage}
+          emptyText="No products found"
+          onRowClick={(p) => navigate(`/admin/products/${p.id}`)}
         />
-        </div>
-      {/* )} */}
+      </div>
 
       <ProductFormModal
         open={open}
@@ -221,13 +228,13 @@ export default function ProductsPage() {
           setOpen(false);
           setEditProduct(null);
         }}
-        onSubmit={async data => {
+        onSubmit={async (data) => {
           if (editProduct) {
             await ProductsAPI.updateProduct(editProduct.id, data);
           } else {
             await ProductsAPI.createProduct(data);
           }
-          dispatch(fetchProducts());
+          dispatch(fetchProducts({ page, page_size: pageSize }));
           setOpen(false);
           setEditProduct(null);
         }}

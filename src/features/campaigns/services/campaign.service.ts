@@ -12,7 +12,6 @@ export const CampaignService = {
   getAll(
     params: PaginationParams = { page: 1, page_size: 10 }
   ): Promise<CampaignListResponse> {
-    console.log("🚨 getAll called");
     return axiosClient
       .get(BASE, { params })
       .then((res) => res.data);
@@ -23,8 +22,6 @@ getByTeamMember(
   memberId: number,
   params: PaginationParams = { page: 1, page_size: 10 }
 ): Promise<CampaignListResponse> {
-  console.log(memberId, "service");
-
   return axiosClient
     .get(BASE, {
       params: {

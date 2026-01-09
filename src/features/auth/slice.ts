@@ -14,7 +14,6 @@ function decodeToken(token: string | null) {
 
 const savedToken = localStorage.getItem("token");
 const decoded = decodeToken(savedToken);
-console.log("Decoded token:", decoded);
 interface AuthState {
   token: string | null;
   user: any | null;

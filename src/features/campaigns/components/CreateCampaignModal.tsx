@@ -29,7 +29,7 @@ export default function CreateCampaignModal({
 
   useEffect(() => {
     dispatch(fetchTeam());
-    dispatch(fetchProducts());
+    dispatch(fetchProducts({ page: 1, page_size: 10 }));
   }, [dispatch]);
 
   const managers = useMemo(
@@ -155,7 +155,7 @@ const handleSubmit = async () => {
   };
 
   await dispatch(createCampaign(payload as any));
-  await dispatch(fetchCampaigns());
+  await dispatch(fetchCampaigns({ page: 1, page_size: 10 }));
   onClose();
 };
 

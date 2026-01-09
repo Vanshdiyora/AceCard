@@ -35,7 +35,7 @@ export default function TeamMemberOverviewTab({
   }, [allCampaigns, member.role, member.id]);
 
   return (
-  <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+  <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 mt-6">
 
     {/* ================= MEMBER DETAILS ================= */}
     <div className="bg-white rounded-2xl border p-6 space-y-5">

@@ -82,8 +82,8 @@ export default function AddLeadModal({ open, onClose, onSubmit }: any) {
   useEffect(() => {
     if (open) {
       dispatch(fetchTeam());
-      dispatch(fetchProducts());
-      dispatch(fetchCampaigns());
+      dispatch(fetchProducts({ page: 1, page_size: 10 }));
+      dispatch(fetchCampaigns({ page: 1, page_size: 10 }));
     }
   }, [dispatch, open]);
 

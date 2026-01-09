@@ -11,10 +11,12 @@ import { CampaignService } from "./services/campaign.service";
 // -----------------------------
 
 export const fetchCampaigns = createAsyncThunk<
-  CampaignListResponse
->("campaigns/fetchAll", async () => {
-  return await CampaignService.getAll();
+  CampaignListResponse,
+  { page?: number; page_size?: number }
+>("campaigns/fetchAll", async ({ page = 1, page_size = 10 }) => {
+  return await CampaignService.getAll({ page, page_size });
 });
+
 
 export const createCampaign = createAsyncThunk<
   Campaign,

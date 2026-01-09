@@ -56,7 +56,7 @@ export default function TeamMemberLeadsTab({
   ];
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 mt-6">
 
       {/* Header (white only here) */}
       <div className=" rounded-2xl border flex justify-between items-center">

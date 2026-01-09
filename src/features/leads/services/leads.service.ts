@@ -41,7 +41,6 @@ export const LeadsService = {
 
   async addNote(id: number, note: string): Promise<Lead> {
     const res = await axiosClient.post(`${BASE}/${id}/notes`, { note });
-    console.log(res)
     return res.data;
   },
 

@@ -32,8 +32,6 @@ axiosClient.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      console.warn("Unauthorized → Redirecting to login...");
-
       // Remove token
       localStorage.removeItem("token");
 

@@ -35,8 +35,6 @@ export default function GlobalSearch({ mode }: GlobalSearchProps) {
 
 
   const handleSelect = (item: GlobalSearchItem) => {
-    console.log("Navigating to:", item.route);
-
     setQuery("");
     setActiveIndex(0);
     (document.activeElement as HTMLElement | null)?.blur();

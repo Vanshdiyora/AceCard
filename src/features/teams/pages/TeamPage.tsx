@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { useAppDispatch, useAppSelector } from "../../../app/hooks";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 import {
   fetchTeam,
@@ -20,26 +20,14 @@ import DataTable, { type Column } from "../../../common/components/table/DataTab
 
 import type { TeamMember } from "../types";
 
-/* ---------------- TYPES ---------------- */
-
-type Filter =
-  | "all"
-  | "vendor_admin"
-  | "manager"
-  | "sales_rep"
-  | "active"
-  | "suspended";
-
+type Filter = "all" | "vendor_admin" | "manager" | "sales_rep" | "active" | "suspended";
 type UserRole = "vendor_admin" | "manager" | "sales_rep";
-
-/* ---------------- COMPONENT ---------------- */
 
 export default function TeamPage() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const [params] = useSearchParams();
 
-  const { members = [], loading } = useAppSelector((s) => s.team);
+  const { members = [], loading, meta } = useAppSelector((s) => s.team);
   const authState = useAppSelector((s) => s.auth);
 
   const ROLES: readonly UserRole[] = ["vendor_admin", "manager", "sales_rep"];
@@ -50,20 +38,8 @@ export default function TeamPage() {
 
   const currentUserId = authState?.user?.user_id;
 
-  const canCreateManager = currentRole === "vendor_admin";
-  const canCreateSalesRep =
-    currentRole === "vendor_admin" || currentRole === "manager";
-
-  const managers = useMemo(
-    () => members.filter((m) => m.role === "manager"),
-    [members]
-  );
-
-  const managerMap = useMemo(() => {
-    const map = new Map<number, string>();
-    managers.forEach((m) => map.set(m.id, m.name));
-    return map;
-  }, [managers]);
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
 
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
@@ -74,120 +50,82 @@ export default function TeamPage() {
   const [permOpen, setPermOpen] = useState(false);
   const [suspendOpen, setSuspendOpen] = useState(false);
 
-  const isAnyModalOpen = addOpen || editOpen || permOpen || suspendOpen;
+  const canCreateManager = currentRole === "vendor_admin";
+  const canCreateSalesRep = currentRole === "vendor_admin" || currentRole === "manager";
+
+  const managers = useMemo(() => members.filter((m) => m.role === "manager"), [members]);
+  const managerMap = useMemo(() => {
+    const map = new Map<number, string>();
+    managers.forEach((m) => map.set(m.id, m.name));
+    return map;
+  }, [managers]);
 
   useEffect(() => {
-    if (isAnyModalOpen) {
-      const scrollY = window.scrollY;
-      document.body.style.position = "fixed";
-      document.body.style.top = `-${scrollY}px`;
-      document.body.style.width = "100%";
-
-      return () => {
-        document.body.style.position = "";
-        document.body.style.top = "";
-        document.body.style.width = "";
-        window.scrollTo(0, scrollY);
-      };
-    }
-  }, [isAnyModalOpen]);
+    dispatch(fetchTeam({ page, page_size: pageSize }));
+  }, [dispatch, page, pageSize]);
 
   useEffect(() => {
-    dispatch(fetchTeam());
-  }, [dispatch]);
+    setPage(1);
+  }, [filter, search]);
 
-  useEffect(() => {
-    if (params.get("open") === "create" && (canCreateManager || canCreateSalesRep)) {
-      setAddOpen(true);
-    }
-  }, [params, canCreateManager, canCreateSalesRep]);
+  const filteredMembers = useMemo(() => {
+  return members.filter((m) => {
+    if (!m) return false;
 
-  const filtered = useMemo(() => {
-    return members.filter((m) => {
-      if (!m) return false;
+    if (filter === "active" && m.status !== "active") return false;
+    if (filter === "suspended" && m.status !== "suspended") return false;
 
-      if (filter === "active" && m.status !== "active") return false;
-      if (filter === "suspended" && m.status !== "suspended") return false;
+    if (["vendor_admin", "manager", "sales_rep"].includes(filter) && m.role !== filter)
+      return false;
 
-      if (
-        ["vendor_admin", "manager", "sales_rep"].includes(filter) &&
-        m.role !== filter
-      )
-        return false;
+    if (!m.name?.toLowerCase().includes(search.toLowerCase())) return false;
 
-      if (!m.name?.toLowerCase().includes(search.toLowerCase())) return false;
+    return true;
+  });
+}, [members, filter, search]);
 
-      return true;
-    });
-  }, [members, filter, search]);
 
-const columns: Column<TeamMember>[] = [
-  { header: "Name", accessor: "name" },
-  { header: "Email", accessor: "email" },
-  {
-    header: "Status",
-    render: (m) => (
-      <span className={`px-2 py-1 rounded text-xs ${
-        m.status === "active"
-          ? "bg-green-100 text-green-700"
-          : "bg-red-100 text-red-700"
-      }`}>
-        {m.status}
-      </span>
-    ),
-  },
-  {
-    header: "Role",
-    render: (m) => m.role.replace("_", " "),
-  },
-  {
-    header: "Manager",
-    render: (m) =>
-      m.manager_id ? managerMap.get(m.manager_id) ?? "—" : "—",
-  },
-  {
-    header: "Leads",
-    align: "right",
-    render: (m) => m.leads_count ?? 0,
-  },
-  {
-    header: "Last Active",
-    align: "right",
-    render: (m) =>
-      m.last_active_at
-        ? new Date(m.last_active_at).toLocaleDateString()
-        : "—",
-  },
-  // {
-  //   header: "Permissions",
-  //   width: "minmax(120px, 1fr)",
-  //   align: "right",
-  //   render: (m) => (
-  //     <button
-  //       className="text-purple-600 text-sm hover:underline"
-  //       onClick={(e) => {
-  //         e.stopPropagation();
-  //         setSelected(m);
-  //         setPermOpen(true);
-  //       }}
-  //     >
-  //       View
-  //     </button>
-  //   ),
-  // },
-];
+  const columns: Column<TeamMember>[] = [
+    { header: "Name", accessor: "name" },
+    { header: "Email", accessor: "email" },
+    {
+      header: "Status",
+      render: (m) => (
+        <span className={`px-2 py-1 rounded text-xs ${m.status === "active" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+          }`}>
+          {m.status}
+        </span>
+      ),
+    },
+    { header: "Role", render: (m) => m.role.replace("_", " ") },
+    { header: "Manager", render: (m) => (m.manager_id ? managerMap.get(m.manager_id) ?? "—" : "—") },
+    { header: "Leads", align: "right", render: (m) => m.leads_count ?? 0 },
+    {
+      header: "Permissions",
+      align: "right",
+      render: (m) => (
+        <button
+          className="text-purple-600 text-sm hover:underline"
+          onClick={(e) => {
+            e.stopPropagation();
+            setSelected(m);
+            setPermOpen(true);
+          }}
+        >
+          View
+        </button>
+      ),
+    },
+  ];
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6">
       <PageHeader
         title="Team"
         description="Manage your team members"
         addButtonLabel={
-          currentRole === "vendor_admin"
-            ? "Add Member"
-            : currentRole === "manager"
-            ? "Add Sales Rep"
-            : undefined
+          currentRole === "vendor_admin" ? "Add Member" :
+            currentRole === "manager" ? "Add Sales Rep" : undefined
         }
         onAdd={() => {
           if (!canCreateManager && !canCreateSalesRep) return;
@@ -209,13 +147,17 @@ const columns: Column<TeamMember>[] = [
         onSearch={setSearch}
       />
 
-      <DataTable
-        columns={columns}
-        data={filtered}
-        emptyText={loading ? "Loading..." : "No Members found"}
-        onRowClick={(m) => navigate(`/admin/team/${m.id}`)}
-      />
-
+      <div className="mt-6">
+        <DataTable
+          columns={columns}
+          data={filteredMembers}
+          loading={loading}
+          page={meta?.page ?? page}
+          totalPages={meta?.total_pages ?? 1}
+          onPageChange={setPage}
+          onRowClick={(m) => navigate(`/admin/team/${m.id}`)}
+        />
+      </div>
       {/* Modals */}
       <AddMemberModal
         open={addOpen}
@@ -248,7 +190,8 @@ const columns: Column<TeamMember>[] = [
 
       <PermissionsModal
         open={permOpen}
-        permissions={selected?.permissions}
+        permissions={selected?.permissions || {}}
+        role={selected?.role || ""}
         onClose={() => {
           setPermOpen(false);
           setSelected(null);
@@ -268,7 +211,7 @@ const columns: Column<TeamMember>[] = [
           setSuspendOpen(false);
           setSelected(null);
         }}
-        onConfirm={(status:any) => {
+        onConfirm={(status: any) => {
           if (!selected) return;
           dispatch(updateMember({ id: selected.id, data: { status } }));
           setSuspendOpen(false);

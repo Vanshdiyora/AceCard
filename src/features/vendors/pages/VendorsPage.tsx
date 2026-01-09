@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../../app/hooks";
 import { fetchVendors, archiveVendor, updateVendor } from "../slice";
 
@@ -29,18 +29,16 @@ function deriveStage(v: VendorItem): string {
   }
 }
 
-/* ---------------- COMPONENT ---------------- */
-
 export default function VendorsPage() {
   const dispatch = useAppDispatch();
-  const { vendors, loading } = useAppSelector((s) => s.vendors);
+  const { vendors, loading, meta } = useAppSelector((s) => s.vendors);
   const navigate = useNavigate();
 
   const [activeTab, setActiveTab] = useState<"all" | "active" | "archived">("all");
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<"recent" | "name">("recent");
-
   const [page, setPage] = useState(1);
+  const pageSize = 10;
 
   const [addOpen, setAddOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
@@ -49,29 +47,10 @@ export default function VendorsPage() {
   const [notifyOpen, setNotifyOpen] = useState(false);
   const [selectedVendor, setSelectedVendor] = useState<VendorItem | null>(null);
 
+  // Fetch vendors whenever page/filter changes
   useEffect(() => {
-    dispatch(fetchVendors());
-  }, [dispatch]);
-
-  useEffect(() => {
-    setPage(1);
-  }, [activeTab, search, sort]);
-
-  const filtered = useMemo(() => {
-    return vendors
-      .filter((v) => activeTab === "all" || v.status === activeTab)
-      .filter((v) => {
-        const q = search.toLowerCase();
-        return (
-          v.legal_name.toLowerCase().includes(q) ||
-          v.primary_email.toLowerCase().includes(q)
-        );
-      })
-      .sort((a, b) => {
-        if (sort === "name") return a.legal_name.localeCompare(b.legal_name);
-        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-      });
-  }, [vendors, activeTab, search, sort]);
+    dispatch(fetchVendors({ page, page_size: pageSize }));
+  }, [dispatch, page, pageSize, activeTab, search, sort]);
 
   const columns: Column<VendorItem>[] = [
     { header: "Vendor Name", accessor: "legal_name", width: "2fr" },
@@ -84,12 +63,13 @@ export default function VendorsPage() {
       width: "1.5fr",
       render: (v) => (
         <span
-          className={`px-2 py-1 rounded-full text-xs ${v.status === "active"
+          className={`px-2 py-1 rounded-full text-xs ${
+            v.status === "active"
               ? "bg-green-100 text-green-700"
               : "bg-gray-100 text-gray-600"
-            }`}
+          }`}
         >
-          {v.status === "active" ? "Active" : "archived"}
+          {v.status === "active" ? "Active" : "Archived"}
         </span>
       ),
     },
@@ -99,31 +79,30 @@ export default function VendorsPage() {
       width: "1fr",
       align: "right",
       render: (v) => (
-  <RowActionsDropdown
-  status={v.status} 
-    onEdit={() => {
-      setSelectedVendor(v);
-      setEditOpen(true);
-    }}
-    onSeats={() => {
-      setSelectedVendor(v);
-      setSeatsOpen(true);
-    }}
-    onNotify={() => {
-      setSelectedVendor(v);
-      setNotifyOpen(true);
-    }}
-    onArchive={() => {
-      setSelectedVendor(v);
-      setArchiveOpen(true);
-    }}
-    onUnarchive={async () => {
-      await dispatch(updateVendor({ id: v.id, data: { status: "active" } }));
-      dispatch(fetchVendors());
-    }}
-  />
-),
-
+        <RowActionsDropdown
+          status={v.status}
+          onEdit={() => {
+            setSelectedVendor(v);
+            setEditOpen(true);
+          }}
+          onSeats={() => {
+            setSelectedVendor(v);
+            setSeatsOpen(true);
+          }}
+          onNotify={() => {
+            setSelectedVendor(v);
+            setNotifyOpen(true);
+          }}
+          onArchive={() => {
+            setSelectedVendor(v);
+            setArchiveOpen(true);
+          }}
+          onUnarchive={async () => {
+            await dispatch(updateVendor({ id: v.id, data: { status: "active" } }));
+            dispatch(fetchVendors({ page, page_size: pageSize }));
+          }}
+        />
+      ),
     },
   ];
 
@@ -149,7 +128,7 @@ export default function VendorsPage() {
             onClose={() => setArchiveOpen(false)}
             onConfirm={async () => {
               await dispatch(archiveVendor(selectedVendor.id));
-              dispatch(fetchVendors());
+              dispatch(fetchVendors({ page, page_size: pageSize }));
               setArchiveOpen(false);
             }}
           />
@@ -163,15 +142,24 @@ export default function VendorsPage() {
           { label: "Archived", value: "archived" },
         ]}
         activeTab={activeTab}
-        onTabChange={(v) => (v === "all" || v === "active" || v === "archived") && setActiveTab(v)}
+        onTabChange={(v) => {
+          setActiveTab(v as any);
+          setPage(1);
+        }}
         searchPlaceholder="Search vendors..."
-        onSearch={setSearch}
+        onSearch={(v) => {
+          setSearch(v);
+          setPage(1);
+        }}
         filters={[
           {
             key: "sort",
             placeholder: "Sort by",
             value: sort,
-            onChange: (v) => setSort(v as "recent" | "name"),
+            onChange: (v) => {
+              setSort(v as any);
+              setPage(1);
+            },
             options: [
               { label: "Recent", value: "recent" },
               { label: "Name A–Z", value: "name" },
@@ -183,17 +171,16 @@ export default function VendorsPage() {
       <div className="mt-6">
         <DataTable<VendorItem>
           columns={columns}
-          data={filtered}
+          data={vendors}
           loading={loading}
-          page={page}
-          pageSize={10}
+          page={meta?.page ?? page}
+          totalPages={meta?.total_pages ?? 1}
           onPageChange={setPage}
           emptyText="No vendors found"
           onRowClick={(v) =>
             navigate(`/super/vendors/${v.id}`, { state: { vendor: v } })
           }
         />
-
       </div>
     </div>
   );

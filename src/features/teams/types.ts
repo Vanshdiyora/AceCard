@@ -1,15 +1,29 @@
-/* ---------- PERMISSIONS ---------- */
+/* ======================================================
+   PERMISSIONS
+====================================================== */
+
 export interface TeamPermissions {
+  manage_team: boolean;
+  manage_products: boolean;
+  manage_campaigns: boolean;
+  view_leads: boolean;
+  edit_leads: boolean;
+  archive_leads: boolean;
   send_notifications: boolean;
   view_analytics: boolean;
-  view_leads: boolean;
 }
 
-/* ---------- TEAM MEMBER ---------- */
+export interface UpdatePermissionsDTO extends TeamPermissions {}
+
+
+/* ======================================================
+   TEAM MEMBER
+====================================================== */
+
 export interface TeamMember {
   id: number;
   vendor_id: number;
-  manager_id?: number | null; 
+  manager_id?: number | null;
   name: string;
   email: string;
   phone: string;
@@ -30,7 +44,11 @@ export interface TeamMember {
   lastActive?: string;
 }
 
-/* ---------- PAGINATION ---------- */
+
+/* ======================================================
+   PAGINATION
+====================================================== */
+
 export interface TeamMeta {
   total_count: number;
   page: number;
@@ -45,14 +63,18 @@ export interface TeamListResponse {
   meta: TeamMeta;
 }
 
-/* ---------- DTOs ---------- */
+
+/* ======================================================
+   DTOs
+====================================================== */
+
 export interface CreateTeamMemberDTO {
   email: string;
   name: string;
   password: string;
   phone: string;
   role: string;
-  manager_id?: number; 
+  manager_id?: number;
 }
 
 export interface UpdateTeamMemberDTO {
@@ -60,11 +82,5 @@ export interface UpdateTeamMemberDTO {
   email?: string;
   phone?: string;
   role?: string;
-  status?: "active" | "inactive";
-}
-
-export interface UpdatePermissionsDTO {
-  send_notifications: boolean;
-  view_analytics: boolean;
-  view_leads: boolean;
+  status?: "active" | "pending" | "suspended";
 }

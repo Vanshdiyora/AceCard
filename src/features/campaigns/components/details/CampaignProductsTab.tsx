@@ -22,7 +22,7 @@ export default function CampaignProductsTab({ assignedProducts = [] }: Props) {
   const { products, loading } = useAppSelector((s) => s.products);
 
   useEffect(() => {
-    if (!products.length) dispatch(fetchProducts());
+    if (!products.length) dispatch(fetchProducts({ page: 1, page_size: 10 }));
   }, [dispatch, products.length]);
 
   const rows: ProductRow[] = useMemo(() => {

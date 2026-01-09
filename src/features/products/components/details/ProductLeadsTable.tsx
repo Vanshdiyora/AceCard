@@ -29,9 +29,9 @@ export default function ProductLeadsTable({ productId }: Props) {
 
   /* ---------------- Fetch dependencies ---------------- */
   useEffect(() => {
-    if (leads.length === 0) dispatch(fetchLeads({ page: 1, pageSize: 1000 }));
+    if (leads.length === 0) dispatch(fetchLeads({ page: 1, pageSize: 10 }));
     if (members.length === 0) dispatch(fetchTeam());
-    if (campaigns.length === 0) dispatch(fetchCampaigns());
+    if (campaigns.length === 0) dispatch(fetchCampaigns({ page: 1, page_size: 10 }));
   }, [dispatch, leads.length, members.length, campaigns.length]);
 
   /* ---------------- Enrich leads ---------------- */

@@ -12,8 +12,6 @@ export default function ProtectedRoute({ children, superOnly = false }: Protecte
 
   if (!token) return <Navigate to="/login" replace />;
 
-  console.log("ProtectedRoute role:", role);
-
   // Super admin only routes
   if (superOnly && role !== "super_admin") {
     return <Navigate to="/admin" replace />;

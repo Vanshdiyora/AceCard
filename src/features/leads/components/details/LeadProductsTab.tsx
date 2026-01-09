@@ -17,7 +17,7 @@ export default function LeadProductsTab({ lead }: Props) {
 
   useEffect(() => {
     if (!products.length) {
-      dispatch(fetchProducts());
+      dispatch(fetchProducts({ page: 1, page_size: 10 }));
     }
   }, [dispatch, products.length]);
 

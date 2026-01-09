@@ -28,6 +28,8 @@ export default function CampaignsPage() {
   const items: Campaign[] = Array.isArray(campaignsState?.items) ? campaignsState.items : [];
   const meta = campaignsState?.meta ?? null;
   const loading = campaignsState?.loading ?? false;
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
 
   const [activeTab, setActiveTab] = useState("all");
   const [search, setSearch] = useState("");
@@ -36,21 +38,21 @@ export default function CampaignsPage() {
   const [openCreate, setOpenCreate] = useState(false);
 
   useEffect(() => {
-  if (!openCreate) return;
+    if (!openCreate) return;
 
-  const scrollY = window.scrollY;
+    const scrollY = window.scrollY;
 
-  document.body.style.position = "fixed";
-  document.body.style.top = `-${scrollY}px`;
-  document.body.style.width = "100%";
+    document.body.style.position = "fixed";
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.width = "100%";
 
-  return () => {
-    document.body.style.position = "";
-    document.body.style.top = "";
-    document.body.style.width = "";
-    window.scrollTo(0, scrollY);
-  };
-}, [openCreate]);
+    return () => {
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.width = "";
+      window.scrollTo(0, scrollY);
+    };
+  }, [openCreate]);
 
 
   /* -------- Auto open from redirect -------- */
@@ -63,8 +65,9 @@ export default function CampaignsPage() {
 
   /* -------- Fetch -------- */
   useEffect(() => {
-    dispatch(fetchCampaigns());
-  }, [dispatch]);
+    dispatch(fetchCampaigns({ page, page_size: pageSize }));
+  }, [dispatch, page, pageSize]);
+
 
   /* -------- Filtering -------- */
   const filtered = useMemo(() => {
@@ -82,20 +85,20 @@ export default function CampaignsPage() {
   }, [items, search, activeTab]);
 
   const sortFilter = useMemo(() => {
-  return [
-    {
-      key: "sort",
-      placeholder: "Sort",
-      value: sort,
-      onChange: (v: string) => setSort(v as any),
-      options: [
-        { label: "Recent", value: "recent" },
-        { label: "Name A–Z", value: "name_asc" },
-        { label: "Pipeline High–Low", value: "pipeline_desc" },
-      ],
-    },
-  ];
-}, [sort]);
+    return [
+      {
+        key: "sort",
+        placeholder: "Sort",
+        value: sort,
+        onChange: (v: string) => setSort(v as any),
+        options: [
+          { label: "Recent", value: "recent" },
+          { label: "Name A–Z", value: "name_asc" },
+          { label: "Pipeline High–Low", value: "pipeline_desc" },
+        ],
+      },
+    ];
+  }, [sort]);
 
 
   /* -------- Sorting -------- */
@@ -173,31 +176,14 @@ export default function CampaignsPage() {
         <DataTable
           columns={columns}
           data={finalData}
-          emptyText={loading ? "Loading..." : "No campaigns found"}
+          loading={loading}
+          page={meta?.page ?? page}
+          totalPages={meta?.total_pages ?? 1}
+          onPageChange={setPage}
           onRowClick={(c) => navigate(`${c.id}`)}
         />
+
       </div>
-      {meta && (
-        <div className="flex justify-end items-center gap-4 text-sm">
-          <button
-            disabled={!meta.has_previous}
-            className="px-3 py-1 border rounded disabled:opacity-40"
-            onClick={() => dispatch(fetchCampaigns())}
-          >
-            Prev
-          </button>
-          <span>
-            Page {meta.page} of {meta.total_pages}
-          </span>
-          <button
-            disabled={!meta.has_next}
-            className="px-3 py-1 border rounded disabled:opacity-40"
-            onClick={() => dispatch(fetchCampaigns())}
-          >
-            Next
-          </button>
-        </div>
-      )}
     </div>
   );
 }

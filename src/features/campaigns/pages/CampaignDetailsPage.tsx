@@ -40,7 +40,7 @@ export default function CampaignDetailsPage() {
     }
 
     dispatch(fetchTeam());
-    dispatch(fetchProducts());
+    dispatch(fetchProducts({ page: 1, page_size: 10 }));
   }, [id, dispatch]);
 
   // ✅ LOADING STATE

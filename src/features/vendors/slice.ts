@@ -24,23 +24,25 @@ const initialState: VendorsState = {
 
 /* ---------- THUNKS ---------- */
 
+export type FetchVendorsParams = {
+  page?: number;
+  page_size?: number;
+};
+
 export const fetchVendors = createAsyncThunk(
   "vendors/fetchAll",
   async (
-    params: { page?: number; page_size?: number } | undefined,
+    params: FetchVendorsParams | undefined,
     { rejectWithValue }
   ) => {
     try {
-      return await vendorsService.list(
-        params ?? { page: 1, page_size: 10 }
-      );
+      return await vendorsService.list(params ?? { page: 1, page_size: 10 });
     } catch (err: any) {
-      return rejectWithValue(
-        err?.message ?? "Failed to fetch vendors"
-      );
+      return rejectWithValue(err?.message ?? "Failed to fetch vendors");
     }
   }
 );
+
 
 export const createVendor = createAsyncThunk(
   "vendors/create",
