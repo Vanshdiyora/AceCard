@@ -12,7 +12,7 @@ export interface SupportReply {
 export interface SupportTicket {
   id: number;
   vendor_id: number;
-  title: string;
+  subject: string;
   category: string;
   priority: "high" | "medium" | "low";
   status?: "open" | "closed" | "pending";

@@ -1,7 +1,17 @@
 export interface FieldConfig {
   name: string;
   label: string;
-  type: "text" | "number" | "email" | "select" | "textarea" | "date" | "checkbox" | "multiselect" | "radio" | "datetime";
+  type:
+    | "text"
+    | "number"
+    | "email"
+    | "select"
+    | "textarea"
+    | "date"
+    | "checkbox"
+    | "multiselect"
+    | "radio"
+    | "datetime";
   placeholder?: string;
   options?: { label: string; value: any }[];
 }
@@ -10,23 +20,26 @@ interface DynamicFormProps {
   fields: FieldConfig[];
   form: any;
   onChange: (key: string, value: any) => void;
+  noValidate?: boolean; // ✅ added
 }
+
 export default function DynamicForm({
   fields,
   form,
   onChange,
+  noValidate = false,
 }: DynamicFormProps) {
   return (
-    <div className="p-5 space-y-4 overflow-y-auto custom-scrollbar flex-1">
-
-      {/* Base fields */}
+    <form
+      className="p-5 space-y-4 overflow-y-auto custom-scrollbar flex-1"
+      noValidate={noValidate}
+    >
       {fields.map((field) => (
         <div key={field.name} className="flex flex-col">
           <label className="text-sm font-medium capitalize mb-1">
             {field.label}
           </label>
 
-          {/* TEXT / NUMBER / EMAIL / DATE */}
           {["text", "number", "email", "date"].includes(field.type) && (
             <input
               type={field.type}
@@ -37,7 +50,6 @@ export default function DynamicForm({
             />
           )}
 
-          {/* TEXTAREA */}
           {field.type === "textarea" && (
             <textarea
               rows={3}
@@ -48,7 +60,6 @@ export default function DynamicForm({
             />
           )}
 
-          {/* SELECT */}
           {field.type === "select" && (
             <select
               className="border rounded-lg w-full p-2 text-sm"
@@ -64,7 +75,6 @@ export default function DynamicForm({
             </select>
           )}
 
-          {/* RADIO */}
           {field.type === "radio" && (
             <div className="flex flex-col gap-2">
               {field.options?.map((opt) => (
@@ -86,11 +96,8 @@ export default function DynamicForm({
             </div>
           )}
 
-          {/* MULTISELECT WITH CHECKBOXES */}
           {field.type === "multiselect" && (
             <div className="border rounded-lg p-2 space-y-1 max-h-40 overflow-y-auto">
-
-              {/* Placeholder */}
               {(!form[field.name] || form[field.name].length === 0) && (
                 <p className="text-xs text-gray-400 italic">
                   {field.placeholder || "Select one or more options"}
@@ -114,7 +121,9 @@ export default function DynamicForm({
                         if (e.target.checked) {
                           updatedValues.push(opt.value);
                         } else {
-                          updatedValues = updatedValues.filter((v) => v !== opt.value);
+                          updatedValues = updatedValues.filter(
+                            (v) => v !== opt.value
+                          );
                         }
 
                         onChange(field.name, updatedValues);
@@ -129,7 +138,6 @@ export default function DynamicForm({
             </div>
           )}
 
-          {/* DATETIME */}
           {field.type === "datetime" && (
             <input
               type="datetime-local"
@@ -139,7 +147,6 @@ export default function DynamicForm({
             />
           )}
 
-          {/* CHECKBOX */}
           {field.type === "checkbox" && (
             <input
               type="checkbox"
@@ -149,9 +156,7 @@ export default function DynamicForm({
             />
           )}
         </div>
-
-
       ))}
-    </div>
+    </form>
   );
 }

@@ -13,22 +13,20 @@ export default function NewTicketModal({ open, onClose }: Props) {
   const dispatch = useAppDispatch();
 
   const [form, setForm] = useState<NewSupportTicketForm>({
-    title: "",
+    subject: "",
     priority: "medium",
     category: "technical",
     description: "",
   });
 
-  // 🔒 Scroll lock when modal is open
+  const [error, setError] = useState<string | null>(null);
+
   useEffect(() => {
     if (!open) return;
-
     const scrollY = window.scrollY;
-
     document.body.style.position = "fixed";
     document.body.style.top = `-${scrollY}px`;
     document.body.style.width = "100%";
-
     return () => {
       document.body.style.position = "";
       document.body.style.top = "";
@@ -41,7 +39,7 @@ export default function NewTicketModal({ open, onClose }: Props) {
 
   const fields: FieldConfig[] = [
     {
-      name: "subject",
+      name: "subject", // ✅ matches backend
       label: "Subject",
       type: "text",
       placeholder: "Enter subject",
@@ -50,7 +48,6 @@ export default function NewTicketModal({ open, onClose }: Props) {
       name: "priority",
       label: "Priority",
       type: "select",
-      placeholder: "Select priority",
       options: [
         { label: "Low", value: "low" },
         { label: "Medium", value: "medium" },
@@ -62,7 +59,6 @@ export default function NewTicketModal({ open, onClose }: Props) {
       name: "category",
       label: "Category",
       type: "select",
-      placeholder: "Select category",
       options: [
         { label: "Technical", value: "technical" },
         { label: "Billing", value: "billing" },
@@ -80,17 +76,13 @@ export default function NewTicketModal({ open, onClose }: Props) {
   ];
 
   const update = (key: string, value: any) => {
-    const field = fields.find((f) => f.name === key);
-    if (field?.type === "number") value = Number(value);
-
     setForm((prev) => ({ ...prev, [key]: value }));
+    setError(null);
   };
 
   const submit = async () => {
-    if (!form.title || !form.description) {
-      alert("Title and description are required");
-      return;
-    }
+    if (!form.subject.trim()) return setError("Subject is required");
+    if (!form.description.trim()) return setError("Description is required");
 
     await dispatch(addTicket(form));
     onClose();
@@ -99,10 +91,11 @@ export default function NewTicketModal({ open, onClose }: Props) {
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
       <div className="bg-white w-[480px] rounded-xl p-6 shadow-xl flex flex-col">
+        <h2 className="text-xl font-semibold mb-1">Create Support Ticket</h2>
 
-        <h2 className="text-xl font-semibold mb-4">Create Support Ticket</h2>
+        <DynamicForm fields={fields} form={form} onChange={update} noValidate />
 
-        <DynamicForm fields={fields} form={form} onChange={update} />
+        {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
 
         <div className="flex justify-end gap-3 mt-6">
           <button
@@ -111,7 +104,6 @@ export default function NewTicketModal({ open, onClose }: Props) {
           >
             Cancel
           </button>
-
           <button
             onClick={submit}
             className="px-4 py-2 bg-purple-600 text-white rounded-lg"
@@ -119,7 +111,6 @@ export default function NewTicketModal({ open, onClose }: Props) {
             Create Ticket
           </button>
         </div>
-
       </div>
     </div>
   );
