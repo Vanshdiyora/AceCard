@@ -99,6 +99,7 @@ export default function VendorsPage() {
   return (
     <div className="p-6">
       <PageHeader title="Vendor Management" description="Manage vendor onboarding & verification" addButtonLabel="Add Vendor" onAdd={() => setAddOpen(true)} />
+      <ErrorAlert message={fetchError ?? error} />
 
       <AddVendorModal open={addOpen} onClose={() => setAddOpen(false)} />
 
@@ -157,7 +158,6 @@ export default function VendorsPage() {
           onRowClick={(v) => navigate(`/super/vendors/${v.id}`, { state: { vendor: v } })}
         />
       </div>
-      <ErrorAlert message={fetchError ?? error} />
 
     </div>
   );

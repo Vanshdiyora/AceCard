@@ -20,8 +20,11 @@ interface DynamicFormProps {
   fields: FieldConfig[];
   form: any;
   onChange: (key: string, value: any) => void;
-  noValidate?: boolean; // ✅ added
+  noValidate?: boolean;
 }
+
+const baseInputClass =
+  "border rounded-lg w-full min-w-0 max-w-full p-2 text-sm truncate box-border appearance-none focus:outline-none focus:ring-2 focus:ring-purple-500";
 
 export default function DynamicForm({
   fields,
@@ -35,7 +38,7 @@ export default function DynamicForm({
       noValidate={noValidate}
     >
       {fields.map((field) => (
-        <div key={field.name} className="flex flex-col">
+        <div key={field.name} className="flex flex-col min-w-0">
           <label className="text-sm font-medium capitalize mb-1">
             {field.label}
           </label>
@@ -43,7 +46,7 @@ export default function DynamicForm({
           {["text", "number", "email", "date"].includes(field.type) && (
             <input
               type={field.type}
-              className="border rounded-lg w-full p-2 text-sm"
+              className={baseInputClass}
               placeholder={field.placeholder}
               value={form[field.name] ?? ""}
               onChange={(e) => onChange(field.name, e.target.value)}
@@ -53,27 +56,35 @@ export default function DynamicForm({
           {field.type === "textarea" && (
             <textarea
               rows={3}
-              className="border rounded-lg w-full p-2 text-sm"
+              className={baseInputClass}
               placeholder={field.placeholder}
               value={form[field.name] ?? ""}
               onChange={(e) => onChange(field.name, e.target.value)}
             />
           )}
 
-          {field.type === "select" && (
-            <select
-              className="border rounded-lg w-full p-2 text-sm"
-              value={form[field.name] ?? ""}
-              onChange={(e) => onChange(field.name, e.target.value)}
-            >
-              <option value="">Select {field.label}</option>
-              {field.options?.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-          )}
+         
+{field.type === "select" && (
+  <div className="relative w-full max-w-full">
+    <select
+      className={baseInputClass}
+      value={form[field.name] ?? ""}
+      onChange={(e) => onChange(field.name, e.target.value)}
+    >
+      <option value="">Select {field.label}</option>
+      {field.options?.map((opt) => (
+        <option key={opt.value} value={opt.value}>
+          {opt.label}
+        </option>
+      ))}
+    </select>
+
+    <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs opacity-60">
+      ▼
+    </span>
+  </div>
+)}
+
 
           {field.type === "radio" && (
             <div className="flex flex-col gap-2">
@@ -141,7 +152,7 @@ export default function DynamicForm({
           {field.type === "datetime" && (
             <input
               type="datetime-local"
-              className="border rounded-lg w-full p-2 text-sm"
+              className={baseInputClass}
               value={form[field.name] ?? ""}
               onChange={(e) => onChange(field.name, e.target.value)}
             />
