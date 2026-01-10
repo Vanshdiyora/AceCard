@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAppDispatch } from "../../../app/hooks";
-import { notifyVendor, fetchVendors } from "../slice";
+import { notifyVendor } from "../slice";
 
 export default function NotifyVendorModal({ open, onClose, vendor }: any) {
   const dispatch = useAppDispatch();
@@ -51,7 +51,7 @@ export default function NotifyVendorModal({ open, onClose, vendor }: any) {
         })
       ).unwrap();
 
-      dispatch(fetchVendors());
+      // dispatch(fetchVendors());
       onClose();
     } catch (err: any) {
       console.error(err);

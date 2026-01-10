@@ -1,5 +1,5 @@
 import React from "react";
-
+import BrandLoader from "../../ui/BrandLoader";
 export type Column<T> = {
   header: string;
   accessor?: keyof T;
@@ -43,10 +43,11 @@ export default function DataTable<T>({
       </div>
 
       {loading && (
-        <div className="bg-white rounded-xl border p-10 text-center text-gray-400">
-          Loading...
+        <div className="bg-white rounded-xl border p-10">
+          <BrandLoader message="Loading data..." />
         </div>
       )}
+
 
       {!loading && data.length === 0 && (
         <div className="bg-white rounded-xl border p-10 text-center text-gray-400">
@@ -68,8 +69,8 @@ export default function DataTable<T>({
                   {col.render
                     ? col.render(row)
                     : col.accessor
-                    ? String(row[col.accessor] ?? "—")
-                    : "—"}
+                      ? String(row[col.accessor] ?? "—")
+                      : "—"}
                 </div>
               ))}
             </div>

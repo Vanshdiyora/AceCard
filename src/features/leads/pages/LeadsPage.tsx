@@ -41,14 +41,14 @@ export default function LeadsPage() {
   const [editOpen, setEditOpen] = useState(false);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
 
-const [page, setPage] = useState(1);
-const pageSize = 10;
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
 
 
-useEffect(() => {
-  dispatch(fetchLeads({ page, pageSize }));
-  dispatch(fetchTeam());
-}, [dispatch, page, pageSize]);
+  useEffect(() => {
+    dispatch(fetchLeads({ page, pageSize }));
+    dispatch(fetchTeam());
+  }, [dispatch, page, pageSize]);
 
 
   useEffect(() => setPage(1), [activeTab, search]);
@@ -153,19 +153,19 @@ useEffect(() => {
           },
         ]}
       />
-<DataTable
-  columns={columns}
-  data={finalLeads}
-  loading={loading}
-  page={meta?.page ?? page}
-  totalPages={meta?.total_pages ?? 1}
-  onPageChange={setPage}
-  emptyText="No leads found"
-  onRowClick={(lead) => navigate(`${lead.id}`)}
-/>
+      <DataTable
+        columns={columns}
+        data={finalLeads}
+        loading={loading}
+        page={meta?.page ?? page}
+        totalPages={meta?.total_pages ?? 1}
+        onPageChange={setPage}
+        emptyText="No leads found"
+        onRowClick={(lead) => navigate(`${lead.id}`)}
+      />
 
-      <AddLeadModal open={addOpen} onClose={() => setAddOpen(false)} onSubmit={(d:any)=>dispatch(createLead(d))}/>
-      <EditLeadModal open={editOpen} lead={selectedLead} onClose={()=>setEditOpen(false)} onSubmit={(d)=>selectedLead && dispatch(updateLead({id:selectedLead.id,data:d}))}/>
+      <AddLeadModal open={addOpen} onClose={() => setAddOpen(false)} onSubmit={(d: any) => dispatch(createLead(d))} />
+      <EditLeadModal open={editOpen} lead={selectedLead} onClose={() => setEditOpen(false)} onSubmit={(d) => selectedLead && dispatch(updateLead({ id: selectedLead.id, data: d }))} />
     </div>
   );
 }

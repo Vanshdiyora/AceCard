@@ -1,9 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../../app/hooks";
 import { fetchTickets } from "../slice";
-
 import NewTicketModal from "../components/NewTicketModal";
-
 import {
   AlertCircle,
   Clock,
@@ -12,18 +10,14 @@ import {
   MessageSquareMore,
   Folder,
 } from "lucide-react";
-
 import PageHeader from "../../../common/components/layout/PageHeader";
+import BrandLoader from "../../../common/ui/BrandLoader";
 
 export default function SupportPage() {
   const dispatch = useAppDispatch();
-  const { tickets } = useAppSelector((s) => s.support);
+  const { tickets, loading } = useAppSelector((s) => s.support);
 
-  // -------------------------------
-  // Extract vendorId from JWT token
-  // -------------------------------
   const token = localStorage.getItem("token");
-
   let vendorId: number | null = null;
 
   if (token) {
@@ -35,16 +29,13 @@ export default function SupportPage() {
     }
   }
 
-  // Fetch tickets on load
   useEffect(() => {
     if (vendorId) {
       dispatch(fetchTickets(vendorId));
     }
-  }, [vendorId]);
+  }, [vendorId, dispatch]);
 
   const [showModal, setShowModal] = useState(false);
-
-  // Reply dropdown states
   const [expandedTicket, setExpandedTicket] = useState<number | null>(null);
 
   const openTickets = tickets.filter((t) => t.status === "open").length;
@@ -74,8 +65,6 @@ export default function SupportPage() {
 
   return (
     <div className="p-6">
-
-      {/* 🌟 Page Header */}
       <PageHeader
         title="Support Center"
         description="Get help and manage your support requests"
@@ -84,139 +73,112 @@ export default function SupportPage() {
       />
 
       <div className="grid grid-cols-12 gap-6">
-
         {/* LEFT CONTENT */}
         <div className="col-span-8 space-y-5">
-
-          {/* Tickets Tab */}
           <div className="bg-white rounded-xl p-5 border">
-            <div className="flex gap-8 border-b">
-              <button className="text-purple-600 font-medium border-b-2 border-purple-600 pb-2">
-                Support Tickets
-              </button>
-            </div>
+            <button className="text-purple-600 font-medium border-b-2 border-purple-600 pb-2">
+              Support Tickets
+            </button>
           </div>
 
-          {/* Ticket List */}
           <div className="space-y-5">
-            {/* EMPTY STATE */}
-            {tickets.length === 0 && (
+            {loading ? (
+              <div className="bg-white border rounded-xl p-10">
+                <BrandLoader message="Loading tickets..." />
+              </div>
+            ) : tickets.length === 0 ? (
               <div className="bg-white border rounded-xl p-10 text-center text-gray-500">
                 <MessageSquare size={40} className="mx-auto mb-4 text-gray-400" />
                 <h3 className="text-lg font-semibold mb-1">No support tickets yet</h3>
                 <p className="text-sm mb-4">
                   You haven’t raised any support requests.
                 </p>
-
               </div>
-            )}
-            {tickets.map((t: any) => (
-              <div
-                key={t.id}
-                className="bg-white p-5 border rounded-xl shadow-sm hover:shadow-md transition"
-              >
-                {/* Ticket Header */}
-                <div className="flex justify-between">
-                  <div className="flex gap-4">
-                    {icons[t.category]}
-
-                    <div>
-                      <div className="flex gap-3 items-center mb-1">
-                        <span className="text-sm text-gray-500 font-medium">
-                          TKT-{t.id}
-                        </span>
-
-                        <span
-                          className={`px-2 py-0.5 rounded-full text-xs ${statusColors[t.status]}`}
-                        >
-                          {t.status}
-                        </span>
-
-                        <span
-                          className={`px-2 py-0.5 rounded-full text-xs ${priorityColors[t.priority]}`}
-                        >
-                          {t.priority}
-                        </span>
-                      </div>
-
-                      <h3 className="font-semibold text-lg">{t.subject}</h3>
-
-                      <p className="text-gray-600 text-sm">{t.description}</p>
-
-                      <div className="flex items-center gap-6 text-sm text-gray-500 mt-2">
-                        <span className="flex items-center gap-1">
-                          <Clock size={14} /> {t.created_at ?? "Just now"}
-                        </span>
-                        <span>Category: {t.category}</span>
+            ) : (
+              tickets.map((t: any) => (
+                <div
+                  key={t.id}
+                  className="bg-white p-5 border rounded-xl shadow-sm hover:shadow-md transition"
+                >
+                  <div className="flex justify-between">
+                    <div className="flex gap-4">
+                      {icons[t.category]}
+                      <div>
+                        <div className="flex gap-3 items-center mb-1">
+                          <span className="text-sm text-gray-500 font-medium">
+                            TKT-{t.id}
+                          </span>
+                          <span className={`px-2 py-0.5 rounded-full text-xs ${statusColors[t.status]}`}>
+                            {t.status}
+                          </span>
+                          <span className={`px-2 py-0.5 rounded-full text-xs ${priorityColors[t.priority]}`}>
+                            {t.priority}
+                          </span>
+                        </div>
+                        <h3 className="font-semibold text-lg">{t.subject}</h3>
+                        <p className="text-gray-600 text-sm">{t.description}</p>
+                        <div className="flex items-center gap-6 text-sm text-gray-500 mt-2">
+                          <span className="flex items-center gap-1">
+                            <Clock size={14} /> {t.created_at ?? "Just now"}
+                          </span>
+                          <span>Category: {t.category}</span>
+                        </div>
                       </div>
                     </div>
+
+                    <MessageSquareMore
+                      className="text-gray-400 hover:text-gray-600 cursor-pointer"
+                      onClick={() =>
+                        setExpandedTicket(expandedTicket === t.id ? null : t.id)
+                      }
+                    />
                   </div>
 
-                  {/* TOGGLE REPLY PANEL */}
-                  <MessageSquareMore
-                    className="text-gray-400 hover:text-gray-600 cursor-pointer"
-                    onClick={() => {
-                      setExpandedTicket(expandedTicket === t.id ? null : t.id);
-                    }}
-                  />
+                  {expandedTicket === t.id && (
+                    <div className="mt-4 border-t pt-4 space-y-4">
+                      {(!t.replies || t.replies.length === 0) && (
+                        <div className="bg-yellow-50 text-yellow-700 p-3 rounded-lg text-sm">
+                          <strong>No replies yet.</strong> Your ticket is under review.
+                        </div>
+                      )}
+
+                      {t.replies?.length > 0 && (
+                        <div className="space-y-3">
+                          {t.replies.map((r: any) => (
+                            <div key={r.id} className="bg-gray-50 p-3 rounded-lg text-sm">
+                              <p className="font-medium text-gray-700">Admin Reply:</p>
+                              <p className="text-gray-600">{r.message}</p>
+                              <p className="text-xs text-gray-400 mt-1">{r.created_at}</p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
-
-                {/* REPLY DROPDOWN */}
-                {expandedTicket === t.id && (
-                  <div className="mt-4 border-t pt-4 space-y-4">
-
-                    {/* If no replies → show message */}
-                    {(!t.replies || t.replies.length === 0) && (
-                      <div className="bg-yellow-50 text-yellow-700 p-3 rounded-lg text-sm">
-                        <strong>No replies yet.</strong> Your ticket is under review by our support team.
-                      </div>
-                    )}
-
-                    {/* Show Replies */}
-                    {t.replies?.length > 0 && (
-                      <div className="space-y-3">
-                        {t.replies.map((r: any) => (
-                          <div
-                            key={r.id}
-                            className="bg-gray-50 p-3 rounded-lg text-sm"
-                          >
-                            <p className="font-medium text-gray-700">Admin Reply:</p>
-                            <p className="text-gray-600">{r.message}</p>
-                            <p className="text-xs text-gray-400 mt-1">{r.created_at}</p>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
 
         {/* RIGHT SIDEBAR */}
         <div className="col-span-4 space-y-6">
-          {/* Stats */}
           <div className="bg-white border rounded-xl p-5">
             <h3 className="font-semibold mb-4">Support Stats</h3>
-
             <div className="space-y-4">
-              <div className="flex justify-between items-center">
+              <div className="flex justify-between">
                 <span className="flex items-center gap-2">
                   <AlertCircle className="text-blue-500" size={18} /> Open Tickets
                 </span>
                 <span className="font-semibold">{openTickets}</span>
               </div>
-
-              <div className="flex justify-between items-center">
+              <div className="flex justify-between">
                 <span className="flex items-center gap-2">
                   <Clock className="text-orange-500" size={18} /> In Progress
                 </span>
                 <span className="font-semibold">{inProgress}</span>
               </div>
-
-              <div className="flex justify-between items-center">
+              <div className="flex justify-between">
                 <span className="flex items-center gap-2">
                   <CheckCircle2 className="text-green-600" size={18} /> Resolved
                 </span>
@@ -224,42 +186,9 @@ export default function SupportPage() {
               </div>
             </div>
           </div>
-
-          {/* Help Resources */}
-          <div className="bg-white border rounded-xl p-5 space-y-3">
-            <h3 className="font-semibold mb-3">Help Resources</h3>
-
-            <button className="w-full bg-purple-50 hover:bg-purple-100 transition p-3 rounded-lg flex items-center gap-3">
-              <Folder className="text-purple-600" size={18} />
-              Documentation
-            </button>
-
-            <button className="w-full bg-orange-50 hover:bg-orange-100 transition p-3 rounded-lg flex items-center gap-3">
-              <MessageSquare className="text-orange-600" size={18} />
-              Community Forum
-            </button>
-
-            <button className="w-full bg-indigo-50 hover:bg-indigo-100 transition p-3 rounded-lg flex items-center gap-3">
-              <CheckCircle2 className="text-indigo-600" size={18} />
-              Video Tutorials
-            </button>
-          </div>
-
-          {/* Live Chat */}
-          <div className="p-6 rounded-xl bg-gradient-to-br from-purple-600 to-purple-800 text-white space-y-4 shadow-lg">
-            <h3 className="font-semibold text-lg">Need Immediate Help?</h3>
-            <p className="text-purple-200 text-sm">
-              Our support team is available 24/7
-            </p>
-
-            <button className="w-full bg-white bg-opacity-20 hover:bg-opacity-30 transition p-3 rounded-lg flex items-center gap-3">
-              <MessageSquare size={18} /> Start Live Chat
-            </button>
-          </div>
         </div>
       </div>
 
-      {/* Ticket Modal */}
       <NewTicketModal open={showModal} onClose={() => setShowModal(false)} />
     </div>
   );

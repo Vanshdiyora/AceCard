@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../../app/hooks";
-import { fetchVendors, archiveVendor, updateVendor } from "../slice";
+import { fetchVendors, archiveVendor, unarchiveVendor } from "../slice";
 
 import PageHeader from "../../../common/components/layout/PageHeader";
 import PageFilters from "../../../common/components/layout/PageFilter";
@@ -63,11 +63,10 @@ export default function VendorsPage() {
       width: "1.5fr",
       render: (v) => (
         <span
-          className={`px-2 py-1 rounded-full text-xs ${
-            v.status === "active"
+          className={`px-2 py-1 rounded-full text-xs ${v.status === "active"
               ? "bg-green-100 text-green-700"
               : "bg-gray-100 text-gray-600"
-          }`}
+            }`}
         >
           {v.status === "active" ? "Active" : "Archived"}
         </span>
@@ -98,9 +97,9 @@ export default function VendorsPage() {
             setArchiveOpen(true);
           }}
           onUnarchive={async () => {
-            await dispatch(updateVendor({ id: v.id, data: { status: "active" } }));
-            dispatch(fetchVendors({ page, page_size: pageSize }));
+            await dispatch(unarchiveVendor(v.id));
           }}
+
         />
       ),
     },
@@ -128,7 +127,7 @@ export default function VendorsPage() {
             onClose={() => setArchiveOpen(false)}
             onConfirm={async () => {
               await dispatch(archiveVendor(selectedVendor.id));
-              dispatch(fetchVendors({ page, page_size: pageSize }));
+              // dispatch(fetchVendors({ page, page_size: pageSize }));
               setArchiveOpen(false);
             }}
           />

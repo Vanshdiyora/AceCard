@@ -25,12 +25,16 @@ export const vendorsService = {
   },
 
   updateSeats: async (id: number, seats: number): Promise<VendorItem> => {
-    const res: AxiosResponse<VendorItem> = await api.patch(`/admin/vendors/${id}/seats`, { seats });
+    const res: AxiosResponse<VendorItem> = await api.patch(`/admin/vendors/${id}/seats`, { seats_appointed: seats });
     return res.data;
   },
 
   archive: async (id: number): Promise<void> => {
-    await api.delete(`/admin/vendors/${id}`);
+    await api.post(`/admin/vendors/${id}/archive`);
+  },
+
+  unarchive: async (id: number) => {
+    await api.post(`/admin/vendors/${id}/unarchive`);
   },
 
   notify: async (payload: any): Promise<void> => {

@@ -3,26 +3,26 @@ import React from "react";
 interface Props {
   title: string;
   value: string | number;
-  change?: string | number;          // e.g. +18.2%
-  positive?: boolean;                // true → green ↑ , false → red ↓
-  icon?: React.ReactNode;            // ICON AT TOP LEFT
+  change?: string | number;
+  positive?: boolean;
+  icon?: React.ReactNode;
 }
 
 export default function StatCard({ title, value, change, positive, icon }: Props) {
   return (
-    <div className="bg-white p-5 rounded-2xl shadow-sm border flex flex-col gap-3">
+    <div className="bg-white p-4 rounded-xl shadow-sm border flex flex-col gap-2">
 
-      {/* TOP ROW → ICON + PROFIT/LOSS */}
+      {/* TOP ROW */}
       <div className="flex justify-between items-start">
         {/* Icon */}
-        <div className="p-3 rounded-xl bg-purple-100 text-purple-600 text-xl">
+        <div className="p-2 rounded-lg bg-purple-100 text-purple-600 text-base">
           {icon}
         </div>
 
         {/* Profit / Loss */}
         {change !== undefined && (
           <span
-            className={`text-sm font-semibold flex items-center gap-1 ${
+            className={`text-xs font-semibold flex items-center gap-0.5 ${
               positive ? "text-green-600" : "text-red-600"
             }`}
           >
@@ -32,10 +32,10 @@ export default function StatCard({ title, value, change, positive, icon }: Props
       </div>
 
       {/* TITLE */}
-      <p className="text-gray-500">{title}</p>
+      <p className="text-gray-500 text-sm">{title}</p>
 
       {/* VALUE */}
-      <h2 className="text-3xl font-bold">
+      <h2 className="text-2xl font-bold leading-tight">
         {typeof value === "number" ? value.toLocaleString() : value}
       </h2>
     </div>

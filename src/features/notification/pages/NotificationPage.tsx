@@ -21,7 +21,9 @@ export default function NotificationsPage() {
 
   const filtered = useMemo(() => {
     return vendors.filter((v) =>
-      v.legal_name.toLowerCase().includes(search.toLowerCase())
+      v.legal_name.toLowerCase().includes(search.toLowerCase()) ||
+      v.primary_email.toLowerCase().includes(search.toLowerCase())
+
     );
   }, [vendors, search]);
 

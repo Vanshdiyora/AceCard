@@ -1,7 +1,7 @@
 import DynamicForm, { type FieldConfig } from "../../../common/ui/DynamicForm";
 import { useState, useEffect } from "react";
 import { useAppDispatch } from "../../../app/hooks";
-import { createVendor, fetchVendors } from "../slice";
+import { createVendor } from "../slice";
 import type { VendorItem } from "../types";
 
 interface AddVendorModalProps {
@@ -103,7 +103,6 @@ export default function AddVendorModal({ open, onClose }: AddVendorModalProps) {
 
   const save = async () => {
     await dispatch(createVendor(form));
-    dispatch(fetchVendors());
     onClose();
   };
 

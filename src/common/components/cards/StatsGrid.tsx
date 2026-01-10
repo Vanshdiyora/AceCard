@@ -1,5 +1,5 @@
 import React from "react";
-import StatCard from "./StatCard"; // update path if needed
+import StatCard from "./StatCard";
 
 interface StatItem {
   title: string;
@@ -15,7 +15,7 @@ interface Props {
 
 export default function StatsGrid({ items }: Props) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       {items.map((item, idx) => (
         <StatCard
           key={idx}
