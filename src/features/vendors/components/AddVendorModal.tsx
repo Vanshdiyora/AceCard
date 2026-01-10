@@ -9,7 +9,9 @@ interface AddVendorModalProps {
   onClose: () => void;
 }
 
-type VendorForm = Partial<VendorItem>;
+type VendorForm = Partial<VendorItem> & {
+  password?: string;
+};
 
 export default function AddVendorModal({ open, onClose }: AddVendorModalProps) {
   const dispatch = useAppDispatch();
@@ -19,15 +21,19 @@ export default function AddVendorModal({ open, onClose }: AddVendorModalProps) {
     address: "",
     primary_email: "",
     primary_phone: "",
-    payment_terms: "monthly",
+    payment_terms: "",
     vendor_poc_email: "",
     crm_system: "none",
+    password: "",
   });
 
   /* 🔒 Disable background scroll when modal is open */
   useEffect(() => {
-    if (open) document.body.style.overflow = "hidden";
-    else document.body.style.overflow = "";
+    if (open) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
 
     return () => {
       document.body.style.overflow = "";
@@ -59,7 +65,7 @@ export default function AddVendorModal({ open, onClose }: AddVendorModalProps) {
       type: "text",
       placeholder: "Enter main contact number",
     },
-    {
+     {
       name: "payment_terms",
       label: "Payment Terms",
       type: "select",
@@ -74,6 +80,12 @@ export default function AddVendorModal({ open, onClose }: AddVendorModalProps) {
       label: "Vendor POC Email",
       type: "email",
       placeholder: "Enter email of vendor's point of contact",
+    },
+    {
+      name: "password",
+      label: "Password",
+      type: "text",
+      placeholder: "Enter temporary vendor password",
     },
     {
       name: "crm_system",

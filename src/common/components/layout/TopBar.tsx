@@ -29,7 +29,7 @@ export default function Topbar({ type }: TopbarProps) {
 
   const initials = name
     .split(" ")
-    .map((n:any) => n[0])
+    .map((n: any) => n[0])
     .join("")
     .toUpperCase()
     .slice(0, 2);
@@ -53,7 +53,7 @@ export default function Topbar({ type }: TopbarProps) {
   };
 
   const Dropdown = (
-    <div className="absolute right-0 mt-2 bg-white border shadow-lg rounded-lg w-40 z-50">
+    <div className="absolute right-0 top-full mt-2 bg-white border shadow-xl rounded-lg w-40 z-50 origin-top-right">
       <button
         className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
         onClick={handleLogout}
@@ -65,7 +65,7 @@ export default function Topbar({ type }: TopbarProps) {
 
   if (type === "super_admin") {
     return (
-      <header className="h-20 bg-[#E6E4F2] border-b px-4 sm:px-6 flex items-center justify-between min-w-0">
+      <header className="h-20 bg-[#E6E4F2] border-b px-4 sm:px-6 flex items-center justify-between min-w-0 relative">
         <div className="flex-1 min-w-0 max-w-md">
           <GlobalSearch mode="super_admin" />
         </div>
@@ -94,7 +94,7 @@ export default function Topbar({ type }: TopbarProps) {
   }
 
   return (
-    <header className="h-16 bg-[#E6E4F2] px-4 sm:px-6 flex items-center justify-between min-w-0">
+    <header className="h-16 bg-[#E6E4F2] px-4 sm:px-6 flex items-center justify-between min-w-0 relative">
       <h3 className="text-base sm:text-xl font-medium truncate">
         Hi, {name}
       </h3>

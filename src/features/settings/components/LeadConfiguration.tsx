@@ -7,6 +7,7 @@ import type {
   FieldType,
   Option,
 } from "../types";
+import BrandLoader from "../../../common/ui/BrandLoader";
 
 const requiredKeys = ["name", "phone", "email", "product"] as const;
 
@@ -97,7 +98,13 @@ export default function LeadConfiguration() {
     alert("Configuration saved");
   };
 
-  if (loading) return <div className="p-6 text-gray-500">Loading...</div>;
+if (loading)
+  return (
+    <div className="flex items-center justify-center min-h-[60vh]">
+      <BrandLoader />
+    </div>
+  );
+
   if (error) return <div className="p-6 text-red-600">{error}</div>;
 
   return (

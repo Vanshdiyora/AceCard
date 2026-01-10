@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../../app/hooks";
 import { fetchAccountProfile, updateAccountProfile } from "../slice";
+import BrandLoader from "../../../common/ui/BrandLoader";
 
 type AccountForm = {
   name: string;
@@ -90,7 +91,13 @@ export default function AccountSettings() {
     setEditing(false);
   };
 
-  if (loading) return <p>Loading...</p>;
+  if (loading)
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <BrandLoader />
+      </div>
+    );
+
 
   return (
     <div className="bg-white shadow p-8 rounded-xl">
