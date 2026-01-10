@@ -2,17 +2,37 @@ import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import NotificationBell from "./NotificationBell";
 import GlobalSearch from "../../../features/globalSearch/components/GlobalSearch";
-import { useAppDispatch } from "../../../app/hooks";
+import { useAppDispatch, useAppSelector } from "../../../app/hooks";
 import { logout } from "../../../features/auth/slice";
+import { fetchAccountProfile } from "../../../features/settings/slice";
 
 type TopbarProps = {
-  username?: string;
   type: "admin" | "super_admin";
 };
 
-export default function Topbar({ username = "User", type }: TopbarProps) {
+export default function Topbar({ type }: TopbarProps) {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+
+  const profile = useAppSelector((s) => s.settings.account.data);
+  const jwtUser = useAppSelector((s) => s.auth.user);
+
+  useEffect(() => {
+    if (!profile) dispatch(fetchAccountProfile());
+  }, [profile, dispatch]);
+
+  const name =
+    (profile as any)?.name ||
+    jwtUser?.name ||
+    jwtUser?.email?.split("@")[0] ||
+    "User";
+
+  const initials = name
+    .split(" ")
+    .map((n: string) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
 
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
@@ -23,7 +43,6 @@ export default function Topbar({ username = "User", type }: TopbarProps) {
         setOpen(false);
       }
     };
-
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
@@ -34,9 +53,9 @@ export default function Topbar({ username = "User", type }: TopbarProps) {
   };
 
   const Dropdown = (
-    <div className="absolute right-0 mt-2 bg-white border shadow-lg rounded-lg w-40 z-50">
+    <div className="absolute top-full right-0 mt-2 bg-white border shadow-lg rounded-xl w-40 z-50">
       <button
-        className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+        className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 rounded-xl"
         onClick={handleLogout}
       >
         Sign Out
@@ -46,7 +65,7 @@ export default function Topbar({ username = "User", type }: TopbarProps) {
 
   if (type === "super_admin") {
     return (
-      <header className="h-20 bg-[#E6E4F2] border-b px-4 sm:px-6 flex items-center justify-between min-w-0">
+      <header className="h-20 bg-[#E6E4F2] border-b px-4 sm:px-6 flex items-center justify-between min-w-0 overflow-visible">
         <div className="flex-1 min-w-0 max-w-md">
           <GlobalSearch mode="super_admin" />
         </div>
@@ -56,15 +75,15 @@ export default function Topbar({ username = "User", type }: TopbarProps) {
 
           <div
             className="relative flex items-center gap-2 cursor-pointer"
-            onClick={() => setOpen(p => !p)}
+            onClick={() => setOpen((p) => !p)}
             ref={menuRef}
           >
             <div className="w-10 h-10 bg-purple-600 text-white rounded-full flex items-center justify-center font-medium">
-              SA
+              {initials}
             </div>
 
             <span className="hidden sm:block text-gray-700 font-medium">
-              Super Admin
+              {name}
             </span>
 
             {open && Dropdown}
@@ -75,9 +94,9 @@ export default function Topbar({ username = "User", type }: TopbarProps) {
   }
 
   return (
-    <header className="h-16 bg-[#E6E4F2] px-4 sm:px-6 flex items-center justify-between min-w-0">
+    <header className="h-16 bg-[#E6E4F2] px-4 sm:px-6 flex items-center justify-between min-w-0 overflow-visible">
       <h3 className="text-base sm:text-xl font-medium truncate">
-        Hi, {username}
+        Hi, {name}
       </h3>
 
       <div className="flex-1 mx-4 min-w-0 max-w-md">
@@ -89,11 +108,11 @@ export default function Topbar({ username = "User", type }: TopbarProps) {
 
         <div
           className="relative cursor-pointer"
-          onClick={() => setOpen(p => !p)}
+          onClick={() => setOpen((p) => !p)}
           ref={menuRef}
         >
-          <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center">
-            A
+          <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center font-medium">
+            {initials}
           </div>
 
           {open && Dropdown}

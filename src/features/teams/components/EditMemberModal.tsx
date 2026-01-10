@@ -32,9 +32,17 @@ export default function EditMemberModal({
 
   if (!open || !form) return null;
 
-  const update = (key: string, value: any) => {
-    setForm((prev: any) => ({ ...prev, [key]: value }));
-  };
+const update = (key: string, value: any) => {
+  let parsedValue = value;
+
+  // Convert manager_id to number
+  if (key === "manager_id") {
+    parsedValue = value === "" || value == null ? undefined : Number(value);
+  }
+
+  setForm((prev: any) => ({ ...prev, [key]: parsedValue }));
+};
+
 
   const fields: FieldConfig[] = [
     { name: "name", label: "Full Name", type: "text" as const },

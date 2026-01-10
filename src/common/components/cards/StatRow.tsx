@@ -16,7 +16,7 @@ export default function StatsRow({ items }: Props) {
   return (
     <div
   className="bg-white rounded-2xl border px-16 py-2"
-  style={{ boxShadow: "5px 3px 14.6px 0px #2D1A5340" }}
+  style={{ boxShadow: "2px 2px 3px 0px #2D1A5340" }}
 >
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 items-center">
         {items.map((item, index) => (

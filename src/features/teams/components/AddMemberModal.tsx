@@ -47,11 +47,17 @@ export default function AddMemberModal({
 
   if (!open || !form) return null;
 
- const update = (key: string, value: any) => {
-  setForm((prev) =>
-    prev && key in prev ? { ...prev, [key]: value } : prev
-  );
+const update = (key: string, value: any) => {
+  let parsedValue = value;
+
+  // Convert manager_id to number
+  if (key === "manager_id") {
+    parsedValue = value === "" || value == null ? undefined : Number(value);
+  }
+
+  setForm((prev: any) => ({ ...prev, [key]: parsedValue }));
 };
+
 
 
   const roleOptions =

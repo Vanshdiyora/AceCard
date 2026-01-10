@@ -7,9 +7,8 @@ interface Props {
 export default function RecentActivity({ items }: Props) {
   if (!items || items.length === 0) {
     return (
-      <div
-        className="bg-white rounded-2xl border px-6 py-5 text-center text-sm text-gray-500"
-        style={{ boxShadow: "5px 3px 14.6px 0px #2D1A5340" }}
+      <div className="bg-white rounded-2xl border px-6 py-5 text-center text-sm text-gray-500"
+        style={{ boxShadow: "2px 2px 3px 0px #2D1A5340" }}
       >
         <h3 className="font-semibold text-[#2d1a53] mb-4">Recent Activity</h3>
         No recent activity
@@ -20,7 +19,7 @@ export default function RecentActivity({ items }: Props) {
   return (
     <div
       className="bg-white rounded-2xl border px-6 py-5"
-      style={{ boxShadow: "5px 3px 14.6px 0px #2D1A5340" }}
+      style={{ boxShadow: "2px 2px 3px 0px #2D1A5340" }}
     >
       <h3 className="font-semibold text-[#2d1a53] mb-4">Recent Activity</h3>
 

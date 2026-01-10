@@ -20,7 +20,7 @@ export default function QuickStatsCard({ stats }: Props) {
       {/* Top Performers — 70% */}
       <div
         className="w-[70%] bg-white rounded-2xl border p-6"
-        style={{ boxShadow: "5px 3px 14.6px 0px #2D1A5340" }}
+        style={{ boxShadow: "2px 2px 3px 0px #2D1A5340" }}
       >
         <div className="flex justify-between items-center mb-4">
           <h3 className="font-semibold text-[#2d1a53]">Top Performers</h3>
@@ -62,7 +62,7 @@ export default function QuickStatsCard({ stats }: Props) {
       </div>
 
       {/* Quick Action — 30% */}
-      <div className="w-[30%] bg-purple-300/60 rounded-2xl p-6 text-[#2d1a53] space-y-4"  style={{ boxShadow: "5px 3px 14.6px 0px #2D1A5340" }}>
+      <div className="w-[30%] bg-purple-300/60 rounded-2xl p-6 text-[#2d1a53] space-y-4"  style={{ boxShadow: "2px 2px 3px 0px #2D1A5340" }}>
         <h3 className="font-semibold">Quick Action</h3>
 
         <ActionButton label="Add Campaign" onClick={() => navigate("/admin/campaigns?open=create")} />
