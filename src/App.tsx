@@ -13,7 +13,8 @@ import {
   SupportPage, DashboardPage, TeamPage, ProductsPage, CampaignsPage, LeadPage, SettingsPage, CampaignDetailsPage
   , TeamMemberDetailsPage,
   ProductDetailsPage,
-  VendorDetailsPage
+  VendorDetailsPage,
+  NotificationsPage
 } from "./features/index";
 
 export default function App() {
@@ -37,6 +38,8 @@ export default function App() {
           <Route path="vendors" element={<VendorsPage />} />
           <Route path="vendors/:id" element={<VendorDetailsPage />} />
           <Route path="support" element={<SupportAdmin />} />
+          <Route path="notifications" element={<NotificationsPage />} />
+
         </Route>
 
 

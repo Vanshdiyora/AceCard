@@ -30,7 +30,8 @@ export const store = configureStore({
     superSalespersons: salespersonReducer,
     superSeats: seatskeysSlice,
     notifications: notificationsReducer,
-    globalSearch: globalSearchReducer, 
+    globalSearch: globalSearchReducer,
+     
   },
 });
 

@@ -4,6 +4,7 @@ import { useAppDispatch, useAppSelector } from "../../../app/hooks";
 import { markAll } from "../slice";
 import NotificationItem from "./NotificationItem";
 import { selectNotifications } from "../selectors";
+import { useNotificationSocket } from "../hooks/useNotificationSocket";
 
 export default function NotificationSidebar({
   open,
@@ -14,7 +15,9 @@ export default function NotificationSidebar({
 }) {
   const dispatch = useAppDispatch();
   const notifications = useAppSelector(selectNotifications);
-
+  const token = useAppSelector((s) => s.auth.token);
+  useNotificationSocket(token);
+  
   useEffect(() => {
     document.body.style.overflow = open ? "hidden" : "auto";
   }, [open]);
