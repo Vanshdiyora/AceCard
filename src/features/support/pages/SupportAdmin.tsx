@@ -11,6 +11,7 @@ import StatsGrid from "../../../common/components/cards/StatsGrid";
 import TicketDetailsModal from "../components/TicketDetailsModal";
 import DataTable, { type Column } from "../../../common/components/table/DataTable";
 import ErrorAlert from "../../../common/ui/ErrorAlert";
+import StatsGridSkeleton from "../../../common/components/cards/StatsGridSkeleton";
 
 export default function SupportAdmin() {
   const dispatch = useAppDispatch();
@@ -164,15 +165,16 @@ export default function SupportAdmin() {
 
       {error && <ErrorAlert message={error} />}
 
-      <StatsGrid items={stats} />
+    {loading ? <StatsGridSkeleton /> : <StatsGrid items={stats} />}
+
       <div className="mt-6" />
 
       <PageFilters
         tabs={[
           { label: "All", value: "all" },
-          { label: `Open (${stats[0].value})`, value: "open" },
-          { label: `Pending (${stats[1].value})`, value: "pending" },
-          { label: `Closed (${stats[2].value})`, value: "closed" },
+          { label: `Open`, value: "open" },
+          { label: `Pending`, value: "pending" },
+          { label: `Closed`, value: "closed" },
         ]}
         activeTab={activeTab}
         onTabChange={setActiveTab}
