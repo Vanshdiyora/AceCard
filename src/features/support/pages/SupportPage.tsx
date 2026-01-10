@@ -12,10 +12,11 @@ import {
 } from "lucide-react";
 import PageHeader from "../../../common/components/layout/PageHeader";
 import BrandLoader from "../../../common/ui/BrandLoader";
+import ErrorAlert from "../../../common/ui/ErrorAlert";
 
 export default function SupportPage() {
   const dispatch = useAppDispatch();
-  const { tickets, loading } = useAppSelector((s) => s.support);
+  const { tickets, loading, error } = useAppSelector((s) => s.support);
 
   const token = localStorage.getItem("token");
   let vendorId: number | null = null;
@@ -28,6 +29,19 @@ export default function SupportPage() {
       console.error("Failed to decode JWT", error);
     }
   }
+  const formatDate = (iso?: string | null) => {
+  if (!iso) return "Just now";
+
+  const d = new Date(iso);
+
+  return d.toLocaleString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+};
 
   useEffect(() => {
     if (vendorId) {
@@ -64,7 +78,7 @@ export default function SupportPage() {
   };
 
   return (
-    <div className="p-6">
+    <div className="p-6 min-h-screen">
       <PageHeader
         title="Support Center"
         description="Get help and manage your support requests"
@@ -72,54 +86,69 @@ export default function SupportPage() {
         onAdd={() => setShowModal(true)}
       />
 
-      <div className="grid grid-cols-12 gap-6">
-        {/* LEFT CONTENT */}
-        <div className="col-span-8 space-y-5">
-          <div className="bg-white rounded-xl p-5 border">
-            <button className="text-purple-600 font-medium border-b-2 border-purple-600 pb-2">
+      {error && <ErrorAlert message={error} />}
+
+      <div className="grid grid-cols-12 gap-8 mt-6">
+        {/* LEFT */}
+        <div className="col-span-8 space-y-6">
+          <div className="bg-white rounded-2xl px-6 py-4 border shadow-sm">
+            <span className="text-purple-600 font-semibold border-b-2 border-purple-600 pb-2 inline-block">
               Support Tickets
-            </button>
+            </span>
           </div>
 
-          <div className="space-y-5">
-            {loading ? (
-              <div className="bg-white border rounded-xl p-10">
-                <BrandLoader message="Loading tickets..." />
-              </div>
-            ) : tickets.length === 0 ? (
-              <div className="bg-white border rounded-xl p-10 text-center text-gray-500">
-                <MessageSquare size={40} className="mx-auto mb-4 text-gray-400" />
-                <h3 className="text-lg font-semibold mb-1">No support tickets yet</h3>
-                <p className="text-sm mb-4">
-                  You haven’t raised any support requests.
-                </p>
-              </div>
-            ) : (
-              tickets.map((t: any) => (
+          {loading && !error ? (
+            <div className="bg-white border rounded-2xl p-12 flex justify-center">
+              <BrandLoader message="Loading tickets..." />
+            </div>
+          ) : tickets.length === 0 ? (
+            <div className="bg-white border rounded-2xl p-12 text-center">
+              <MessageSquare size={44} className="mx-auto mb-4 text-gray-300" />
+              <h3 className="text-lg font-semibold text-gray-700">
+                No support tickets yet
+              </h3>
+              <p className="text-sm text-gray-500 mt-1">
+                You haven’t raised any support requests.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-5">
+              {tickets.map((t: any) => (
                 <div
                   key={t.id}
-                  className="bg-white p-5 border rounded-xl shadow-sm hover:shadow-md transition"
+                  className="bg-white border rounded-2xl p-6 hover:shadow-md transition-shadow"
                 >
-                  <div className="flex justify-between">
+                  <div className="flex justify-between items-start">
                     <div className="flex gap-4">
-                      {icons[t.category]}
-                      <div>
-                        <div className="flex gap-3 items-center mb-1">
-                          <span className="text-sm text-gray-500 font-medium">
+                      <div className="mt-1">{icons[t.category]}</div>
+
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-3 text-xs">
+                          <span className="text-gray-500 font-medium">
                             TKT-{t.id}
                           </span>
-                          <span className={`px-2 py-0.5 rounded-full text-xs ${statusColors[t.status]}`}>
+                          <span
+                            className={`px-2 py-0.5 rounded-full ${statusColors[t.status]}`}
+                          >
                             {t.status}
                           </span>
-                          <span className={`px-2 py-0.5 rounded-full text-xs ${priorityColors[t.priority]}`}>
+                          <span
+                            className={`px-2 py-0.5 rounded-full ${priorityColors[t.priority]}`}
+                          >
                             {t.priority}
                           </span>
                         </div>
-                        <h3 className="font-semibold text-lg">{t.subject}</h3>
-                        <p className="text-gray-600 text-sm">{t.description}</p>
-                        <div className="flex items-center gap-6 text-sm text-gray-500 mt-2">
+
+                        <h3 className="text-lg font-semibold text-gray-800">
+                          {t.subject}
+                        </h3>
+                        <p className="text-sm text-gray-600">
+                          {t.description}
+                        </p>
+
+                        <div className="flex items-center gap-5 text-xs text-gray-500 mt-2">
                           <span className="flex items-center gap-1">
-                            <Clock size={14} /> {t.created_at ?? "Just now"}
+                            <Clock size={14} /> {formatDate(t.created_at)}
                           </span>
                           <span>Category: {t.category}</span>
                         </div>
@@ -127,6 +156,7 @@ export default function SupportPage() {
                     </div>
 
                     <MessageSquareMore
+                      size={20}
                       className="text-gray-400 hover:text-gray-600 cursor-pointer"
                       onClick={() =>
                         setExpandedTicket(expandedTicket === t.id ? null : t.id)
@@ -136,7 +166,7 @@ export default function SupportPage() {
 
                   {expandedTicket === t.id && (
                     <div className="mt-4 border-t pt-4 space-y-4">
-                      {(!t.replies || t.replies.length === 0) && (
+                      {!t.replies?.length && (
                         <div className="bg-yellow-50 text-yellow-700 p-3 rounded-lg text-sm">
                           <strong>No replies yet.</strong> Your ticket is under review.
                         </div>
@@ -145,10 +175,17 @@ export default function SupportPage() {
                       {t.replies?.length > 0 && (
                         <div className="space-y-3">
                           {t.replies.map((r: any) => (
-                            <div key={r.id} className="bg-gray-50 p-3 rounded-lg text-sm">
-                              <p className="font-medium text-gray-700">Admin Reply:</p>
+                            <div
+                              key={r.id}
+                              className="bg-gray-50 p-3 rounded-lg text-sm"
+                            >
+                              <p className="font-medium text-gray-700">
+                                Admin Reply
+                              </p>
                               <p className="text-gray-600">{r.message}</p>
-                              <p className="text-xs text-gray-400 mt-1">{r.created_at}</p>
+                              <p className="text-xs text-gray-400 mt-1">
+                                {formatDate(t.created_at)}
+                              </p>
                             </div>
                           ))}
                         </div>
@@ -156,31 +193,34 @@ export default function SupportPage() {
                     </div>
                   )}
                 </div>
-              ))
-            )}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
 
-        {/* RIGHT SIDEBAR */}
+        {/* RIGHT */}
         <div className="col-span-4 space-y-6">
-          <div className="bg-white border rounded-xl p-5">
-            <h3 className="font-semibold mb-4">Support Stats</h3>
-            <div className="space-y-4">
-              <div className="flex justify-between">
-                <span className="flex items-center gap-2">
-                  <AlertCircle className="text-blue-500" size={18} /> Open Tickets
+          <div className="bg-white border rounded-2xl p-6 shadow-sm">
+            <h3 className="font-semibold text-gray-800 mb-5">Support Stats</h3>
+
+            <div className="space-y-4 text-sm">
+              <div className="flex justify-between items-center">
+                <span className="flex items-center gap-2 text-gray-600">
+                  <AlertCircle size={18} className="text-blue-500" /> Open Tickets
                 </span>
                 <span className="font-semibold">{openTickets}</span>
               </div>
-              <div className="flex justify-between">
-                <span className="flex items-center gap-2">
-                  <Clock className="text-orange-500" size={18} /> In Progress
+
+              <div className="flex justify-between items-center">
+                <span className="flex items-center gap-2 text-gray-600">
+                  <Clock size={18} className="text-orange-500" /> In Progress
                 </span>
                 <span className="font-semibold">{inProgress}</span>
               </div>
-              <div className="flex justify-between">
-                <span className="flex items-center gap-2">
-                  <CheckCircle2 className="text-green-600" size={18} /> Resolved
+
+              <div className="flex justify-between items-center">
+                <span className="flex items-center gap-2 text-gray-600">
+                  <CheckCircle2 size={18} className="text-green-600" /> Resolved
                 </span>
                 <span className="font-semibold">{resolved}</span>
               </div>

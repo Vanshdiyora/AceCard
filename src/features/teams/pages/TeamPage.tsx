@@ -17,17 +17,18 @@ import SuspendMemberModal from "../components/SuspendMemberModal";
 import PageHeader from "../../../common/components/layout/PageHeader";
 import PageFilters from "../../../common/components/layout/PageFilter";
 import DataTable, { type Column } from "../../../common/components/table/DataTable";
-
+import ErrorAlert from "../../../common/ui/ErrorAlert";
 import type { TeamMember } from "../types";
 
 type Filter = "all" | "vendor_admin" | "manager" | "sales_rep" | "active" | "suspended";
 type UserRole = "vendor_admin" | "manager" | "sales_rep";
+type MemberStatus = "active" | "suspended";
 
 export default function TeamPage() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
 
-  const { members = [], loading, meta } = useAppSelector((s) => s.team);
+  const { members = [], loading, meta, error: fetchError } = useAppSelector((s) => s.team);
   const authState = useAppSelector((s) => s.auth);
 
   const ROLES: readonly UserRole[] = ["vendor_admin", "manager", "sales_rep"];
@@ -44,7 +45,7 @@ export default function TeamPage() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
   const [selected, setSelected] = useState<TeamMember | null>(null);
-
+  const [error, setError] = useState<string | null>(null);
   const [addOpen, setAddOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [permOpen, setPermOpen] = useState(false);
@@ -69,21 +70,27 @@ export default function TeamPage() {
   }, [filter, search]);
 
   const filteredMembers = useMemo(() => {
-  return members.filter((m) => {
-    if (!m) return false;
+    return members.filter((m) => {
+      if (!m) return false;
 
-    if (filter === "active" && m.status !== "active") return false;
-    if (filter === "suspended" && m.status !== "suspended") return false;
+      if (filter === "active" && m.status !== "active") return false;
+      if (filter === "suspended" && m.status !== "suspended") return false;
 
-    if (["vendor_admin", "manager", "sales_rep"].includes(filter) && m.role !== filter)
-      return false;
+      if (["vendor_admin", "manager", "sales_rep"].includes(filter) && m.role !== filter)
+        return false;
 
-    if (!m.name?.toLowerCase().includes(search.toLowerCase())) return false;
+      if (!m.name?.toLowerCase().includes(search.toLowerCase())) return false;
 
-    return true;
-  });
-}, [members, filter, search]);
+      return true;
+    });
+  }, [members, filter, search]);
 
+  function getErrorMessage(err: unknown): string {
+    if (!err) return "Something went wrong";
+    if (typeof err === "string") return err;
+    if (typeof err === "object" && "message" in err) return String((err as any).message);
+    return "Something went wrong";
+  }
 
   const columns: Column<TeamMember>[] = [
     { header: "Name", accessor: "name" },
@@ -132,6 +139,7 @@ export default function TeamPage() {
           setAddOpen(true);
         }}
       />
+       <ErrorAlert message={error || fetchError} />
 
       <PageFilters
         tabs={[
@@ -162,10 +170,17 @@ export default function TeamPage() {
       <AddMemberModal
         open={addOpen}
         onClose={() => setAddOpen(false)}
-        onSubmit={(data) => {
-          dispatch(createMember(data));
-          setAddOpen(false);
+        onSubmit={async (data) => {
+          try {
+            await dispatch(createMember(data)).unwrap();
+            setAddOpen(false);
+            setError(null);
+          } catch (err) {
+            setError(getErrorMessage(err));
+          }
+
         }}
+
         currentRole={currentRole}
         currentUserId={currentUserId}
         managers={managers}
@@ -178,12 +193,18 @@ export default function TeamPage() {
           setEditOpen(false);
           setSelected(null);
         }}
-        onSubmit={(data) => {
+        onSubmit={async (data) => {
           if (!selected) return;
-          dispatch(updateMember({ id: selected.id, data }));
-          setEditOpen(false);
-          setSelected(null);
+          try {
+            await dispatch(updateMember({ id: selected.id, data })).unwrap();
+            setEditOpen(false);
+            setSelected(null);
+            setError(null);
+          } catch (err: any) {
+            setError(err || "Failed to update member");
+          }
         }}
+
         currentRole={currentRole}
         managers={managers}
       />
@@ -196,12 +217,18 @@ export default function TeamPage() {
           setPermOpen(false);
           setSelected(null);
         }}
-        onSubmit={(data) => {
+        onSubmit={async (data) => {
           if (!selected) return;
-          dispatch(updatePermissions({ id: selected.id, data }));
-          setPermOpen(false);
-          setSelected(null);
+          try {
+            await dispatch(updatePermissions({ id: selected.id, data })).unwrap();
+            setPermOpen(false);
+            setSelected(null);
+            setError(null);
+          } catch (err: any) {
+            setError(err || "Failed to update permissions");
+          }
         }}
+
       />
 
       <SuspendMemberModal
@@ -211,12 +238,18 @@ export default function TeamPage() {
           setSuspendOpen(false);
           setSelected(null);
         }}
-        onConfirm={(status: any) => {
+        onConfirm={async (status: MemberStatus) => {
           if (!selected) return;
-          dispatch(updateMember({ id: selected.id, data: { status } }));
-          setSuspendOpen(false);
-          setSelected(null);
+          try {
+            await dispatch(updateMember({ id: selected.id, data: { status } })).unwrap();
+            setSuspendOpen(false);
+            setSelected(null);
+            setError(null);
+          } catch (err: any) {
+            setError(err || "Failed to update member status");
+          }
         }}
+
       />
     </div>
   );

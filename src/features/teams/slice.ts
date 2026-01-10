@@ -29,17 +29,23 @@ const initialState: TeamState = {
 /* ======================================================
    THUNKS
 ====================================================== */
+
 export type FetchTeamParams = {
   page?: number;
   page_size?: number;
 };
+
+const extractApiError = (err: any, fallback: string) =>
+  err?.response?.data?.error ||
+  err?.response?.data?.message ||
+  err?.message ||
+  fallback;
 
 export const fetchTeam = createAsyncThunk(
   "team/fetch",
   async (params: FetchTeamParams | undefined, { rejectWithValue }) => {
     try {
       const res = await teamService.getTeam(params);
-
       return {
         members: res.data.map((m) => ({
           ...m,
@@ -51,7 +57,7 @@ export const fetchTeam = createAsyncThunk(
         meta: res.meta,
       };
     } catch (err: any) {
-      return rejectWithValue(err?.message ?? "Failed to fetch team");
+      return rejectWithValue(extractApiError(err, "Failed to fetch team"));
     }
   }
 );
@@ -62,7 +68,7 @@ export const createMember = createAsyncThunk(
     try {
       return await teamService.createMember(body);
     } catch (err: any) {
-      return rejectWithValue(err?.message ?? "Failed to create member");
+      return rejectWithValue(extractApiError(err, "Failed to create member"));
     }
   }
 );
@@ -73,35 +79,29 @@ export const fetchMemberById = createAsyncThunk(
     try {
       return await teamService.getMemberById(id);
     } catch (err: any) {
-      return rejectWithValue(err?.message ?? "Failed to fetch member");
+      return rejectWithValue(extractApiError(err, "Failed to fetch member"));
     }
   }
 );
 
 export const updateMember = createAsyncThunk(
   "team/update",
-  async (
-    { id, data }: { id: number; data: UpdateTeamMemberDTO },
-    { rejectWithValue }
-  ) => {
+  async ({ id, data }: { id: number; data: UpdateTeamMemberDTO }, { rejectWithValue }) => {
     try {
       return await teamService.updateMember(id, data);
     } catch (err: any) {
-      return rejectWithValue(err?.message ?? "Failed to update member");
+      return rejectWithValue(extractApiError(err, "Failed to update member"));
     }
   }
 );
 
 export const updatePermissions = createAsyncThunk(
   "team/permissions",
-  async (
-    { id, data }: { id: number; data: UpdatePermissionsDTO },
-    { rejectWithValue }
-  ) => {
+  async ({ id, data }: { id: number; data: UpdatePermissionsDTO }, { rejectWithValue }) => {
     try {
       return await teamService.updatePermissions(id, data);
     } catch (err: any) {
-      return rejectWithValue(err?.message ?? "Failed to update permissions");
+      return rejectWithValue(extractApiError(err, "Failed to update permissions"));
     }
   }
 );
@@ -113,7 +113,7 @@ export const deleteMember = createAsyncThunk(
       await teamService.deleteMember(id);
       return id;
     } catch (err: any) {
-      return rejectWithValue(err?.message ?? "Failed to delete member");
+      return rejectWithValue(extractApiError(err, "Failed to delete member"));
     }
   }
 );
@@ -157,15 +157,9 @@ const teamSlice = createSlice({
 
       /* FETCH MEMBER BY ID */
       .addCase(fetchMemberById.fulfilled, (state, action) => {
-        const idx = state.members.findIndex(
-          (m) => m.id === action.payload.id
-        );
-
+        const idx = state.members.findIndex((m) => m.id === action.payload.id);
         if (idx !== -1) {
-          state.members[idx] = {
-            ...state.members[idx],
-            ...action.payload,
-          };
+          state.members[idx] = { ...state.members[idx], ...action.payload };
         } else {
           state.members.push({
             ...action.payload,
@@ -179,22 +173,15 @@ const teamSlice = createSlice({
 
       /* UPDATE MEMBER */
       .addCase(updateMember.fulfilled, (state, action) => {
-        const idx = state.members.findIndex(
-          (m) => m.id === action.payload.id
-        );
+        const idx = state.members.findIndex((m) => m.id === action.payload.id);
         if (idx !== -1) {
-          state.members[idx] = {
-            ...state.members[idx],
-            ...action.payload,
-          };
+          state.members[idx] = { ...state.members[idx], ...action.payload };
         }
       })
 
       /* UPDATE PERMISSIONS */
       .addCase(updatePermissions.fulfilled, (state, action) => {
-        const idx = state.members.findIndex(
-          (m) => m.id === action.payload.id
-        );
+        const idx = state.members.findIndex((m) => m.id === action.payload.id);
         if (idx !== -1) {
           state.members[idx].permissions = action.payload.permissions;
         }
@@ -202,9 +189,7 @@ const teamSlice = createSlice({
 
       /* DELETE MEMBER */
       .addCase(deleteMember.fulfilled, (state, action) => {
-        state.members = state.members.filter(
-          (m) => m.id !== action.payload
-        );
+        state.members = state.members.filter((m) => m.id !== action.payload);
       });
   },
 });

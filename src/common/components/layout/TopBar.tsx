@@ -22,14 +22,14 @@ export default function Topbar({ type }: TopbarProps) {
   }, [profile, dispatch]);
 
   const name =
-    (profile as any)?.name ||
+    profile?.name ||
     jwtUser?.name ||
     jwtUser?.email?.split("@")[0] ||
     "User";
 
   const initials = name
     .split(" ")
-    .map((n: string) => n[0])
+    .map((n:any) => n[0])
     .join("")
     .toUpperCase()
     .slice(0, 2);
@@ -53,9 +53,9 @@ export default function Topbar({ type }: TopbarProps) {
   };
 
   const Dropdown = (
-    <div className="absolute top-full right-0 mt-2 bg-white border shadow-lg rounded-xl w-40 z-50">
+    <div className="absolute right-0 mt-2 bg-white border shadow-lg rounded-lg w-40 z-50">
       <button
-        className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 rounded-xl"
+        className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
         onClick={handleLogout}
       >
         Sign Out
@@ -65,7 +65,7 @@ export default function Topbar({ type }: TopbarProps) {
 
   if (type === "super_admin") {
     return (
-      <header className="h-20 bg-[#E6E4F2] border-b px-4 sm:px-6 flex items-center justify-between min-w-0 overflow-visible">
+      <header className="h-20 bg-[#E6E4F2] border-b px-4 sm:px-6 flex items-center justify-between min-w-0">
         <div className="flex-1 min-w-0 max-w-md">
           <GlobalSearch mode="super_admin" />
         </div>
@@ -94,7 +94,7 @@ export default function Topbar({ type }: TopbarProps) {
   }
 
   return (
-    <header className="h-16 bg-[#E6E4F2] px-4 sm:px-6 flex items-center justify-between min-w-0 overflow-visible">
+    <header className="h-16 bg-[#E6E4F2] px-4 sm:px-6 flex items-center justify-between min-w-0">
       <h3 className="text-base sm:text-xl font-medium truncate">
         Hi, {name}
       </h3>

@@ -25,92 +25,136 @@ export type FetchVendorsParams = {
   page_size?: number;
 };
 
-export const fetchVendors = createAsyncThunk(
+type ApiError = { response?: { data?: { error?: string; message?: string } } };
+
+function extractError(err: unknown, fallback: string): string {
+  if (typeof err === "string") return err;
+  if (err instanceof Error) return err.message;
+  if (typeof err === "object" && err && "response" in err) {
+    const e = err as ApiError;
+    return e.response?.data?.error || e.response?.data?.message || fallback;
+  }
+  return fallback;
+}
+
+export const fetchVendors = createAsyncThunk<
+  { data: VendorItem[]; meta: VendorMeta },
+  FetchVendorsParams | undefined,
+  { rejectValue: string }
+>(
   "vendors/fetchAll",
-  async (params: FetchVendorsParams | undefined, { rejectWithValue }) => {
+  async (params, { rejectWithValue }) => {
     try {
       return await vendorsService.list(params ?? { page: 1, page_size: 10 });
-    } catch (err: any) {
-      return rejectWithValue(err?.message ?? "Failed to fetch vendors");
+    } catch (err: unknown) {
+      return rejectWithValue(extractError(err, "Failed to fetch vendors"));
     }
   }
 );
 
-export const unarchiveVendor = createAsyncThunk(
+export const unarchiveVendor = createAsyncThunk<
+  number,
+  number,
+  { rejectValue: string }
+>(
   "vendors/unarchive",
-  async (id: number, { rejectWithValue }) => {
+  async (id, { rejectWithValue }) => {
     try {
       await vendorsService.unarchive(id);
-      return id; // return id for reducer
-    } catch (err: any) {
-      return rejectWithValue(err?.message ?? "Failed to unarchive vendor");
+      return id;
+    } catch (err: unknown) {
+      return rejectWithValue(extractError(err, "Failed to unarchive vendor"));
     }
   }
 );
 
-export const createVendor = createAsyncThunk(
+export const createVendor = createAsyncThunk<
+  VendorItem,
+  Partial<VendorItem>,
+  { rejectValue: string }
+>(
   "vendors/create",
-  async (data: Partial<VendorItem>, { rejectWithValue }) => {
+  async (data, { rejectWithValue }) => {
     try {
       return await vendorsService.create(data);
-    } catch (err: any) {
-      return rejectWithValue(err?.message ?? "Failed to create vendor");
+    } catch (err: unknown) {
+      return rejectWithValue(extractError(err, "Failed to create vendor"));
     }
   }
 );
 
-export const updateVendor = createAsyncThunk(
+export const updateVendor = createAsyncThunk<
+  VendorItem,
+  { id: number; data: Partial<VendorItem> },
+  { rejectValue: string }
+>(
   "vendors/update",
-  async ({ id, data }: { id: number; data: Partial<VendorItem> }, { rejectWithValue }) => {
+  async ({ id, data }, { rejectWithValue }) => {
     try {
       return await vendorsService.update(id, data);
-    } catch (err: any) {
-      return rejectWithValue(err?.message ?? "Failed to update vendor");
+    } catch (err: unknown) {
+      return rejectWithValue(extractError(err, "Failed to update vendor"));
     }
   }
 );
 
-export const updateSeats = createAsyncThunk(
+export const updateSeats = createAsyncThunk<
+  VendorItem,
+  { id: number; seats: number },
+  { rejectValue: string }
+>(
   "vendors/updateSeats",
-  async ({ id, seats }: { id: number; seats: number }, { rejectWithValue }) => {
+  async ({ id, seats }, { rejectWithValue }) => {
     try {
       return await vendorsService.updateSeats(id, seats);
-    } catch (err: any) {
-      return rejectWithValue(err?.message ?? "Failed to update seats");
+    } catch (err: unknown) {
+      return rejectWithValue(extractError(err, "Failed to update seats"));
     }
   }
 );
 
-export const archiveVendor = createAsyncThunk(
+export const archiveVendor = createAsyncThunk<
+  number,
+  number,
+  { rejectValue: string }
+>(
   "vendors/archive",
-  async (id: number, { rejectWithValue }) => {
+  async (id, { rejectWithValue }) => {
     try {
       await vendorsService.archive(id);
       return id;
-    } catch (err: any) {
-      return rejectWithValue(err?.message ?? "Failed to archive vendor");
+    } catch (err: unknown) {
+      return rejectWithValue(extractError(err, "Failed to archive vendor"));
     }
   }
 );
 
-export const notifyVendor = createAsyncThunk(
+export const notifyVendor = createAsyncThunk<
+  unknown,
+  unknown,
+  { rejectValue: string }
+>(
   "vendors/notify",
-  async (payload: any, { rejectWithValue }) => {
+  async (payload, { rejectWithValue }) => {
     try {
       return await vendorsService.notify(payload);
-    } catch (err: any) {
-      return rejectWithValue(err?.message ?? "Failed to notify vendor");
+    } catch (err: unknown) {
+      return rejectWithValue(extractError(err, "Failed to notify vendor"));
     }
   }
 );
 
-export const fetchVendorById = createAsyncThunk(
+export const fetchVendorById = createAsyncThunk<
+  VendorItem,
+  number,
+  { rejectValue: string }
+>(
   "vendors/fetchById",
-  async (id: number, { rejectWithValue }) => {
+  async (id, { rejectWithValue }) => {
     try {
       return await vendorsService.getById(id);
-    } catch (err: any) {
-      return rejectWithValue(err?.message ?? "Failed to fetch vendor");
+    } catch (err: unknown) {
+      return rejectWithValue(extractError(err, "Failed to fetch vendor"));
     }
   }
 );
@@ -151,7 +195,7 @@ const vendorsSlice = createSlice({
       })
       .addCase(fetchVendors.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload as string;
+        state.error = action.payload;
       })
 
       /* UNARCHIVE */
@@ -181,7 +225,7 @@ const vendorsSlice = createSlice({
       })
       .addCase(fetchVendorById.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload as string;
+        state.error = action.payload;
       })
 
       /* UPDATE */

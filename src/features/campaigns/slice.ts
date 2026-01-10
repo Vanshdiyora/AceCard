@@ -1,28 +1,43 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import type {
-  Campaign,
-  CampaignState,
-  CampaignListResponse,
-} from "./types";
+import type { Campaign, CampaignState, CampaignListResponse } from "./types";
 import { CampaignService } from "./services/campaign.service";
 
-// -----------------------------
-// THUNKS
-// -----------------------------
+/* ---------------------------------------
+   ERROR HELPER
+---------------------------------------- */
+
+const extractApiError = (err: unknown, fallback: string): string =>
+  (err as any)?.response?.data?.error ||
+  (err as any)?.response?.data?.message ||
+  (err as any)?.message ||
+  fallback;
+
+/* ---------------------------------------
+   THUNKS
+---------------------------------------- */
 
 export const fetchCampaigns = createAsyncThunk<
   CampaignListResponse,
-  { page?: number; page_size?: number }
->("campaigns/fetchAll", async ({ page = 1, page_size = 10 }) => {
-  return await CampaignService.getAll({ page, page_size });
+  { page?: number; page_size?: number },
+  { rejectValue: string }
+>("campaigns/fetchAll", async ({ page = 1, page_size = 10 }, { rejectWithValue }) => {
+  try {
+    return await CampaignService.getAll({ page, page_size });
+  } catch (err) {
+    return rejectWithValue(extractApiError(err, "Failed to fetch campaigns"));
+  }
 });
-
 
 export const createCampaign = createAsyncThunk<
   Campaign,
-  Partial<Campaign>
->("campaigns/create", async (data) => {
-  return await CampaignService.create(data);
+  Partial<Campaign>,
+  { rejectValue: string }
+>("campaigns/create", async (data, { rejectWithValue }) => {
+  try {
+    return await CampaignService.create(data);
+  } catch (err) {
+    return rejectWithValue(extractApiError(err, "Failed to create campaign"));
+  }
 });
 
 export const fetchCampaignsByTeamMember = createAsyncThunk<
@@ -32,49 +47,55 @@ export const fetchCampaignsByTeamMember = createAsyncThunk<
 >(
   "campaigns/fetchByTeamMember",
   async ({ memberId, page, page_size }, { rejectWithValue }) => {
-    if (!memberId) {
-      return rejectWithValue("Member ID is required to fetch campaigns");
-    }
-
-    const params: { page?: number; page_size?: number } = {};
-    if (page !== undefined) params.page = page;
-    if (page_size !== undefined) params.page_size = page_size;
+    if (!memberId) return rejectWithValue("Member ID is required");
 
     try {
-      return await CampaignService.getByTeamMember(memberId, params);
-    } catch (err: any) {
-      return rejectWithValue(
-        err?.message ?? "Failed to fetch campaigns for team member"
-      );
+      return await CampaignService.getByTeamMember(memberId, { page, page_size });
+    } catch (err) {
+      return rejectWithValue(extractApiError(err, "Failed to fetch member campaigns"));
     }
   }
 );
 
-
 export const fetchCampaignById = createAsyncThunk<
   Campaign,
-  number
->("campaigns/fetchById", async (id) => {
-  return await CampaignService.getById(id);
+  number,
+  { rejectValue: string }
+>("campaigns/fetchById", async (id, { rejectWithValue }) => {
+  try {
+    return await CampaignService.getById(id);
+  } catch (err) {
+    return rejectWithValue(extractApiError(err, "Failed to fetch campaign"));
+  }
 });
 
 export const updateCampaign = createAsyncThunk<
   Campaign,
-  { id: number; data: Partial<Campaign> }
->("campaigns/update", async ({ id, data }) => {
-  return await CampaignService.update(id, data);
+  { id: number; data: Partial<Campaign> },
+  { rejectValue: string }
+>("campaigns/update", async ({ id, data }, { rejectWithValue }) => {
+  try {
+    return await CampaignService.update(id, data);
+  } catch (err) {
+    return rejectWithValue(extractApiError(err, "Failed to update campaign"));
+  }
 });
 
 export const archiveCampaign = createAsyncThunk<
   Campaign,
-  number
->("campaigns/archive", async (id) => {
-  return await CampaignService.archive(id);
+  number,
+  { rejectValue: string }
+>("campaigns/archive", async (id, { rejectWithValue }) => {
+  try {
+    return await CampaignService.archive(id);
+  } catch (err) {
+    return rejectWithValue(extractApiError(err, "Failed to archive campaign"));
+  }
 });
 
-// -----------------------------
-// INITIAL STATE
-// -----------------------------
+/* ---------------------------------------
+   STATE
+---------------------------------------- */
 
 const initialState: CampaignState = {
   items: [],
@@ -83,110 +104,73 @@ const initialState: CampaignState = {
   error: null,
 };
 
-// -----------------------------
-// SLICE
-// -----------------------------
+/* ---------------------------------------
+   SLICE
+---------------------------------------- */
 
 const campaignSlice = createSlice({
   name: "campaigns",
   initialState,
   reducers: {},
-
   extraReducers: (builder) => {
-    // -----------------------------
-    // FETCH CAMPAIGNS
-    // -----------------------------
-    builder.addCase(fetchCampaigns.pending, (state) => {
-      state.loading = true;
-      state.error = null;
-    });
+    builder
 
-    builder.addCase(fetchCampaigns.fulfilled, (state, action) => {
-      state.loading = false;
-      state.items = action.payload.data;
-      state.meta = action.payload.meta;
-    });
+      .addCase(fetchCampaigns.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchCampaigns.fulfilled, (state, action) => {
+        state.loading = false;
+        state.items = action.payload.data;
+        state.meta = action.payload.meta;
+      })
+      .addCase(fetchCampaigns.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload ?? "Failed to fetch campaigns";
+      })
 
-    builder.addCase(fetchCampaigns.rejected, (state, action) => {
-      state.loading = false;
-      state.error =
-        action.error.message ?? "Failed to fetch campaigns";
-    });
+      .addCase(createCampaign.fulfilled, (state, action) => {
+        state.items.unshift(action.payload);
+      })
 
-    // -----------------------------
-    // CREATE CAMPAIGN
-    // -----------------------------
-    builder.addCase(createCampaign.fulfilled, (state, action) => {
-      state.items.unshift(action.payload);
-    });
+      .addCase(updateCampaign.fulfilled, (state, action) => {
+        const idx = state.items.findIndex((c) => c.id === action.payload.id);
+        if (idx !== -1) state.items[idx] = action.payload;
+      })
 
-    // -----------------------------
-    // UPDATE CAMPAIGN
-    // -----------------------------
-    builder.addCase(updateCampaign.fulfilled, (state, action) => {
-      const idx = state.items.findIndex(
-        (c) => c.id === action.payload.id
-      );
-      if (idx !== -1) state.items[idx] = action.payload;
-    });
+      .addCase(fetchCampaignsByTeamMember.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchCampaignsByTeamMember.fulfilled, (state, action) => {
+        state.loading = false;
+        state.items = action.payload.data;
+        state.meta = action.payload.meta;
+      })
+      .addCase(fetchCampaignsByTeamMember.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload ?? "Failed to fetch member campaigns";
+      })
 
-    // -----------------------------
-    // FETCH CAMPAIGNS BY TEAM MEMBER
-    // -----------------------------
-    builder.addCase(fetchCampaignsByTeamMember.pending, (state) => {
-      state.loading = true;
-      state.error = null;
-    });
+      .addCase(archiveCampaign.fulfilled, (state, action) => {
+        const idx = state.items.findIndex((c) => c.id === action.payload.id);
+        if (idx !== -1) state.items[idx] = action.payload;
+      })
 
-    builder.addCase(fetchCampaignsByTeamMember.fulfilled, (state, action) => {
-      state.loading = false;
-      state.items = action.payload.data;
-      state.meta = action.payload.meta;
-    });
-
-    builder.addCase(fetchCampaignsByTeamMember.rejected, (state, action) => {
-      state.loading = false;
-      state.error =
-        action.error.message ?? "Failed to fetch member campaigns";
-    });
-
-    // -----------------------------
-    // ARCHIVE CAMPAIGN
-    // -----------------------------
-    builder.addCase(archiveCampaign.fulfilled, (state, action) => {
-      const idx = state.items.findIndex(
-        (c) => c.id === action.payload.id
-      );
-      if (idx !== -1) state.items[idx] = action.payload;
-    });
-
-    // -----------------------------
-    // FETCH CAMPAIGN BY ID
-    // -----------------------------
-    builder.addCase(fetchCampaignById.pending, (state) => {
-      state.loading = true;
-      state.error = null;
-    });
-
-    builder.addCase(fetchCampaignById.fulfilled, (state, action) => {
-      state.loading = false;
-
-      const idx = state.items.findIndex(
-        (c) => c.id === action.payload.id
-      );
-
-      if (idx !== -1) {
-        state.items[idx] = action.payload;
-      } else {
-        state.items.push(action.payload);
-      }
-    });
-
-    builder.addCase(fetchCampaignById.rejected, (state, action) => {
-      state.loading = false;
-      state.error =
-        action.error.message ?? "Failed to fetch campaign";
-    });
+      .addCase(fetchCampaignById.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchCampaignById.fulfilled, (state, action) => {
+        state.loading = false;
+        const idx = state.items.findIndex((c) => c.id === action.payload.id);
+        if (idx !== -1) state.items[idx] = action.payload;
+        else state.items.push(action.payload);
+      })
+      .addCase(fetchCampaignById.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload ?? "Failed to fetch campaign";
+      });
   },
 });
 

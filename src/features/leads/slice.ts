@@ -5,9 +5,21 @@ import type {
   UpdateLeadDto,
   PaginationMeta,
   LeadsApiResponse,
-  LeadNote
+  LeadNote,
 } from "./types";
 import { LeadsService } from "./services/leads.service";
+
+/* -----------------------------------------------------
+   ERROR HANDLER
+----------------------------------------------------- */
+
+type ApiError = { response?: { data?: { error?: string; message?: string } } };
+
+const extractApiError = (err: unknown, fallback: string): string =>
+  (err as ApiError)?.response?.data?.error ||
+  (err as ApiError)?.response?.data?.message ||
+  (err as Error)?.message ||
+  fallback;
 
 /* -----------------------------------------------------
    STATE
@@ -16,7 +28,7 @@ import { LeadsService } from "./services/leads.service";
 interface LeadsState {
   leads: Lead[];
   meta: PaginationMeta | null;
-  notes: Record<number, LeadNote[]>; // keyed by leadId
+  notes: Record<number, LeadNote[]>;
   loading: boolean;
   error: string | null;
 }
@@ -28,57 +40,85 @@ const initialState: LeadsState = {
   loading: false,
   error: null,
 };
+
 /* -----------------------------------------------------
    THUNKS
 ----------------------------------------------------- */
 
 export const fetchLeads = createAsyncThunk<
   LeadsApiResponse,
-  { page?: number; pageSize?: number }
->("leads/fetch", async ({ page = 1, pageSize = 10 }) => {
-  return await LeadsService.getLeads(page, pageSize);
+  { page?: number; pageSize?: number },
+  { rejectValue: string }
+>("leads/fetch", async ({ page = 1, pageSize = 10 }, { rejectWithValue }) => {
+  try {
+    return await LeadsService.getLeads(page, pageSize);
+  } catch (err) {
+    return rejectWithValue(extractApiError(err, "Failed to load leads"));
+  }
 });
 
-
-export const createLead = createAsyncThunk<Lead, CreateLeadDto>(
-  "leads/create",
-  async (payload) => LeadsService.createLead(payload)
-);
+export const createLead = createAsyncThunk<
+  Lead,
+  CreateLeadDto,
+  { rejectValue: string }
+>("leads/create", async (payload, { rejectWithValue }) => {
+  try {
+    return await LeadsService.createLead(payload);
+  } catch (err) {
+    return rejectWithValue(extractApiError(err, "Failed to create lead"));
+  }
+});
 
 export const updateLead = createAsyncThunk<
   Lead,
-  { id: number; data: UpdateLeadDto }
->("leads/update", async ({ id, data }) =>
-  LeadsService.updateLead(id, data)
-);
+  { id: number; data: UpdateLeadDto },
+  { rejectValue: string }
+>("leads/update", async ({ id, data }, { rejectWithValue }) => {
+  try {
+    return await LeadsService.updateLead(id, data);
+  } catch (err) {
+    return rejectWithValue(extractApiError(err, "Failed to update lead"));
+  }
+});
 
-export const archiveLead = createAsyncThunk<number, number>(
-  "leads/archive",
-  async (id) => {
+export const archiveLead = createAsyncThunk<
+  number,
+  number,
+  { rejectValue: string }
+>("leads/archive", async (id, { rejectWithValue }) => {
+  try {
     await LeadsService.archiveLead(id);
     return id;
+  } catch (err) {
+    return rejectWithValue(extractApiError(err, "Failed to archive lead"));
   }
-);
+});
 
 export const fetchLeadNotes = createAsyncThunk<
   { leadId: number; notes: LeadNote[] },
-  number
->("leads/fetchNotes", async (leadId) => {
-  const notes = await LeadsService.getNotes(leadId);
-  return { leadId, notes };
+  number,
+  { rejectValue: string }
+>("leads/fetchNotes", async (leadId, { rejectWithValue }) => {
+  try {
+    const notes = await LeadsService.getNotes(leadId);
+    return { leadId, notes };
+  } catch (err) {
+    return rejectWithValue(extractApiError(err, "Failed to load lead notes"));
+  }
 });
 
-export const fetchLeadById = createAsyncThunk(
-  "leads/fetchById",
-  async (id: number, { rejectWithValue }) => {
-    try {
-      const res = await LeadsService.getLeadById(id);
-      return res.data;
-    } catch (err: any) {
-      return rejectWithValue(err?.message ?? "Failed to fetch lead");
-    }
+export const fetchLeadById = createAsyncThunk<
+  Lead,
+  number,
+  { rejectValue: string }
+>("leads/fetchById", async (id, { rejectWithValue }) => {
+  try {
+    const res = await LeadsService.getLeadById(id);
+    return res.data;
+  } catch (err) {
+    return rejectWithValue(extractApiError(err, "Failed to fetch lead"));
   }
-);
+});
 
 /* -----------------------------------------------------
    SLICE
@@ -90,8 +130,6 @@ const leadsSlice = createSlice({
   reducers: {},
   extraReducers: (builder) => {
     builder
-
-      /* FETCH */
       .addCase(fetchLeads.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -103,56 +141,51 @@ const leadsSlice = createSlice({
       })
       .addCase(fetchLeads.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message ?? "Failed to load leads";
+        state.error = action.payload ?? "Failed to load leads";
       })
 
-      /* CREATE */
       .addCase(createLead.fulfilled, (state, action) => {
         state.leads.unshift(action.payload);
       })
 
-      /* UPDATE */
       .addCase(updateLead.fulfilled, (state, action) => {
         const i = state.leads.findIndex((l) => l.id === action.payload.id);
         if (i !== -1) state.leads[i] = action.payload;
       })
 
       .addCase(fetchLeadById.pending, (state) => {
-  state.loading = true;
-})
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchLeadById.fulfilled, (state, action) => {
+        state.loading = false;
+        const idx = state.leads.findIndex((l) => l.id === action.payload.id);
+        if (idx !== -1) state.leads[idx] = action.payload;
+        else state.leads.push(action.payload);
+      })
+      .addCase(fetchLeadById.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload ?? "Failed to fetch lead";
+      })
 
-.addCase(fetchLeadById.fulfilled, (state, action) => {
-  state.loading = false;
-
-  const idx = state.leads.findIndex(l => l.id === action.payload.id);
-  if (idx !== -1) {
-    state.leads[idx] = action.payload;
-  } else {
-    state.leads.push(action.payload);
-  }
-})
-
-.addCase(fetchLeadById.rejected, (state, action) => {
-  state.loading = false;
-  state.error = action.payload as string;
-})
-
-
-      /* ARCHIVE */
       .addCase(archiveLead.fulfilled, (state, action) => {
         state.leads = state.leads.filter((l) => l.id !== action.payload);
       })
-       .addCase(fetchLeadNotes.pending, (state) => {
+      .addCase(archiveLead.rejected, (state, action) => {
+        state.error = action.payload ?? "Failed to archive lead";
+      })
+
+      .addCase(fetchLeadNotes.pending, (state) => {
         state.loading = true;
       })
       .addCase(fetchLeadNotes.fulfilled, (state, action) => {
         state.loading = false;
         state.notes[action.payload.leadId] = action.payload.notes;
       })
-      .addCase(fetchLeadNotes.rejected, (state) => {
+      .addCase(fetchLeadNotes.rejected, (state, action) => {
         state.loading = false;
+        state.error = action.payload ?? "Failed to load notes";
       });
-
   },
 });
 

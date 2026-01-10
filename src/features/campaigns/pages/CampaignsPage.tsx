@@ -7,6 +7,7 @@ import PageHeader from "../../../common/components/layout/PageHeader";
 import PageFilters, { type TabItem } from "../../../common/components/layout/PageFilter";
 import DataTable, { type Column } from "../../../common/components/table/DataTable";
 import CreateCampaignModal from "../components/CreateCampaignModal";
+import ErrorAlert from "../../../common/ui/ErrorAlert";
 import type { Campaign } from "../types";
 
 const tabs: TabItem[] = [
@@ -28,13 +29,14 @@ export default function CampaignsPage() {
   const items: Campaign[] = Array.isArray(campaignsState?.items) ? campaignsState.items : [];
   const meta = campaignsState?.meta ?? null;
   const loading = campaignsState?.loading ?? false;
+  const fetchError: string | null = campaignsState?.error ?? null;
+
   const [page, setPage] = useState(1);
   const pageSize = 10;
 
   const [activeTab, setActiveTab] = useState("all");
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<"recent" | "name_asc" | "pipeline_desc">("recent");
-  const [showSortDropdown, setShowSortDropdown] = useState(false);
   const [openCreate, setOpenCreate] = useState(false);
 
   useEffect(() => {
@@ -54,7 +56,6 @@ export default function CampaignsPage() {
     };
   }, [openCreate]);
 
-
   /* -------- Auto open from redirect -------- */
   useEffect(() => {
     if (searchParams.get("open") === "create") {
@@ -67,7 +68,6 @@ export default function CampaignsPage() {
   useEffect(() => {
     dispatch(fetchCampaigns({ page, page_size: pageSize }));
   }, [dispatch, page, pageSize]);
-
 
   /* -------- Filtering -------- */
   const filtered = useMemo(() => {
@@ -99,7 +99,6 @@ export default function CampaignsPage() {
       },
     ];
   }, [sort]);
-
 
   /* -------- Sorting -------- */
   const finalData = useMemo(() => {
@@ -137,6 +136,7 @@ export default function CampaignsPage() {
         addButtonLabel="Create Campaign"
         onAdd={() => setOpenCreate(true)}
       />
+      <ErrorAlert message={fetchError} />
 
       <CreateCampaignModal open={openCreate} onClose={() => setOpenCreate(false)} />
 
@@ -151,28 +151,10 @@ export default function CampaignsPage() {
           onExport={() => console.log("Export CSV")}
           onImport={() => console.log("Import CSV")}
         />
-
-        {showSortDropdown && (
-          <div className="absolute right-6 mt-2 w-48 bg-white border rounded-lg shadow-lg z-20 text-sm">
-            {[["recent", "Recent"], ["name_asc", "Name A-Z"], ["pipeline_desc", "Pipeline High-Low"]].map(
-              ([v, l]) => (
-                <div
-                  key={v}
-                  className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                  onClick={() => {
-                    setSort(v as any);
-                    setShowSortDropdown(false);
-                  }}
-                >
-                  {l}
-                </div>
-              )
-            )}
-          </div>
-        )}
       </div>
-      <div className="w-full overflow-x-auto my-6">
 
+
+      <div className="w-full overflow-x-auto my-6">
         <DataTable
           columns={columns}
           data={finalData}
@@ -182,8 +164,8 @@ export default function CampaignsPage() {
           onPageChange={setPage}
           onRowClick={(c) => navigate(`${c.id}`)}
         />
-
       </div>
+
     </div>
   );
 }
