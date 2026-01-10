@@ -51,11 +51,17 @@ export const fetchLeads = createAsyncThunk<
   { rejectValue: string }
 >("leads/fetch", async ({ page = 1, pageSize = 10 }, { rejectWithValue }) => {
   try {
-    return await LeadsService.getLeads(page, pageSize);
+    const res = await LeadsService.getLeads(page, pageSize);
+
+    return {
+      data: Array.isArray(res.data) ? res.data : [], 
+      meta: res.meta,
+    };
   } catch (err) {
     return rejectWithValue(extractApiError(err, "Failed to load leads"));
   }
 });
+
 
 export const createLead = createAsyncThunk<
   Lead,

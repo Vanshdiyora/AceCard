@@ -17,11 +17,6 @@ export const LeadsService = {
         page_size: pageSize,
       },
     });
-
-    if (!res.data?.data || !res.data?.meta) {
-      throw new Error("Invalid leads response");
-    }
-
     return res.data;
   },
 
