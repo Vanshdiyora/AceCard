@@ -55,11 +55,7 @@ export default function TeamPage() {
   const canCreateSalesRep = currentRole === "vendor_admin" || currentRole === "manager";
 
   const managers = useMemo(() => members.filter((m) => m.role === "manager"), [members]);
-  const managerMap = useMemo(() => {
-    const map = new Map<number, string>();
-    managers.forEach((m) => map.set(m.id, m.name));
-    return map;
-  }, [managers]);
+  
 
   useEffect(() => {
     dispatch(fetchTeam({ page, page_size: pageSize }));
@@ -105,8 +101,12 @@ export default function TeamPage() {
       ),
     },
     { header: "Role", render: (m) => m.role.replace("_", " ") },
-    { header: "Manager", render: (m) => (m.manager_id ? managerMap.get(m.manager_id) ?? "—" : "—") },
-    { header: "Leads", align: "right", render: (m) => m.leads_count ?? 0 },
+    {
+      header: "Manager",
+      render: (m) => m.assigned_manager?.name ?? "NA",
+    },
+
+    { header: "Leads", align: "right", render: (m) => m.total_leads ?? 0 },
     {
       header: "Permissions",
       align: "right",
@@ -139,7 +139,7 @@ export default function TeamPage() {
           setAddOpen(true);
         }}
       />
-       <ErrorAlert message={error || fetchError} />
+      <ErrorAlert message={error || fetchError} />
 
       <PageFilters
         tabs={[

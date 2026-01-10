@@ -29,20 +29,28 @@ export interface TeamMember {
   phone: string;
   role: "manager" | "sales_rep" | "vendor_admin" | string;
   status: "active" | "pending" | "suspended";
-  leads_count?: number;
+
+  // Backend computed fields
+  total_leads?: number;
+  total_deal_amount?: number;
+  assigned_manager?: {
+    id: number;
+    name: string;
+  };
+
   permissions?: TeamPermissions;
-  deal_amount?: number;
 
   last_active_at?: string;
   created_at: string;
   updated_at: string;
 
-  // UI-only fields
+  // UI-only
   leads?: number;
   pipeline?: string;
   conversion?: string;
   lastActive?: string;
 }
+
 
 
 /* ======================================================

@@ -49,8 +49,11 @@ export const fetchTeam = createAsyncThunk(
       return {
         members: res.data.map((m) => ({
           ...m,
-          leads: 0,
-          pipeline: "$0",
+
+          // Map backend → UI
+          manager_id: m.assigned_manager?.id ?? null,
+          leads: m.total_leads ?? 0,
+          pipeline: `$${m.total_deal_amount ?? 0}`,
           conversion: "0%",
           lastActive: "Recently",
         })),
@@ -61,6 +64,7 @@ export const fetchTeam = createAsyncThunk(
     }
   }
 );
+  
 
 export const createMember = createAsyncThunk(
   "team/create",

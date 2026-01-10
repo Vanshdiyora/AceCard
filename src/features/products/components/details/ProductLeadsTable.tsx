@@ -23,18 +23,31 @@ export default function ProductLeadsTable({ productId }: Props) {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
 
-  const { leads, loading: leadsLoading } = useAppSelector((s) => s.leads);
-  const { members } = useAppSelector((s) => s.team);
-  const { items: campaigns } = useAppSelector((s) => s.campaigns);
+  const leads = useAppSelector((s) => s.leads?.leads ?? []);
+  const leadsLoading = useAppSelector((s) => s.leads?.loading ?? false);
 
-  /* ---------------- Fetch dependencies ---------------- */
+  const members = useAppSelector((s) => s.team?.members ?? []);
+  const membersLoading = useAppSelector((s) => s.team?.loading ?? false);
+
+  const campaigns = useAppSelector((s) => s.campaigns?.items ?? []);
+  const campaignsLoading = useAppSelector((s) => s.campaigns?.loading ?? false);
+
   useEffect(() => {
-    if (leads.length === 0) dispatch(fetchLeads({ page: 1, pageSize: 10 }));
-    if (members.length === 0) dispatch(fetchTeam());
-    if (campaigns.length === 0) dispatch(fetchCampaigns({ page: 1, page_size: 10 }));
-  }, [dispatch, leads.length, members.length, campaigns.length]);
+    if (!leadsLoading && leads.length === 0) {
+      dispatch(fetchLeads({ page: 1, pageSize: 10 }));
+    }
 
-  /* ---------------- Enrich leads ---------------- */
+    if (!membersLoading && members.length === 0) {
+      dispatch(fetchTeam());
+    }
+
+    if (!campaignsLoading && campaigns.length === 0) {
+      dispatch(fetchCampaigns({ page: 1, page_size: 10 }));
+    }
+  }, [
+    dispatch
+  ]);
+
   const rows: LeadRow[] = useMemo(() => {
     return leads
       .filter((l) => l.products?.includes(productId))
@@ -54,15 +67,7 @@ export default function ProductLeadsTable({ productId }: Props) {
   }, [leads, members, campaigns, productId]);
 
   const columns: Column<LeadRow>[] = [
-    {
-      header: "Lead Name",
-      accessor: "lead_name",
-      render: (row) => (
-        <span>
-          {row.lead_name}
-        </span>
-      ),
-    },
+    { header: "Lead Name", accessor: "lead_name" },
     { header: "Campaign", accessor: "campaign_name" },
     { header: "Owner", accessor: "owner_name" },
     { header: "Manager", accessor: "manager_name" },
@@ -78,14 +83,11 @@ export default function ProductLeadsTable({ productId }: Props) {
 
   return (
     <div className="rounded-2xl border">
-
-      {/* Header */}
-      <div className="py-4 border-b">
+      <div className="py-4 border-b px-6">
         <h3 className="text-base font-semibold">Associated Leads</h3>
       </div>
 
-      {/* Table */}
-      <div>
+      <div className="p-4">
         <DataTable<LeadRow>
           columns={columns}
           data={rows}
@@ -93,7 +95,6 @@ export default function ProductLeadsTable({ productId }: Props) {
           onRowClick={(row) => navigate(`/admin/leads/${row.id}`)}
         />
       </div>
-
     </div>
   );
 }

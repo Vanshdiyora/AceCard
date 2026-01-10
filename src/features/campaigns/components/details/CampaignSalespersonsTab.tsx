@@ -44,8 +44,8 @@ export default function CampaignSalespersonsTab({
       .map((m) => ({
         id: m.id,
         name: m.name,
-        totalLeads: m.leads_count ?? 0,
-        totalDealAmount: m.deal_amount ?? 0,
+        totalLeads: m.total_leads ?? 0,
+        totalDealAmount: m.total_deal_amount ?? 0,
       }));
   }, [allSalesReps, assignedReps]);
 
@@ -117,7 +117,7 @@ return (
     {/* Modal */}
     {open && (
       <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
-        <div className=" w-[420px] max-h-[80vh] rounded-2xl shadow-xl flex flex-col overflow-hidden">
+        <div className="bg-white w-[420px] max-h-[80vh] rounded-2xl shadow-xl flex flex-col overflow-hidden">
 
           {/* Modal Header */}
           <div className="p-5 border-b">
