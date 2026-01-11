@@ -9,20 +9,26 @@ export interface SupportReply {
 }
 
 /* ---------- SUPPORT TICKET ---------- */
+/* ---------- SUPPORT TICKET ---------- */
 export interface SupportTicket {
   id: number;
   vendor_id: number;
+  vendor_name: string;
+  vendor_email: string;
+  requester_id: number;
+
   subject: string;
   category: string;
   priority: "high" | "medium" | "low";
-  status?: "open" | "closed" | "pending";
-  // status: "open" | "resolved" | "in_progress";
+  status: "open" | "closed" | "pending";
+  description: string;
 
   replies?: SupportReply[];
 
   created_at: string;
   updated_at: string;
 }
+
 
 
 

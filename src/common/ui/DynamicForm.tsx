@@ -24,7 +24,9 @@ interface DynamicFormProps {
 }
 
 const baseInputClass =
-  "border rounded-lg w-full min-w-0 max-w-full p-2 text-sm truncate box-border appearance-none focus:outline-none focus:ring-2 focus:ring-purple-500 overflow-hidden";
+  "border border-gray-300 rounded-lg w-full min-w-0 max-w-full p-2 text-sm truncate box-border appearance-none " +
+  "focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 " +
+  "focus-visible:ring-offset-2 focus-visible:ring-offset-white";
 
 export default function DynamicForm({
   fields,
@@ -34,13 +36,13 @@ export default function DynamicForm({
 }: DynamicFormProps) {
   return (
     <form
-      className="p-5 space-y-4 overflow-y-auto overflow-x-hidden custom-scrollbar flex-1"
+      className="p-5 space-y-4 overflow-y-auto overflow-x-visible custom-scrollbar flex-1"
       noValidate={noValidate}
     >
       {fields.map((field) => (
         <div
           key={field.name}
-          className="flex flex-col min-w-0 overflow-hidden"
+          className="flex flex-col min-w-0 overflow-visible"
         >
           <label className="text-sm font-medium capitalize mb-1 truncate">
             {field.label}
@@ -81,7 +83,7 @@ export default function DynamicForm({
           )}
 
           {field.type === "select" && (
-            <div className="relative w-full max-w-full overflow-hidden">
+            <div className="relative w-full max-w-full">
               <select
                 className={baseInputClass}
                 value={form[field.name] ?? ""}
@@ -102,7 +104,7 @@ export default function DynamicForm({
           )}
 
           {field.type === "radio" && (
-            <div className="flex flex-col gap-2 overflow-hidden">
+            <div className="flex flex-col gap-2">
               {field.options?.map((opt) => (
                 <label
                   key={opt.value}
@@ -114,7 +116,7 @@ export default function DynamicForm({
                     value={opt.value}
                     checked={form[field.name] === opt.value}
                     onChange={() => onChange(field.name, opt.value)}
-                    className="h-4 w-4 shrink-0"
+                    className="h-4 w-4 shrink-0 focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2"
                   />
                   <span className="text-sm truncate">{opt.label}</span>
                 </label>
@@ -154,7 +156,7 @@ export default function DynamicForm({
 
                         onChange(field.name, updatedValues);
                       }}
-                      className="h-4 w-4 shrink-0"
+                      className="h-4 w-4 shrink-0 focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2"
                     />
 
                     <span className="text-sm truncate">{opt.label}</span>
@@ -174,10 +176,10 @@ export default function DynamicForm({
           )}
 
           {field.type === "checkbox" && (
-            <div className="flex items-center gap-2 overflow-hidden">
+            <div className="flex items-center gap-2">
               <input
                 type="checkbox"
-                className="h-4 w-4 shrink-0"
+                className="h-4 w-4 shrink-0 focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2"
                 checked={!!form[field.name]}
                 onChange={(e) => onChange(field.name, e.target.checked)}
               />

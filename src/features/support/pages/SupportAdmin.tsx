@@ -13,14 +13,16 @@ import ErrorAlert from "../../../common/ui/ErrorAlert";
 import StatsGridSkeleton from "../../../common/components/cards/StatsGridSkeleton";
 import BlockingLoader from "../../../common/ui/BlockingLoader";
 import ResultModal from "../../../common/ui/ResultModal";
+
 type TicketStatus = "open" | "pending" | "closed";
+
 export default function SupportAdmin() {
   const dispatch = useAppDispatch();
-  
+
   const { tickets, loading, error, meta } = useAppSelector((s) => s.support);
-  const { vendors } = useAppSelector((s) => s.vendors);
-const [page, setPage] = useState(1);
-const pageSize = 10;
+
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
 
   const [activeTab, setActiveTab] = useState("all");
   const [search, setSearch] = useState("");
@@ -38,13 +40,13 @@ const pageSize = 10;
     setResultOpen(true);
   };
 
- useEffect(() => {
-  dispatch(fetchAllTickets({ page, page_size: pageSize }));
-}, [dispatch, page]);
+  useEffect(() => {
+    dispatch(fetchAllTickets({ page, page_size: pageSize }));
+  }, [dispatch, page]);
 
-useEffect(() => {
-  setPage(1);
-}, [activeTab, search]);
+  useEffect(() => {
+    setPage(1);
+  }, [activeTab, search]);
 
   const formatDate = (value?: string) => {
     if (!value) return "—";
@@ -59,18 +61,6 @@ useEffect(() => {
       hour12: true,
     });
   };
-
-  const vendorNameMap = useMemo(() => {
-    const map: Record<number, string> = {};
-    vendors?.forEach((v: any) => (map[v.id] = v.legal_name || ""));
-    return map;
-  }, [vendors]);
-
-  const vendorContactMap = useMemo(() => {
-    const map: Record<number, string> = {};
-    vendors?.forEach((v: any) => (map[v.id] = v.primary_email || ""));
-    return map;
-  }, [vendors]);
 
   const stats = useMemo(
     () => [
@@ -95,29 +85,27 @@ useEffect(() => {
 
   const filteredTickets = useMemo(() => {
     const s = search.toLowerCase();
+
     return tickets.filter((t) => {
       if (activeTab !== "all" && t.status !== activeTab) return false;
+
       return (
         t.subject?.toLowerCase().includes(s) ||
-        vendorNameMap[t.vendor_id]?.toLowerCase().includes(s) ||
-        vendorContactMap[t.vendor_id]?.toLowerCase().includes(s) ||
+        t.vendor_name?.toLowerCase().includes(s) ||
+        t.vendor_email?.toLowerCase().includes(s) ||
         String(t.id).includes(s)
       );
     });
-  }, [tickets, activeTab, search, vendorNameMap, vendorContactMap]);
+  }, [tickets, activeTab, search]);
 
   const openDetails = (ticket: any) => {
-    setSelectedTicket({
-      ...ticket,
-      vendorName: vendorNameMap[ticket.vendor_id],
-      vendorContact: vendorContactMap[ticket.vendor_id],
-    });
+    setSelectedTicket(ticket);
     setDetailsModal(true);
   };
 
   const columns: Column<any>[] = [
-    { header: "Vendor", render: (t) => vendorNameMap[t.vendor_id] || "—" },
-    { header: "Contact", render: (t) => vendorContactMap[t.vendor_id] || "—" },
+    { header: "Vendor", render: (t) => t.vendor_name || "—" },
+    { header: "Contact", render: (t) => t.vendor_email || "—" },
     {
       header: "Issue Type",
       render: (t) => (
@@ -157,8 +145,7 @@ useEffect(() => {
         </span>
       ),
     },
-    { header: "Assigned To", render: (t) => t.assigned_to || "—" },
-    { header: "Last Update", render: (t) => formatDate(t.updated_at) },
+    { header: "Last Update",width:'1.5fr', render: (t) => formatDate(t.updated_at) },
     {
       header: "",
       align: "right",
@@ -186,9 +173,9 @@ useEffect(() => {
       <PageFilters
         tabs={[
           { label: "All", value: "all" },
-          { label: `Open`, value: "open" },
-          { label: `Pending`, value: "pending" },
-          { label: `Closed`, value: "closed" },
+          { label: "Open", value: "open" },
+          { label: "Pending", value: "pending" },
+          { label: "Closed", value: "closed" },
         ]}
         activeTab={activeTab}
         onTabChange={setActiveTab}
@@ -199,15 +186,14 @@ useEffect(() => {
       <div className="mt-6" />
 
       <DataTable
-  columns={columns}
-  data={filteredTickets}
-  loading={loading}
-  emptyText="No tickets found"
-  page={page}
-  totalPages={meta?.total_pages || 1}
-  onPageChange={(p) => setPage(p)}
-/>
-
+        columns={columns}
+        data={filteredTickets}
+        loading={loading}
+        emptyText="No tickets found"
+        page={page}
+        totalPages={meta?.total_pages || 1}
+        onPageChange={setPage}
+      />
 
       <TicketDetailsModal
         open={detailsModal}
@@ -217,7 +203,6 @@ useEffect(() => {
           try {
             setProcessing(true);
             await dispatch(replyTicket({ ticketId, message, status })).unwrap();
-            // await dispatch(fetchAllTickets());
             showResult(true, "Reply sent successfully.");
             setDetailsModal(false);
           } catch {

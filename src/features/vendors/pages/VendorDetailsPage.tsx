@@ -157,7 +157,7 @@ export default function VendorDetailsPage() {
           <div className="flex flex-wrap gap-2 col-span-2">
             <Tag active={vendor.crm_manual_trigger} label="Manual Trigger" />
             <Tag active={vendor.crm_realtime_sync} label="Realtime Sync" />
-            <Tag active={!!vendor.crm_system} label={vendor.crm_system || "No CRM"} />
+            <Tag active={!!vendor.allowed_crm_integrations} label={vendor.allowed_crm_integrations || "No CRM"} />
           </div>
         </Section>
 

@@ -79,7 +79,7 @@ export default function EditVendorModal({
       placeholder: "Set a temporary password",
     },
     {
-      name: "crm_system",
+      name: "allowed_crm_integrations",
       label: "CRM Systems",
       type: "multiselect",
       placeholder: "Select CRM systems (optional)",

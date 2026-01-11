@@ -30,7 +30,7 @@ export default function AddVendorModal({
     primary_phone: "",
     payment_terms: "",
     vendor_poc_email: "",
-    crm_system: [], // keep empty so placeholder shows
+    allowed_crm_integrations: [], // keep empty so placeholder shows
     password: "",
   });
 
@@ -88,7 +88,7 @@ export default function AddVendorModal({
       placeholder: "Set a temporary password",
     },
     {
-      name: "crm_system",
+      name: "allowed_crm_integrations",
       label: "CRM Systems",
       type: "multiselect",
       placeholder: "Select CRM systems (optional)",
@@ -112,9 +112,9 @@ export default function AddVendorModal({
 
       const payload = {
         ...form,
-        crm_system:
-          form.crm_system && form.crm_system.length > 0
-            ? form.crm_system
+        allowed_crm_integrations:
+          form.allowed_crm_integrations && form.allowed_crm_integrations.length > 0
+            ? form.allowed_crm_integrations
             : ["none"], // fallback only in payload
       };
 
