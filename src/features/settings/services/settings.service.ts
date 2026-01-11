@@ -69,4 +69,26 @@ export const settingsService = {
       customFields: cfg.customFields ?? payload.customFields,
     };
   },
+
+  // ---------- Suggested Questions ----------
+  async listSuggestedQuestions() {
+    const res = await axios.get("/vendor/suggested-questions/");
+    return res.data ?? [];
+  },
+
+  async createSuggestedQuestion(question: string) {
+    const res = await axios.post("/vendor/suggested-questions/", { question });
+    return res.data;
+  },
+
+  async updateSuggestedQuestion(id: number, question: string) {
+    const res = await axios.put(`/vendor/suggested-questions/${id}`, { question });
+    return res.data;
+  },
+
+  async deleteSuggestedQuestion(id: number) {
+    await axios.delete(`/vendor/suggested-questions/${id}`);
+    return id;
+  },
+
 };

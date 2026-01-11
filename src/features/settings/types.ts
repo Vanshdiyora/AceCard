@@ -77,4 +77,20 @@ export interface SettingsState {
     saving: boolean;
     error: string | null;
   };
+  suggestedQuestions: SuggestedQuestionsState;
+}
+
+// ---------- Suggested Questions ----------
+export interface SuggestedQuestion {
+  id: number;
+  question: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface SuggestedQuestionsState {
+  data: SuggestedQuestion[];
+  loading: boolean;
+  saving: boolean;
+  error: string | null;
 }

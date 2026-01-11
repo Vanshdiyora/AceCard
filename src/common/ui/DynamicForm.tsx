@@ -2,16 +2,16 @@ export interface FieldConfig {
   name: string;
   label: string;
   type:
-    | "text"
-    | "number"
-    | "email"
-    | "select"
-    | "textarea"
-    | "date"
-    | "checkbox"
-    | "multiselect"
-    | "radio"
-    | "datetime";
+  | "text"
+  | "number"
+  | "email"
+  | "select"
+  | "textarea"
+  | "date"
+  | "checkbox"
+  | "multiselect"
+  | "radio"
+  | "datetime";
   placeholder?: string;
   options?: { label: string; value: any }[];
 }
@@ -43,7 +43,7 @@ export default function DynamicForm({
             {field.label}
           </label>
 
-          {["text", "number", "email", "date"].includes(field.type) && (
+          {["text", "email", "date"].includes(field.type) && (
             <input
               type={field.type}
               className={baseInputClass}
@@ -52,6 +52,21 @@ export default function DynamicForm({
               onChange={(e) => onChange(field.name, e.target.value)}
             />
           )}
+
+          {field.type === "number" && (
+            <input
+              type="number"
+              inputMode="numeric"
+              className={`${baseInputClass} no-spinner`}
+              placeholder={field.placeholder}
+              value={form[field.name] === 0 ? "" : form[field.name] ?? ""}
+              onChange={(e) => {
+                const val = e.target.value;
+                onChange(field.name, val === "" ? "" : Number(val));
+              }}
+            />
+          )}
+
 
           {field.type === "textarea" && (
             <textarea
@@ -63,27 +78,27 @@ export default function DynamicForm({
             />
           )}
 
-         
-{field.type === "select" && (
-  <div className="relative w-full max-w-full">
-    <select
-      className={baseInputClass}
-      value={form[field.name] ?? ""}
-      onChange={(e) => onChange(field.name, e.target.value)}
-    >
-      <option value="">Select {field.label}</option>
-      {field.options?.map((opt) => (
-        <option key={opt.value} value={opt.value}>
-          {opt.label}
-        </option>
-      ))}
-    </select>
 
-    <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs opacity-60">
-      ▼
-    </span>
-  </div>
-)}
+          {field.type === "select" && (
+            <div className="relative w-full max-w-full">
+              <select
+                className={baseInputClass}
+                value={form[field.name] ?? ""}
+                onChange={(e) => onChange(field.name, e.target.value)}
+              >
+                <option value="">Select {field.label}</option>
+                {field.options?.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+
+              <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs opacity-60">
+                ▼
+              </span>
+            </div>
+          )}
 
 
           {field.type === "radio" && (

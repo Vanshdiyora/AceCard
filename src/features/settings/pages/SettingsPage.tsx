@@ -8,6 +8,7 @@ import LeadConfiguration from "../components/LeadConfiguration";
 // import NotificationPreferences from "../components/NotificationPreferences";
 import PublicProfileSettings from "../components/PublicProfileSettings";
 // import VendorInformation from "../components/VendorInformation";
+import SuggestedQuestions from "../components/SuggestedQuestions";
 
 export default function SettingsPage() {
   const [active, setActive] = useState("account");
@@ -32,6 +33,7 @@ export default function SettingsPage() {
             {/* {active === "campaign" && <CampaignSettings />} */}
             {/* {active === "notifications" && <NotificationPreferences />} */}
             {active === "profile" && <PublicProfileSettings />}
+            {active === "questions" && <SuggestedQuestions />}
             {/* {active === "vendor" && <VendorInformation />} */}
           </div>
         </div>

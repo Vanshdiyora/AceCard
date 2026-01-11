@@ -6,6 +6,7 @@ import {
   // Bell,
   Globe,
   // Building2,
+  HelpCircle
 } from "lucide-react";
 
 const items = [
@@ -14,7 +15,9 @@ const items = [
   { id: "lead", label: "Lead Configuration", icon: ListChecks },
   // { id: "campaign", label: "Campaign Settings", icon: Megaphone },
   // { id: "notifications", label: "Notification Preferences", icon: Bell },
+  { id: "questions", label: "Suggested Questions", icon: HelpCircle },
   { id: "profile", label: "Public Profile Settings", icon: Globe },
+
   // { id: "vendor", label: "Vendor Information", icon: Building2 },
 ];
 

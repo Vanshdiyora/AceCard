@@ -40,6 +40,32 @@ export const createCampaign = createAsyncThunk<
   }
 });
 
+export const duplicateCampaign = createAsyncThunk<
+  Campaign,
+  Campaign,
+  { rejectValue: string }
+>("campaigns/duplicate", async (campaign, { rejectWithValue }) => {
+  try {
+    const payload: Partial<Campaign> = {
+      vendor_id: campaign.vendor_id,
+      name: `${campaign.name} Copy`,
+      description: campaign.description,
+      manager_id: campaign.manager_id,
+      assigned_reps: campaign.assigned_reps,
+      products: campaign.products,
+      start_date: campaign.start_date,
+      end_date: campaign.end_date,
+      status: "active", // recommended
+      budget: campaign.budget,
+    };
+
+    return await CampaignService.create(payload);
+  } catch (err) {
+    return rejectWithValue(extractApiError(err, "Failed to duplicate campaign"));
+  }
+});
+
+
 export const fetchCampaignsByTeamMember = createAsyncThunk<
   CampaignListResponse,
   { memberId?: number; page?: number; page_size?: number },
@@ -119,6 +145,9 @@ const campaignSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
+      .addCase(duplicateCampaign.fulfilled, (state, action) => {
+  state.items.unshift(action.payload);
+})
       .addCase(fetchCampaigns.fulfilled, (state, action) => {
         state.loading = false;
         state.items = action.payload.data;

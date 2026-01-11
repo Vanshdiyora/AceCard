@@ -57,6 +57,21 @@ export default function TeamPage() {
     setPage(1);
   }, [filter, search]);
 
+  useEffect(() => {
+    const isAnyModalOpen = addOpen || editOpen || permOpen;
+
+    if (isAnyModalOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [addOpen, editOpen, permOpen]);
+
+
   const filteredMembers = useMemo(() => {
     return members.filter((m) => {
       if (!m) return false;
@@ -75,11 +90,10 @@ export default function TeamPage() {
       header: "Status",
       render: (m) => (
         <span
-          className={`px-2 py-1 rounded text-xs ${
-            m.status === "active"
+          className={`px-2 py-1 rounded text-xs ${m.status === "active"
               ? "bg-green-100 text-green-700"
               : "bg-red-100 text-red-700"
-          }`}
+            }`}
         >
           {m.status}
         </span>
@@ -118,8 +132,8 @@ export default function TeamPage() {
           currentRole === "vendor_admin"
             ? "Add Member"
             : currentRole === "manager"
-            ? "Add Sales Rep"
-            : undefined
+              ? "Add Sales Rep"
+              : undefined
         }
         onAdd={() => setAddOpen(true)}
       />

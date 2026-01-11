@@ -81,20 +81,23 @@ export default function TeamMemberDetailsPage() {
   }
 
   /* Not found */
-  if (!member) {
-    return (
-      <div className="min-h-screen p-6">
-        <button
-          onClick={() => navigate(-1)}
-          className="flex items-center gap-2 text-sm text-gray-500 hover:text-black mb-4"
-        >
-          <ArrowLeft size={16} />
-          Back to Team
-        </button>
-        <div className="text-red-500">Member not found</div>
+if (!member) {
+  return (
+    <div className="flex flex-col h-full">
+      <button
+        onClick={() => navigate(-1)}
+        className="flex items-center mt-6 gap-2 text-sm text-gray-500 hover:text-black"
+      >
+        <ArrowLeft size={16} />
+        Back to Team
+      </button>
+
+      <div className="flex flex-1 items-center justify-center text-red-500">
+        Member not found
       </div>
-    );
-  }
+    </div>
+  );
+}
 
   /* Status change */
   const handleStatusChange = async () => {

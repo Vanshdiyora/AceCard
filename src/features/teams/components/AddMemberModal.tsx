@@ -47,54 +47,77 @@ export default function AddMemberModal({
 
   if (!open || !form) return null;
 
-const update = (key: string, value: any) => {
-  let parsedValue = value;
+  const update = (key: string, value: any) => {
+    let parsedValue = value;
 
-  // Convert manager_id to number
-  if (key === "manager_id") {
-    parsedValue = value === "" || value == null ? undefined : Number(value);
-  }
+    // Convert manager_id to number
+    if (key === "manager_id") {
+      parsedValue = value === "" || value == null ? undefined : Number(value);
+    }
 
-  setForm((prev: any) => ({ ...prev, [key]: parsedValue }));
-};
+    setForm((prev: any) => ({ ...prev, [key]: parsedValue }));
+  };
 
 
 
   const roleOptions =
     currentRole === "vendor_admin"
       ? [
-          { label: "Manager", value: "manager" },
-          { label: "Sales Rep", value: "sales_rep" },
-        ]
+        { label: "Manager", value: "manager" },
+        { label: "Sales Rep", value: "sales_rep" },
+      ]
       : currentRole === "manager"
-      ? [{ label: "Sales Rep", value: "sales_rep" }]
-      : [];
+        ? [{ label: "Sales Rep", value: "sales_rep" }]
+        : [];
 
-  const fields: FieldConfig[] = [
-    { name: "name", label: "Full Name", type: "text" as const },
-    { name: "email", label: "Email", type: "email" as const },
-    { name: "phone", label: "Phone", type: "text" as const },
-    { name: "password", label: "Password", type: "text" as const },
-    {
-      name: "role",
-      label: "Role",
-      type: "select" as const,
-      options: roleOptions,
-    },
-    ...(form.role === "sales_rep" && currentRole === "vendor_admin"
-      ? [
-          {
-            name: "manager_id",
-            label: "Manager",
-            type: "select" as const,
-            options: managers.map((m) => ({
-              label: m.name,
-              value: m.id,
-            })),
-          },
-        ]
-      : []),
-  ];
+const fields: FieldConfig[] = [
+  {
+    name: "name",
+    label: "Full Name",
+    type: "text" as const,
+    placeholder: "Enter full name",
+  },
+  {
+    name: "email",
+    label: "Email",
+    type: "email" as const,
+    placeholder: "Enter email address",
+  },
+  {
+    name: "phone",
+    label: "Phone",
+    type: "text" as const,
+    placeholder: "Enter phone number",
+  },
+  {
+    name: "password",
+    label: "Password",
+    type: "text" as const,
+    placeholder: "Set a temporary password",
+  },
+  {
+    name: "role",
+    label: "Role",
+    type: "select" as const,
+    placeholder: "Select a role",
+    options: roleOptions,
+  },
+  ...(form.role === "sales_rep" && currentRole === "vendor_admin"
+    ? [
+        {
+          name: "manager_id",
+          label: "Manager",
+          type: "select" as const,
+          placeholder: "Assign a manager",
+          options: managers.map((m) => ({
+            label: m.name,
+            value: m.id,
+          })),
+        },
+      ]
+    : []),
+];
+
 
   const submit = () => {
     let payload = { ...form };

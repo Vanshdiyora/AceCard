@@ -155,7 +155,7 @@ export default function ProductsPage() {
           totalPages={meta?.total_pages ?? 1}
           onPageChange={setPage}
           emptyText="No products found"
-          onRowClick={(p) => navigate(`/admin/products/${p.id}`)}
+          onRowClick={(p) => navigate(`/admin/products/${p.id}`, { state: { product: p } })}
         />
       </div>
 

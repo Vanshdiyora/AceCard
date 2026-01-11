@@ -1,6 +1,8 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { ArrowLeft, Edit, Trash2 } from "lucide-react";
+import { Copy } from "lucide-react";
+import { duplicateCampaign } from "../slice";
 
 import { useAppDispatch, useAppSelector } from "../../../app/hooks";
 import { fetchCampaignById, archiveCampaign } from "../slice";
@@ -25,6 +27,7 @@ export default function CampaignDetailsPage() {
   const [openEdit, setOpenEdit] = useState(false);
   const [archiveOpen, setArchiveOpen] = useState(false);
   const [archiving, setArchiving] = useState(false);
+  const [duplicating, setDuplicating] = useState(false);
 
   const [activeTab, setActiveTab] = useState<typeof TABS[number]>("overview");
 
@@ -52,18 +55,22 @@ export default function CampaignDetailsPage() {
 
   if (!campaign) {
     return (
-      <>
+      <div className="flex flex-col h-full">
         <button
           onClick={() => navigate(-1)}
-          className="flex items-center pt-6 gap-2 text-sm text-gray-500 hover:text-black"
+          className="flex items-center mt-6 gap-2 text-sm text-gray-500 hover:text-black"
         >
           <ArrowLeft size={16} />
           Back to Campaigns
         </button>
-        <div className="p-6 text-red-500">Campaign not found</div>
-      </>
+
+        <div className="flex flex-1 items-center justify-center text-red-500">
+          Campaign not found
+        </div>
+      </div>
     );
   }
+
 
   const isReadOnly =
     campaign.status === "archived" ||
@@ -103,22 +110,42 @@ export default function CampaignDetailsPage() {
           <button
             disabled={isReadOnly}
             onClick={() => setOpenEdit(true)}
-            className={`px-4 py-2 rounded-xl border flex items-center gap-2 text-sm ${
-              isReadOnly ? "opacity-50 cursor-not-allowed" : "hover:bg-purple-50"
-            }`}
+            className={`px-4 py-2 rounded-xl border flex items-center gap-2 text-sm ${isReadOnly ? "opacity-50 cursor-not-allowed" : "hover:bg-purple-50"
+              }`}
           >
             <Edit size={16} /> Edit
           </button>
 
-          <button
-            onClick={() => setArchiveOpen(true)}
-            disabled={isReadOnly}
-            className={`px-4 py-2 rounded-xl bg-red-50 text-red-600 flex items-center gap-2 text-sm ${
-              isReadOnly ? "opacity-50 cursor-not-allowed" : "hover:bg-red-100"
-            }`}
-          >
-            <Trash2 size={16} /> Archive
-          </button>
+          {campaign.status === "archived" ? (
+            <button
+              disabled={duplicating}
+              onClick={async () => {
+                try {
+                  setDuplicating(true);
+                  const newCampaign = await dispatch(duplicateCampaign(campaign)).unwrap();
+                  navigate(`/admin/campaigns/${newCampaign.id}`);
+                } finally {
+                  setDuplicating(false);
+                }
+              }}
+              className={`px-4 py-2 rounded-xl border flex items-center gap-2 text-sm ${duplicating ? "opacity-50 cursor-not-allowed" : "hover:bg-green-50"
+                }`}
+            >
+              <Copy size={16} />
+              {duplicating ? "Duplicating..." : "Duplicate"}
+            </button>
+          ) : (
+            <button
+              onClick={() => setArchiveOpen(true)}
+              disabled={isReadOnly}
+              className={`px-4 py-2 rounded-xl bg-red-50 text-red-600 flex items-center gap-2 text-sm ${isReadOnly ? "opacity-50 cursor-not-allowed" : "hover:bg-red-100"
+                }`}
+            >
+              <Trash2 size={16} /> Archive
+            </button>
+          )}
+
+
         </div>
       </div>
 
@@ -127,11 +154,10 @@ export default function CampaignDetailsPage() {
           <button
             key={t}
             onClick={() => setActiveTab(t)}
-            className={`relative pb-3 text-sm capitalize transition ${
-              activeTab === t
-                ? "text-purple-600 font-medium"
-                : "text-gray-400 hover:text-gray-600"
-            }`}
+            className={`relative pb-3 text-sm capitalize transition ${activeTab === t
+              ? "text-purple-600 font-medium"
+              : "text-gray-400 hover:text-gray-600"
+              }`}
           >
             {t}
             {activeTab === t && (
@@ -171,6 +197,12 @@ export default function CampaignDetailsPage() {
         onClose={() => setArchiveOpen(false)}
         onConfirm={handleArchive}
       />
+      {duplicating && (
+        <div className="fixed inset-0 bg-white/70 backdrop-blur-sm z-50 flex items-center justify-center">
+          <BrandLoader message="Duplicating campaign..." />
+        </div>
+      )}
+
     </div>
   );
 }
