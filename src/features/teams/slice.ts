@@ -9,6 +9,19 @@ import type {
 } from "./types";
 
 /* ======================================================
+   NORMALIZER
+====================================================== */
+
+const normalizeMember = (m: any): TeamMember => ({
+  ...m,
+  manager_id: m.assigned_manager?.id ?? m.manager_id ?? null,
+  leads: m.total_leads ?? m.leads ?? 0,
+  pipeline: m.total_deal_amount ? `$${m.total_deal_amount}` : m.pipeline ?? "$0",
+  conversion: m.conversion ?? "0%",
+  lastActive: m.lastActive ?? "Recently",
+});
+
+/* ======================================================
    STATE
 ====================================================== */
 
@@ -27,6 +40,16 @@ const initialState: TeamState = {
 };
 
 /* ======================================================
+   HELPERS
+====================================================== */
+
+const extractApiError = (err: any, fallback: string) =>
+  err?.response?.data?.error ||
+  err?.response?.data?.message ||
+  err?.message ||
+  fallback;
+
+/* ======================================================
    THUNKS
 ====================================================== */
 
@@ -35,44 +58,17 @@ export type FetchTeamParams = {
   page_size?: number;
 };
 
-const extractApiError = (err: any, fallback: string) =>
-  err?.response?.data?.error ||
-  err?.response?.data?.message ||
-  err?.message ||
-  fallback;
-
 export const fetchTeam = createAsyncThunk(
   "team/fetch",
   async (params: FetchTeamParams | undefined, { rejectWithValue }) => {
     try {
       const res = await teamService.getTeam(params);
       return {
-        members: res.data.map((m) => ({
-          ...m,
-
-          // Map backend → UI
-          manager_id: m.assigned_manager?.id ?? null,
-          leads: m.total_leads ?? 0,
-          pipeline: `$${m.total_deal_amount ?? 0}`,
-          conversion: "0%",
-          lastActive: "Recently",
-        })),
+        members: res.data.map(normalizeMember),
         meta: res.meta,
       };
     } catch (err: any) {
       return rejectWithValue(extractApiError(err, "Failed to fetch team"));
-    }
-  }
-);
-  
-
-export const createMember = createAsyncThunk(
-  "team/create",
-  async (body: CreateTeamMemberDTO, { rejectWithValue }) => {
-    try {
-      return await teamService.createMember(body);
-    } catch (err: any) {
-      return rejectWithValue(extractApiError(err, "Failed to create member"));
     }
   }
 );
@@ -81,18 +77,45 @@ export const fetchMemberById = createAsyncThunk(
   "team/fetchById",
   async (id: number, { rejectWithValue }) => {
     try {
-      return await teamService.getMemberById(id);
+      return normalizeMember(await teamService.getMemberById(id));
     } catch (err: any) {
       return rejectWithValue(extractApiError(err, "Failed to fetch member"));
     }
   }
 );
 
+export const createMember = createAsyncThunk(
+  "team/create",
+  async (body: CreateTeamMemberDTO, { rejectWithValue }) => {
+    try {
+      return normalizeMember(await teamService.createMember(body));
+    } catch (err: any) {
+      return rejectWithValue(extractApiError(err, "Failed to create member"));
+    }
+  }
+);
+
+/* 🔴 FIXED THUNK */
 export const updateMember = createAsyncThunk(
   "team/update",
-  async ({ id, data }: { id: number; data: UpdateTeamMemberDTO }, { rejectWithValue }) => {
+  async (
+    { id, data }: { id: number; data: UpdateTeamMemberDTO },
+    { rejectWithValue }
+  ) => {
     try {
-      return await teamService.updateMember(id, data);
+      const res = await teamService.updateMember(id, data);
+
+      // 👇 Safely detect { status: "updated" } response
+      if (
+        res &&
+        typeof res === "object" &&
+        "status" in res &&
+        (res as any).status === "updated"
+      ) {
+        return { id, ...data };
+      }
+
+      return normalizeMember(res);
     } catch (err: any) {
       return rejectWithValue(extractApiError(err, "Failed to update member"));
     }
@@ -101,14 +124,29 @@ export const updateMember = createAsyncThunk(
 
 export const updatePermissions = createAsyncThunk(
   "team/permissions",
-  async ({ id, data }: { id: number; data: UpdatePermissionsDTO }, { rejectWithValue }) => {
+  async (
+    { id, data }: { id: number; data: UpdatePermissionsDTO },
+    { rejectWithValue }
+  ) => {
     try {
-      return await teamService.updatePermissions(id, data);
+      const res = await teamService.updatePermissions(id, data);
+
+      if (
+        res &&
+        typeof res === "object" &&
+        "status" in res &&
+        (res as any).status === "updated"
+      ) {
+        return { id, permissions: data };
+      }
+
+      return normalizeMember(res);
     } catch (err: any) {
       return rejectWithValue(extractApiError(err, "Failed to update permissions"));
     }
   }
 );
+
 
 export const deleteMember = createAsyncThunk(
   "team/delete",
@@ -132,8 +170,6 @@ const teamSlice = createSlice({
   reducers: {},
   extraReducers: (builder) => {
     builder
-
-      /* FETCH TEAM */
       .addCase(fetchTeam.pending, (state) => {
         state.loading = true;
         state.error = undefined;
@@ -148,50 +184,37 @@ const teamSlice = createSlice({
         state.error = action.payload as string;
       })
 
-      /* CREATE MEMBER */
-      .addCase(createMember.fulfilled, (state, action) => {
-        state.members.unshift({
-          ...action.payload,
-          leads: 0,
-          pipeline: "$0",
-          conversion: "0%",
-          lastActive: "Just now",
-        });
-      })
-
-      /* FETCH MEMBER BY ID */
       .addCase(fetchMemberById.fulfilled, (state, action) => {
         const idx = state.members.findIndex((m) => m.id === action.payload.id);
-        if (idx !== -1) {
-          state.members[idx] = { ...state.members[idx], ...action.payload };
-        } else {
-          state.members.push({
-            ...action.payload,
-            leads: 0,
-            pipeline: "$0",
-            conversion: "0%",
-            lastActive: "Recently",
-          });
-        }
+        if (idx !== -1) state.members[idx] = action.payload;
+        else state.members.push(action.payload);
       })
 
-      /* UPDATE MEMBER */
+      .addCase(createMember.fulfilled, (state, action) => {
+        state.members.unshift(action.payload);
+      })
+
+      /* 🔴 FIXED MERGE */
       .addCase(updateMember.fulfilled, (state, action) => {
         const idx = state.members.findIndex((m) => m.id === action.payload.id);
         if (idx !== -1) {
-          state.members[idx] = { ...state.members[idx], ...action.payload };
+          state.members[idx] = {
+            ...state.members[idx],
+            ...action.payload,
+          };
         }
       })
 
-      /* UPDATE PERMISSIONS */
       .addCase(updatePermissions.fulfilled, (state, action) => {
         const idx = state.members.findIndex((m) => m.id === action.payload.id);
         if (idx !== -1) {
-          state.members[idx].permissions = action.payload.permissions;
+          state.members[idx] = {
+            ...state.members[idx],
+            ...action.payload,
+          };
         }
       })
 
-      /* DELETE MEMBER */
       .addCase(deleteMember.fulfilled, (state, action) => {
         state.members = state.members.filter((m) => m.id !== action.payload);
       });

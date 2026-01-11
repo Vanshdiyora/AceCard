@@ -1,72 +1,114 @@
-// pages/TeamMemberDetailsPage.tsx
-import { useParams, useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
-import { ArrowLeft, Edit, Shield, UserX } from "lucide-react";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { useState, useEffect, useMemo } from "react";
+import { ArrowLeft, Edit, Shield, UserX, CheckCircle2 } from "lucide-react";
 
 import { useAppDispatch, useAppSelector } from "../../../app/hooks";
-import {
-  updateMember,
-  fetchMemberById,
-  updatePermissions,
-} from "../slice";
+import { updateMember, fetchMemberById, updatePermissions } from "../slice";
 
 import EditMemberModal from "../components/EditMemberModal";
 import PermissionsModal from "../components/PermissionsModal";
+import SuspendMemberModal from "../components/SuspendMemberModal";
 
 import TeamMemberOverviewTab from "../components/details/TeamMemberOverviewTab";
 import TeamMemberLeadsTab from "../components/details/TeamMemberLeadsTab";
+import BrandLoader from "../../../common/ui/BrandLoader";
+import type { TeamMember } from "../types";
 
 const TABS = ["overview", "leads"] as const;
 
 export default function TeamMemberDetailsPage() {
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const dispatch = useAppDispatch();
 
   const auth = useAppSelector((s) => s.auth);
-  const teamMembers = useAppSelector((s) => s.team.members);
+  const { members, loading } = useAppSelector((s) => s.team);
 
   const ROLES = ["vendor_admin", "manager", "sales_rep"] as const;
-
   const rawRole = auth?.role ?? "";
   const currentRole = ROLES.includes(rawRole as any)
     ? (rawRole as "vendor_admin" | "manager" | "sales_rep")
     : "sales_rep";
 
-  const managers = teamMembers.filter((m) => m.role === "manager");
+  const managers = useMemo(
+    () => members.filter((m) => m.role === "manager"),
+    [members]
+  );
 
-  const [activeTab, setActiveTab] =
-    useState<typeof TABS[number]>("overview");
+  const preloaded = (location.state as { member?: TeamMember })?.member;
 
+  const member = useMemo(() => {
+    return (
+      members.find((m) => m.id === Number(id)) ||
+      (preloaded && preloaded.id === Number(id) ? preloaded : null)
+    );
+  }, [members, id, preloaded]);
+
+  const [activeTab, setActiveTab] = useState<typeof TABS[number]>("overview");
   const [editOpen, setEditOpen] = useState(false);
   const [permOpen, setPermOpen] = useState(false);
+  const [suspendOpen, setSuspendOpen] = useState(false);
+  const [suspendMode, setSuspendMode] = useState<"suspend" | "activate">("suspend");
+  const [suspending, setSuspending] = useState(false);
+  const [hasFetched, setHasFetched] = useState(false);
 
-  const { members, loading } = useAppSelector((s) => s.team);
-  const member = members.find((m) => m.id === Number(id));
-
+  /* Fetch only if missing */
   useEffect(() => {
-    if (id) {
-      dispatch(fetchMemberById(Number(id)));
+    if (id && !member) {
+      dispatch(fetchMemberById(Number(id))).finally(() => setHasFetched(true));
+    } else {
+      setHasFetched(true);
     }
-  }, [id, dispatch]);
+  }, [id, member, dispatch]);
 
-  if (loading) {
-    return <div className="p-6 text-gray-500">Loading member…</div>;
+  /* Scroll lock */
+  useEffect(() => {
+    const lock = editOpen || permOpen || suspendOpen;
+    document.body.style.overflow = lock ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [editOpen, permOpen, suspendOpen]);
+
+  /* Loading */
+  if (!hasFetched || (loading && !member)) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <BrandLoader message="Loading member..." />
+      </div>
+    );
   }
 
+  /* Not found */
   if (!member) {
-    return <div className="p-6">Member not found</div>;
+    return (
+      <div className="min-h-screen p-6">
+        <button
+          onClick={() => navigate(-1)}
+          className="flex items-center gap-2 text-sm text-gray-500 hover:text-black mb-4"
+        >
+          <ArrowLeft size={16} />
+          Back to Team
+        </button>
+        <div className="text-red-500">Member not found</div>
+      </div>
+    );
   }
 
-  const suspend = async () => {
-    if (confirm("Suspend this member?")) {
-      dispatch(
+  /* Status change */
+  const handleStatusChange = async () => {
+    try {
+      setSuspending(true);
+      await dispatch(
         updateMember({
           id: member.id,
-          data: { status: "suspended" },
+          data: { status: suspendMode === "suspend" ? "suspended" : "active" },
         })
-      );
-      navigate(-1);
+      ).unwrap();
+    } finally {
+      setSuspending(false);
+      setSuspendOpen(false);
     }
   };
 
@@ -89,13 +131,9 @@ export default function TeamMemberDetailsPage() {
           </div>
 
           <div>
-            <h2 className="text-xl font-semibold leading-tight">
-              {member.name}
-            </h2>
+            <h2 className="text-xl font-semibold leading-tight">{member.name}</h2>
             <div className="flex items-center gap-2 text-sm text-gray-500">
-              <span className="capitalize">
-                {member.role.replace("_", " ")}
-              </span>
+              <span className="capitalize">{member.role.replace("_", " ")}</span>
               <span>•</span>
               <span
                 className={`px-2 py-0.5 rounded-full text-xs font-medium ${
@@ -120,9 +158,25 @@ export default function TeamMemberDetailsPage() {
             <Shield size={16} /> Permissions
           </button>
 
-          {member.status === "active" && (
-            <button onClick={suspend} className="btn-danger">
+          {member.status === "active" ? (
+            <button
+              onClick={() => {
+                setSuspendMode("suspend");
+                setSuspendOpen(true);
+              }}
+              className="btn-danger"
+            >
               <UserX size={16} /> Suspend
+            </button>
+          ) : (
+            <button
+              onClick={() => {
+                setSuspendMode("activate");
+                setSuspendOpen(true);
+              }}
+              className="btn-success"
+            >
+              <CheckCircle2 size={16} /> Activate
             </button>
           )}
         </div>
@@ -145,12 +199,8 @@ export default function TeamMemberDetailsPage() {
         ))}
       </div>
 
-      {activeTab === "overview" && (
-        <TeamMemberOverviewTab member={member} />
-      )}
-      {activeTab === "leads" && (
-        <TeamMemberLeadsTab memberId={member.id} />
-      )}
+      {activeTab === "overview" && <TeamMemberOverviewTab member={member} />}
+      {activeTab === "leads" && <TeamMemberLeadsTab memberId={member.id} />}
 
       {/* Modals */}
       <EditMemberModal
@@ -159,8 +209,8 @@ export default function TeamMemberDetailsPage() {
         currentRole={currentRole}
         managers={managers}
         onClose={() => setEditOpen(false)}
-        onSubmit={(data) => {
-          dispatch(updateMember({ id: member.id, data }));
+        onSubmit={async (data) => {
+          await dispatch(updateMember({ id: member.id, data })).unwrap();
           setEditOpen(false);
         }}
       />
@@ -170,10 +220,19 @@ export default function TeamMemberDetailsPage() {
         permissions={member.permissions || {}}
         role={member.role}
         onClose={() => setPermOpen(false)}
-        onSubmit={(data) => {
-          dispatch(updatePermissions({ id: member.id, data }));
+        onSubmit={async (data) => {
+          await dispatch(updatePermissions({ id: member.id, data })).unwrap();
           setPermOpen(false);
         }}
+      />
+
+      <SuspendMemberModal
+        open={suspendOpen}
+        memberName={member.name}
+        mode={suspendMode}
+        loading={suspending}
+        onClose={() => setSuspendOpen(false)}
+        onConfirm={handleStatusChange}
       />
     </div>
   );

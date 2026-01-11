@@ -3,6 +3,7 @@ import { useAppDispatch, useAppSelector } from "../../../../app/hooks";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useMemo } from "react";
 import { fetchCampaignsByTeamMember } from "../../../campaigns/slice";
+import BrandLoader from "../../../../common/ui/BrandLoader";
 
 export default function TeamMemberOverviewTab({
   member,
@@ -23,20 +24,15 @@ export default function TeamMemberOverviewTab({
 
   const campaigns = useMemo(() => {
     if (member.role === "manager") {
-      return allCampaigns.filter(
-        (c) => c.manager_id === member.id
-      );
+      return allCampaigns.filter((c) => c.manager_id === member.id);
     }
-
     return allCampaigns;
   }, [allCampaigns, member.role, member.id]);
 
   return (
     <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 mt-6">
-
       {/* ================= MEMBER DETAILS ================= */}
       <div className="bg-white rounded-2xl border p-6 space-y-5">
-
         <h3 className="text-base font-semibold">Member Details</h3>
 
         <div className="space-y-4">
@@ -46,12 +42,10 @@ export default function TeamMemberOverviewTab({
           <Detail label="Status" value={member.status} />
           <Detail label="Joined On" value={member.created_at} />
         </div>
-
       </div>
 
       {/* ================= CAMPAIGNS ================= */}
-      <div className="xl:col-span-2 bg-white rounded-2xl border p-6">
-
+      <div className="xl:col-span-2 bg-white rounded-2xl border p-6 flex flex-col">
         <div className="flex justify-between items-center mb-5">
           <div>
             <h3 className="text-base font-semibold">
@@ -75,26 +69,27 @@ export default function TeamMemberOverviewTab({
           </button>
         </div>
 
+        {/* Loader */}
         {loading && (
-          <div className="py-8 text-sm text-gray-500">
-            Loading campaigns…
+          <div className="flex-1 flex items-center justify-center">
+            <BrandLoader message="Loading campaigns..." />
           </div>
         )}
 
+        {/* Empty state */}
         {!loading && campaigns.length === 0 && (
-          <div className="py-8 text-sm text-gray-500">
+          <div className="flex-1 flex items-center justify-center text-sm text-gray-500">
             No campaigns assigned
           </div>
         )}
 
-        {campaigns.length > 0 && (
+        {/* List */}
+        {!loading && campaigns.length > 0 && (
           <div className="space-y-3">
             {campaigns.map((c) => (
               <div
                 key={c.id}
-                onClick={() =>
-                  navigate(`/admin/campaigns/${c.id}`)
-                }
+                onClick={() => navigate(`/admin/campaigns/${c.id}`)}
                 className="p-4 rounded-xl border hover:border-purple-300 hover:bg-purple-50/40 cursor-pointer transition"
               >
                 <div className="flex justify-between items-start">
@@ -102,9 +97,7 @@ export default function TeamMemberOverviewTab({
                     <div className="font-medium text-sm">{c.name}</div>
 
                     <div className="flex gap-3 mt-1 text-xs text-gray-500">
-                      <span className="capitalize">
-                        {c.status}
-                      </span>
+                      <span className="capitalize">{c.status}</span>
                       <span>
                         Budget: ₹{c.budget?.toLocaleString() ?? "-"}
                       </span>
@@ -117,7 +110,6 @@ export default function TeamMemberOverviewTab({
             ))}
           </div>
         )}
-
       </div>
     </div>
   );

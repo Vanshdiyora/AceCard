@@ -1,6 +1,8 @@
 import { useNavigate } from "react-router-dom";
-import { useAppSelector } from "../../../../app/hooks";
+import { useAppSelector, useAppDispatch } from "../../../../app/hooks";
 import DataTable, { type Column } from "../../../../common/components/table/DataTable";
+import { useEffect } from "react";
+import { fetchLeads } from "../../../leads/slice";
 
 type LeadRow = {
   id: number;
@@ -11,26 +13,25 @@ type LeadRow = {
   last_interaction_at?: string;
 };
 
-export default function TeamMemberLeadsTab({
-  memberId,
-}: {
-  memberId: number;
-}) {
+export default function TeamMemberLeadsTab({ memberId }: { memberId: number }) {
   const navigate = useNavigate();
-  const { leads } = useAppSelector((s) => s.leads);
+  const dispatch = useAppDispatch();
+  const { leads, loading } = useAppSelector((s) => s.leads);
 
-  const assignedLeads = leads.filter(
-    (l) => l.assigned_rep_id === memberId && !l.archived
-  );
+  useEffect(() => {
+    dispatch(fetchLeads({ page: 1, pageSize: 50, memberId }));
+  }, [memberId, dispatch]);
 
-  const rows: LeadRow[] = assignedLeads.map((l) => ({
-    id: l.id,
-    lead_name: l.lead_name,
-    company: l.company,
-    stage: l.stage,
-    deal_amount: l.deal_amount,
-    last_interaction_at: l.last_interaction_at,
-  }));
+  const rows: LeadRow[] = leads
+    .filter((l) => !l.archived)
+    .map((l) => ({
+      id: l.id,
+      lead_name: l.lead_name,
+      company: l.company,
+      stage: l.stage,
+      deal_amount: l.deal_amount,
+      last_interaction_at: l.last_interaction_at,
+    }));
 
   const columns: Column<LeadRow>[] = [
     { header: "Lead", accessor: "lead_name" },
@@ -40,13 +41,13 @@ export default function TeamMemberLeadsTab({
       header: "Deal",
       accessor: "deal_amount",
       align: "right",
-      width: "140px",
+      // width: "140px",
       render: (row) => `₹${row.deal_amount?.toLocaleString() ?? "-"}`,
     },
     {
       header: "Last Activity",
       accessor: "last_interaction_at",
-      width: "160px",
+      // width: "160px",
       align: "right",
       render: (row) =>
         row.last_interaction_at
@@ -56,20 +57,13 @@ export default function TeamMemberLeadsTab({
   ];
 
   return (
-    <div className="space-y-4 mt-6">
-
-      {/* Header (white only here) */}
-      <div className=" rounded-2xl border flex justify-between items-center">
+    <div className="space-y-4">
+      <div className="rounded-2xl border pt-4 flex justify-between items-center">
         <div>
           <h3 className="text-base font-semibold">
-            Leads Captured
-            <span className="ml-2 text-sm text-gray-400">
-              ({rows.length})
-            </span>
+            Leads Captured <span className="ml-2 text-sm text-gray-400">({rows.length})</span>
           </h3>
-          <p className="text-sm text-gray-500">
-            Leads currently assigned to this member
-          </p>
+          <p className="text-sm text-gray-500">Leads currently assigned to this member</p>
         </div>
 
         <button
@@ -80,14 +74,13 @@ export default function TeamMemberLeadsTab({
         </button>
       </div>
 
-      {/* Table (no background wrapper) */}
       <DataTable<LeadRow>
         columns={columns}
         data={rows}
+        loading={loading}
         emptyText="No leads assigned to this member"
         onRowClick={(row) => navigate(`/admin/leads/${row.id}`)}
       />
-
     </div>
   );
 }
