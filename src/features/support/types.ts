@@ -13,9 +13,9 @@ export interface SupportReply {
 export interface SupportTicket {
   id: number;
   vendor_id: number;
-  vendor_name: string;
-  vendor_email: string;
-  requester_id: number;
+  vendor_name?: string;
+  vendor_email?: string;
+  requester_id?: number;
 
   subject: string;
   category: string;
