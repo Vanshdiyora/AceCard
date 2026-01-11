@@ -2,7 +2,13 @@ import { useEffect, useState, useMemo } from "react";
 import { useAppDispatch, useAppSelector } from "../../../app/hooks";
 import { useNavigate } from "react-router-dom";
 
-import { fetchTeam, createMember, updateMember, updatePermissions } from "../slice";
+import {
+  fetchTeam,
+  createMember,
+  updateMember,
+  updatePermissions,
+} from "../slice";
+
 import AddMemberModal from "../components/AddMemberModal";
 import EditMemberModal from "../components/EditMemberModal";
 import PermissionsModal from "../components/PermissionsModal";
@@ -11,6 +17,9 @@ import PageHeader from "../../../common/components/layout/PageHeader";
 import PageFilters from "../../../common/components/layout/PageFilter";
 import DataTable, { type Column } from "../../../common/components/table/DataTable";
 import ErrorAlert from "../../../common/ui/ErrorAlert";
+import BlockingLoader from "../../../common/ui/BlockingLoader";
+import ResultModal from "../../../common/ui/ResultModal";
+
 import type { TeamMember } from "../types";
 
 type Filter = "all" | "vendor_admin" | "manager" | "sales_rep" | "active" | "suspended";
@@ -47,6 +56,17 @@ export default function TeamPage() {
   const [editOpen, setEditOpen] = useState(false);
   const [permOpen, setPermOpen] = useState(false);
 
+  const [blocking, setBlocking] = useState(false);
+  const [resultOpen, setResultOpen] = useState(false);
+  const [resultSuccess, setResultSuccess] = useState(true);
+  const [resultMessage, setResultMessage] = useState("");
+
+  const showResult = (success: boolean, message: string) => {
+    setResultSuccess(success);
+    setResultMessage(message);
+    setResultOpen(true);
+  };
+
   const managers = useMemo(() => members.filter((m) => m.role === "manager"), [members]);
 
   useEffect(() => {
@@ -56,28 +76,41 @@ export default function TeamPage() {
   useEffect(() => {
     setPage(1);
   }, [filter, search]);
+  const lockScroll = () => {
+    const scrollBarWidth = window.innerWidth - document.documentElement.clientWidth;
+
+    document.documentElement.style.overflow = "hidden";
+    document.body.style.overflow = "hidden";
+    document.body.style.paddingRight = `${scrollBarWidth}px`;
+  };
+
+  const unlockScroll = () => {
+    document.documentElement.style.overflow = "";
+    document.body.style.overflow = "";
+    document.body.style.paddingRight = "";
+  };
 
   useEffect(() => {
-    const isAnyModalOpen = addOpen || editOpen || permOpen;
+    const isAnyModalOpen = addOpen || editOpen || permOpen || resultOpen;
 
     if (isAnyModalOpen) {
-      document.body.style.overflow = "hidden";
+      lockScroll();
     } else {
-      document.body.style.overflow = "";
+      unlockScroll();
     }
 
     return () => {
-      document.body.style.overflow = "";
+      unlockScroll();
     };
-  }, [addOpen, editOpen, permOpen]);
-
+  }, [addOpen, editOpen, permOpen, resultOpen]);
 
   const filteredMembers = useMemo(() => {
     return members.filter((m) => {
       if (!m) return false;
       if (filter === "active" && m.status !== "active") return false;
       if (filter === "suspended" && m.status !== "suspended") return false;
-      if (["vendor_admin", "manager", "sales_rep"].includes(filter) && m.role !== filter) return false;
+      if (["vendor_admin", "manager", "sales_rep"].includes(filter) && m.role !== filter)
+        return false;
       if (!m.name?.toLowerCase().includes(search.toLowerCase())) return false;
       return true;
     });
@@ -107,7 +140,6 @@ export default function TeamPage() {
     { header: "Leads", align: "right", render: (m) => m.leads ?? 0 },
     {
       header: "Permissions",
-      align: "left",
       render: (m) => (
         <button
           className="text-purple-600 text-sm hover:underline"
@@ -162,22 +194,27 @@ export default function TeamPage() {
           page={meta?.page ?? page}
           totalPages={meta?.total_pages ?? 1}
           onPageChange={setPage}
-          onRowClick={(m) =>
-            navigate(`/admin/team/${m.id}`, { state: { member: m } })
-          }
+          onRowClick={(m) => navigate(`/admin/team/${m.id}`, { state: { member: m } })}
         />
       </div>
 
-      {/* Modals */}
       <AddMemberModal
         open={addOpen}
-        onClose={() => setAddOpen(false)}
         currentRole={currentRole}
         currentUserId={currentUserId}
         managers={managers}
+        onClose={() => setAddOpen(false)}
         onSubmit={async (data) => {
-          await dispatch(createMember(data)).unwrap();
-          setAddOpen(false);
+          try {
+            setBlocking(true);
+            await dispatch(createMember(data)).unwrap();
+            setAddOpen(false);
+            showResult(true, "Team member added successfully.");
+          } catch {
+            showResult(false, "Failed to add member.");
+          } finally {
+            setBlocking(false);
+          }
         }}
       />
 
@@ -192,8 +229,16 @@ export default function TeamPage() {
         }}
         onSubmit={async (data) => {
           if (!selected) return;
-          await dispatch(updateMember({ id: selected.id, data })).unwrap();
-          setEditOpen(false);
+          try {
+            setBlocking(true);
+            await dispatch(updateMember({ id: selected.id, data })).unwrap();
+            setEditOpen(false);
+            showResult(true, "Member updated successfully.");
+          } catch {
+            showResult(false, "Failed to update member.");
+          } finally {
+            setBlocking(false);
+          }
         }}
       />
 
@@ -207,9 +252,26 @@ export default function TeamPage() {
         }}
         onSubmit={async (data) => {
           if (!selected) return;
-          await dispatch(updatePermissions({ id: selected.id, data })).unwrap();
-          setPermOpen(false);
+          try {
+            setBlocking(true);
+            await dispatch(updatePermissions({ id: selected.id, data })).unwrap();
+            setPermOpen(false);
+            showResult(true, "Permissions updated successfully.");
+          } catch {
+            showResult(false, "Failed to update permissions.");
+          } finally {
+            setBlocking(false);
+          }
         }}
+      />
+
+      <BlockingLoader show={blocking} />
+
+      <ResultModal
+        open={resultOpen}
+        success={resultSuccess}
+        message={resultMessage}
+        onClose={() => setResultOpen(false)}
       />
     </div>
   );

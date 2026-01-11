@@ -7,11 +7,15 @@ import { updateMember, fetchMemberById, updatePermissions } from "../slice";
 
 import EditMemberModal from "../components/EditMemberModal";
 import PermissionsModal from "../components/PermissionsModal";
-import SuspendMemberModal from "../components/SuspendMemberModal";
 
 import TeamMemberOverviewTab from "../components/details/TeamMemberOverviewTab";
 import TeamMemberLeadsTab from "../components/details/TeamMemberLeadsTab";
 import BrandLoader from "../../../common/ui/BrandLoader";
+import DetailPageHeader from "../../../common/components/layout/DetailPageHeader";
+import ConfirmationModal from "../../../common/ui/ConfirmationModal";
+import BlockingLoader from "../../../common/ui/BlockingLoader";
+import ResultModal from "../../../common/ui/ResultModal";
+
 import type { TeamMember } from "../types";
 
 const TABS = ["overview", "leads"] as const;
@@ -48,12 +52,21 @@ export default function TeamMemberDetailsPage() {
   const [activeTab, setActiveTab] = useState<typeof TABS[number]>("overview");
   const [editOpen, setEditOpen] = useState(false);
   const [permOpen, setPermOpen] = useState(false);
-  const [suspendOpen, setSuspendOpen] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const [suspendMode, setSuspendMode] = useState<"suspend" | "activate">("suspend");
-  const [suspending, setSuspending] = useState(false);
+  const [processing, setProcessing] = useState(false);
   const [hasFetched, setHasFetched] = useState(false);
 
-  /* Fetch only if missing */
+  const [resultOpen, setResultOpen] = useState(false);
+  const [resultSuccess, setResultSuccess] = useState(true);
+  const [resultMessage, setResultMessage] = useState("");
+
+  const showResult = (success: boolean, message: string) => {
+    setResultSuccess(success);
+    setResultMessage(message);
+    setResultOpen(true);
+  };
+
   useEffect(() => {
     if (id && !member) {
       dispatch(fetchMemberById(Number(id))).finally(() => setHasFetched(true));
@@ -61,17 +74,35 @@ export default function TeamMemberDetailsPage() {
       setHasFetched(true);
     }
   }, [id, member, dispatch]);
+  const lockScroll = () => {
+  const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
 
-  /* Scroll lock */
+  document.documentElement.style.overflow = "hidden";
+  document.body.style.overflow = "hidden";
+  document.body.style.paddingRight = `${scrollbarWidth}px`;
+};
+
+const unlockScroll = () => {
+  document.documentElement.style.overflow = "";
+  document.body.style.overflow = "";
+  document.body.style.paddingRight = "";
+};
+
   useEffect(() => {
-    const lock = editOpen || permOpen || suspendOpen;
-    document.body.style.overflow = lock ? "hidden" : "";
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [editOpen, permOpen, suspendOpen]);
+  const lock = editOpen || permOpen || confirmOpen || resultOpen;
 
-  /* Loading */
+  if (lock) {
+    lockScroll();
+  } else {
+    unlockScroll();
+  }
+
+  return () => {
+    unlockScroll();
+  };
+}, [editOpen, permOpen, confirmOpen, resultOpen]);
+
+
   if (!hasFetched || (loading && !member)) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -80,112 +111,97 @@ export default function TeamMemberDetailsPage() {
     );
   }
 
-  /* Not found */
-if (!member) {
-  return (
-    <div className="flex flex-col h-full">
-      <button
-        onClick={() => navigate(-1)}
-        className="flex items-center mt-6 gap-2 text-sm text-gray-500 hover:text-black"
-      >
-        <ArrowLeft size={16} />
-        Back to Team
-      </button>
+  if (!member) {
+    return (
+      <div className="flex flex-col h-full">
+        <button
+          onClick={() => navigate(-1)}
+          className="flex items-center mt-6 gap-2 text-sm text-gray-500 hover:text-black"
+        >
+          <ArrowLeft size={16} />
+          Back to Team
+        </button>
 
-      <div className="flex flex-1 items-center justify-center text-red-500">
-        Member not found
+        <div className="flex flex-1 items-center justify-center text-red-500">
+          Member not found
+        </div>
       </div>
-    </div>
-  );
-}
+    );
+  }
 
-  /* Status change */
   const handleStatusChange = async () => {
     try {
-      setSuspending(true);
+      setProcessing(true);
       await dispatch(
         updateMember({
           id: member.id,
           data: { status: suspendMode === "suspend" ? "suspended" : "active" },
         })
       ).unwrap();
+
+      showResult(
+        true,
+        suspendMode === "suspend"
+          ? "Member suspended successfully."
+          : "Member activated successfully."
+      );
+    } catch {
+      showResult(false, "Failed to update member status.");
     } finally {
-      setSuspending(false);
-      setSuspendOpen(false);
+      setProcessing(false);
+      setConfirmOpen(false);
     }
   };
 
   return (
     <div className="p-6">
-      {/* Back */}
       <button
         onClick={() => navigate(-1)}
-        className="flex items-center gap-2 text-sm text-gray-500 hover:text-black"
+        className="flex items-center gap-2 text-sm text-gray-500 hover:text-black mb-6"
       >
         <ArrowLeft size={16} />
         Back to Team
       </button>
 
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 bg-white rounded-2xl p-6 border mt-6">
-        <div className="flex items-center gap-4">
-          <div className="h-14 w-14 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center text-xl font-semibold">
-            {member.name.slice(0, 1).toUpperCase()}
-          </div>
+      <DetailPageHeader
+        title={member.name}
+        subtitle={member.role.replace("_", " ")}
+        avatar={member.name[0].toUpperCase()}
+        status={{
+          label: member.status,
+          variant: member.status === "active" ? "active" : "suspended",
+        }}
+        actions={
+          <>
+            <button onClick={() => setEditOpen(true)} className="btn-outline">
+              <Edit size={16} /> Edit
+            </button>
 
-          <div>
-            <h2 className="text-xl font-semibold leading-tight">{member.name}</h2>
-            <div className="flex items-center gap-2 text-sm text-gray-500">
-              <span className="capitalize">{member.role.replace("_", " ")}</span>
-              <span>•</span>
-              <span
-                className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                  member.status === "active"
-                    ? "bg-green-100 text-green-700"
-                    : "bg-gray-200 text-gray-700"
-                }`}
-              >
-                {member.status}
-              </span>
-            </div>
-          </div>
-        </div>
+            <button onClick={() => setPermOpen(true)} className="btn-outline">
+              <Shield size={16} /> Permissions
+            </button>
 
-        {/* Actions */}
-        <div className="flex gap-2 flex-wrap">
-          <button onClick={() => setEditOpen(true)} className="btn-outline">
-            <Edit size={16} /> Edit
-          </button>
-
-          <button onClick={() => setPermOpen(true)} className="btn-outline">
-            <Shield size={16} /> Permissions
-          </button>
-
-          {member.status === "active" ? (
             <button
               onClick={() => {
-                setSuspendMode("suspend");
-                setSuspendOpen(true);
+                setSuspendMode(member.status === "active" ? "suspend" : "activate");
+                setConfirmOpen(true);
               }}
-              className="btn-danger"
+              className={member.status === "active" ? "btn-danger" : "btn-success"}
             >
-              <UserX size={16} /> Suspend
+              {member.status === "active" ? (
+                <>
+                  <UserX size={16} /> Suspend
+                </>
+              ) : (
+                <>
+                  <CheckCircle2 size={16} /> Activate
+                </>
+              )}
             </button>
-          ) : (
-            <button
-              onClick={() => {
-                setSuspendMode("activate");
-                setSuspendOpen(true);
-              }}
-              className="btn-success"
-            >
-              <CheckCircle2 size={16} /> Activate
-            </button>
-          )}
-        </div>
-      </div>
+          </>
+        }
+      />
 
-      {/* Tabs */}
       <div className="flex gap-6 border-b text-sm mt-6">
         {TABS.map((t) => (
           <button
@@ -205,7 +221,6 @@ if (!member) {
       {activeTab === "overview" && <TeamMemberOverviewTab member={member} />}
       {activeTab === "leads" && <TeamMemberLeadsTab memberId={member.id} />}
 
-      {/* Modals */}
       <EditMemberModal
         open={editOpen}
         member={member}
@@ -213,8 +228,16 @@ if (!member) {
         managers={managers}
         onClose={() => setEditOpen(false)}
         onSubmit={async (data) => {
-          await dispatch(updateMember({ id: member.id, data })).unwrap();
-          setEditOpen(false);
+          try {
+            setProcessing(true);
+            await dispatch(updateMember({ id: member.id, data })).unwrap();
+            showResult(true, "Member updated successfully.");
+          } catch {
+            showResult(false, "Failed to update member.");
+          } finally {
+            setProcessing(false);
+            setEditOpen(false);
+          }
         }}
       />
 
@@ -224,18 +247,41 @@ if (!member) {
         role={member.role}
         onClose={() => setPermOpen(false)}
         onSubmit={async (data) => {
-          await dispatch(updatePermissions({ id: member.id, data })).unwrap();
-          setPermOpen(false);
+          try {
+            setProcessing(true);
+            await dispatch(updatePermissions({ id: member.id, data })).unwrap();
+            showResult(true, "Permissions updated successfully.");
+          } catch {
+            showResult(false, "Failed to update permissions.");
+          } finally {
+            setProcessing(false);
+            setPermOpen(false);
+          }
         }}
       />
 
-      <SuspendMemberModal
-        open={suspendOpen}
-        memberName={member.name}
-        mode={suspendMode}
-        loading={suspending}
-        onClose={() => setSuspendOpen(false)}
+      <ConfirmationModal
+        open={confirmOpen}
+        title={suspendMode === "suspend" ? "Suspend Member" : "Activate Member"}
+        message={
+          suspendMode === "suspend"
+            ? `Are you sure you want to suspend ${member.name}?`
+            : `Are you sure you want to activate ${member.name}?`
+        }
+        confirmLabel={suspendMode === "suspend" ? "Suspend" : "Activate"}
+        confirmVariant={suspendMode === "suspend" ? "danger" : "success"}
+        loading={processing}
+        onClose={() => setConfirmOpen(false)}
         onConfirm={handleStatusChange}
+      />
+
+      <BlockingLoader show={processing} />
+
+      <ResultModal
+        open={resultOpen}
+        success={resultSuccess}
+        message={resultMessage}
+        onClose={() => setResultOpen(false)}
       />
     </div>
   );

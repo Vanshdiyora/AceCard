@@ -44,9 +44,7 @@ export default function ProductLeadsTable({ productId }: Props) {
     if (!campaignsLoading && campaigns.length === 0) {
       dispatch(fetchCampaigns({ page: 1, page_size: 10 }));
     }
-  }, [
-    dispatch
-  ]);
+  }, [dispatch]); // intentionally only on mount
 
   const rows: LeadRow[] = useMemo(() => {
     return leads
@@ -73,24 +71,17 @@ export default function ProductLeadsTable({ productId }: Props) {
     { header: "Manager", accessor: "manager_name" },
   ];
 
-  if (leadsLoading) {
-    return (
-      <div className="bg-white p-8 rounded-xl text-center text-gray-500">
-        Loading leads...
-      </div>
-    );
-  }
-
   return (
     <div className="rounded-2xl border">
       <div className="py-4 border-b px-6">
         <h3 className="text-base font-semibold">Associated Leads</h3>
       </div>
 
-      <div className="p-4">
+      <div className="px-4">
         <DataTable<LeadRow>
           columns={columns}
           data={rows}
+          loading={leadsLoading || membersLoading || campaignsLoading}
           emptyText="No leads associated with this product."
           onRowClick={(row) => navigate(`/admin/leads/${row.id}`)}
         />

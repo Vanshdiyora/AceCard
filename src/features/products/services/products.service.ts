@@ -42,7 +42,7 @@ export const ProductsAPI = {
   },
 
   /* -------- ARCHIVE / ACTIVATE -------- */
-  async toggleArchive(id: number): Promise<Product> {
+  async archiveProduct(id: number): Promise<Product> {
     const res = await axiosClient.post(
       `/vendor/products/${id}/archive`
     );

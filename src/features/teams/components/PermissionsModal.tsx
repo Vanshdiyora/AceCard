@@ -20,6 +20,17 @@ const ROLE_PERMISSION_MAP: Record<
   sales_rep: ["view_leads", "edit_leads", "archive_leads"],
 };
 
+const EMPTY_PERMISSIONS: TeamPermissions = {
+  manage_team: false,
+  manage_products: false,
+  manage_campaigns: false,
+  view_leads: false,
+  edit_leads: false,
+  archive_leads: false,
+  send_notifications: false,
+  view_analytics: false,
+};
+
 export default function PermissionsModal({
   open,
   permissions,
@@ -36,23 +47,14 @@ export default function PermissionsModal({
   const visibleKeys =
     ROLE_PERMISSION_MAP[role as "manager" | "sales_rep"] ?? [];
 
-  const [form, setForm] = useState<TeamPermissions>({
-    manage_team: false,
-    manage_products: false,
-    manage_campaigns: false,
-    view_leads: false,
-    edit_leads: false,
-    archive_leads: false,
-    send_notifications: false,
-    view_analytics: false,
-  });
+  const [form, setForm] = useState<TeamPermissions>(EMPTY_PERMISSIONS);
 
   useEffect(() => {
     if (open) {
-      setForm((prev) => ({
-        ...prev,
+      setForm({
+        ...EMPTY_PERMISSIONS,
         ...permissions,
-      }));
+      });
     }
   }, [open, permissions]);
 

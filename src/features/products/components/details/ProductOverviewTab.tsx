@@ -6,7 +6,7 @@ export default function ProductOverviewTab({
   product: Product;
 }) {
   return (
-    <div className="bg-white rounded-2xl border p-8 space-y-6">
+    <div className="bg-white rounded-2xl border p-6 space-y-6">
 
       {/* Description + Status */}
       <div className="relative">

@@ -2,10 +2,6 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { ProductsAPI } from "./services/products.service";
 import type { ProductState, ProductListResponse, Product } from "./types";
 
-/* -----------------------------------------------------
-   ERROR HANDLER
------------------------------------------------------ */
-
 type ApiError = { response?: { data?: { error?: string; message?: string } } };
 
 const extractApiError = (err: unknown, fallback: string): string =>
@@ -14,9 +10,7 @@ const extractApiError = (err: unknown, fallback: string): string =>
   (err as Error)?.message ||
   fallback;
 
-/* -----------------------------------------------------
-   THUNKS
------------------------------------------------------ */
+/* ---------------- THUNKS ---------------- */
 
 export const fetchProducts = createAsyncThunk<
   ProductListResponse,
@@ -30,21 +24,56 @@ export const fetchProducts = createAsyncThunk<
   }
 });
 
-export const fetchProductById = createAsyncThunk<
+export const fetchProductById = createAsyncThunk<Product, number, { rejectValue: string }>(
+  "products/fetchById",
+  async (id, { rejectWithValue }) => {
+    try {
+      return await ProductsAPI.getById(id);
+    } catch (err) {
+      return rejectWithValue(extractApiError(err, "Failed to fetch product"));
+    }
+  }
+);
+
+export const createProduct = createAsyncThunk<Product, Partial<Product>, { rejectValue: string }>(
+  "products/create",
+  async (data, { rejectWithValue }) => {
+    try {
+      return await ProductsAPI.createProduct(data);
+    } catch (err) {
+      return rejectWithValue(extractApiError(err, "Failed to create product"));
+    }
+  }
+);
+
+export const updateProduct = createAsyncThunk<
   Product,
-  number,
+  { id: number; data: Partial<Product> },
   { rejectValue: string }
->("products/fetchById", async (id, { rejectWithValue }) => {
+>("products/update", async ({ id, data }, { rejectWithValue }) => {
   try {
-    return await ProductsAPI.getById(id);
+    return await ProductsAPI.updateProduct(id, data);
   } catch (err) {
-    return rejectWithValue(extractApiError(err, "Failed to fetch product"));
+    return rejectWithValue(extractApiError(err, "Failed to update product"));
   }
 });
 
-/* -----------------------------------------------------
-   INITIAL STATE
------------------------------------------------------ */
+/* -------- Optimistic Archive -------- */
+
+export const archiveProduct = createAsyncThunk<
+  { id: number },
+  number,
+  { rejectValue: string }
+>("products/archive", async (id, { rejectWithValue }) => {
+  try {
+    await ProductsAPI.archiveProduct(id); // returns { status: "updated" }
+    return { id };
+  } catch (err) {
+    return rejectWithValue(extractApiError(err, "Failed to archive product"));
+  }
+});
+
+/* ---------------- STATE ---------------- */
 
 const initialState: ProductState & { error: string | null } = {
   products: [],
@@ -54,9 +83,7 @@ const initialState: ProductState & { error: string | null } = {
   error: null,
 };
 
-/* -----------------------------------------------------
-   SLICE
------------------------------------------------------ */
+/* ---------------- SLICE ---------------- */
 
 const productsSlice = createSlice({
   name: "products",
@@ -68,7 +95,8 @@ const productsSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      /* -------- ALL PRODUCTS -------- */
+
+      /* ---------- FETCH LIST ---------- */
       .addCase(fetchProducts.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -83,7 +111,7 @@ const productsSlice = createSlice({
         state.error = action.payload ?? "Failed to fetch products";
       })
 
-      /* -------- SINGLE PRODUCT -------- */
+      /* ---------- FETCH SINGLE ---------- */
       .addCase(fetchProductById.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -96,6 +124,62 @@ const productsSlice = createSlice({
         state.loading = false;
         state.selectedProduct = null;
         state.error = action.payload ?? "Failed to fetch product";
+      })
+
+      /* ---------- CREATE ---------- */
+      .addCase(createProduct.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(createProduct.fulfilled, (state, action) => {
+        state.loading = false;
+        if (!state.meta || state.meta.page === 1) {
+          state.products.unshift(action.payload);
+        }
+      })
+      .addCase(createProduct.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload ?? "Failed to create product";
+      })
+
+      /* ---------- UPDATE ---------- */
+      .addCase(updateProduct.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(updateProduct.fulfilled, (state, action) => {
+        state.loading = false;
+        const i = state.products.findIndex(p => p.id === action.payload.id);
+        if (i !== -1) state.products[i] = action.payload;
+        if (state.selectedProduct?.id === action.payload.id) {
+          state.selectedProduct = action.payload;
+        }
+      })
+      .addCase(updateProduct.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload ?? "Failed to update product";
+      })
+
+      /* ---------- ARCHIVE (OPTIMISTIC) ---------- */
+      .addCase(archiveProduct.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(archiveProduct.fulfilled, (state, action) => {
+        state.loading = false;
+        const id = action.payload.id;
+
+        const p = state.products.find(p => p.id === id);
+        if (p) p.status = p.status === "active" ? "archived" : "active";
+
+        if (state.selectedProduct?.id === id) {
+          state.selectedProduct.status =
+            state.selectedProduct.status === "active" ? "archived" : "active";
+        }
+      })
+      .addCase(archiveProduct.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload ?? "Failed to archive product";
       });
   },
 });

@@ -1,8 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppSelector, useAppDispatch } from "../../../app/hooks";
-import { fetchProducts } from "../slice";
-import { ProductsAPI } from "../services/products.service";
+import { fetchProducts, createProduct, updateProduct } from "../slice";
 import ProductFormModal from "../components/ProductFormModal";
 import PageHeader from "../../../common/components/layout/PageHeader";
 import PageFilters from "../../../common/components/layout/PageFilter";
@@ -10,6 +9,8 @@ import DataTable, { type Column } from "../../../common/components/table/DataTab
 import ErrorAlert from "../../../common/ui/ErrorAlert";
 import { Edit2 } from "lucide-react";
 import type { Product } from "../types";
+import BlockingLoader from "../../../common/ui/BlockingLoader";
+import ResultModal from "../../../common/ui/ResultModal";
 
 type SortBy = "recent" | "name" | "price";
 type StatusFilter = "all" | "active" | "archived";
@@ -33,6 +34,13 @@ export default function ProductsPage() {
 
   const [page, setPage] = useState(1);
   const pageSize = meta?.page_size ?? 10;
+
+  const [blocking, setBlocking] = useState(false);
+  const [result, setResult] = useState<{
+    open: boolean;
+    success: boolean;
+    message: string;
+  }>({ open: false, success: true, message: "" });
 
   useEffect(() => {
     dispatch(fetchProducts({ page, page_size: pageSize }));
@@ -65,7 +73,8 @@ export default function ProductsPage() {
         break;
       default:
         list.sort(
-          (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+          (a, b) =>
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
         );
     }
 
@@ -110,6 +119,15 @@ export default function ProductsPage() {
 
   return (
     <div className="p-6">
+      <BlockingLoader show={blocking} />
+
+      <ResultModal
+        open={result.open}
+        success={result.success}
+        message={result.message}
+        onClose={() => setResult({ ...result, open: false })}
+      />
+
       <PageHeader
         title="Products"
         description="Manage your product catalog"
@@ -119,7 +137,8 @@ export default function ProductsPage() {
           setOpen(true);
         }}
       />
-        {error && <ErrorAlert message={error} />}
+
+      {error && <ErrorAlert message={error} />}
 
       <PageFilters
         tabs={[
@@ -155,7 +174,9 @@ export default function ProductsPage() {
           totalPages={meta?.total_pages ?? 1}
           onPageChange={setPage}
           emptyText="No products found"
-          onRowClick={(p) => navigate(`/admin/products/${p.id}`, { state: { product: p } })}
+          onRowClick={(p) =>
+            navigate(`/admin/products/${p.id}`, { state: { product: p } })
+          }
         />
       </div>
 
@@ -167,12 +188,36 @@ export default function ProductsPage() {
           setEditProduct(null);
         }}
         onSubmit={async (data) => {
-          if (editProduct) await ProductsAPI.updateProduct(editProduct.id, data);
-          else await ProductsAPI.createProduct(data);
+          try {
+            setBlocking(true);
 
-          dispatch(fetchProducts({ page, page_size: pageSize }));
-          setOpen(false);
-          setEditProduct(null);
+            if (editProduct) {
+              await dispatch(updateProduct({ id: editProduct.id, data })).unwrap();
+              setResult({
+                open: true,
+                success: true,
+                message: "Product updated successfully",
+              });
+            } else {
+              await dispatch(createProduct(data)).unwrap();
+              setResult({
+                open: true,
+                success: true,
+                message: "Product created successfully",
+              });
+            }
+
+            setOpen(false);
+            setEditProduct(null);
+          } catch (err: any) {
+            setResult({
+              open: true,
+              success: false,
+              message: err?.message ?? "Something went wrong. Please try again.",
+            });
+          } finally {
+            setBlocking(false);
+          }
         }}
       />
     </div>
