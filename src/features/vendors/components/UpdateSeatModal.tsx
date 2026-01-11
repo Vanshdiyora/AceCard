@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAppDispatch } from "../../../app/hooks";
-import { updateSeats, fetchVendors } from "../slice";
+import { updateSeats } from "../slice";
 import type { VendorItem } from "../types";
 
 interface UpdateSeatsModalProps {
@@ -34,7 +34,6 @@ export default function UpdateSeatsModal({
     if (!vendor) return;
 
     await dispatch(updateSeats({ id: vendor.id, seats }));
-    dispatch(fetchVendors());
     onClose();
   };
 

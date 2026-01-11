@@ -1,23 +1,38 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { ArrowLeft, Edit, Trash2 } from "lucide-react";
-import { Copy } from "lucide-react";
-import { duplicateCampaign } from "../slice";
+import { ArrowLeft, Edit, Trash2, Copy } from "lucide-react";
 
 import { useAppDispatch, useAppSelector } from "../../../app/hooks";
-import { fetchCampaignById, archiveCampaign } from "../slice";
+import {
+  fetchCampaignById,
+  archiveCampaign,
+  duplicateCampaign,
+} from "../slice";
 import { fetchTeam } from "../../teams/slice";
 import { fetchProducts } from "../../products/slice";
+
 import EditCampaignModal from "../components/EditCampaignModal";
 import CampaignOverviewTab from "../components/details/CampaignOverviewTab";
 import CampaignSalespersonsTab from "../components/details/CampaignSalespersonsTab";
 import CampaignProductsTab from "../components/details/CampaignProductsTab";
-import ArchiveCampaignModal from "../components/ArchiveCampaignModal";
+import ConfirmationModal from "../../../common/ui/ConfirmationModal";
 import { selectEnrichedCampaignById } from "../selectors";
 import type { EnrichedCampaign } from "../types";
 import BrandLoader from "../../../common/ui/BrandLoader";
+import BlockingLoader from "../../../common/ui/BlockingLoader";
+import ResultModal from "../../../common/ui/ResultModal";
+import DetailPageHeader from "../../../common/components/layout/DetailPageHeader";
 
 const TABS = ["overview", "salespersons", "products"] as const;
+
+const statusVariantMap: Record<string, "active" | "inactive" | "archived" | "suspended"> = {
+  active: "active",
+  planned: "inactive",
+  completed: "archived",
+  expired: "archived",
+  archived: "archived",
+  suspended: "suspended",
+};
 
 export default function CampaignDetailsPage() {
   const { id } = useParams<{ id: string }>();
@@ -25,11 +40,20 @@ export default function CampaignDetailsPage() {
   const dispatch = useAppDispatch();
 
   const [openEdit, setOpenEdit] = useState(false);
-  const [archiveOpen, setArchiveOpen] = useState(false);
-  const [archiving, setArchiving] = useState(false);
-  const [duplicating, setDuplicating] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState<"archive" | "duplicate" | null>(null);
 
+  const [processing, setProcessing] = useState(false);
   const [activeTab, setActiveTab] = useState<typeof TABS[number]>("overview");
+
+  const [resultOpen, setResultOpen] = useState(false);
+  const [resultSuccess, setResultSuccess] = useState(true);
+  const [resultMessage, setResultMessage] = useState("");
+
+  const showResult = (success: boolean, message: string) => {
+    setResultSuccess(success);
+    setResultMessage(message);
+    setResultOpen(true);
+  };
 
   const campaign = useAppSelector(
     selectEnrichedCampaignById(Number(id))
@@ -38,12 +62,29 @@ export default function CampaignDetailsPage() {
   const loading = useAppSelector((s) => s.campaigns.loading);
 
   useEffect(() => {
-    if (id) {
-      dispatch(fetchCampaignById(Number(id)));
-    }
+    if (id) dispatch(fetchCampaignById(Number(id)));
     dispatch(fetchTeam());
     dispatch(fetchProducts({ page: 1, page_size: 10 }));
   }, [id, dispatch]);
+
+  useEffect(() => {
+    const shouldLock = openEdit || confirmOpen || resultOpen;
+
+    if (!shouldLock) return;
+
+    const scrollY = window.scrollY;
+
+    document.body.style.position = "fixed";
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.width = "100%";
+
+    return () => {
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.width = "";
+      window.scrollTo(0, scrollY);
+    };
+  }, [openEdit, confirmOpen, resultOpen]);
 
   if (loading && !campaign) {
     return (
@@ -63,14 +104,12 @@ export default function CampaignDetailsPage() {
           <ArrowLeft size={16} />
           Back to Campaigns
         </button>
-
         <div className="flex flex-1 items-center justify-center text-red-500">
           Campaign not found
         </div>
       </div>
     );
   }
-
 
   const isReadOnly =
     campaign.status === "archived" ||
@@ -79,12 +118,28 @@ export default function CampaignDetailsPage() {
 
   const handleArchive = async () => {
     try {
-      setArchiving(true);
+      setProcessing(true);
       await dispatch(archiveCampaign(campaign.id)).unwrap();
-      navigate("/admin/campaigns");
+      showResult(true, "Campaign archived successfully.");
+    } catch {
+      showResult(false, "Failed to archive campaign.");
     } finally {
-      setArchiving(false);
-      setArchiveOpen(false);
+      setProcessing(false);
+      setConfirmOpen(null);
+    }
+  };
+
+  const handleDuplicate = async () => {
+    try {
+      setProcessing(true);
+      const newCampaign = await dispatch(duplicateCampaign(campaign)).unwrap();
+      showResult(true, "Campaign duplicated successfully.");
+      navigate(`/admin/campaigns/${newCampaign.id}`);
+    } catch {
+      showResult(false, "Failed to duplicate campaign.");
+    } finally {
+      setProcessing(false);
+      setConfirmOpen(null);
     }
   };
 
@@ -97,67 +152,61 @@ export default function CampaignDetailsPage() {
         <ArrowLeft size={16} />
         Back to Campaigns
       </button>
-
-      <div className="bg-white rounded-2xl p-6 shadow-sm flex justify-between items-center mt-6">
-        <div>
-          <h2 className="text-2xl font-semibold">{campaign.name}</h2>
-          <p className="text-gray-500 mt-1">
-            {campaign.description || "No description provided"}
-          </p>
-        </div>
-
-        <div className="flex gap-3">
-          <button
-            disabled={isReadOnly}
-            onClick={() => setOpenEdit(true)}
-            className={`px-4 py-2 rounded-xl border flex items-center gap-2 text-sm ${isReadOnly ? "opacity-50 cursor-not-allowed" : "hover:bg-purple-50"
+      <div className="mt-6" />
+      <DetailPageHeader
+        title={campaign.name}
+        subtitle={campaign.description || "No description provided"}
+        status={{
+          label: campaign.status,
+          variant: statusVariantMap[campaign.status] ?? "inactive",
+        }}
+        actions={
+          <div className="flex gap-3">
+            <button
+              disabled={isReadOnly || processing}
+              onClick={() => setOpenEdit(true)}
+              className={`px-4 py-2 rounded-xl border flex items-center gap-2 text-sm ${
+                isReadOnly ? "opacity-50 cursor-not-allowed" : "hover:bg-purple-50"
               }`}
-          >
-            <Edit size={16} /> Edit
-          </button>
-
-          {campaign.status === "archived" ? (
-            <button
-              disabled={duplicating}
-              onClick={async () => {
-                try {
-                  setDuplicating(true);
-                  const newCampaign = await dispatch(duplicateCampaign(campaign)).unwrap();
-                  navigate(`/admin/campaigns/${newCampaign.id}`);
-                } finally {
-                  setDuplicating(false);
-                }
-              }}
-              className={`px-4 py-2 rounded-xl border flex items-center gap-2 text-sm ${duplicating ? "opacity-50 cursor-not-allowed" : "hover:bg-green-50"
-                }`}
             >
-              <Copy size={16} />
-              {duplicating ? "Duplicating..." : "Duplicate"}
+              <Edit size={16} /> Edit
             </button>
-          ) : (
-            <button
-              onClick={() => setArchiveOpen(true)}
-              disabled={isReadOnly}
-              className={`px-4 py-2 rounded-xl bg-red-50 text-red-600 flex items-center gap-2 text-sm ${isReadOnly ? "opacity-50 cursor-not-allowed" : "hover:bg-red-100"
+
+            {campaign.status === "archived" ? (
+              <button
+                disabled={processing}
+                onClick={() => setConfirmOpen("duplicate")}
+                className={`px-4 py-2 rounded-xl border flex items-center gap-2 text-sm ${
+                  processing ? "opacity-50 cursor-not-allowed" : "hover:bg-green-50"
                 }`}
-            >
-              <Trash2 size={16} /> Archive
-            </button>
-          )}
-
-
-        </div>
-      </div>
+              >
+                <Copy size={16} /> Duplicate
+              </button>
+            ) : (
+              <button
+                disabled={processing || isReadOnly}
+                onClick={() => setConfirmOpen("archive")}
+                className={`px-4 py-2 rounded-xl bg-red-50 text-red-600 flex items-center gap-2 text-sm ${
+                  isReadOnly ? "opacity-50 cursor-not-allowed" : "hover:bg-red-100"
+                }`}
+              >
+                <Trash2 size={16} /> Archive
+              </button>
+            )}
+          </div>
+        }
+      />
 
       <div className="flex gap-8 border-b border-gray-200 my-6">
         {TABS.map((t) => (
           <button
             key={t}
             onClick={() => setActiveTab(t)}
-            className={`relative pb-3 text-sm capitalize transition ${activeTab === t
-              ? "text-purple-600 font-medium"
-              : "text-gray-400 hover:text-gray-600"
-              }`}
+            className={`relative pb-3 text-sm capitalize transition ${
+              activeTab === t
+                ? "text-purple-600 font-medium"
+                : "text-gray-400 hover:text-gray-600"
+            }`}
           >
             {t}
             {activeTab === t && (
@@ -184,25 +233,38 @@ export default function CampaignDetailsPage() {
         <CampaignProductsTab assignedProducts={campaign.products ?? []} />
       )}
 
-      <EditCampaignModal
-        open={openEdit}
-        onClose={() => setOpenEdit(false)}
-        campaign={campaign}
-      />
+      <EditCampaignModal open={openEdit} onClose={() => setOpenEdit(false)} campaign={campaign} />
 
-      <ArchiveCampaignModal
-        open={archiveOpen}
-        campaignName={campaign.name}
-        loading={archiving}
-        onClose={() => setArchiveOpen(false)}
+      <ConfirmationModal
+        open={confirmOpen === "archive"}
+        title="Archive Campaign"
+        message={`Are you sure you want to archive "${campaign.name}"?`}
+        confirmLabel="Archive"
+        confirmVariant="danger"
+        loading={processing}
+        onClose={() => setConfirmOpen(null)}
         onConfirm={handleArchive}
       />
-      {duplicating && (
-        <div className="fixed inset-0 bg-white/70 backdrop-blur-sm z-50 flex items-center justify-center">
-          <BrandLoader message="Duplicating campaign..." />
-        </div>
-      )}
 
+      <ConfirmationModal
+        open={confirmOpen === "duplicate"}
+        title="Duplicate Campaign"
+        message={`Create a copy of "${campaign.name}"?`}
+        confirmLabel="Duplicate"
+        confirmVariant="primary"
+        loading={processing}
+        onClose={() => setConfirmOpen(null)}
+        onConfirm={handleDuplicate}
+      />
+
+      <BlockingLoader show={processing} />
+
+      <ResultModal
+        open={resultOpen}
+        success={resultSuccess}
+        message={resultMessage}
+        onClose={() => setResultOpen(false)}
+      />
     </div>
   );
 }

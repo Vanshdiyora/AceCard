@@ -1,7 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { useAppDispatch, useAppSelector } from "../../../app/hooks";
 import { fetchAllTickets, replyTicket } from "../slice";
-import { fetchVendors } from "../../vendors/slice";
 
 import { MessageSquare, Clock, CheckCircle2 } from "lucide-react";
 
@@ -12,21 +11,40 @@ import TicketDetailsModal from "../components/TicketDetailsModal";
 import DataTable, { type Column } from "../../../common/components/table/DataTable";
 import ErrorAlert from "../../../common/ui/ErrorAlert";
 import StatsGridSkeleton from "../../../common/components/cards/StatsGridSkeleton";
-
+import BlockingLoader from "../../../common/ui/BlockingLoader";
+import ResultModal from "../../../common/ui/ResultModal";
+type TicketStatus = "open" | "pending" | "closed";
 export default function SupportAdmin() {
   const dispatch = useAppDispatch();
-  const { tickets, loading, error } = useAppSelector((s) => s.support);
+  
+  const { tickets, loading, error, meta } = useAppSelector((s) => s.support);
   const { vendors } = useAppSelector((s) => s.vendors);
+const [page, setPage] = useState(1);
+const pageSize = 10;
 
   const [activeTab, setActiveTab] = useState("all");
   const [search, setSearch] = useState("");
   const [selectedTicket, setSelectedTicket] = useState<any>(null);
   const [detailsModal, setDetailsModal] = useState(false);
 
-  useEffect(() => {
-    dispatch(fetchAllTickets());
-    dispatch(fetchVendors());
-  }, [dispatch]);
+  const [processing, setProcessing] = useState(false);
+  const [resultOpen, setResultOpen] = useState(false);
+  const [resultSuccess, setResultSuccess] = useState(true);
+  const [resultMessage, setResultMessage] = useState("");
+
+  const showResult = (success: boolean, message: string) => {
+    setResultSuccess(success);
+    setResultMessage(message);
+    setResultOpen(true);
+  };
+
+ useEffect(() => {
+  dispatch(fetchAllTickets({ page, page_size: pageSize }));
+}, [dispatch, page]);
+
+useEffect(() => {
+  setPage(1);
+}, [activeTab, search]);
 
   const formatDate = (value?: string) => {
     if (!value) return "—";
@@ -105,7 +123,6 @@ export default function SupportAdmin() {
       render: (t) => (
         <span className="px-2 py-1 rounded-md bg-gray-100 text-xs">{t.category}</span>
       ),
-      width: "120px",
     },
     { header: "Subject", render: (t) => t.subject },
     {
@@ -123,7 +140,6 @@ export default function SupportAdmin() {
           {t.priority}
         </span>
       ),
-      width: "90px",
     },
     {
       header: "Status",
@@ -140,14 +156,12 @@ export default function SupportAdmin() {
           {t.status}
         </span>
       ),
-      width: "90px",
     },
     { header: "Assigned To", render: (t) => t.assigned_to || "—" },
-    { header: "Last Update", render: (t) => formatDate(t.updated_at), width: "110px" },
+    { header: "Last Update", render: (t) => formatDate(t.updated_at) },
     {
       header: "",
       align: "right",
-      width: "120px",
       render: (t) => (
         <button
           className="px-3 py-1.5 rounded-lg border text-sm hover:bg-gray-100"
@@ -165,7 +179,7 @@ export default function SupportAdmin() {
 
       {error && <ErrorAlert message={error} />}
 
-    {loading ? <StatsGridSkeleton /> : <StatsGrid items={stats} />}
+      {loading ? <StatsGridSkeleton /> : <StatsGrid items={stats} />}
 
       <div className="mt-6" />
 
@@ -185,21 +199,42 @@ export default function SupportAdmin() {
       <div className="mt-6" />
 
       <DataTable
-        columns={columns}
-        data={filteredTickets}
-        loading={loading}
-        emptyText="No tickets found"
-      />
+  columns={columns}
+  data={filteredTickets}
+  loading={loading}
+  emptyText="No tickets found"
+  page={page}
+  totalPages={meta?.total_pages || 1}
+  onPageChange={(p) => setPage(p)}
+/>
+
 
       <TicketDetailsModal
         open={detailsModal}
         onClose={() => setDetailsModal(false)}
         ticket={selectedTicket}
-        onReply={async (ticketId: number, message: string, status: string) => {
-          await dispatch(replyTicket({ ticketId, message, status }));
-          await dispatch(fetchAllTickets());
-          setDetailsModal(false);
+        onReply={async (ticketId: number, message: string, status: TicketStatus) => {
+          try {
+            setProcessing(true);
+            await dispatch(replyTicket({ ticketId, message, status })).unwrap();
+            // await dispatch(fetchAllTickets());
+            showResult(true, "Reply sent successfully.");
+            setDetailsModal(false);
+          } catch {
+            showResult(false, "Failed to send reply.");
+          } finally {
+            setProcessing(false);
+          }
         }}
+      />
+
+      <BlockingLoader show={processing} />
+
+      <ResultModal
+        open={resultOpen}
+        success={resultSuccess}
+        message={resultMessage}
+        onClose={() => setResultOpen(false)}
       />
     </div>
   );

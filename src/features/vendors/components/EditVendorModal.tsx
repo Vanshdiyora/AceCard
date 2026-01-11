@@ -32,13 +32,66 @@ export default function EditVendorModal({
   }, [vendor]);
 
   const fields: FieldConfig[] = [
-    { name: "legal_name", label: "Legal Name", type: "text", placeholder: "Enter legal registered name" },
-    { name: "address", label: "Address", type: "text", placeholder: "Enter vendor's address" },
-    { name: "primary_email", label: "Primary Email", type: "email", placeholder: "Enter main company email" },
-    { name: "primary_phone", label: "Primary Phone", type: "text", placeholder: "Enter main contact number" },
-    { name: "gst", label: "GST Number", type: "text", placeholder: "Enter GST number (optional)" },
-    { name: "payment_terms", label: "Payment Terms", type: "text", placeholder: "Ex: Net 30 / Monthly / Quarterly" },
+    {
+      name: "legal_name",
+      label: "Legal Name",
+      type: "text",
+      placeholder: "Enter company legal name",
+    },
+    {
+      name: "address",
+      label: "Address",
+      type: "text",
+      placeholder: "Enter registered business address",
+    },
+    {
+      name: "primary_email",
+      label: "Primary Email",
+      type: "email",
+      placeholder: "contact@company.com",
+    },
+    {
+      name: "primary_phone",
+      label: "Primary Phone",
+      type: "text",
+      placeholder: "Mobile Number",
+    },
+    {
+      name: "payment_terms",
+      label: "Payment Terms",
+      type: "select",
+      placeholder: "Select payment frequency",
+      options: [
+        { label: "Monthly", value: "monthly" },
+        { label: "Annually", value: "annually" },
+      ],
+    },
+    {
+      name: "vendor_poc_email",
+      label: "Vendor POC Email",
+      type: "email",
+      placeholder: "poc@company.com",
+    },
+    {
+      name: "password",
+      label: "Password",
+      type: "text",
+      placeholder: "Set a temporary password",
+    },
+    {
+      name: "crm_system",
+      label: "CRM System",
+      type: "select",
+      placeholder: "Choose CRM (optional)",
+      options: [
+        { label: "None", value: "none" },
+        { label: "Zoho", value: "zoho" },
+        { label: "HubSpot", value: "hubspot" },
+        { label: "Salesforce", value: "salesforce" },
+      ],
+    },
   ];
+
 
   const update = (key: string, value: any) => {
     setForm((prev) => ({ ...prev, [key]: value }));

@@ -7,9 +7,16 @@ import type { NewSupportTicketForm } from "../types";
 interface Props {
   open: boolean;
   onClose: () => void;
+  onSubmitStart?: () => void;
+  onSubmitEnd?: (success: boolean, message: string) => void;
 }
 
-export default function NewTicketModal({ open, onClose }: Props) {
+export default function NewTicketModal({
+  open,
+  onClose,
+  onSubmitStart,
+  onSubmitEnd,
+}: Props) {
   const dispatch = useAppDispatch();
 
   const [form, setForm] = useState<NewSupportTicketForm>({
@@ -39,7 +46,7 @@ export default function NewTicketModal({ open, onClose }: Props) {
 
   const fields: FieldConfig[] = [
     {
-      name: "subject", // ✅ matches backend
+      name: "subject",
       label: "Subject",
       type: "text",
       placeholder: "Enter subject",
@@ -84,8 +91,14 @@ export default function NewTicketModal({ open, onClose }: Props) {
     if (!form.subject.trim()) return setError("Subject is required");
     if (!form.description.trim()) return setError("Description is required");
 
-    await dispatch(addTicket(form));
-    onClose();
+    try {
+      onSubmitStart?.();
+      await dispatch(addTicket(form)).unwrap();
+      onSubmitEnd?.(true, "Ticket created successfully");
+      onClose();
+    } catch {
+      onSubmitEnd?.(false, "Failed to create ticket");
+    }
   };
 
   return (

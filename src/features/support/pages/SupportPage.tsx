@@ -13,6 +13,8 @@ import {
 import PageHeader from "../../../common/components/layout/PageHeader";
 import BrandLoader from "../../../common/ui/BrandLoader";
 import ErrorAlert from "../../../common/ui/ErrorAlert";
+import BlockingLoader from "../../../common/ui/BlockingLoader";
+import ResultModal from "../../../common/ui/ResultModal";
 
 export default function SupportPage() {
   const dispatch = useAppDispatch();
@@ -29,19 +31,20 @@ export default function SupportPage() {
       console.error("Failed to decode JWT", error);
     }
   }
+
   const formatDate = (iso?: string | null) => {
-  if (!iso) return "Just now";
+    if (!iso) return "Just now";
 
-  const d = new Date(iso);
+    const d = new Date(iso);
 
-  return d.toLocaleString("en-IN", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-};
+    return d.toLocaleString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
 
   useEffect(() => {
     if (vendorId) {
@@ -51,6 +54,17 @@ export default function SupportPage() {
 
   const [showModal, setShowModal] = useState(false);
   const [expandedTicket, setExpandedTicket] = useState<number | null>(null);
+
+  const [processing, setProcessing] = useState(false);
+  const [resultOpen, setResultOpen] = useState(false);
+  const [resultSuccess, setResultSuccess] = useState(true);
+  const [resultMessage, setResultMessage] = useState("");
+
+  const showResult = (success: boolean, message: string) => {
+    setResultSuccess(success);
+    setResultMessage(message);
+    setResultOpen(true);
+  };
 
   const openTickets = tickets.filter((t) => t.status === "open").length;
   const inProgress = tickets.filter((t) => t.status === "pending").length;
@@ -127,14 +141,10 @@ export default function SupportPage() {
                           <span className="text-gray-500 font-medium">
                             TKT-{t.id}
                           </span>
-                          <span
-                            className={`px-2 py-0.5 rounded-full ${statusColors[t.status]}`}
-                          >
+                          <span className={`px-2 py-0.5 rounded-full ${statusColors[t.status]}`}>
                             {t.status}
                           </span>
-                          <span
-                            className={`px-2 py-0.5 rounded-full ${priorityColors[t.priority]}`}
-                          >
+                          <span className={`px-2 py-0.5 rounded-full ${priorityColors[t.priority]}`}>
                             {t.priority}
                           </span>
                         </div>
@@ -142,9 +152,7 @@ export default function SupportPage() {
                         <h3 className="text-lg font-semibold text-gray-800">
                           {t.subject}
                         </h3>
-                        <p className="text-sm text-gray-600">
-                          {t.description}
-                        </p>
+                        <p className="text-sm text-gray-600">{t.description}</p>
 
                         <div className="flex items-center gap-5 text-xs text-gray-500 mt-2">
                           <span className="flex items-center gap-1">
@@ -175,13 +183,8 @@ export default function SupportPage() {
                       {t.replies?.length > 0 && (
                         <div className="space-y-3">
                           {t.replies.map((r: any) => (
-                            <div
-                              key={r.id}
-                              className="bg-gray-50 p-3 rounded-lg text-sm"
-                            >
-                              <p className="font-medium text-gray-700">
-                                Admin Reply
-                              </p>
+                            <div key={r.id} className="bg-gray-50 p-3 rounded-lg text-sm">
+                              <p className="font-medium text-gray-700">Admin Reply</p>
                               <p className="text-gray-600">{r.message}</p>
                               <p className="text-xs text-gray-400 mt-1">
                                 {formatDate(t.created_at)}
@@ -229,7 +232,24 @@ export default function SupportPage() {
         </div>
       </div>
 
-      <NewTicketModal open={showModal} onClose={() => setShowModal(false)} />
+      <NewTicketModal
+        open={showModal}
+        onClose={() => setShowModal(false)}
+        onSubmitStart={() => setProcessing(true)}
+        onSubmitEnd={(success, message) => {
+          setProcessing(false);
+          showResult(success, message);
+        }}
+      />
+
+      <BlockingLoader show={processing} />
+
+      <ResultModal
+        open={resultOpen}
+        success={resultSuccess}
+        message={resultMessage}
+        onClose={() => setResultOpen(false)}
+      />
     </div>
   );
 }

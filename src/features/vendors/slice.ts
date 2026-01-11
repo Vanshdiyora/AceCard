@@ -189,10 +189,13 @@ const vendorsSlice = createSlice({
       })
       .addCase(fetchVendors.fulfilled, (state, action) => {
         state.loading = false;
-        state.vendors = action.payload.data ?? [];
+        if (state.meta?.page !== action.payload.meta.page) {
+          state.vendors = action.payload.data ?? [];
+        }
         state.meta = action.payload.meta ?? null;
         state.stats = computeStats(state.vendors);
       })
+
       .addCase(fetchVendors.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;

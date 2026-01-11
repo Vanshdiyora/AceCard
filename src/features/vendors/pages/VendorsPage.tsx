@@ -6,6 +6,8 @@ import PageHeader from "../../../common/components/layout/PageHeader";
 import PageFilters from "../../../common/components/layout/PageFilter";
 import DataTable, { type Column } from "../../../common/components/table/DataTable";
 import ErrorAlert from "../../../common/ui/ErrorAlert";
+import BlockingLoader from "../../../common/ui/BlockingLoader";
+import ResultModal from "../../../common/ui/ResultModal";
 
 import NotifyVendorModal from "../components/NotifyVendorModal";
 import AddVendorModal from "../components/AddVendorModal";
@@ -35,7 +37,6 @@ export default function VendorsPage() {
 
   const { vendors, loading, meta, error: fetchError } = useAppSelector((s) => s.vendors);
 
-  const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"all" | "active" | "archived">("all");
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<"recent" | "name">("recent");
@@ -49,6 +50,17 @@ export default function VendorsPage() {
   const [archiveOpen, setArchiveOpen] = useState(false);
   const [notifyOpen, setNotifyOpen] = useState(false);
   const [selectedVendor, setSelectedVendor] = useState<VendorItem | null>(null);
+
+  const [processing, setProcessing] = useState(false);
+  const [resultOpen, setResultOpen] = useState(false);
+  const [resultSuccess, setResultSuccess] = useState(true);
+  const [resultMessage, setResultMessage] = useState("");
+
+  const showResult = (success: boolean, message: string) => {
+    setResultSuccess(success);
+    setResultMessage(message);
+    setResultOpen(true);
+  };
 
   useEffect(() => {
     dispatch(fetchVendors({ page, page_size: pageSize }));
@@ -85,10 +97,13 @@ export default function VendorsPage() {
           onArchive={() => { setSelectedVendor(v); setArchiveOpen(true); }}
           onUnarchive={async () => {
             try {
+              setProcessing(true);
               await dispatch(unarchiveVendor(v.id)).unwrap();
-              setError(null);
-            } catch (err: unknown) {
-              setError(getErrorMessage(err));
+              showResult(true, "Vendor unarchived successfully.");
+            } catch (err) {
+              showResult(false, getErrorMessage(err));
+            } finally {
+              setProcessing(false);
             }
           }}
         />
@@ -99,9 +114,15 @@ export default function VendorsPage() {
   return (
     <div className="p-6">
       <PageHeader title="Vendor Management" description="Manage vendor onboarding & verification" addButtonLabel="Add Vendor" onAdd={() => setAddOpen(true)} />
-      <ErrorAlert message={fetchError ?? error} />
+      <ErrorAlert message={fetchError } />
 
-      <AddVendorModal open={addOpen} onClose={() => setAddOpen(false)} />
+      <AddVendorModal
+        open={addOpen}
+        onClose={() => setAddOpen(false)}
+        onSuccess={() => showResult(true, "Vendor created successfully.")}
+        onError={(msg) => showResult(false, msg)}
+        setProcessing={setProcessing}
+      />
 
       {selectedVendor && (
         <>
@@ -114,10 +135,14 @@ export default function VendorsPage() {
             onClose={() => setArchiveOpen(false)}
             onConfirm={async () => {
               try {
+                setProcessing(true);
                 await dispatch(archiveVendor(selectedVendor.id)).unwrap();
+                showResult(true, "Vendor archived successfully.");
                 setArchiveOpen(false);
-              } catch (err: unknown) {
-                setError(getErrorMessage(err));
+              } catch (err) {
+                showResult(false, getErrorMessage(err));
+              } finally {
+                setProcessing(false);
               }
             }}
           />
@@ -159,6 +184,14 @@ export default function VendorsPage() {
         />
       </div>
 
+      <BlockingLoader show={processing} />
+
+      <ResultModal
+        open={resultOpen}
+        success={resultSuccess}
+        message={resultMessage}
+        onClose={() => setResultOpen(false)}
+      />
     </div>
   );
 }

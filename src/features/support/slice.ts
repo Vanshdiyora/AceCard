@@ -5,10 +5,7 @@ import {
   replyToSupportTicket,
   getAllSupportTickets,
 } from "./services/support.service";
-import type {
-  SupportState,
-  SupportTicket,
-} from "./types";
+import type { SupportState, SupportTicket } from "./types";
 
 /* ---------------- THUNKS ---------------- */
 
@@ -18,25 +15,22 @@ export const fetchTickets = createAsyncThunk(
     try {
       return await getVendorSupportTickets(vendorId);
     } catch (err: any) {
-      return rejectWithValue(
-        err?.message ?? "Failed to fetch tickets"
-      );
+      return rejectWithValue(err?.message ?? "Failed to fetch tickets");
     }
   }
 );
 
 export const fetchAllTickets = createAsyncThunk(
   "support/fetchAll",
-  async (_, { rejectWithValue }) => {
+  async (params: { page: number; page_size: number }, { rejectWithValue }) => {
     try {
-      return await getAllSupportTickets();
+      return await getAllSupportTickets(params);
     } catch (err: any) {
-      return rejectWithValue(
-        err?.message ?? "Failed to fetch all tickets"
-      );
+      return rejectWithValue(err?.message ?? "Failed to fetch all tickets");
     }
   }
 );
+
 
 export const addTicket = createAsyncThunk(
   "support/add",
@@ -44,12 +38,12 @@ export const addTicket = createAsyncThunk(
     try {
       return await createSupportTicket(payload);
     } catch (err: any) {
-      return rejectWithValue(
-        err?.message ?? "Failed to create ticket"
-      );
+      return rejectWithValue(err?.message ?? "Failed to create ticket");
     }
   }
 );
+
+type TicketStatus = "open" | "pending" | "closed";
 
 export const replyTicket = createAsyncThunk(
   "support/reply",
@@ -58,18 +52,21 @@ export const replyTicket = createAsyncThunk(
       ticketId,
       message,
       status,
-    }: { ticketId: number; message: string; status: string },
+    }: { ticketId: number; message: string; status: TicketStatus },
     { rejectWithValue }
   ) => {
     try {
-      return await replyToSupportTicket(ticketId, {
+      await replyToSupportTicket(ticketId, { message, status });
+
+      return {
+        id: Date.now(),
+        ticket_id: ticketId,
         message,
-        status,
-      });
+        status, // now correctly typed
+        created_at: new Date().toISOString(),
+      };
     } catch (err: any) {
-      return rejectWithValue(
-        err?.message ?? "Failed to reply"
-      );
+      return rejectWithValue(err?.message ?? "Failed to reply");
     }
   }
 );
@@ -137,23 +134,20 @@ const supportSlice = createSlice({
       })
 
       /* -------- REPLY TICKET -------- */
-      .addCase(replyTicket.fulfilled, (state, action) => {
-        const reply = action.payload;
-        if (!reply) return;
+    .addCase(replyTicket.fulfilled, (state, action) => {
+  const reply = action.payload;
+  if (!reply) return;
 
-        const ticket = state.tickets.find(
-          (t) => t.id === reply.ticket_id
-        );
+  const ticket = state.tickets.find((t) => t.id === reply.ticket_id);
+  if (!ticket) return;
 
-        if (!ticket) return;
+  ticket.replies ??= [];
+  ticket.replies.push(reply);
 
-        ticket.replies ??= [];
-        ticket.replies.push(reply);
+  if (reply.status) ticket.status = reply.status;
+  ticket.updated_at = new Date().toISOString();
+});
 
-        if (reply.status) {
-          ticket.status = reply.status;
-        }
-      });
   },
 });
 

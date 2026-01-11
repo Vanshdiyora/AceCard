@@ -13,7 +13,6 @@ const navigate = useNavigate();
     qualified: "bg-orange-100 text-orange-700",
     contacted: "bg-yellow-100 text-yellow-700",
     hot: "bg-red-100 text-red-700",
-    negotiation: "bg-purple-100 text-purple-700",
     demo: "bg-indigo-100 text-indigo-700",
   };
 

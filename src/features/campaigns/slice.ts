@@ -55,7 +55,7 @@ export const duplicateCampaign = createAsyncThunk<
       products: campaign.products,
       start_date: campaign.start_date,
       end_date: campaign.end_date,
-      status: "active", // recommended
+      status: "active",
       budget: campaign.budget,
     };
 
@@ -64,7 +64,6 @@ export const duplicateCampaign = createAsyncThunk<
     return rejectWithValue(extractApiError(err, "Failed to duplicate campaign"));
   }
 });
-
 
 export const fetchCampaignsByTeamMember = createAsyncThunk<
   CampaignListResponse,
@@ -141,13 +140,11 @@ const campaignSlice = createSlice({
   extraReducers: (builder) => {
     builder
 
+      /* ---------- FETCH ALL ---------- */
       .addCase(fetchCampaigns.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(duplicateCampaign.fulfilled, (state, action) => {
-  state.items.unshift(action.payload);
-})
       .addCase(fetchCampaigns.fulfilled, (state, action) => {
         state.loading = false;
         state.items = action.payload.data;
@@ -158,34 +155,65 @@ const campaignSlice = createSlice({
         state.error = action.payload ?? "Failed to fetch campaigns";
       })
 
-      .addCase(createCampaign.fulfilled, (state, action) => {
-        state.items.unshift(action.payload);
-      })
-
-      .addCase(updateCampaign.fulfilled, (state, action) => {
-        const idx = state.items.findIndex((c) => c.id === action.payload.id);
-        if (idx !== -1) state.items[idx] = action.payload;
-      })
-
-      .addCase(fetchCampaignsByTeamMember.pending, (state) => {
+      /* ---------- CREATE ---------- */
+      .addCase(createCampaign.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(fetchCampaignsByTeamMember.fulfilled, (state, action) => {
+      .addCase(createCampaign.fulfilled, (state, action) => {
         state.loading = false;
-        state.items = action.payload.data;
-        state.meta = action.payload.meta;
+        state.items.unshift(action.payload);
       })
-      .addCase(fetchCampaignsByTeamMember.rejected, (state, action) => {
+      .addCase(createCampaign.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload ?? "Failed to fetch member campaigns";
+        state.error = action.payload ?? "Failed to create campaign";
       })
 
-      .addCase(archiveCampaign.fulfilled, (state, action) => {
+      /* ---------- DUPLICATE ---------- */
+      .addCase(duplicateCampaign.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(duplicateCampaign.fulfilled, (state, action) => {
+        state.loading = false;
+        state.items.unshift(action.payload);
+      })
+      .addCase(duplicateCampaign.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload ?? "Failed to duplicate campaign";
+      })
+
+      /* ---------- UPDATE ---------- */
+      .addCase(updateCampaign.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(updateCampaign.fulfilled, (state, action) => {
+        state.loading = false;
         const idx = state.items.findIndex((c) => c.id === action.payload.id);
         if (idx !== -1) state.items[idx] = action.payload;
       })
+      .addCase(updateCampaign.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload ?? "Failed to update campaign";
+      })
 
+      /* ---------- ARCHIVE ---------- */
+      .addCase(archiveCampaign.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(archiveCampaign.fulfilled, (state, action) => {
+        state.loading = false;
+        const idx = state.items.findIndex((c) => c.id === action.payload.id);
+        if (idx !== -1) state.items[idx] = action.payload;
+      })
+      .addCase(archiveCampaign.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload ?? "Failed to archive campaign";
+      })
+
+      /* ---------- FETCH BY ID ---------- */
       .addCase(fetchCampaignById.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -199,6 +227,21 @@ const campaignSlice = createSlice({
       .addCase(fetchCampaignById.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload ?? "Failed to fetch campaign";
+      })
+
+      /* ---------- FETCH BY TEAM MEMBER ---------- */
+      .addCase(fetchCampaignsByTeamMember.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchCampaignsByTeamMember.fulfilled, (state, action) => {
+        state.loading = false;
+        state.items = action.payload.data;
+        state.meta = action.payload.meta;
+      })
+      .addCase(fetchCampaignsByTeamMember.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload ?? "Failed to fetch member campaigns";
       });
   },
 });

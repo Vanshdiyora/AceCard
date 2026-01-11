@@ -7,13 +7,22 @@ import type { VendorItem } from "../types";
 interface AddVendorModalProps {
   open: boolean;
   onClose: () => void;
+  onSuccess: () => void;
+  onError: (msg: string) => void;
+  setProcessing: (v: boolean) => void;
 }
 
 type VendorForm = Partial<VendorItem> & {
   password?: string;
 };
 
-export default function AddVendorModal({ open, onClose }: AddVendorModalProps) {
+export default function AddVendorModal({
+  open,
+  onClose,
+  onSuccess,
+  onError,
+  setProcessing,
+}: AddVendorModalProps) {
   const dispatch = useAppDispatch();
 
   const [form, setForm] = useState<VendorForm>({
@@ -27,16 +36,18 @@ export default function AddVendorModal({ open, onClose }: AddVendorModalProps) {
     password: "",
   });
 
-  /* 🔒 Disable background scroll when modal is open */
   useEffect(() => {
     if (open) {
       document.body.style.overflow = "hidden";
+      document.documentElement.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "";
+      document.documentElement.style.overflow = "";
     }
 
     return () => {
       document.body.style.overflow = "";
+      document.documentElement.style.overflow = "";
     };
   }, [open]);
 
@@ -45,31 +56,31 @@ export default function AddVendorModal({ open, onClose }: AddVendorModalProps) {
       name: "legal_name",
       label: "Legal Name",
       type: "text",
-      placeholder: "Enter legal registered name",
+      placeholder: "Enter company legal name",
     },
     {
       name: "address",
       label: "Address",
       type: "text",
-      placeholder: "Enter vendor's address",
+      placeholder: "Enter registered business address",
     },
     {
       name: "primary_email",
       label: "Primary Email",
       type: "email",
-      placeholder: "Enter main company email",
+      placeholder: "contact@company.com",
     },
     {
       name: "primary_phone",
       label: "Primary Phone",
       type: "text",
-      placeholder: "Enter main contact number",
+      placeholder: "Mobile Number",
     },
-     {
+    {
       name: "payment_terms",
       label: "Payment Terms",
       type: "select",
-      placeholder: "Select payment cycle",
+      placeholder: "Select payment frequency",
       options: [
         { label: "Monthly", value: "monthly" },
         { label: "Annually", value: "annually" },
@@ -79,19 +90,19 @@ export default function AddVendorModal({ open, onClose }: AddVendorModalProps) {
       name: "vendor_poc_email",
       label: "Vendor POC Email",
       type: "email",
-      placeholder: "Enter email of vendor's point of contact",
+      placeholder: "poc@company.com",
     },
     {
       name: "password",
       label: "Password",
       type: "text",
-      placeholder: "Enter temporary vendor password",
+      placeholder: "Set a temporary password",
     },
     {
       name: "crm_system",
       label: "CRM System",
       type: "select",
-      placeholder: "Select CRM",
+      placeholder: "Choose CRM (optional)",
       options: [
         { label: "None", value: "none" },
         { label: "Zoho", value: "zoho" },
@@ -101,13 +112,22 @@ export default function AddVendorModal({ open, onClose }: AddVendorModalProps) {
     },
   ];
 
+
   const update = (key: string, value: any) => {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
   const save = async () => {
-    await dispatch(createVendor(form));
-    onClose();
+    try {
+      setProcessing(true);
+      await dispatch(createVendor(form)).unwrap();
+      onSuccess();
+      onClose();
+    } catch (err: any) {
+      onError(err?.message || "Failed to create vendor.");
+    } finally {
+      setProcessing(false);
+    }
   };
 
   if (!open) return null;
@@ -127,10 +147,7 @@ export default function AddVendorModal({ open, onClose }: AddVendorModalProps) {
           <button className="px-4 py-2 border rounded" onClick={onClose}>
             Cancel
           </button>
-          <button
-            className="px-4 py-2 bg-purple-600 text-white rounded"
-            onClick={save}
-          >
+          <button className="px-4 py-2 bg-purple-600 text-white rounded" onClick={save}>
             Save
           </button>
         </div>
