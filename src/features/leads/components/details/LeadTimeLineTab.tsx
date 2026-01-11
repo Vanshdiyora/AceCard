@@ -1,61 +1,82 @@
-import type { Lead } from "../../types";
+import { useEffect } from "react";
+import { useAppDispatch, useAppSelector } from "../../../../app/hooks";
+import { fetchLeadTimeline } from "../../slice";
 import { Clock } from "lucide-react";
+import BrandLoader from "../../../../common/ui/BrandLoader";
 
 interface Props {
-  lead: Lead;
+  leadId: number;
 }
 
-export default function LeadTimeLineTab({ lead }: Props) {
+export default function LeadTimeLineTab({ leadId }: Props) {
+  const dispatch = useAppDispatch();
+  const timeline = useAppSelector((s) => s.leads.timeline[leadId]);
+  const loading = useAppSelector((s) => s.leads.loading);
+
+  useEffect(() => {
+    dispatch(fetchLeadTimeline(leadId));
+  }, [dispatch, leadId]);
+
+  // Show loader only on first load
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[350px]">
+        <BrandLoader />
+      </div>
+    );
+  }
+
+  // No data after load
+  if (!timeline && !loading) {
+    return (
+      <div className="p-6 text-sm text-gray-400 text-center">
+        No activity yet.
+      </div>
+    );
+  }
+
   return (
-    <div className="relative space-y-4">
-      {/* Vertical line */}
-      <div className="absolute left-3 top-0 bottom-0 w-px bg-gray-200" />
+    <div className="relative min-h-[200px]">
+      {timeline.length === 0 && !loading && (
+        <div className="p-6 text-sm text-gray-400 text-center">
+          No activity yet.
+        </div>
+      )}
 
-      <TimelineItem
-        title="Lead Created"
-        desc="Lead was added to the system"
-        time={lead.created_at}
-      />
-
-      <TimelineItem
-        title="Last Interaction"
-        desc="Most recent activity"
-        time={lead.last_interaction_at}
-      />
+      {timeline.length > 0 && (
+        <>
+          <div className="absolute left-5 top-0 bottom-0 w-px bg-gray-200" />
+          <div className="relative space-y-6">
+            {timeline.map((item) => (
+              <TimelineItem key={item.id} item={item} />
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }
 
-const TimelineItem = ({
-  title,
-  desc,
-  time,
-}: {
-  title: string;
-  desc: string;
-  time: string;
-}) => (
-  <div className="relative flex gap-4 items-start">
-    {/* Card */}
-    <div
-      className="
-        flex-1 bg-white border border-gray-100 rounded-2xl
-        px-5 py-4 shadow-sm hover:shadow-md transition
-      "
-    >
-      <div className="flex items-center justify-between mb-1">
-        <span className="text-sm font-semibold text-gray-900">
-          {title}
-        </span>
-        <span className="flex items-center gap-1 text-xs text-gray-400">
-          <Clock size={12} />
-          {new Date(time).toLocaleString()}
-        </span>
-      </div>
+function TimelineItem({ item }: { item: any }) {
+  return (
+    <div className="relative flex gap-4">
+      <div className="flex-1 bg-white border border-gray-100 rounded-2xl px-5 py-4 shadow-sm">
+        <div className="flex justify-between items-center mb-1">
+          <span className="text-sm font-semibold text-gray-900">
+            {item.title}
+          </span>
+          <span className="flex items-center gap-1 text-xs text-gray-400">
+            <Clock size={12} />
+            {new Date(item.timestamp).toLocaleString()}
+          </span>
+        </div>
 
-      <p className="text-sm text-gray-600 leading-relaxed">
-        {desc}
-      </p>
+        <p className="text-sm text-gray-600">{item.description}</p>
+
+        {item.actor && (
+          <p className="mt-1 text-xs text-gray-400">by {item.actor}</p>
+        )}
+      </div>
     </div>
-  </div>
-);
+  );
+}

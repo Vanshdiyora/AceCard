@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from "react";
 import { useAppDispatch, useAppSelector } from "../../../../app/hooks";
 import { fetchLeadNotes } from "../../slice";
-import { fetchTeam } from "../../../teams/slice";
+import BrandLoader from "../../../../common/ui/BrandLoader";
 
 interface Props {
   leadId: number;
@@ -15,7 +15,6 @@ export default function LeadNotesTab({ leadId }: Props) {
   const teamMembers = useAppSelector((s) => s.team.members);
 
   useEffect(() => {
-    dispatch(fetchTeam());
     dispatch(fetchLeadNotes(leadId));
   }, [dispatch, leadId]);
 
@@ -31,8 +30,8 @@ export default function LeadNotesTab({ leadId }: Props) {
     <div className="space-y-6">
       <div className="space-y-4">
         {loading && (
-          <div className="bg-white border border-gray-100 rounded-2xl p-4 text-sm text-gray-400">
-            Loading notes…
+          <div className="flex items-center justify-center min-h-[350px]">
+            <BrandLoader />
           </div>
         )}
 
@@ -55,7 +54,6 @@ export default function LeadNotesTab({ leadId }: Props) {
     </div>
   );
 }
-
 
 const NoteCard = ({
   authorName,

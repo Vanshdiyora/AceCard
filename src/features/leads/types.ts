@@ -51,3 +51,14 @@ export interface LeadNote {
   body: string;
   created_at: string;
 }
+
+export type TimelineEventType = "note" | "created" | "updated" | "status_changed" | "unknown";
+
+export interface TimelineItem {
+  id: string;
+  type: TimelineEventType;
+  timestamp: string;
+  title: string;
+  description: string;
+  actor?: string;
+}

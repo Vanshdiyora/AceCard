@@ -48,4 +48,10 @@ export const ProductsAPI = {
     );
     return res.data;
   },
+  /* -------- LOOKUP PRODUCTS BY IDS -------- */
+async lookupByIds(ids: number[]): Promise<Product[]> {
+  const res = await axiosClient.post("/vendor/products/lookup", { ids });
+  return res.data;
+},
+
 };

@@ -1,16 +1,16 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { ArrowLeft, Edit, Trash2 } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 
 import { useAppDispatch, useAppSelector } from "../../../app/hooks";
-import { updateLead, archiveLead, fetchLeadById } from "../slice";
+import { fetchLeadById } from "../slice";
 
-import EditLeadModal from "../components/EditLeadModal";
 import LeadOverviewTab from "../components/details/LeadOverviewTab";
 import LeadTimelineTab from "../components/details/LeadTimeLineTab";
 import LeadNotesTab from "../components/details/LeadNotesTab";
 import LeadFollowupsTab from "../components/details/LeadFollowupsTab";
 import LeadProductsTab from "../components/details/LeadProductsTab";
+import BrandLoader from "../../../common/ui/BrandLoader";
 
 const TABS = ["overview", "timeline", "notes", "followups", "products"] as const;
 
@@ -21,7 +21,6 @@ export default function LeadDetailsPage() {
 
   const [activeTab, setActiveTab] =
     useState<typeof TABS[number]>("overview");
-  const [editOpen, setEditOpen] = useState(false);
 
   const { leads, loading } = useAppSelector((s) => s.leads);
   const lead = leads.find((l) => l.id === Number(id));
@@ -32,22 +31,35 @@ export default function LeadDetailsPage() {
     }
   }, [id, dispatch]);
 
+  /* ---------- Loading ---------- */
   if (loading && !lead) {
-    return <div className="p-8 text-sm text-gray-500">Loading lead…</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <BrandLoader message="Loading lead..." />
+      </div>
+    );
   }
 
+  /* ---------- Not Found ---------- */
   if (!loading && !lead) {
-    return <div className="p-8 text-sm text-red-500">Lead not found</div>;
+    return (
+      <div className="flex flex-col h-full">
+        <button
+          onClick={() => navigate(-1)}
+          className="flex items-center mt-6 gap-2 text-sm text-gray-500 hover:text-black"
+        >
+          <ArrowLeft size={16} />
+          Back to Leads
+        </button>
+        <div className="flex flex-1 items-center justify-center text-red-500">
+          Lead not found
+        </div>
+      </div>
+    );
   }
 
+  // ✅ TypeScript now knows lead exists
   if (!lead) return null;
-
-  const archive = async () => {
-    if (confirm("Archive this lead?")) {
-      await dispatch(archiveLead(lead.id));
-      navigate("/admin/leads");
-    }
-  };
 
   return (
     <div className="mx-auto p-6 space-y-6">
@@ -70,23 +82,6 @@ export default function LeadDetailsPage() {
             {lead.lead_name}
           </h2>
           <span className="text-sm text-gray-500">{lead.company}</span>
-        </div>
-
-        <div className="flex gap-2">
-          <button
-            onClick={() => setEditOpen(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-xl border border-gray-200 hover:bg-gray-50 transition"
-          >
-            <Edit size={14} />
-            Edit
-          </button>
-          <button
-            onClick={archive}
-            className="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-xl border border-red-200 text-red-600 hover:bg-red-50 transition"
-          >
-            <Trash2 size={14} />
-            Archive
-          </button>
         </div>
       </div>
 
@@ -113,22 +108,11 @@ export default function LeadDetailsPage() {
       {/* Content */}
       <div>
         {activeTab === "overview" && <LeadOverviewTab lead={lead} />}
-        {activeTab === "timeline" && <LeadTimelineTab lead={lead} />}
+        {activeTab === "timeline" && <LeadTimelineTab leadId={lead.id} />}
         {activeTab === "notes" && <LeadNotesTab leadId={lead.id} />}
         {activeTab === "followups" && <LeadFollowupsTab />}
         {activeTab === "products" && <LeadProductsTab lead={lead} />}
       </div>
-
-      {/* Edit Modal */}
-      <EditLeadModal
-        open={editOpen}
-        lead={lead}
-        onClose={() => setEditOpen(false)}
-        onSubmit={(data) => {
-          dispatch(updateLead({ id: lead.id, data }));
-          setEditOpen(false);
-        }}
-      />
     </div>
   );
 }

@@ -6,6 +6,7 @@ import type {
   PaginationMeta,
   LeadsApiResponse,
   LeadNote,
+  TimelineItem
 } from "./types";
 import { LeadsService } from "./services/leads.service";
 
@@ -31,6 +32,8 @@ interface LeadsState {
   notes: Record<number, LeadNote[]>;
   loading: boolean;
   error: string | null;
+  timeline: Record<number, TimelineItem[]>;
+
 }
 
 const initialState: LeadsState = {
@@ -39,6 +42,7 @@ const initialState: LeadsState = {
   notes: {},
   loading: false,
   error: null,
+  timeline: {},
 };
 
 /* -----------------------------------------------------
@@ -84,6 +88,53 @@ export const updateLead = createAsyncThunk<
     return await LeadsService.updateLead(id, data);
   } catch (err) {
     return rejectWithValue(extractApiError(err, "Failed to update lead"));
+  }
+});
+
+export const fetchLeadTimeline = createAsyncThunk<
+  { leadId: number; timeline: TimelineItem[] },
+  number,
+  { rejectValue: string }
+>("leads/fetchTimeline", async (leadId, { rejectWithValue }) => {
+  try {
+    const raw = await LeadsService.getTimeline(leadId);
+
+    const normalized: TimelineItem[] = raw.map((e: any) => {
+      switch (e.type) {
+        case "note":
+          return {
+            id: e.id,
+            type: "note",
+            timestamp: e.timestamp,
+            title: "Note Added",
+            description: e.data?.body ?? "Note added",
+            actor: e.data?.author_id ? `User #${e.data.author_id}` : undefined,
+          };
+
+        case "created":
+          return {
+            id: e.id,
+            type: "created",
+            timestamp: e.timestamp,
+            title: "Lead Created",
+            description: `Source: ${e.data?.source ?? "unknown"}`,
+            actor: e.data?.actor,
+          };
+
+        default:
+          return {
+            id: e.id,
+            type: "unknown",
+            timestamp: e.timestamp,
+            title: "Activity",
+            description: "An activity occurred",
+          };
+      }
+    });
+
+    return { leadId, timeline: normalized };
+  } catch (err) {
+    return rejectWithValue(extractApiError(err, "Failed to load timeline"));
   }
 });
 
@@ -179,6 +230,16 @@ const leadsSlice = createSlice({
       })
       .addCase(archiveLead.rejected, (state, action) => {
         state.error = action.payload ?? "Failed to archive lead";
+      })
+      .addCase(fetchLeadTimeline.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(fetchLeadTimeline.fulfilled, (state, action) => {
+        state.loading = false;
+        state.timeline[action.payload.leadId] = action.payload.timeline;
+      })
+      .addCase(fetchLeadTimeline.rejected, (state) => {
+        state.loading = false;
       })
 
       .addCase(fetchLeadNotes.pending, (state) => {

@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { ProductsAPI } from "./services/products.service";
-import type { ProductState, ProductListResponse, Product } from "./types";
+import type { ProductState, ProductListResponse, Product, ProductLookup } from "./types";
 
 type ApiError = { response?: { data?: { error?: string; message?: string } } };
 
@@ -73,6 +73,20 @@ export const archiveProduct = createAsyncThunk<
   }
 });
 
+export const lookupProducts = createAsyncThunk<
+  ProductLookup[],
+  number[],
+  { rejectValue: string }
+>("products/lookup", async (ids, { rejectWithValue }) => {
+  try {
+    return await ProductsAPI.lookupByIds(ids);
+  } catch (err) {
+    return rejectWithValue(extractApiError(err, "Failed to lookup products"));
+  }
+});
+
+
+
 /* ---------------- STATE ---------------- */
 
 const initialState: ProductState & { error: string | null } = {
@@ -81,6 +95,7 @@ const initialState: ProductState & { error: string | null } = {
   selectedProduct: null,
   loading: false,
   error: null,
+  lookup: [],
 };
 
 /* ---------------- SLICE ---------------- */
@@ -180,7 +195,21 @@ const productsSlice = createSlice({
       .addCase(archiveProduct.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload ?? "Failed to archive product";
+      })
+      // LOOK UP
+      .addCase(lookupProducts.pending, (state) => {
+        state.loading = true;
+      })
+     .addCase(lookupProducts.fulfilled, (state, action) => {
+  state.loading = false;
+  state.lookup = action.payload;
+})
+
+      .addCase(lookupProducts.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload ?? "Failed to lookup products";
       });
+
   },
 });
 

@@ -25,6 +25,11 @@ export interface ProductListResponse {
   data: Product[];
   meta: ProductMeta;
 }
+/* ---------- PRODUCT LOOKUP ---------- */
+export interface ProductLookup {
+  id: number;
+  name: string;
+}
 
 /* ---------- STATE ---------- */
 export interface ProductState {
@@ -37,4 +42,5 @@ export interface ProductState {
   selectedProduct: Product | null;
 
   loading: boolean;
+  lookup: ProductLookup[];
 }

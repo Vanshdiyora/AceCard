@@ -60,4 +60,9 @@ async getLeads(
 
     return res.data.data;
   },
+  async getTimeline(leadId: number): Promise<any[]> {
+  const res = await axiosClient.get(`${BASE}/${leadId}/timeline`);
+  return Array.isArray(res.data) ? res.data : [];
+},
+
 };
