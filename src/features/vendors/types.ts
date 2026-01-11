@@ -23,7 +23,7 @@ export interface VendorItem {
   payment_terms: string;
   vendor_poc_email: string;
 
-  crm_system: string;
+  crm_system: string[], 
   crm_manual_trigger: boolean;
   crm_realtime_sync: boolean;
 

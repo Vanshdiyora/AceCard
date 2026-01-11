@@ -36,7 +36,7 @@ export default function EditVendorModal({
       name: "legal_name",
       label: "Legal Name",
       type: "text",
-      placeholder: "Enter company legal name",
+      placeholder: "Enter legal company name",
     },
     {
       name: "address",
@@ -54,13 +54,13 @@ export default function EditVendorModal({
       name: "primary_phone",
       label: "Primary Phone",
       type: "text",
-      placeholder: "Mobile Number",
+      placeholder: "Enter primary contact number",
     },
     {
       name: "payment_terms",
       label: "Payment Terms",
       type: "select",
-      placeholder: "Select payment frequency",
+      placeholder: "Select payment terms",
       options: [
         { label: "Monthly", value: "monthly" },
         { label: "Annually", value: "annually" },
@@ -80,17 +80,18 @@ export default function EditVendorModal({
     },
     {
       name: "crm_system",
-      label: "CRM System",
-      type: "select",
-      placeholder: "Choose CRM (optional)",
+      label: "CRM Systems",
+      type: "multiselect",
+      placeholder: "Select CRM systems (optional)",
       options: [
-        { label: "None", value: "none" },
         { label: "Zoho", value: "zoho" },
         { label: "HubSpot", value: "hubspot" },
         { label: "Salesforce", value: "salesforce" },
+        { label: "Custom", value: "custom" },
       ],
     },
   ];
+
 
 
   const update = (key: string, value: any) => {

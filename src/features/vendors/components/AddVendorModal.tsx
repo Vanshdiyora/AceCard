@@ -12,9 +12,7 @@ interface AddVendorModalProps {
   setProcessing: (v: boolean) => void;
 }
 
-type VendorForm = Partial<VendorItem> & {
-  password?: string;
-};
+type VendorForm = Partial<VendorItem> & { password?: string };
 
 export default function AddVendorModal({
   open,
@@ -32,31 +30,22 @@ export default function AddVendorModal({
     primary_phone: "",
     payment_terms: "",
     vendor_poc_email: "",
-    crm_system: "none",
+    crm_system: [], // keep empty so placeholder shows
     password: "",
   });
 
   useEffect(() => {
-    if (open) {
-      document.body.style.overflow = "hidden";
-      document.documentElement.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-      document.documentElement.style.overflow = "";
-    }
-
+    document.body.style.overflow = open ? "hidden" : "";
     return () => {
       document.body.style.overflow = "";
-      document.documentElement.style.overflow = "";
     };
   }, [open]);
-
   const fields: FieldConfig[] = [
     {
       name: "legal_name",
       label: "Legal Name",
       type: "text",
-      placeholder: "Enter company legal name",
+      placeholder: "Enter legal company name",
     },
     {
       name: "address",
@@ -74,13 +63,13 @@ export default function AddVendorModal({
       name: "primary_phone",
       label: "Primary Phone",
       type: "text",
-      placeholder: "Mobile Number",
+      placeholder: "Enter primary contact number",
     },
     {
       name: "payment_terms",
       label: "Payment Terms",
       type: "select",
-      placeholder: "Select payment frequency",
+      placeholder: "Select payment terms",
       options: [
         { label: "Monthly", value: "monthly" },
         { label: "Annually", value: "annually" },
@@ -100,14 +89,14 @@ export default function AddVendorModal({
     },
     {
       name: "crm_system",
-      label: "CRM System",
-      type: "select",
-      placeholder: "Choose CRM (optional)",
+      label: "CRM Systems",
+      type: "multiselect",
+      placeholder: "Select CRM systems (optional)",
       options: [
-        { label: "None", value: "none" },
         { label: "Zoho", value: "zoho" },
         { label: "HubSpot", value: "hubspot" },
         { label: "Salesforce", value: "salesforce" },
+        { label: "Custom", value: "custom" },
       ],
     },
   ];
@@ -120,7 +109,16 @@ export default function AddVendorModal({
   const save = async () => {
     try {
       setProcessing(true);
-      await dispatch(createVendor(form)).unwrap();
+
+      const payload = {
+        ...form,
+        crm_system:
+          form.crm_system && form.crm_system.length > 0
+            ? form.crm_system
+            : ["none"], // fallback only in payload
+      };
+
+      await dispatch(createVendor(payload)).unwrap();
       onSuccess();
       onClose();
     } catch (err: any) {
@@ -139,7 +137,7 @@ export default function AddVendorModal({
           <h2 className="text-xl font-semibold">Add Vendor</h2>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-5 py-3">
+        <div className="flex-1 overflow-y-auto">
           <DynamicForm fields={fields} form={form} onChange={update} />
         </div>
 
@@ -147,7 +145,10 @@ export default function AddVendorModal({
           <button className="px-4 py-2 border rounded" onClick={onClose}>
             Cancel
           </button>
-          <button className="px-4 py-2 bg-purple-600 text-white rounded" onClick={save}>
+          <button
+            className="px-4 py-2 bg-purple-600 text-white rounded"
+            onClick={save}
+          >
             Save
           </button>
         </div>

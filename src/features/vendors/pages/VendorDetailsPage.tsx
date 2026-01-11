@@ -101,14 +101,14 @@ export default function VendorDetailsPage() {
     .toUpperCase();
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6">
       <button
         onClick={() => navigate(-1)}
         className="flex items-center gap-2 text-xs text-gray-400 hover:text-gray-700"
       >
         <ArrowLeft size={14} /> Back to Vendors
       </button>
-
+      <div className="mt-6" />
       <DetailPageHeader
         title={vendor.legal_name}
         subtitle={vendor.primary_email}
@@ -126,6 +126,7 @@ export default function VendorDetailsPage() {
           </>
         }
       />
+      <div className="mt-6" />
 
       {/* Row 1 */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -148,6 +149,7 @@ export default function VendorDetailsPage() {
           <Info label="Joined" value={new Date(vendor.created_at).toDateString()} />
         </Section>
       </div>
+      <div className="mt-6" />
 
       {/* Row 2 */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -210,23 +212,28 @@ export default function VendorDetailsPage() {
 
 function Section({ title, icon, children }: any) {
   return (
-    <div className="bg-white rounded-2xl p-6 shadow space-y-4">
+    <div className="bg-white rounded-2xl p-6 shadow space-y-4 min-w-0 overflow-hidden">
       <div className="flex items-center gap-2 text-purple-600 font-semibold">
         {icon} {title}
       </div>
-      <div className="grid grid-cols-2 gap-4">{children}</div>
+      <div className="grid grid-cols-2 gap-4 min-w-0">
+        {children}
+      </div>
     </div>
   );
 }
 
 function Info({ label, value }: any) {
   return (
-    <div>
+    <div className="min-w-0 overflow-hidden">
       <p className="text-xs text-gray-400">{label}</p>
-      <div className="font-medium">{value}</div>
+      <div className="font-medium break-all leading-snug">
+        {value}
+      </div>
     </div>
   );
 }
+
 
 function StatusBadge({ status }: any) {
   return (

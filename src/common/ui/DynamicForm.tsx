@@ -2,16 +2,16 @@ export interface FieldConfig {
   name: string;
   label: string;
   type:
-  | "text"
-  | "number"
-  | "email"
-  | "select"
-  | "textarea"
-  | "date"
-  | "checkbox"
-  | "multiselect"
-  | "radio"
-  | "datetime";
+    | "text"
+    | "number"
+    | "email"
+    | "select"
+    | "textarea"
+    | "date"
+    | "checkbox"
+    | "multiselect"
+    | "radio"
+    | "datetime";
   placeholder?: string;
   options?: { label: string; value: any }[];
 }
@@ -24,7 +24,7 @@ interface DynamicFormProps {
 }
 
 const baseInputClass =
-  "border rounded-lg w-full min-w-0 max-w-full p-2 text-sm truncate box-border appearance-none focus:outline-none focus:ring-2 focus:ring-purple-500";
+  "border rounded-lg w-full min-w-0 max-w-full p-2 text-sm truncate box-border appearance-none focus:outline-none focus:ring-2 focus:ring-purple-500 overflow-hidden";
 
 export default function DynamicForm({
   fields,
@@ -34,12 +34,15 @@ export default function DynamicForm({
 }: DynamicFormProps) {
   return (
     <form
-      className="p-5 space-y-4 overflow-y-auto custom-scrollbar flex-1"
+      className="p-5 space-y-4 overflow-y-auto overflow-x-hidden custom-scrollbar flex-1"
       noValidate={noValidate}
     >
       {fields.map((field) => (
-        <div key={field.name} className="flex flex-col min-w-0">
-          <label className="text-sm font-medium capitalize mb-1">
+        <div
+          key={field.name}
+          className="flex flex-col min-w-0 overflow-hidden"
+        >
+          <label className="text-sm font-medium capitalize mb-1 truncate">
             {field.label}
           </label>
 
@@ -67,20 +70,18 @@ export default function DynamicForm({
             />
           )}
 
-
           {field.type === "textarea" && (
             <textarea
               rows={3}
-              className={baseInputClass}
+              className={`${baseInputClass} resize-none`}
               placeholder={field.placeholder}
               value={form[field.name] ?? ""}
               onChange={(e) => onChange(field.name, e.target.value)}
             />
           )}
 
-
           {field.type === "select" && (
-            <div className="relative w-full max-w-full">
+            <div className="relative w-full max-w-full overflow-hidden">
               <select
                 className={baseInputClass}
                 value={form[field.name] ?? ""}
@@ -100,13 +101,12 @@ export default function DynamicForm({
             </div>
           )}
 
-
           {field.type === "radio" && (
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2 overflow-hidden">
               {field.options?.map((opt) => (
                 <label
                   key={opt.value}
-                  className="flex items-center gap-2 cursor-pointer"
+                  className="flex items-center gap-2 cursor-pointer truncate"
                 >
                   <input
                     type="radio"
@@ -114,18 +114,18 @@ export default function DynamicForm({
                     value={opt.value}
                     checked={form[field.name] === opt.value}
                     onChange={() => onChange(field.name, opt.value)}
-                    className="h-4 w-4"
+                    className="h-4 w-4 shrink-0"
                   />
-                  <span className="text-sm">{opt.label}</span>
+                  <span className="text-sm truncate">{opt.label}</span>
                 </label>
               ))}
             </div>
           )}
 
           {field.type === "multiselect" && (
-            <div className="border rounded-lg p-2 space-y-1 max-h-40 overflow-y-auto">
+            <div className="border rounded-lg p-2 space-y-1 max-h-40 overflow-y-auto overflow-x-hidden">
               {(!form[field.name] || form[field.name].length === 0) && (
-                <p className="text-xs text-gray-400 italic">
+                <p className="text-xs text-gray-400 italic truncate">
                   {field.placeholder || "Select one or more options"}
                 </p>
               )}
@@ -136,7 +136,7 @@ export default function DynamicForm({
                 return (
                   <label
                     key={opt.value}
-                    className="flex items-center gap-2 p-1 rounded hover:bg-gray-100 cursor-pointer"
+                    className="flex items-center gap-2 p-1 rounded hover:bg-gray-100 cursor-pointer overflow-hidden"
                   >
                     <input
                       type="checkbox"
@@ -154,10 +154,10 @@ export default function DynamicForm({
 
                         onChange(field.name, updatedValues);
                       }}
-                      className="h-4 w-4"
+                      className="h-4 w-4 shrink-0"
                     />
 
-                    <span className="text-sm">{opt.label}</span>
+                    <span className="text-sm truncate">{opt.label}</span>
                   </label>
                 );
               })}
@@ -174,12 +174,15 @@ export default function DynamicForm({
           )}
 
           {field.type === "checkbox" && (
-            <input
-              type="checkbox"
-              className="h-4 w-4"
-              checked={!!form[field.name]}
-              onChange={(e) => onChange(field.name, e.target.checked)}
-            />
+            <div className="flex items-center gap-2 overflow-hidden">
+              <input
+                type="checkbox"
+                className="h-4 w-4 shrink-0"
+                checked={!!form[field.name]}
+                onChange={(e) => onChange(field.name, e.target.checked)}
+              />
+              <span className="text-sm truncate">{field.label}</span>
+            </div>
           )}
         </div>
       ))}
