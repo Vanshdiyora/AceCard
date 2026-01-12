@@ -1,4 +1,4 @@
-import { Navigate, useLocation } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 import { useAppSelector } from "../app/hooks";
 import type { ReactNode } from "react";
 
@@ -13,23 +13,16 @@ export default function ProtectedRoute({
   superOnly = false,
   adminOnly = false,
 }: ProtectedRouteProps) {
-  const { token, role } = useAppSelector((s) => s.auth);
-  const location = useLocation();
+  const { token, role, loading } = useAppSelector((s) => s.auth);
 
-  // Not logged in
-  if (!token) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
-  }
+  if (loading) return null; // ⬅ wait for auth resolution
 
-  // Super admin only
-  if (superOnly && role !== "super_admin") {
-    return <Navigate to="/admin" replace />;
-  }
+  if (!token) return <Navigate to="/login" replace />;
 
-  // Admin only
-  if (adminOnly && (role === "sales_rep" || role === "super_admin")) {
+  if (superOnly && role !== "super_admin") return <Navigate to="/admin" replace />;
+
+  if (adminOnly && (role === "sales_rep" || role === "super_admin"))
     return <Navigate to="/unauthorized" replace />;
-  }
 
   return <>{children}</>;
 }

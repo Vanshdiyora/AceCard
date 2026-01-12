@@ -76,9 +76,9 @@ export default function TeamPage() {
   useEffect(() => {
     setPage(1);
   }, [filter, search]);
+
   const lockScroll = () => {
     const scrollBarWidth = window.innerWidth - document.documentElement.clientWidth;
-
     document.documentElement.style.overflow = "hidden";
     document.body.style.overflow = "hidden";
     document.body.style.paddingRight = `${scrollBarWidth}px`;
@@ -117,29 +117,24 @@ export default function TeamPage() {
   }, [members, filter, search]);
 
   const columns: Column<TeamMember>[] = [
-    { header: "Name", 
-      accessor: "name" },
-    { header: "Email", 
-      width: "2fr",
-      accessor: "email" },
+    { header: "Name", accessor: "name" },
+    { header: "Email", width: "2fr", accessor: "email" },
     {
       header: "Status",
       align: "center",
-
       render: (m) => (
         <span
-          className={`px-2 py-1 rounded text-xs ${m.status === "active"
+          className={`px-2 py-1 rounded text-xs ${
+            m.status === "active"
               ? "bg-green-100 text-green-700"
               : "bg-red-100 text-red-700"
-            }`}
+          }`}
         >
           {m.status}
         </span>
       ),
     },
-    { header: "Role", 
-      align: "right",
-      render: (m) => m.role.replace("_", " ") },
+    { header: "Role", align: "right", render: (m) => m.role.replace("_", " ") },
     {
       header: "Manager",
       align: "right",
@@ -173,8 +168,8 @@ export default function TeamPage() {
           currentRole === "vendor_admin"
             ? "Add Member"
             : currentRole === "manager"
-              ? "Add Sales Rep"
-              : undefined
+            ? "Add Sales Rep"
+            : undefined
         }
         onAdd={() => setAddOpen(true)}
       />
@@ -219,8 +214,8 @@ export default function TeamPage() {
             await dispatch(createMember(data)).unwrap();
             setAddOpen(false);
             showResult(true, "Team member added successfully.");
-          } catch {
-            showResult(false, "Failed to add member.");
+          } catch (err: any) { // 🔴 CHANGED
+            showResult(false, err || "Failed to add member.");
           } finally {
             setBlocking(false);
           }
@@ -243,8 +238,8 @@ export default function TeamPage() {
             await dispatch(updateMember({ id: selected.id, data })).unwrap();
             setEditOpen(false);
             showResult(true, "Member updated successfully.");
-          } catch {
-            showResult(false, "Failed to update member.");
+          } catch (err: any) { // 🔴 CHANGED
+            showResult(false, err || "Failed to update member.");
           } finally {
             setBlocking(false);
           }
@@ -266,8 +261,8 @@ export default function TeamPage() {
             await dispatch(updatePermissions({ id: selected.id, data })).unwrap();
             setPermOpen(false);
             showResult(true, "Permissions updated successfully.");
-          } catch {
-            showResult(false, "Failed to update permissions.");
+          } catch (err: any) { // 🔴 CHANGED
+            showResult(false, err || "Failed to update permissions.");
           } finally {
             setBlocking(false);
           }

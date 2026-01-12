@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import ProtectedRoute from "./utils/ProtectedRoute";
+import RootRedirect from "./utils/RootRedirect";
 
 import LoginPage from "./features/auth/pages/LoginPage";
 import SuperAdminLayout from "./portals/superadmin/layout/SuperAdminLayout";
@@ -31,10 +32,14 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
+        {/* ROOT */}
+        <Route path="/" element={<RootRedirect />} />
+
         {/* LOGIN */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/unauthorized" element={<UnauthorizedPage />} />
-          <Route path="/not-found" element={<PageNotFound />} />
+        <Route path="/not-found" element={<PageNotFound />} />
+
         {/* SUPER ADMIN ROUTES */}
         <Route
           path="/super/*"
@@ -75,8 +80,8 @@ export default function App() {
           <Route path="*" element={<Navigate to="/not-found" replace />} />
         </Route>
 
-        {/* GLOBAL FALLBACK — NO LAYOUT */}
-        <Route path="*" element={<PageNotFound />} />
+        {/* GLOBAL FALLBACK */}
+        <Route path="*" element={<Navigate to="/not-found" replace />} />
       </Routes>
     </BrowserRouter>
   );

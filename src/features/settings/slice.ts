@@ -137,6 +137,22 @@ export const removeSuggestedQuestion = createAsyncThunk<number, number>(
   }
 );
 
+export const resetPassword = createAsyncThunk<
+  void,
+  { old_password: string; new_password: string }
+>("settings/resetPassword", async (payload, thunkAPI) => {
+  try {
+    await settingsService.resetPassword(payload);
+  } catch (err: any) {
+    return thunkAPI.rejectWithValue(
+      err.response?.data?.error ||
+      err.response?.data?.message ||
+      "Failed to update password"
+    );
+  }
+});
+
+
 /* ======================================================
    SLICE
 ====================================================== */
@@ -241,7 +257,19 @@ const settingsSlice = createSlice({
         s.suggestedQuestions.data = s.suggestedQuestions.data.filter(
           (q) => q.id !== a.payload
         );
-      });
+      })
+      .addCase(resetPassword.pending, (s) => {
+  s.account.saving = true;
+  s.account.error = null;
+})
+.addCase(resetPassword.fulfilled, (s) => {
+  s.account.saving = false;
+})
+.addCase(resetPassword.rejected, (s, a) => {
+  s.account.saving = false;
+  s.account.error = a.payload as string;
+});
+
   },
 });
 

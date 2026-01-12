@@ -90,5 +90,7 @@ export const settingsService = {
     await axios.delete(`/vendor/suggested-questions/${id}`);
     return id;
   },
-
+  async resetPassword(payload: { old_password: string; new_password: string }) {
+    await axios.put("/profile/password", payload);
+  }
 };
