@@ -4,7 +4,10 @@ import NotificationBell from "./NotificationBell";
 import GlobalSearch from "../../../features/globalSearch/components/GlobalSearch";
 import { useAppDispatch, useAppSelector } from "../../../app/hooks";
 import { logout } from "../../../features/auth/slice";
-import { fetchAccountProfile } from "../../../features/settings/slice";
+import {
+  fetchAccountProfile,
+  resetSettings,
+} from "../../../features/settings/slice";
 
 type TopbarProps = {
   type: "admin" | "super_admin";
@@ -16,10 +19,13 @@ export default function Topbar({ type }: TopbarProps) {
 
   const profile = useAppSelector((s) => s.settings.account.data);
   const jwtUser = useAppSelector((s) => s.auth.user);
+  const token = useAppSelector((s) => s.auth.token);
 
   useEffect(() => {
-    if (!profile) dispatch(fetchAccountProfile());
-  }, [profile, dispatch]);
+    if (token) {
+      dispatch(fetchAccountProfile());
+    }
+  }, [token, dispatch]);
 
   const name =
     profile?.name ||
@@ -29,7 +35,7 @@ export default function Topbar({ type }: TopbarProps) {
 
   const initials = name
     .split(" ")
-    .map((n: any) => n[0])
+    .map((n:any) => n[0])
     .join("")
     .toUpperCase()
     .slice(0, 2);
@@ -49,6 +55,7 @@ export default function Topbar({ type }: TopbarProps) {
 
   const handleLogout = () => {
     dispatch(logout());
+    dispatch(resetSettings());
     navigate("/login", { replace: true });
   };
 
@@ -72,7 +79,6 @@ export default function Topbar({ type }: TopbarProps) {
 
         <div className="flex items-center gap-4 shrink-0">
           <NotificationBell />
-
           <div
             className="relative flex items-center gap-2 cursor-pointer"
             onClick={() => setOpen((p) => !p)}
@@ -81,11 +87,9 @@ export default function Topbar({ type }: TopbarProps) {
             <div className="w-10 h-10 bg-purple-600 text-white rounded-full flex items-center justify-center font-medium">
               {initials}
             </div>
-
             <span className="hidden sm:block text-gray-700 font-medium">
               {name}
             </span>
-
             {open && Dropdown}
           </div>
         </div>
@@ -95,9 +99,7 @@ export default function Topbar({ type }: TopbarProps) {
 
   return (
     <header className="h-16 bg-[#E6E4F2] px-4 sm:px-6 flex items-center justify-between min-w-0 relative">
-      <h3 className="text-base sm:text-xl font-medium truncate">
-        Hi, {name}
-      </h3>
+      <h3 className="text-base sm:text-xl font-medium truncate">Hi, {name}</h3>
 
       <div className="flex-1 mx-4 min-w-0 max-w-md">
         <GlobalSearch mode="admin" />
@@ -105,7 +107,6 @@ export default function Topbar({ type }: TopbarProps) {
 
       <div className="flex items-center gap-4 shrink-0">
         <NotificationBell />
-
         <div
           className="relative cursor-pointer"
           onClick={() => setOpen((p) => !p)}
@@ -114,7 +115,6 @@ export default function Topbar({ type }: TopbarProps) {
           <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center font-medium">
             {initials}
           </div>
-
           {open && Dropdown}
         </div>
       </div>

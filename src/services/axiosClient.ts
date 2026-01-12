@@ -10,19 +10,16 @@ const axiosClient = axios.create({
 // -----------------------------
 // REQUEST INTERCEPTOR
 // -----------------------------
-axiosClient.interceptors.request.use(
-  (config) => {
-    // Get token from localStorage (after login)
-    const token = localStorage.getItem("token");
+axiosClient.interceptors.request.use((config) => {
+  const token = localStorage.getItem("token");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  } else {
+    delete config.headers.Authorization;
+  }
+  return config;
+});
 
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
 
 
 // -----------------------------

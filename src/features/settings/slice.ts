@@ -144,7 +144,9 @@ export const removeSuggestedQuestion = createAsyncThunk<number, number>(
 const settingsSlice = createSlice({
   name: "settings",
   initialState,
-  reducers: {},
+  reducers: {
+    resetSettings: () => initialState,
+  },
   extraReducers: (builder) => {
     builder
 
@@ -243,4 +245,5 @@ const settingsSlice = createSlice({
   },
 });
 
+export const { resetSettings } = settingsSlice.actions;
 export default settingsSlice.reducer;

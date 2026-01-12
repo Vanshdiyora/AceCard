@@ -5,12 +5,14 @@ function decodeToken(token: string | null) {
   if (!token) return { user: null, role: null };
 
   try {
-    const payload = JSON.parse(atob(token.split(".")[1]));
+    const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+    const payload = JSON.parse(atob(base64));
     return { user: payload, role: payload.role };
   } catch {
     return { user: null, role: null };
   }
 }
+
 
 const savedToken = localStorage.getItem("token");
 const decoded = decodeToken(savedToken);
@@ -45,14 +47,19 @@ const authSlice = createSlice({
       state.token = null;
       state.user = null;
       state.role = null;
+      state.error = null;
+      state.loading = false;
       localStorage.removeItem("token");
-    },
+    }
   },
   extraReducers: (builder) => {
     builder
       .addCase(login.pending, (state) => {
         state.loading = true;
         state.error = null;
+        state.user = null;
+        state.role = null;
+        state.token = null;
       })
       .addCase(login.fulfilled, (state, action) => {
         state.loading = false;

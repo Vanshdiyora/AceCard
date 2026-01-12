@@ -20,6 +20,32 @@ type Props<T> = {
   totalPages?: number;
   onPageChange?: (p: number) => void;
 };
+const MAX_VISIBLE = 3;
+
+function getVisiblePages(page: number, totalPages: number) {
+  if (totalPages <= MAX_VISIBLE) {
+    return Array.from({ length: totalPages }, (_, i) => i + 1);
+  }
+
+  const pages: (number | "...")[] = [];
+
+  const start = Math.max(2, page - 1);
+  const end = Math.min(totalPages - 1, page + 1);
+
+  pages.push(1);
+
+  if (start > 2) pages.push("...");
+
+  for (let p = start; p <= end; p++) {
+    pages.push(p);
+  }
+
+  if (end < totalPages - 1) pages.push("...");
+
+  pages.push(totalPages);
+
+  return pages;
+}
 
 export default function DataTable<T>({
   columns,
@@ -97,34 +123,46 @@ export default function DataTable<T>({
         </div>
       )}
 
-      {onPageChange && totalPages > 1 && (
-        <div className="flex justify-center gap-2 pt-2">
-          <button disabled={page === 1} onClick={() => onPageChange(page - 1)}>
-            Prev
-          </button>
+     {onPageChange && totalPages > 1 && (
+  <div className="flex justify-center gap-2 pt-2 items-center">
+    <button
+      disabled={page === 1}
+      onClick={() => onPageChange(page - 1)}
+      className="px-3 py-1 disabled:opacity-50"
+    >
+      Prev
+    </button>
 
-          {Array.from({ length: totalPages }).map((_, i) => {
-            const p = i + 1;
-            return (
-              <button
-                key={p}
-                onClick={() => onPageChange(p)}
-                className={
-                  p === page
-                    ? "bg-purple-200 px-3 py-1 rounded"
-                    : "px-3 py-1"
-                }
-              >
-                {p}
-              </button>
-            );
-          })}
+    {getVisiblePages(page, totalPages).map((p, i) =>
+      p === "..." ? (
+        <span key={`dots-${i}`} className="px-2 text-gray-400 select-none">
+          ...
+        </span>
+      ) : (
+        <button
+          key={p}
+          onClick={() => onPageChange(p)}
+          className={
+            p === page
+              ? "bg-purple-200 px-3 py-1 rounded font-medium"
+              : "px-3 py-1"
+          }
+        >
+          {p}
+        </button>
+      )
+    )}
 
-          <button disabled={page === totalPages} onClick={() => onPageChange(page + 1)}>
-            Next
-          </button>
-        </div>
-      )}
+    <button
+      disabled={page === totalPages}
+      onClick={() => onPageChange(page + 1)}
+      className="px-3 py-1 disabled:opacity-50"
+    >
+      Next
+    </button>
+  </div>
+)}
+
     </div>
   );
 }
