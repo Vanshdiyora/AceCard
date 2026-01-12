@@ -16,10 +16,10 @@ export default function QuickStatsCard({ stats }: Props) {
   const navigate = useNavigate();
 
   return (
-    <div className="flex w-full gap-6">
-      {/* Top Performers — 70% */}
+    <div className="flex flex-col gap-6 w-full h-full max-h-full">
+      {/* Top Performers */}
       <div
-        className="w-[70%] bg-white rounded-2xl border p-6"
+        className="bg-white rounded-2xl border p-6"
         style={{ boxShadow: "2px 2px 3px 0px #2D1A5340" }}
       >
         <div className="flex justify-between items-center mb-4">
@@ -31,46 +31,50 @@ export default function QuickStatsCard({ stats }: Props) {
         </div>
 
         <div className="divide-y divide-purple-100">
-          {performers.map((p, idx) => (
-            <div
-              key={idx}
-              className="grid grid-cols-[1fr_120px_120px] items-center py-4"
-            >
-              <div className="flex items-center gap-4">
-                <div className="w-9 h-9 rounded-full bg-purple-200 text-purple-700 font-semibold flex items-center justify-center">
-                  {p.name.charAt(0)}
-                </div>
-                <span className="font-medium text-[#2d1a53]">
-                  {p.name}
-                </span>
-              </div>
-
-              <div className="flex justify-center">
-                <span className="px-4 py-1 rounded-full bg-purple-200 text-purple-700 text-xs font-semibold">
-                  {p.leads}
-                </span>
-              </div>
-
-              <div className="flex justify-center">
-                <span className="px-4 py-1 rounded-full bg-purple-200 text-purple-700 text-xs font-semibold">
-                  {p.conversion}
-                </span>
-              </div>
+          {performers.length === 0 ? (
+            <div className="py-10 text-center text-sm text-gray-400">
+              No top performers yet
             </div>
-          ))}
+          ) : (
+            performers.map((p, idx) => (
+              <div
+                key={idx}
+                className="grid grid-cols-[1fr_120px_120px] items-center py-4"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-9 h-9 rounded-full bg-purple-200 text-purple-700 font-semibold flex items-center justify-center">
+                    {p.name.charAt(0)}
+                  </div>
+                  <span className="font-medium text-[#2d1a53]">{p.name}</span>
+                </div>
+
+                <div className="flex justify-center">
+                  <span className="px-4 py-1 rounded-full bg-purple-200 text-purple-700 text-xs font-semibold">
+                    {p.leads}
+                  </span>
+                </div>
+
+                <div className="flex justify-center">
+                  <span className="px-4 py-1 rounded-full bg-purple-200 text-purple-700 text-xs font-semibold">
+                    {p.conversion}
+                  </span>
+                </div>
+              </div>
+            ))
+          )}
         </div>
+
       </div>
 
-      {/* Quick Action — 30% */}
-      <div className="w-[30%] bg-purple-300/60 rounded-2xl p-6 text-[#2d1a53] space-y-4"  style={{ boxShadow: "2px 2px 3px 0px #2D1A5340" }}>
+      {/* Quick Actions */}
+      <div
+        className="bg-purple-300/60 rounded-2xl p-6 text-[#2d1a53] space-y-4"
+        style={{ boxShadow: "2px 2px 3px 0px #2D1A5340" }}
+      >
         <h3 className="font-semibold">Quick Action</h3>
 
         <ActionButton label="Add Campaign" onClick={() => navigate("/admin/campaigns?open=create")} />
-
-         <ActionButton
-        label="Add New Member"
-        onClick={() => navigate("/admin/team?open=create")}
-      />
+        <ActionButton label="Add New Member" onClick={() => navigate("/admin/team?open=create")} />
         <ActionButton label="Import Products" />
       </div>
     </div>

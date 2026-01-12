@@ -23,7 +23,6 @@ export default function DashboardPage() {
 
   return (
     <div className="p-6 space-y-6 max-w-full overflow-x-hidden">
-
       {/* ERROR */}
       {error && <ErrorAlert message={error} />}
 
@@ -61,25 +60,32 @@ export default function DashboardPage() {
         />
       ) : null}
 
-      {/* RECENT ACTIVITY */}
-      <div className="col-span-2">
-        {error ? null : loading ? (
-          <ActivitySkeleton />
-        ) : data ? (
-          <RecentActivity items={data.recent_activity ?? []} />
-        ) : null}
-      </div>
+      {/* MAIN DASHBOARD GRID */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
+        <div className="lg:col-span-2 flex">
+          <div className="flex-1">
+            {error ? null : loading ? (
+              <ActivitySkeleton />
+            ) : data ? (
+              <RecentActivity items={data.recent_activity ?? []} />
+            ) : null}
+          </div>
+        </div>
 
-      {/* QUICK STATS */}
-      <div className="grid gap-6">
-        <div>
-          {error ? null : loading ? (
-            <ChartSkeleton />
-          ) : data ? (
-            <QuickStatsCard stats={data.quick_stats} />
-          ) : null}
+        <div className="flex flex-col h-full">
+          <div className="h-full flex flex-col justify-between">
+            {/* Top Performers */}
+            <div className="shrink-0 mb-6">
+              {error ? null : loading ? (
+                <ChartSkeleton />
+              ) : data ? (
+                <QuickStatsCard stats={data.quick_stats} />
+              ) : null}
+            </div>
+          </div>
         </div>
       </div>
+
     </div>
   );
 }
