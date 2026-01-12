@@ -14,12 +14,14 @@ import type {
 
 const normalizeMember = (m: any): TeamMember => ({
   ...m,
+  permissions: m.permissions ?? {},
   manager_id: m.assigned_manager?.id ?? m.manager_id ?? null,
   leads: m.total_leads ?? m.leads ?? 0,
   pipeline: m.total_deal_amount ? `$${m.total_deal_amount}` : m.pipeline ?? "$0",
   conversion: m.conversion ?? "0%",
   lastActive: m.lastActive ?? "Recently",
 });
+
 
 /* ======================================================
    STATE
@@ -63,10 +65,14 @@ export const fetchTeam = createAsyncThunk(
   async (params: FetchTeamParams | undefined, { rejectWithValue }) => {
     try {
       const res = await teamService.getTeam(params);
+
+      const membersArray = Array.isArray(res.data) ? res.data : [];
+
       return {
-        members: res.data.map(normalizeMember),
+        members: membersArray.map(normalizeMember),
         meta: res.meta,
       };
+
     } catch (err: any) {
       return rejectWithValue(extractApiError(err, "Failed to fetch team"));
     }
@@ -121,7 +127,6 @@ export const updateMember = createAsyncThunk(
     }
   }
 );
-
 export const updatePermissions = createAsyncThunk(
   "team/permissions",
   async (
@@ -129,18 +134,10 @@ export const updatePermissions = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      const res = await teamService.updatePermissions(id, data);
+      await teamService.updatePermissions(id, data);
 
-      if (
-        res &&
-        typeof res === "object" &&
-        "status" in res &&
-        (res as any).status === "updated"
-      ) {
-        return { id, permissions: data };
-      }
-
-      return normalizeMember(res);
+      // Backend returns only status, so we return what we already know
+      return { id, permissions: data };
     } catch (err: any) {
       return rejectWithValue(extractApiError(err, "Failed to update permissions"));
     }
@@ -205,15 +202,13 @@ const teamSlice = createSlice({
         }
       })
 
-      .addCase(updatePermissions.fulfilled, (state, action) => {
-        const idx = state.members.findIndex((m) => m.id === action.payload.id);
-        if (idx !== -1) {
-          state.members[idx] = {
-            ...state.members[idx],
-            ...action.payload,
-          };
-        }
-      })
+     .addCase(updatePermissions.fulfilled, (state, action) => {
+  const idx = state.members.findIndex((m) => m.id === action.payload.id);
+  if (idx !== -1) {
+    state.members[idx].permissions = action.payload.permissions;
+  }
+})
+
 
       .addCase(deleteMember.fulfilled, (state, action) => {
         state.members = state.members.filter((m) => m.id !== action.payload);

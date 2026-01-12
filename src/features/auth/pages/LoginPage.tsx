@@ -28,10 +28,13 @@ export default function LoginPage() {
 
     if (role === "super_admin") {
       navigate("/super");
-    } else {
+    } else if (role === "manager" || role === "vendor_admin") {
       navigate("/admin");
+    } else {
+      navigate("/unauthorized");
     }
-  }, [role, token, navigate]); 
+
+  }, [role, token, navigate]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">

@@ -93,6 +93,10 @@ export default function SuggestedQuestions() {
         <div className="flex justify-center py-10">
           <BrandLoader />
         </div>
+      ) : data.length === 0 ? (
+        <div className="py-10 text-center text-sm text-gray-400">
+          No suggested questions added
+        </div>
       ) : (
         <ul className="space-y-2">
           {data.map((q) => {

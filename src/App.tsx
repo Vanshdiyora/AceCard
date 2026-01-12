@@ -4,7 +4,7 @@ import ProtectedRoute from "./utils/ProtectedRoute";
 import LoginPage from "./features/auth/pages/LoginPage";
 import SuperAdminLayout from "./portals/superadmin/layout/SuperAdminLayout";
 import AdminLayout from "./portals/admin/layout/AdminLayout";
-
+import UnauthorizedPage from "./features/auth/pages/UnauthorizedPage";
 // SUPER ADMIN PAGES
 import { SupportAdmin, VendorsPage } from "./features";
 import LeadDetailsPage from "./features/leads/pages/LeadDetailsPage";
@@ -24,12 +24,12 @@ export default function App() {
 
         {/* LOGIN */}
         <Route path="/login" element={<LoginPage />} />
-
+<Route path="/unauthorized" element={<UnauthorizedPage />} />
         {/* SUPER ADMIN ROUTES */}
         <Route
           path="/super/*"
           element={
-            <ProtectedRoute superOnly={true}>
+            <ProtectedRoute superOnly>
               <SuperAdminLayout />
             </ProtectedRoute>
           }
@@ -47,7 +47,7 @@ export default function App() {
         <Route
           path="/admin/*"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute adminOnly>
               <AdminLayout />
             </ProtectedRoute>
           }

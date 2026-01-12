@@ -71,10 +71,9 @@ export default function VendorsPage() {
     { header: "Vendor Email", accessor: "primary_email", width: "2fr" },
     { header: "Vendor Phone", accessor: "primary_phone", width: "1.5fr" },
     { header: "Vendor GST", width: "1.5fr", render: (v) => v.gst ?? "—" },
-    { header: "Seats", accessor: "seats_appointed", align: "center", width: "1fr" },
+    { header: "Seats", accessor: "seats_appointed", align: "left", width: "1fr" },
     {
       header: "Vendor Status",
-      width: "1.5fr",
       render: (v) => (
         <span className={`px-2 py-1 rounded-full text-xs ${
           v.status === "active" ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"
@@ -83,10 +82,10 @@ export default function VendorsPage() {
         </span>
       ),
     },
-    { header: "Stage", width: "1.5fr", render: deriveStage },
+    { header: "Stage", render: deriveStage },
     {
       header: "Actions",
-      width: "1fr",
+      // width: "1fr",
       align: "right",
       render: (v) => (
         <RowActionsDropdown

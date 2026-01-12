@@ -24,9 +24,9 @@ const EMPTY_PERMISSIONS: TeamPermissions = {
   manage_team: false,
   manage_products: false,
   manage_campaigns: false,
-  view_leads: false,
-  edit_leads: false,
-  archive_leads: false,
+  view_leads: true,
+  edit_leads: true,
+  archive_leads: true,
   send_notifications: false,
   view_analytics: false,
 };

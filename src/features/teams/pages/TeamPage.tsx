@@ -117,10 +117,15 @@ export default function TeamPage() {
   }, [members, filter, search]);
 
   const columns: Column<TeamMember>[] = [
-    { header: "Name", accessor: "name" },
-    { header: "Email", accessor: "email" },
+    { header: "Name", 
+      accessor: "name" },
+    { header: "Email", 
+      width: "2fr",
+      accessor: "email" },
     {
       header: "Status",
+      align: "center",
+
       render: (m) => (
         <span
           className={`px-2 py-1 rounded text-xs ${m.status === "active"
@@ -132,14 +137,18 @@ export default function TeamPage() {
         </span>
       ),
     },
-    { header: "Role", render: (m) => m.role.replace("_", " ") },
+    { header: "Role", 
+      align: "right",
+      render: (m) => m.role.replace("_", " ") },
     {
       header: "Manager",
+      align: "right",
       render: (m) => managers.find((mgr) => mgr.id === m.manager_id)?.name ?? "NA",
     },
     { header: "Leads", align: "right", render: (m) => m.leads ?? 0 },
     {
       header: "Permissions",
+      align: "right",
       render: (m) => (
         <button
           className="text-purple-600 text-sm hover:underline"

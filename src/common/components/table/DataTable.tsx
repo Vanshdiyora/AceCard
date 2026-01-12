@@ -64,13 +64,24 @@ export default function DataTable<T>({
       {/* Header */}
       <div
         className="grid text-xs font-semibold uppercase tracking-wide text-gray-500 px-4 min-w-0"
-        style={{ gridTemplateColumns: gridTemplate }}
+        style={{ gridTemplateColumns: gridTemplate, columnGap: "5px" }}
       >
-        {columns.map((c, i) => (
-          <div key={i} className="py-2 truncate overflow-hidden whitespace-nowrap">
-            {c.header}
-          </div>
-        ))}
+
+      {columns.map((c, i) => (
+  <div
+    key={i}
+    className={`py-2 truncate overflow-hidden whitespace-nowrap ${
+      c.align === "center"
+        ? "text-center"
+        : c.align === "right"
+        ? "text-right"
+        : "text-left"
+    }`}
+  >
+    {c.header}
+  </div>
+))}
+
       </div>
 
       {loading && (
@@ -92,8 +103,9 @@ export default function DataTable<T>({
               key={rowIndex}
               onClick={() => onRowClick?.(row)}
               className="grid items-center bg-white rounded-2xl border px-4 py-3 shadow-sm cursor-pointer hover:bg-gray-50 min-w-0 overflow-hidden"
-              style={{ gridTemplateColumns: gridTemplate }}
+              style={{ gridTemplateColumns: gridTemplate, columnGap: "5px" }}
             >
+
               {columns.map((col, colIndex) => {
                 const content = col.render
                   ? col.render(row)
@@ -104,13 +116,12 @@ export default function DataTable<T>({
                 return (
                   <div
                     key={colIndex}
-                    className={`min-w-0 overflow-hidden ${
-                      col.align === "center"
+                    className={`min-w-0 overflow-hidden ${col.align === "center"
                         ? "text-center"
                         : col.align === "right"
-                        ? "text-right"
-                        : "text-left"
-                    }`}
+                          ? "text-right"
+                          : "text-left"
+                      }`}
                   >
                     <div className="truncate overflow-hidden whitespace-nowrap" title={typeof content === "string" ? content : undefined}>
                       {content}
@@ -123,45 +134,45 @@ export default function DataTable<T>({
         </div>
       )}
 
-     {onPageChange && totalPages > 1 && (
-  <div className="flex justify-center gap-2 pt-2 items-center">
-    <button
-      disabled={page === 1}
-      onClick={() => onPageChange(page - 1)}
-      className="px-3 py-1 disabled:opacity-50"
-    >
-      Prev
-    </button>
+      {onPageChange && totalPages > 1 && (
+        <div className="flex justify-center gap-2 pt-2 items-center">
+          <button
+            disabled={page === 1}
+            onClick={() => onPageChange(page - 1)}
+            className="px-3 py-1 disabled:opacity-50"
+          >
+            Prev
+          </button>
 
-    {getVisiblePages(page, totalPages).map((p, i) =>
-      p === "..." ? (
-        <span key={`dots-${i}`} className="px-2 text-gray-400 select-none">
-          ...
-        </span>
-      ) : (
-        <button
-          key={p}
-          onClick={() => onPageChange(p)}
-          className={
-            p === page
-              ? "bg-purple-200 px-3 py-1 rounded font-medium"
-              : "px-3 py-1"
-          }
-        >
-          {p}
-        </button>
-      )
-    )}
+          {getVisiblePages(page, totalPages).map((p, i) =>
+            p === "..." ? (
+              <span key={`dots-${i}`} className="px-2 text-gray-400 select-none">
+                ...
+              </span>
+            ) : (
+              <button
+                key={p}
+                onClick={() => onPageChange(p)}
+                className={
+                  p === page
+                    ? "bg-purple-200 px-3 py-1 rounded font-medium"
+                    : "px-3 py-1"
+                }
+              >
+                {p}
+              </button>
+            )
+          )}
 
-    <button
-      disabled={page === totalPages}
-      onClick={() => onPageChange(page + 1)}
-      className="px-3 py-1 disabled:opacity-50"
-    >
-      Next
-    </button>
-  </div>
-)}
+          <button
+            disabled={page === totalPages}
+            onClick={() => onPageChange(page + 1)}
+            className="px-3 py-1 disabled:opacity-50"
+          >
+            Next
+          </button>
+        </div>
+      )}
 
     </div>
   );
