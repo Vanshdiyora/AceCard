@@ -17,7 +17,7 @@ export default function LeadTimeLineTab({ leadId }: Props) {
     dispatch(fetchLeadTimeline(leadId));
   }, [dispatch, leadId]);
 
-  // Show loader only on first load
+  // ✅ While loading → show ONLY loader, nothing else
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[350px]">
@@ -26,8 +26,8 @@ export default function LeadTimeLineTab({ leadId }: Props) {
     );
   }
 
-  // No data after load
-  if (!timeline && !loading) {
+  // ✅ After loading, but no data
+  if (!timeline || timeline.length === 0) {
     return (
       <div className="p-6 text-sm text-gray-400 text-center">
         No activity yet.
@@ -37,22 +37,12 @@ export default function LeadTimeLineTab({ leadId }: Props) {
 
   return (
     <div className="relative min-h-[200px]">
-      {timeline.length === 0 && !loading && (
-        <div className="p-6 text-sm text-gray-400 text-center">
-          No activity yet.
-        </div>
-      )}
-
-      {timeline.length > 0 && (
-        <>
-          <div className="absolute left-5 top-0 bottom-0 w-px bg-gray-200" />
-          <div className="relative space-y-6">
-            {timeline.map((item) => (
-              <TimelineItem key={item.id} item={item} />
-            ))}
-          </div>
-        </>
-      )}
+      <div className="absolute left-5 top-0 bottom-0 w-px bg-gray-200" />
+      <div className="relative space-y-6">
+        {timeline.map((item) => (
+          <TimelineItem key={item.id} item={item} />
+        ))}
+      </div>
     </div>
   );
 }

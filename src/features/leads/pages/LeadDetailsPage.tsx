@@ -110,7 +110,7 @@ export default function LeadDetailsPage() {
         {activeTab === "overview" && <LeadOverviewTab lead={lead} />}
         {activeTab === "timeline" && <LeadTimelineTab leadId={lead.id} />}
         {activeTab === "notes" && <LeadNotesTab leadId={lead.id} />}
-        {activeTab === "followups" && <LeadFollowupsTab />}
+        {activeTab === "followups" && <LeadFollowupsTab leadId={lead.id} />}
         {activeTab === "products" && <LeadProductsTab lead={lead} />}
       </div>
     </div>

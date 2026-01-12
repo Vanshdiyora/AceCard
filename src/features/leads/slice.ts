@@ -6,7 +6,8 @@ import type {
   PaginationMeta,
   LeadsApiResponse,
   LeadNote,
-  TimelineItem
+  TimelineItem,
+  Meeting
 } from "./types";
 import { LeadsService } from "./services/leads.service";
 
@@ -33,6 +34,7 @@ interface LeadsState {
   loading: boolean;
   error: string | null;
   timeline: Record<number, TimelineItem[]>;
+  meetings: Record<number, Meeting[]>;
 
 }
 
@@ -43,6 +45,7 @@ const initialState: LeadsState = {
   loading: false,
   error: null,
   timeline: {},
+  meetings: {}
 };
 
 /* -----------------------------------------------------
@@ -65,6 +68,18 @@ export const fetchLeads = createAsyncThunk<
   }
 });
 
+export const fetchLeadMeetings = createAsyncThunk<
+  { leadId: number; meetings: Meeting[] },
+  number,
+  { rejectValue: string }
+>("leads/fetchMeetings", async (leadId, { rejectWithValue }) => {
+  try {
+    const meetings = await LeadsService.getMeetings(leadId);
+    return { leadId, meetings };
+  } catch (err) {
+    return rejectWithValue(extractApiError(err, "Failed to load meetings"));
+  }
+});
 
 
 export const createLead = createAsyncThunk<
@@ -252,7 +267,19 @@ const leadsSlice = createSlice({
       .addCase(fetchLeadNotes.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload ?? "Failed to load notes";
+      })
+      .addCase(fetchLeadMeetings.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(fetchLeadMeetings.fulfilled, (state, action) => {
+        state.loading = false;
+        state.meetings[action.payload.leadId] = action.payload.meetings;
+      })
+      .addCase(fetchLeadMeetings.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload ?? "Failed to load meetings";
       });
+
   },
 });
 

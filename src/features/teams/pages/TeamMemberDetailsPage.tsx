@@ -75,32 +75,32 @@ export default function TeamMemberDetailsPage() {
     }
   }, [id, member, dispatch]);
   const lockScroll = () => {
-  const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
 
-  document.documentElement.style.overflow = "hidden";
-  document.body.style.overflow = "hidden";
-  document.body.style.paddingRight = `${scrollbarWidth}px`;
-};
+    document.documentElement.style.overflow = "hidden";
+    document.body.style.overflow = "hidden";
+    document.body.style.paddingRight = `${scrollbarWidth}px`;
+  };
 
-const unlockScroll = () => {
-  document.documentElement.style.overflow = "";
-  document.body.style.overflow = "";
-  document.body.style.paddingRight = "";
-};
+  const unlockScroll = () => {
+    document.documentElement.style.overflow = "";
+    document.body.style.overflow = "";
+    document.body.style.paddingRight = "";
+  };
 
   useEffect(() => {
-  const lock = editOpen || permOpen || confirmOpen || resultOpen;
+    const lock = editOpen || permOpen || confirmOpen || resultOpen;
 
-  if (lock) {
-    lockScroll();
-  } else {
-    unlockScroll();
-  }
+    if (lock) {
+      lockScroll();
+    } else {
+      unlockScroll();
+    }
 
-  return () => {
-    unlockScroll();
-  };
-}, [editOpen, permOpen, confirmOpen, resultOpen]);
+    return () => {
+      unlockScroll();
+    };
+  }, [editOpen, permOpen, confirmOpen, resultOpen]);
 
 
   if (!hasFetched || (loading && !member)) {
@@ -166,7 +166,8 @@ const unlockScroll = () => {
       <DetailPageHeader
         title={member.name}
         subtitle={member.role.replace("_", " ")}
-        avatar={member.name[0].toUpperCase()}
+        avatar={(member.name?.charAt(0) || "S").toUpperCase()}
+
         status={{
           label: member.status,
           variant: member.status === "active" ? "active" : "suspended",
@@ -207,11 +208,10 @@ const unlockScroll = () => {
           <button
             key={t}
             onClick={() => setActiveTab(t)}
-            className={`pb-2 capitalize ${
-              activeTab === t
+            className={`pb-2 capitalize ${activeTab === t
                 ? "border-b-2 border-purple-600 text-purple-600 font-medium"
                 : "text-gray-500"
-            }`}
+              }`}
           >
             {t}
           </button>

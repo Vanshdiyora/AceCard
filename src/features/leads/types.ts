@@ -62,3 +62,15 @@ export interface TimelineItem {
   description: string;
   actor?: string;
 }
+
+export interface Meeting {
+  id: number;
+  lead_id: number;
+  title?: string;
+  scheduled_at: string;
+  duration_min?: number;
+  location?: string;
+  notes?: string;
+  created_by: number;
+  created_at: string;
+}

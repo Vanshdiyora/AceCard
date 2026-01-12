@@ -103,8 +103,6 @@ export default function TeamMemberOverviewTab({
                       </span>
                     </div>
                   </div>
-
-                  <span className="text-xs text-gray-400">→</span>
                 </div>
               </div>
             ))}

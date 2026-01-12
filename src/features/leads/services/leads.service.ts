@@ -4,26 +4,27 @@ import type {
   CreateLeadDto,
   UpdateLeadDto,
   LeadsApiResponse,
-  LeadNote
+  LeadNote,
+  Meeting
 } from "../types";
 
 const BASE = "/vendor/leads";
 
 export const LeadsService = {
-async getLeads(
-  page = 1,
-  pageSize = 10,
-  memberId?: number
-): Promise<LeadsApiResponse> {
-  const res = await axiosClient.get(BASE, {
-    params: {
-      page,
-      page_size: pageSize,
-      member_id: memberId,
-    },
-  });
-  return res.data;
-},
+  async getLeads(
+    page = 1,
+    pageSize = 10,
+    memberId?: number
+  ): Promise<LeadsApiResponse> {
+    const res = await axiosClient.get(BASE, {
+      params: {
+        page,
+        page_size: pageSize,
+        member_id: memberId,
+      },
+    });
+    return res.data;
+  },
 
 
   async createLead(data: CreateLeadDto): Promise<Lead> {
@@ -46,10 +47,10 @@ async getLeads(
   },
 
   async getLeadById(id: number) {
-  return axiosClient.get(`/vendor/leads/${id}`);
-},
+    return axiosClient.get(`/vendor/leads/${id}`);
+  },
 
-  
+
   async getNotes(leadId: number): Promise<LeadNote[]> {
     const res = await axiosClient.get(`${BASE}/${leadId}/notes`);
 
@@ -61,8 +62,9 @@ async getLeads(
     return res.data.data;
   },
   async getTimeline(leadId: number): Promise<any[]> {
-  const res = await axiosClient.get(`${BASE}/${leadId}/timeline`);
-  return Array.isArray(res.data) ? res.data : [];
-},
-
+    const res = await axiosClient.get(`${BASE}/${leadId}/timeline`);
+    return Array.isArray(res.data) ? res.data : [];
+  },
+  getMeetings: (leadId: number) =>
+    axiosClient.get<Meeting[]>(`/vendor/leads/${leadId}/meetings`).then((r) => r.data),
 };
