@@ -30,4 +30,8 @@ export const notificationService = {
   }) => {
     await axiosClient.post("/admin/vendors/notify", payload);
   },
+  markAsArchived: async (id: number) => {
+  await axiosClient.put(`${BASE}/${id}/archive`);
+},
+
 };

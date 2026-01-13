@@ -4,18 +4,18 @@ export interface RecentActivityEntry {
   name: string;
   created_at: string;
 }
-interface Performer {
+export interface TopPerformer {
   name: string;
-  leads: number;
-  conversion: string;
+  revenue: number;
+  lead_count: number;
 }
+
 export interface QuickStats {
   active_campaigns: number;
   team_members: number;
   products: number;
   avg_deal_size: number;
   win_rate: number;
-  top_performers?: Performer[];
 }
 
 export interface RepPerformance {
@@ -47,6 +47,7 @@ export interface DashboardMetrics {
   quick_stats: QuickStats;
   recent_activity: RecentActivityEntry[];
   rep_performance: RepPerformance;
+  top_performers: TopPerformer[];
 }
 
 export interface DashboardState {

@@ -4,10 +4,11 @@ import api from "../../../services/axiosClient"; // adjust path if needed
 import type { AxiosResponse } from "axios";
 
 export const vendorsService = {
-  list: async (params: FetchVendorsParams): Promise<VendorListResponse> => {
-    const res: AxiosResponse<VendorListResponse> = await api.get("/admin/vendors", { params });
-    return res.data;
-  },
+list: async (params: FetchVendorsParams & { search?: string }): Promise<VendorListResponse> => {
+  const res: AxiosResponse<VendorListResponse> = await api.get("/admin/vendors", { params });
+  return res.data;
+},
+
 
   getById: async (id: number): Promise<VendorItem> => {
     const res: AxiosResponse<VendorItem> = await api.get(`/admin/vendors/${id}`);

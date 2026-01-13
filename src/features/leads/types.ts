@@ -6,6 +6,7 @@ export interface Lead {
   email: string;
   company: string;
   assigned_rep_id?: number;
+  assigned_rep_name: string;
   stage: string;
   products?: number[];
   deal_amount: number;

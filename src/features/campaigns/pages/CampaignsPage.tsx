@@ -66,23 +66,12 @@ export default function CampaignsPage() {
 
   /* -------- Fetch -------- */
   useEffect(() => {
-    dispatch(fetchCampaigns({ page, page_size: pageSize }));
-  }, [dispatch, page, pageSize]);
+    dispatch(fetchCampaigns({ page, page_size: pageSize, search }));
+  }, [dispatch, page, pageSize, search]);
 
-  /* -------- Filtering -------- */
-  const filtered = useMemo(() => {
-    return items.filter((c) => {
-      const q = search.toLowerCase();
-      const match =
-        c.name.toLowerCase().includes(q) ||
-        c.description.toLowerCase().includes(q);
-
-      if (!match) return false;
-      if (activeTab !== "all" && c.status !== activeTab) return false;
-
-      return true;
-    });
-  }, [items, search, activeTab]);
+  useEffect(() => {
+    setPage(1);
+  }, [search, activeTab]);
 
   const sortFilter = useMemo(() => {
     return [
@@ -100,21 +89,28 @@ export default function CampaignsPage() {
     ];
   }, [sort]);
 
+  const tabFiltered = useMemo(() => {
+    if (activeTab === "all") return items;
+    return items.filter((c) => c.status === activeTab);
+  }, [items, activeTab]);
+
+
   /* -------- Sorting -------- */
   const finalData = useMemo(() => {
-    const list = [...filtered];
+    const list = [...tabFiltered];
     switch (sort) {
       case "name_asc":
         return list.sort((a, b) => a.name.localeCompare(b.name));
       case "pipeline_desc":
         return list.sort((a, b) => (b.pipeline_value || 0) - (a.pipeline_value || 0));
-      case "recent":
       default:
         return list.sort(
-          (a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+          (a, b) =>
+            new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
         );
     }
-  }, [filtered, sort]);
+  }, [tabFiltered, sort]);
+
 
   /* -------- Table Columns -------- */
   const columns: Column<Campaign>[] = [

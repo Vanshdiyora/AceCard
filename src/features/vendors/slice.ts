@@ -23,6 +23,7 @@ const initialState: VendorsState = {
 export type FetchVendorsParams = {
   page?: number;
   page_size?: number;
+  search?: string;
 };
 
 type ApiError = { response?: { data?: { error?: string; message?: string } } };
@@ -51,6 +52,7 @@ export const fetchVendors = createAsyncThunk<
     }
   }
 );
+
 
 export const unarchiveVendor = createAsyncThunk<
   number,

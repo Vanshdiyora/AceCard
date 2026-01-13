@@ -54,10 +54,10 @@ const extractApiError = (err: any, fallback: string) =>
 /* ======================================================
    THUNKS
 ====================================================== */
-
 export type FetchTeamParams = {
   page?: number;
   page_size?: number;
+  search?: string;
 };
 
 export const fetchTeam = createAsyncThunk(
@@ -65,19 +65,18 @@ export const fetchTeam = createAsyncThunk(
   async (params: FetchTeamParams | undefined, { rejectWithValue }) => {
     try {
       const res = await teamService.getTeam(params);
-
       const membersArray = Array.isArray(res.data) ? res.data : [];
 
       return {
         members: membersArray.map(normalizeMember),
         meta: res.meta,
       };
-
     } catch (err: any) {
       return rejectWithValue(extractApiError(err, "Failed to fetch team"));
     }
   }
 );
+
 
 export const fetchMemberById = createAsyncThunk(
   "team/fetchById",

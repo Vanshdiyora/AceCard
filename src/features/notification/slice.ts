@@ -31,6 +31,18 @@ export const markAll = createAsyncThunk(
   }
 );
 
+export const archiveNotification = createAsyncThunk(
+  "notifications/archive",
+  async (id: number, { rejectWithValue }) => {
+    try {
+      await notificationService.markAsArchived(id);
+      return id;
+    } catch (err: any) {
+      return rejectWithValue(err?.response?.data?.message || "Archive failed");
+    }
+  }
+);
+
 // 🔹 Admin send
 export const sendVendorNotification = createAsyncThunk(
   "notifications/sendVendor",
@@ -49,12 +61,15 @@ interface State {
   list: Notification[];
   loading: boolean;
   sending: boolean;
+  archiving: boolean;
+  archiveError?: string;
 }
 
 const initialState: State = {
   list: [],
   loading: false,
   sending: false,
+  archiving: false,
 };
 
 const notificationSlice = createSlice({
@@ -66,6 +81,9 @@ const notificationSlice = createSlice({
         ...action.payload,
         is_read: action.payload.status === "read",
       });
+    },
+     clearArchiveError: (state) => {
+      state.archiveError = undefined;
     },
   },
   extraReducers: (builder) => {
@@ -101,9 +119,26 @@ const notificationSlice = createSlice({
       })
       .addCase(sendVendorNotification.rejected, (state) => {
         state.sending = false;
+      })
+
+      .addCase(archiveNotification.pending, (state) => {
+        state.archiving = true;
+        state.archiveError = undefined;
+      })
+
+      .addCase(archiveNotification.fulfilled, (state, action) => {
+        state.archiving = false;
+        state.list = state.list.filter((n) => n.id !== action.payload);
+      })
+
+      .addCase(archiveNotification.rejected, (state, action) => {
+        state.archiving = false;
+        state.archiveError = action.payload as string;
       });
+
+
   },
 });
 
-export const { pushNotification } = notificationSlice.actions;
+export const { pushNotification, clearArchiveError } = notificationSlice.actions;
 export default notificationSlice.reducer;

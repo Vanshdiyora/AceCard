@@ -10,30 +10,31 @@ const BASE = "/vendor/campaigns";
 export const CampaignService = {
   // existing
   getAll(
-    params: PaginationParams = { page: 1, page_size: 10 }
+    params: PaginationParams & { search?: string } = { page: 1, page_size: 10 }
   ): Promise<CampaignListResponse> {
     return axiosClient
       .get(BASE, { params })
       .then((res) => res.data);
   },
 
+
   // ✅ NEW: fetch campaigns by team member
-getByTeamMember(
-  memberId: number,
-  params: PaginationParams = { page: 1, page_size: 10 }
-): Promise<CampaignListResponse> {
-  return axiosClient
-    .get(BASE, {
-      params: {
-        ...params,
-        teams_member_ids: String(memberId), // ✅ FORCE STRING
-      },
-    })
-    .then((res) => ({
-      data: res.data?.data ?? [],
-      meta: res.data?.meta ?? null,
-    }));
-},
+  getByTeamMember(
+    memberId: number,
+    params: PaginationParams = { page: 1, page_size: 10 }
+  ): Promise<CampaignListResponse> {
+    return axiosClient
+      .get(BASE, {
+        params: {
+          ...params,
+          teams_member_ids: String(memberId), // ✅ FORCE STRING
+        },
+      })
+      .then((res) => ({
+        data: res.data?.data ?? [],
+        meta: res.data?.meta ?? null,
+      }));
+  },
 
 
   getById(id: number): Promise<Campaign> {

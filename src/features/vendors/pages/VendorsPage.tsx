@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useAppDispatch, useAppSelector } from "../../../app/hooks";
 import { fetchVendors, archiveVendor, unarchiveVendor } from "../slice";
 
@@ -62,9 +62,19 @@ export default function VendorsPage() {
     setResultOpen(true);
   };
 
-  useEffect(() => {
-    dispatch(fetchVendors({ page, page_size: pageSize }));
-  }, [dispatch, page, pageSize, activeTab, search, sort]);
+useEffect(() => {
+  dispatch(fetchVendors({ page, page_size: pageSize, search }));
+}, [dispatch, page, pageSize, search]);
+
+const finalVendors = useMemo(() => {
+  let list = [...vendors];
+
+  if (activeTab !== "all") list = list.filter(v => v.status === activeTab);
+
+  if (sort === "name") list.sort((a, b) => a.legal_name.localeCompare(b.legal_name));
+
+  return list;
+}, [vendors, activeTab, sort]);
 
   const columns: Column<VendorItem>[] = [
     { header: "Vendor Name", accessor: "legal_name", width: "2fr" },
@@ -173,7 +183,7 @@ export default function VendorsPage() {
       <div className="mt-6">
         <DataTable<VendorItem>
           columns={columns}
-          data={vendors}
+          data={finalVendors}
           loading={loading}
           page={meta?.page ?? page}
           totalPages={meta?.total_pages ?? 1}

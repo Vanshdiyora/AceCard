@@ -5,6 +5,7 @@ import { useAppDispatch, useAppSelector } from "../../../../app/hooks";
 import { lookupProducts } from "../../../products/slice";
 import type { Lead } from "../../types";
 import BrandLoader from "../../../../common/ui/BrandLoader";
+import type { ProductLookup } from "../../../products/types";
 
 interface Props {
   lead: Lead;
@@ -50,8 +51,6 @@ export default function LeadProductsTab({ lead }: Props) {
     </div>
   );
 }
-
-import type { ProductLookup } from "../../../products/types";
 
 const ProductRow = ({
   product,

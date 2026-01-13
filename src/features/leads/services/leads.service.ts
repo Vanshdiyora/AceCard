@@ -11,20 +11,23 @@ import type {
 const BASE = "/vendor/leads";
 
 export const LeadsService = {
-  async getLeads(
-    page = 1,
-    pageSize = 10,
-    memberId?: number
-  ): Promise<LeadsApiResponse> {
-    const res = await axiosClient.get(BASE, {
-      params: {
-        page,
-        page_size: pageSize,
-        member_id: memberId,
-      },
-    });
-    return res.data;
-  },
+async getLeads(
+  page = 1,
+  pageSize = 10,
+  memberId?: number,
+  search?: string
+): Promise<LeadsApiResponse> {
+  const res = await axiosClient.get(BASE, {
+    params: {
+      page,
+      page_size: pageSize,
+      member_id: memberId,
+      search: search || undefined,
+    },
+  });
+  return res.data;
+},
+
 
 
   async createLead(data: CreateLeadDto): Promise<Lead> {

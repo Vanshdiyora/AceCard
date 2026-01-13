@@ -1,18 +1,11 @@
-import type { QuickStats } from "../types";
+import type { TopPerformer } from "../types";
 import { useNavigate } from "react-router-dom";
 
-interface Performer {
-  name: string;
-  leads: number;
-  conversion: string;
-}
-
 interface Props {
-  stats: QuickStats;
+  topPerformers: TopPerformer[];
 }
 
-export default function QuickStatsCard({ stats }: Props) {
-  const performers: Performer[] = stats.top_performers || [];
+export default function QuickStatsCard({ topPerformers }: Props) {
   const navigate = useNavigate();
 
   return (
@@ -22,49 +15,66 @@ export default function QuickStatsCard({ stats }: Props) {
         className="bg-white rounded-2xl border p-6"
         style={{ boxShadow: "2px 2px 3px 0px #2D1A5340" }}
       >
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="font-semibold text-[#2d1a53]">Top Performers</h3>
-          <div className="flex gap-12 text-sm text-gray-300">
-            <span>Lead Count</span>
-            <span>Conversion%</span>
-          </div>
+        {/* Header */}
+        <div className="grid grid-cols-[48px_2fr_96px_72px] items-center mb-4 text-sm text-gray-400">
+          <span className="text-center">#</span>
+          <span>Name</span>
+          <span className="text-center">Revenue</span>
+          <span className="text-center">Leads</span>
         </div>
 
         <div className="divide-y divide-purple-100">
-          {performers.length === 0 ? (
+          {topPerformers.length === 0 ? (
             <div className="py-10 text-center text-sm text-gray-400">
               No top performers yet
             </div>
           ) : (
-            performers.map((p, idx) => (
+            topPerformers.map((p, idx) => (
               <div
                 key={idx}
-                className="grid grid-cols-[1fr_120px_120px] items-center py-4"
+                className="grid grid-cols-[48px_2fr_96px_72px] items-center py-4 text-sm"
               >
-                <div className="flex items-center gap-4">
-                  <div className="w-9 h-9 rounded-full bg-purple-200 text-purple-700 font-semibold flex items-center justify-center">
-                    {p.name.charAt(0)}
-                  </div>
-                  <span className="font-medium text-[#2d1a53]">{p.name}</span>
-                </div>
-
+                {/* Rank */}
                 <div className="flex justify-center">
-                  <span className="px-4 py-1 rounded-full bg-purple-200 text-purple-700 text-xs font-semibold">
-                    {p.leads}
+                  <span
+                    className={`w-7 h-7 rounded-full flex items-center justify-center font-semibold text-xs
+                ${idx === 0
+                        ? "bg-yellow-400 text-yellow-900"
+                        : idx === 1
+                          ? "bg-gray-300 text-gray-800"
+                          : idx === 2
+                            ? "bg-orange-400 text-orange-900"
+                            : "bg-purple-200 text-purple-700"
+                      }`}
+                  >
+                    {idx + 1}
                   </span>
                 </div>
 
+                {/* Name */}
+                <span className="font-medium text-[#2d1a53] truncate">
+                  {p.name}
+                </span>
+
+                {/* Revenue */}
                 <div className="flex justify-center">
-                  <span className="px-4 py-1 rounded-full bg-purple-200 text-purple-700 text-xs font-semibold">
-                    {p.conversion}
+                  <span className="px-3 py-1 rounded-full bg-green-100 text-green-700 text-xs font-semibold">
+                    ${p.revenue}
+                  </span>
+                </div>
+
+                {/* Leads */}
+                <div className="flex justify-center">
+                  <span className="px-3 py-1 rounded-full bg-purple-200 text-purple-700 text-xs font-semibold">
+                    {p.lead_count}
                   </span>
                 </div>
               </div>
             ))
           )}
         </div>
-
       </div>
+
 
       {/* Quick Actions */}
       <div
@@ -73,15 +83,27 @@ export default function QuickStatsCard({ stats }: Props) {
       >
         <h3 className="font-semibold">Quick Action</h3>
 
-        <ActionButton label="Add Campaign" onClick={() => navigate("/admin/campaigns?open=create")} />
-        <ActionButton label="Add New Member" onClick={() => navigate("/admin/team?open=create")} />
+        <ActionButton
+          label="Add Campaign"
+          onClick={() => navigate("/admin/campaigns?open=create")}
+        />
+        <ActionButton
+          label="Add New Member"
+          onClick={() => navigate("/admin/team?open=create")}
+        />
         <ActionButton label="Import Products" />
       </div>
     </div>
   );
 }
 
-function ActionButton({ label, onClick }: { label: string; onClick?: () => void }) {
+function ActionButton({
+  label,
+  onClick,
+}: {
+  label: string;
+  onClick?: () => void;
+}) {
   return (
     <button
       onClick={onClick}
@@ -94,4 +116,3 @@ function ActionButton({ label, onClick }: { label: string; onClick?: () => void 
     </button>
   );
 }
-

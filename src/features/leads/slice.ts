@@ -54,11 +54,11 @@ const initialState: LeadsState = {
 
 export const fetchLeads = createAsyncThunk<
   LeadsApiResponse,
-  { page?: number; pageSize?: number; memberId?: number },
+  { page?: number; pageSize?: number; memberId?: number; search?: string },
   { rejectValue: string }
->("leads/fetch", async ({ page = 1, pageSize = 10, memberId }, { rejectWithValue }) => {
+>("leads/fetch", async ({ page = 1, pageSize = 10, memberId, search }, { rejectWithValue }) => {
   try {
-    const res = await LeadsService.getLeads(page, pageSize, memberId);
+    const res = await LeadsService.getLeads(page, pageSize, memberId, search);
     return {
       data: Array.isArray(res.data) ? res.data : [],
       meta: res.meta,
@@ -67,6 +67,7 @@ export const fetchLeads = createAsyncThunk<
     return rejectWithValue(extractApiError(err, "Failed to load leads"));
   }
 });
+
 
 export const fetchLeadMeetings = createAsyncThunk<
   { leadId: number; meetings: Meeting[] },

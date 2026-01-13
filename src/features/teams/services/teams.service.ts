@@ -10,10 +10,11 @@ import type { PaginationParams } from "../../../common/types";
 const BASE_URL = "/vendor/team";
 
 export const teamService = {
-async getTeam(params: PaginationParams = { page: 1, page_size: 10 }): Promise<TeamListResponse> {
+async getTeam(params: PaginationParams & { search?: string } = { page: 1, page_size: 10 }): Promise<TeamListResponse> {
   const res = await axios.get(BASE_URL, { params });
   return res.data;
 },
+
 
   async getMemberById(id: number): Promise<TeamMember> {
     const res = await axios.get(`${BASE_URL}/${id}`);

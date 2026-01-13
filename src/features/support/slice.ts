@@ -22,7 +22,10 @@ export const fetchTickets = createAsyncThunk(
 
 export const fetchAllTickets = createAsyncThunk(
   "support/fetchAll",
-  async (params: { page: number; page_size: number }, { rejectWithValue }) => {
+  async (
+    params: { page: number; page_size: number; search?: string },
+    { rejectWithValue }
+  ) => {
     try {
       return await getAllSupportTickets(params);
     } catch (err: any) {

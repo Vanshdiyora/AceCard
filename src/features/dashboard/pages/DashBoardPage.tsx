@@ -79,7 +79,10 @@ export default function DashboardPage() {
               {error ? null : loading ? (
                 <ChartSkeleton />
               ) : data ? (
-                <QuickStatsCard stats={data.quick_stats} />
+                <QuickStatsCard
+                  topPerformers={data.top_performers}
+                />
+
               ) : null}
             </div>
           </div>

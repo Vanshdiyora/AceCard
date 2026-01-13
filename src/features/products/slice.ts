@@ -14,15 +14,16 @@ const extractApiError = (err: unknown, fallback: string): string =>
 
 export const fetchProducts = createAsyncThunk<
   ProductListResponse,
-  { page?: number; page_size?: number },
+  { page?: number; page_size?: number; search?: string },
   { rejectValue: string }
->("products/fetchAll", async ({ page = 1, page_size = 10 }, { rejectWithValue }) => {
+>("products/fetchAll", async ({ page = 1, page_size = 10, search }, { rejectWithValue }) => {
   try {
-    return await ProductsAPI.getAll({ page, page_size });
+    return await ProductsAPI.getAll({ page, page_size, search });
   } catch (err) {
     return rejectWithValue(extractApiError(err, "Failed to fetch products"));
   }
 });
+
 
 export const fetchProductById = createAsyncThunk<Product, number, { rejectValue: string }>(
   "products/fetchById",
@@ -200,10 +201,10 @@ const productsSlice = createSlice({
       .addCase(lookupProducts.pending, (state) => {
         state.loading = true;
       })
-     .addCase(lookupProducts.fulfilled, (state, action) => {
-  state.loading = false;
-  state.lookup = action.payload;
-})
+      .addCase(lookupProducts.fulfilled, (state, action) => {
+        state.loading = false;
+        state.lookup = action.payload;
+      })
 
       .addCase(lookupProducts.rejected, (state, action) => {
         state.loading = false;

@@ -1,12 +1,10 @@
 import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../../app/hooks";
-import { fetchLeads, createLead, updateLead } from "../slice";
-import { fetchTeam } from "../../teams/slice";
+import { fetchLeads, updateLead } from "../slice";
 
 import PageHeader from "../../../common/components/layout/PageHeader";
 import PageFilters, { type TabItem } from "../../../common/components/layout/PageFilter";
-import AddLeadModal from "../components/AddLeadModal";
 import EditLeadModal from "../components/EditLeadModal";
 import DataTable, { type Column } from "../../../common/components/table/DataTable";
 import ErrorAlert from "../../../common/ui/ErrorAlert";
@@ -31,31 +29,25 @@ export default function LeadsPage() {
   const navigate = useNavigate();
 
   const { leads, meta, loading, error } = useAppSelector((s) => s.leads);
-  const teamMembers = useAppSelector((s) => s.team.members);
 
   const [activeTab, setActiveTab] = useState("all");
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<SortType>("recent");
 
-  const [addOpen, setAddOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
 
   const [page, setPage] = useState(1);
   const pageSize = 10;
 
-  useEffect(() => {
-    dispatch(fetchLeads({ page, pageSize }));
-    dispatch(fetchTeam());
-  }, [dispatch, page, pageSize]);
+useEffect(() => {
+  dispatch(fetchLeads({ page, pageSize, search }));
+}, [dispatch, page, pageSize, search]);
 
-  useEffect(() => setPage(1), [activeTab, search]);
+useEffect(() => {
+  setPage(1);
+}, [search, activeTab]);
 
-  const ownerMap = useMemo(() => {
-    const map = new Map<number, string>();
-    teamMembers.forEach((m) => map.set(m.id, m.name));
-    return map;
-  }, [teamMembers]);
 
   const columns: Column<Lead>[] = [
     { header: "Name", render: (lead) => lead.lead_name },
@@ -63,7 +55,7 @@ export default function LeadsPage() {
     {
       header: "Owner",
       render: (lead) =>
-        lead.assigned_rep_id ? ownerMap.get(lead.assigned_rep_id) ?? "—" : "—",
+        lead.assigned_rep_name ?? "—",
     },
     { header: "Deal Amount", render: (lead) => lead.deal_amount ?? "—" },
     { header: "Stage", render: (lead) => <span className="px-2 py-1 rounded bg-gray-100 text-xs">{lead.stage}</span> },
@@ -86,35 +78,24 @@ export default function LeadsPage() {
     },
   ];
 
-  const filteredLeads = useMemo(() => {
-    const q = search.toLowerCase();
-    return leads.filter((l) => {
-      const match =
-        l.lead_name.toLowerCase().includes(q) ||
-        l.company?.toLowerCase().includes(q) ||
-        l.email?.toLowerCase().includes(q);
-
-      if (!match) return false;
-      if (activeTab !== "all" && l.stage !== activeTab) return false;
-      return true;
-    });
-  }, [leads, search, activeTab]);
-
   const finalLeads = useMemo(() => {
-    const list = [...filteredLeads];
-    switch (sort) {
-      case "name_asc":
-        return list.sort((a, b) => a.lead_name.localeCompare(b.lead_name));
-      case "pipeline_desc":
-        return list.sort((a, b) => (b.deal_amount || 0) - (a.deal_amount || 0));
-      default:
-        return list.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
-    }
-  }, [filteredLeads, sort]);
+  const list = [...leads];
+  switch (sort) {
+    case "name_asc":
+      return list.sort((a, b) => a.lead_name.localeCompare(b.lead_name));
+    case "pipeline_desc":
+      return list.sort((a, b) => (b.deal_amount || 0) - (a.deal_amount || 0));
+    default:
+      return list.sort(
+        (a, b) =>
+          new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+      );
+  }
+}, [leads, sort]);
 
   return (
     <div className="p-6 space-y-6">
-      <PageHeader title="Leads" description="Manage and track your leads" addButtonLabel="Add Lead" onAdd={() => setAddOpen(true)} />
+      <PageHeader title="Leads" description="Manage and track your leads" />
       {error && <ErrorAlert message={error} />}
 
       <PageFilters tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} searchPlaceholder="Search by name, email, or company..." onSearch={setSearch}
@@ -126,7 +107,6 @@ export default function LeadsPage() {
 
       <DataTable columns={columns} data={finalLeads} loading={loading} page={meta?.page ?? page} totalPages={meta?.total_pages ?? 1} onPageChange={setPage} emptyText="No leads found" onRowClick={(lead) => navigate(`${lead.id}`)} />
 
-      <AddLeadModal open={addOpen} onClose={() => setAddOpen(false)} onSubmit={(d: any) => dispatch(createLead(d))} />
       <EditLeadModal open={editOpen} lead={selectedLead} onClose={() => setEditOpen(false)} onSubmit={(d) => selectedLead && dispatch(updateLead({ id: selectedLead.id, data: d }))} />
     </div>
   );

@@ -43,26 +43,19 @@ export default function ProductsPage() {
   }>({ open: false, success: true, message: "" });
 
   useEffect(() => {
-    dispatch(fetchProducts({ page, page_size: pageSize }));
-  }, [dispatch, page, pageSize]);
+    dispatch(fetchProducts({ page, page_size: pageSize, search }));
+  }, [dispatch, page, pageSize, search]);
+
 
   useEffect(() => {
     setPage(1);
   }, [search, statusFilter, sortBy]);
 
-  const filtered = useMemo(() => {
+
+  const finalProducts = useMemo(() => {
     let list = [...products];
 
     if (statusFilter !== "all") list = list.filter((p) => p.status === statusFilter);
-
-    if (search) {
-      const q = search.toLowerCase();
-      list = list.filter(
-        (p) =>
-          p.name.toLowerCase().includes(q) ||
-          p.description?.toLowerCase().includes(q)
-      );
-    }
 
     switch (sortBy) {
       case "name":
@@ -89,11 +82,10 @@ export default function ProductsPage() {
       header: "Status",
       render: (p) => (
         <span
-          className={`px-2 py-1 rounded text-xs ${
-            p.status === "active"
+          className={`px-2 py-1 rounded text-xs ${p.status === "active"
               ? "bg-green-100 text-green-700"
               : "bg-gray-200 text-gray-600"
-          }`}
+            }`}
         >
           {p.status}
         </span>
@@ -168,7 +160,7 @@ export default function ProductsPage() {
       <div className="mt-6">
         <DataTable
           columns={columns}
-          data={filtered}
+          data={finalProducts}
           loading={loading}
           page={meta?.page ?? page}
           totalPages={meta?.total_pages ?? 1}
@@ -178,6 +170,7 @@ export default function ProductsPage() {
             navigate(`/admin/products/${p.id}`, { state: { product: p } })
           }
         />
+
       </div>
 
       <ProductFormModal

@@ -1,53 +1,38 @@
-import { useAppDispatch } from "../../../app/hooks";
-import { markRead } from "../slice";
+import { Trash2 } from "lucide-react";
+import { useAppDispatch, useAppSelector } from "../../../app/hooks";
+import { markRead, archiveNotification } from "../slice";
+import BlockerLoader from "../../../common/ui/BlockingLoader";
 
-interface NotificationItemProps {
-  item: {
-    id: number;
-    message_title: string;
-    message_body: string;
-    created_at: string;
-    status: "sent" | "read";
-  };
-}
-
-export default function NotificationItem({ item }: NotificationItemProps) {
+export default function NotificationItem({ item }: any) {
   const dispatch = useAppDispatch();
-
-  // unread = status === "sent"
   const isUnread = item.status === "sent";
+const archiving = useAppSelector((s) => s.notifications.archiving);
 
-  const handleClick = () => {
-    if (isUnread) {
-      dispatch(markRead(item.id)); // ✅ mark as read
-    }
+  const handleArchive = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    dispatch(archiveNotification(item.id));
   };
-
-  const formattedDate = new Date(item.created_at).toLocaleString();
 
   return (
     <div
-      onClick={handleClick}
+      onClick={() => isUnread && dispatch(markRead(item.id))}
       className={`p-3 border rounded-md cursor-pointer relative group transition
         ${isUnread ? "bg-blue-50 border-blue-200" : "bg-white"}`}
     >
-      {/* Title */}
-      <h4
-        className={`text-sm ${
-          isUnread ? "font-semibold" : "font-medium"
-        }`}
+      <BlockerLoader show={archiving} />
+
+      <button
+        onClick={handleArchive}
+        className="absolute top-2 right-2 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100"
+        title="Archive"
       >
-        {item.message_title}
-      </h4>
+        <Trash2 size={16} />
+      </button>
 
-      {/* Body */}
-      <p className="text-sm text-gray-600">
-        {item.message_body}
-      </p>
-
-      {/* Date */}
+      <h4 className="text-sm font-semibold">{item.message_title}</h4>
+      <p className="text-sm text-gray-600">{item.message_body}</p>
       <span className="text-xs text-gray-400">
-        {formattedDate}
+        {new Date(item.created_at).toLocaleString()}
       </span>
     </div>
   );

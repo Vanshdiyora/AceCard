@@ -18,15 +18,19 @@ const extractApiError = (err: unknown, fallback: string): string =>
 
 export const fetchCampaigns = createAsyncThunk<
   CampaignListResponse,
-  { page?: number; page_size?: number },
+  { page?: number; page_size?: number; search?: string },
   { rejectValue: string }
->("campaigns/fetchAll", async ({ page = 1, page_size = 10 }, { rejectWithValue }) => {
-  try {
-    return await CampaignService.getAll({ page, page_size });
-  } catch (err) {
-    return rejectWithValue(extractApiError(err, "Failed to fetch campaigns"));
+>(
+  "campaigns/fetchAll",
+  async ({ page = 1, page_size = 10, search }, { rejectWithValue }) => {
+    try {
+      return await CampaignService.getAll({ page, page_size, search });
+    } catch (err) {
+      return rejectWithValue(extractApiError(err, "Failed to fetch campaigns"));
+    }
   }
-});
+);
+
 
 export const createCampaign = createAsyncThunk<
   Campaign,

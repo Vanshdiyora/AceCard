@@ -70,12 +70,13 @@ export default function TeamPage() {
   const managers = useMemo(() => members.filter((m) => m.role === "manager"), [members]);
 
   useEffect(() => {
-    dispatch(fetchTeam({ page, page_size: pageSize }));
-  }, [dispatch, page, pageSize]);
+    dispatch(fetchTeam({ page, page_size: pageSize, search }));
+  }, [dispatch, page, pageSize, search]);
 
   useEffect(() => {
     setPage(1);
-  }, [filter, search]);
+  }, [search, filter]);
+
 
   const lockScroll = () => {
     const scrollBarWidth = window.innerWidth - document.documentElement.clientWidth;
@@ -104,18 +105,6 @@ export default function TeamPage() {
     };
   }, [addOpen, editOpen, permOpen, resultOpen]);
 
-  const filteredMembers = useMemo(() => {
-    return members.filter((m) => {
-      if (!m) return false;
-      if (filter === "active" && m.status !== "active") return false;
-      if (filter === "suspended" && m.status !== "suspended") return false;
-      if (["vendor_admin", "manager", "sales_rep"].includes(filter) && m.role !== filter)
-        return false;
-      if (!m.name?.toLowerCase().includes(search.toLowerCase())) return false;
-      return true;
-    });
-  }, [members, filter, search]);
-
   const columns: Column<TeamMember>[] = [
     { header: "Name", accessor: "name" },
     { header: "Email", width: "2fr", accessor: "email" },
@@ -124,11 +113,10 @@ export default function TeamPage() {
       align: "center",
       render: (m) => (
         <span
-          className={`px-2 py-1 rounded text-xs ${
-            m.status === "active"
+          className={`px-2 py-1 rounded text-xs ${m.status === "active"
               ? "bg-green-100 text-green-700"
               : "bg-red-100 text-red-700"
-          }`}
+            }`}
         >
           {m.status}
         </span>
@@ -159,6 +147,17 @@ export default function TeamPage() {
     },
   ];
 
+  const finalMembers = useMemo(() => {
+    return members.filter((m) => {
+      if (!m) return false;
+      if (filter === "active" && m.status !== "active") return false;
+      if (filter === "suspended" && m.status !== "suspended") return false;
+      if (["vendor_admin", "manager", "sales_rep"].includes(filter) && m.role !== filter)
+        return false;
+      return true;
+    });
+  }, [members, filter]);
+
   return (
     <div className="p-6">
       <PageHeader
@@ -168,8 +167,8 @@ export default function TeamPage() {
           currentRole === "vendor_admin"
             ? "Add Member"
             : currentRole === "manager"
-            ? "Add Sales Rep"
-            : undefined
+              ? "Add Sales Rep"
+              : undefined
         }
         onAdd={() => setAddOpen(true)}
       />
@@ -193,13 +192,14 @@ export default function TeamPage() {
       <div className="mt-6">
         <DataTable
           columns={columns}
-          data={filteredMembers}
+          data={finalMembers}
           loading={loading}
           page={meta?.page ?? page}
           totalPages={meta?.total_pages ?? 1}
           onPageChange={setPage}
           onRowClick={(m) => navigate(`/admin/team/${m.id}`, { state: { member: m } })}
         />
+
       </div>
 
       <AddMemberModal

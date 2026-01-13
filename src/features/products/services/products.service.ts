@@ -7,10 +7,13 @@ import type { PaginationParams } from "../../../common/types";
 
 export const ProductsAPI = {
   /* -------- GET ALL PRODUCTS -------- */
-  async getAll( params: PaginationParams = { page: 1, page_size: 10 }): Promise<ProductListResponse> {
-    const res = await axiosClient.get("/vendor/products",{params});
-    return res.data; // { data, meta }
-  },
+async getAll(
+  params: PaginationParams & { search?: string } = { page: 1, page_size: 10 }
+): Promise<ProductListResponse> {
+  const res = await axiosClient.get("/vendor/products", { params });
+  return res.data;
+},
+
 
   /* -------- GET PRODUCT BY ID -------- */
   async getById(id: number): Promise<Product> {
@@ -49,9 +52,9 @@ export const ProductsAPI = {
     return res.data;
   },
   /* -------- LOOKUP PRODUCTS BY IDS -------- */
-async lookupByIds(ids: number[]): Promise<Product[]> {
-  const res = await axiosClient.post("/vendor/products/lookup", { ids });
-  return res.data;
-},
+  async lookupByIds(ids: number[]): Promise<Product[]> {
+    const res = await axiosClient.post("/vendor/products/lookup", { ids });
+    return res.data;
+  },
 
 };

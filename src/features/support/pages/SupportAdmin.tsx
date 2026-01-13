@@ -40,9 +40,10 @@ export default function SupportAdmin() {
     setResultOpen(true);
   };
 
-  useEffect(() => {
-    dispatch(fetchAllTickets({ page, page_size: pageSize }));
-  }, [dispatch, page]);
+useEffect(() => {
+  dispatch(fetchAllTickets({ page, page_size: pageSize, search }));
+}, [dispatch, page, search]);
+
 
   useEffect(() => {
     setPage(1);
@@ -83,20 +84,10 @@ export default function SupportAdmin() {
     [tickets]
   );
 
-  const filteredTickets = useMemo(() => {
-    const s = search.toLowerCase();
-
-    return tickets.filter((t) => {
-      if (activeTab !== "all" && t.status !== activeTab) return false;
-
-      return (
-        t.subject?.toLowerCase().includes(s) ||
-        t.vendor_name?.toLowerCase().includes(s) ||
-        t.vendor_email?.toLowerCase().includes(s) ||
-        String(t.id).includes(s)
-      );
-    });
-  }, [tickets, activeTab, search]);
+const finalTickets = useMemo(() => {
+  if (activeTab === "all") return tickets;
+  return tickets.filter((t) => t.status === activeTab);
+}, [tickets, activeTab]);
 
   const openDetails = (ticket: any) => {
     setSelectedTicket(ticket);
@@ -187,7 +178,7 @@ export default function SupportAdmin() {
 
       <DataTable
         columns={columns}
-        data={filteredTickets}
+        data={finalTickets}
         loading={loading}
         emptyText="No tickets found"
         page={page}

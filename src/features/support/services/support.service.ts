@@ -43,9 +43,9 @@ export const replyToSupportTicket = async (
 };
 
 /* -------- ADMIN: All tickets -------- */
-export const getAllSupportTickets = async ( params: PaginationParams = { page: 1, page_size: 10 } ): Promise<SupportListResponse> => {
-  const res = await axiosClient.get(
-    `/admin/support/requests` , {params}
-  );
+export const getAllSupportTickets = async (
+  params: PaginationParams & { search?: string } = { page: 1, page_size: 10 }
+): Promise<SupportListResponse> => {
+  const res = await axiosClient.get(`/admin/support/requests`, { params });
   return res.data;
 };
