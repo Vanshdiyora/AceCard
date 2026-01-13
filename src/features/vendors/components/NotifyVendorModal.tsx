@@ -51,7 +51,6 @@ export default function NotifyVendorModal({ open, onClose, vendor }: any) {
         })
       ).unwrap();
 
-      // dispatch(fetchVendors());
       onClose();
     } catch (err: any) {
       console.error(err);

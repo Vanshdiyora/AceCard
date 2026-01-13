@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppSelector, useAppDispatch } from "../../../app/hooks";
 import { fetchProducts, createProduct, updateProduct } from "../slice";
@@ -7,7 +7,6 @@ import PageHeader from "../../../common/components/layout/PageHeader";
 import PageFilters from "../../../common/components/layout/PageFilter";
 import DataTable, {
   type Column,
-  type DataTableRef,
 } from "../../../common/components/table/DataTable";
 import ErrorAlert from "../../../common/ui/ErrorAlert";
 import { Edit2 } from "lucide-react";
@@ -21,7 +20,6 @@ type StatusFilter = "all" | "active" | "archived";
 export default function ProductsPage() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const tableRef = useRef<DataTableRef | null>(null);
 
   const { products: rawProducts = [], loading, meta, error } = useAppSelector(
     (s) => s.products ?? {}
@@ -91,11 +89,10 @@ export default function ProductsPage() {
       header: "Status",
       render: (p) => (
         <span
-          className={`px-2 py-1 rounded text-xs ${
-            p.status === "active"
+          className={`px-2 py-1 rounded text-xs ${p.status === "active"
               ? "bg-green-100 text-green-700"
               : "bg-gray-200 text-gray-600"
-          }`}
+            }`}
         >
           {p.status}
         </span>
@@ -165,13 +162,12 @@ export default function ProductsPage() {
             ],
           },
         ]}
-        onExport={() => tableRef.current?.exportCSV()}
+        onExport={() => console.log("Export")}
         disableExport={finalProducts.length === 0}
       />
 
       <div className="mt-6">
         <DataTable
-          ref={tableRef}
           columns={columns}
           data={finalProducts}
           loading={loading}
@@ -183,6 +179,7 @@ export default function ProductsPage() {
             navigate(`/admin/products/${p.id}`, { state: { product: p } })
           }
         />
+
       </div>
 
       <ProductFormModal

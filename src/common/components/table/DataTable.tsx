@@ -1,4 +1,4 @@
-import React, { useEffect, useState, forwardRef, useImperativeHandle } from "react";
+import React, { useEffect, useState } from "react";
 import BrandLoader from "../../ui/BrandLoader";
 
 export type Column<T> = {
@@ -7,10 +7,6 @@ export type Column<T> = {
   width?: string;
   align?: "left" | "center" | "right";
   render?: (row: T) => React.ReactNode;
-};
-
-export type DataTableRef = {
-  exportCSV: () => void;
 };
 
 type Props<T> = {
@@ -46,54 +42,24 @@ function getVisiblePages(page: number, totalPages: number) {
   return pages;
 }
 
-function DataTableInner<T>(
-  {
-    columns,
-    data,
-    loading = false,
-    emptyText = "No data found",
-    onRowClick,
-    page = 1,
-    totalPages = 1,
-    onPageChange,
-  }: Props<T>,
-  ref: React.Ref<DataTableRef>
-) {
+export default function DataTable<T>({
+  columns,
+  data,
+  loading = false,
+  emptyText = "No data found",
+  onRowClick,
+  page = 1,
+  totalPages = 1,
+  onPageChange,
+}: Props<T>) {
   const gridTemplate = columns.map((c) => c.width || "1fr").join(" ");
-  const [localPage, setLocalPage] = useState(page);
+  
+  const [uiPage, setUiPage] = useState(page);
 
-  useEffect(() => setLocalPage(page), [page]);
-
-  useImperativeHandle(ref, () => ({
-    exportCSV() {
-      if (!data.length) return;
-
-      const headers = columns.map((c) => `"${c.header}"`).join(",");
-
-      const rows = data.map((row) =>
-        columns
-          .map((c) => {
-            let value = "";
-
-            if (c.accessor) value = String((row as any)[c.accessor] ?? "");
-            else if (c.render) value = String(c.render(row) ?? "");
-
-            return `"${value.replace(/"/g, '""')}"`;
-          })
-          .join(",")
-      );
-
-      const csv = [headers, ...rows].join("\n");
-      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "export.csv";
-      a.click();
-      URL.revokeObjectURL(url);
-    },
-  }));
+  // Sync UI page when external page changes (API response)
+  useEffect(() => {
+    setUiPage(page);
+  }, [page]);
 
   return (
     <div className="w-full space-y-4 overflow-x-hidden">
@@ -138,22 +104,69 @@ function DataTableInner<T>(
         ))}
 
       {onPageChange && totalPages > 1 && (
-        <div className="flex justify-center gap-2">
-          <button disabled={localPage === 1} onClick={() => onPageChange(localPage - 1)}>Prev</button>
-          {getVisiblePages(localPage, totalPages).map((p, i) =>
-            p === "..." ? <span key={i}>...</span> : (
-              <button key={p} onClick={() => onPageChange(p)}>{p}</button>
+        <div className="flex justify-center items-center gap-2 mt-4">
+          {/* Prev */}
+          <button
+            disabled={uiPage === 1}
+            onClick={() => {
+              const p = uiPage - 1;
+              setUiPage(p);
+              onPageChange(p);
+            }}
+            className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition
+              ${
+                uiPage === 1
+                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                  : "bg-white hover:bg-gray-50 text-gray-700"
+              }`}
+          >
+            Prev
+          </button>
+
+          {/* Page Numbers */}
+          {getVisiblePages(uiPage, totalPages).map((p, i) =>
+            p === "..." ? (
+              <span key={i} className="px-2 text-gray-400 select-none">
+                …
+              </span>
+            ) : (
+              <button
+                key={p}
+                onClick={() => {
+                  setUiPage(p);
+                  onPageChange(p);
+                }}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition
+                  ${
+                    p === uiPage
+                      ? "bg-purple-600 text-white border-purple-600 shadow-sm"
+                      : "bg-white text-gray-700 hover:bg-gray-50"
+                  }`}
+              >
+                {p}
+              </button>
             )
           )}
-          <button disabled={localPage === totalPages} onClick={() => onPageChange(localPage + 1)}>Next</button>
+
+          {/* Next */}
+          <button
+            disabled={uiPage === totalPages}
+            onClick={() => {
+              const p = uiPage + 1;
+              setUiPage(p);
+              onPageChange(p);
+            }}
+            className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition
+              ${
+                uiPage === totalPages
+                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                  : "bg-white hover:bg-gray-50 text-gray-700"
+              }`}
+          >
+            Next
+          </button>
         </div>
       )}
     </div>
   );
 }
-
-const DataTable = forwardRef(DataTableInner) as <T>(
-  props: Props<T> & { ref?: React.Ref<DataTableRef> }
-) => React.ReactElement;
-
-export default DataTable;

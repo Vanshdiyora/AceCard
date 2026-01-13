@@ -24,7 +24,9 @@ export type FetchVendorsParams = {
   page?: number;
   page_size?: number;
   search?: string;
+  append?: boolean;
 };
+
 
 type ApiError = { response?: { data?: { error?: string; message?: string } } };
 
@@ -191,12 +193,23 @@ const vendorsSlice = createSlice({
       })
       .addCase(fetchVendors.fulfilled, (state, action) => {
         state.loading = false;
-        if (state.meta?.page !== action.payload.meta.page) {
-          state.vendors = action.payload.data ?? [];
+
+        const incoming = action.payload.data ?? [];
+        const { append } = action.meta.arg || {};
+
+        const map = new Map<number, VendorItem>();
+
+        if (append) {
+          state.vendors.forEach(v => map.set(v.id, v));
         }
+
+        incoming.forEach(v => map.set(v.id, v));
+
+        state.vendors = Array.from(map.values());
         state.meta = action.payload.meta ?? null;
         state.stats = computeStats(state.vendors);
       })
+
 
       .addCase(fetchVendors.rejected, (state, action) => {
         state.loading = false;

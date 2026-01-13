@@ -1,32 +1,73 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../../app/hooks";
 import { fetchVendors } from "../../vendors/slice";
 import { sendVendorNotification } from "../slice";
 import BrandLoader from "../../../common/ui/BrandLoader";
+import BlockingLoader from "../../../common/ui/BlockingLoader";
+import ResultModal from "../../../common/ui/ResultModal";
+import type { VendorItem } from "../../vendors/types";
+
+import JoditEditor from "jodit-react";
+import "jodit/es2021/jodit.min.css";
 
 const PAGE_SIZE = 10;
-const MAX_VISIBLE = 4;
 
 export default function NotificationsPage() {
   const dispatch = useAppDispatch();
-
   const vendors = useAppSelector((s) => s.vendors.vendors);
-  const loading = useAppSelector((s) => s.vendors.loading);
   const meta = useAppSelector((s) => s.vendors.meta);
+  const loading = useAppSelector((s) => s.vendors.loading);
 
-  const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
-  const [selected, setSelected] = useState<number[]>([]);
-  const [step, setStep] = useState<"select" | "compose">("select");
+  const [selected, setSelected] = useState<Record<number, VendorItem>>({});
+  const [open, setOpen] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
+  const [selectAllLoading, setSelectAllLoading] = useState(false);
+  const [allSelected, setAllSelected] = useState(false);
 
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
 
+  const [sending, setSending] = useState(false);
+  const [resultOpen, setResultOpen] = useState(false);
+  const [resultSuccess, setResultSuccess] = useState(false);
+  const [resultMessage, setResultMessage] = useState("");
+
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+
+  const isInitialLoading =
+    loading && !loadingMore && !isSearching && !selectAllLoading;
+
+  const totalCount = meta?.total_count ?? null;
+
   useEffect(() => {
-    dispatch(fetchVendors({ page, page_size: PAGE_SIZE }));
-  }, [dispatch, page]);
+    if (!meta || vendors.length === 0) {
+      dispatch(fetchVendors({ page: 1, page_size: PAGE_SIZE }));
+    }
+  }, [dispatch, meta, vendors.length]);
+
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setIsSearching(true);
+      dispatch(fetchVendors({ page: 1, page_size: PAGE_SIZE, search })).finally(
+        () => setIsSearching(false)
+      );
+    }, 300);
+    return () => clearTimeout(t);
+  }, [search, dispatch]);
+
+  useEffect(() => {
+    const close = (e: MouseEvent) => {
+      if (!wrapperRef.current?.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, []);
 
   const filtered = useMemo(() => {
+    if (!search) return vendors;
     return vendors.filter(
       (v) =>
         v.legal_name.toLowerCase().includes(search.toLowerCase()) ||
@@ -34,249 +75,254 @@ export default function NotificationsPage() {
     );
   }, [vendors, search]);
 
-  const allFilteredIds = useMemo(() => filtered.map((v) => v.id), [filtered]);
+  const toggleVendor = (vendor: VendorItem) => {
+    setSelected((prev) => ({ ...prev, [vendor.id]: vendor }));
+    setAllSelected(false);
+    setSearch("");
+    setOpen(false);
+  };
 
-  const allSelected =
-    allFilteredIds.length > 0 &&
-    allFilteredIds.every((id) => selected.includes(id));
+  const removeVendor = (id: number) => {
+    setSelected((prev) => {
+      const copy = { ...prev };
+      delete copy[id];
+      return copy;
+    });
+    setAllSelected(false);
+  };
 
-  const someSelected =
-    allFilteredIds.some((id) => selected.includes(id)) && !allSelected;
+  const handleScroll = () => {
+    if (!listRef.current || loadingMore || !meta) return;
 
-  const toggleSelectAll = () => {
+    const { scrollTop, scrollHeight, clientHeight } = listRef.current;
+
+    if (
+      scrollTop + clientHeight >= scrollHeight - 20 &&
+      meta.page < meta.total_pages
+    ) {
+      const next = meta.page + 1;
+      setLoadingMore(true);
+
+      dispatch(
+        fetchVendors({
+          page: next,
+          page_size: PAGE_SIZE,
+          search,
+          append: true,
+        })
+      ).finally(() => setLoadingMore(false));
+    }
+  };
+
+  const selectAll = async () => {
+    if (!meta) return;
+
     if (allSelected) {
-      setSelected((prev) => prev.filter((id) => !allFilteredIds.includes(id)));
-    } else {
-      setSelected((prev) => Array.from(new Set([...prev, ...allFilteredIds])));
+      setSelected({});
+      setAllSelected(false);
+      return;
+    }
+
+    setSelectAllLoading(true);
+
+    const pageSize = totalCount ?? meta.total_pages * PAGE_SIZE;
+
+    const res = await dispatch(
+      fetchVendors({ page: 1, page_size: pageSize, search })
+    ).unwrap();
+
+    const all: Record<number, VendorItem> = {};
+    res.data.forEach((v) => (all[v.id] = v));
+
+    setSelected(all);
+    setAllSelected(true);
+    setSelectAllLoading(false);
+  };
+
+  const send = async () => {
+    setSending(true);
+    try {
+      await dispatch(
+        sendVendorNotification({
+          vendor_ids: Object.keys(selected).map(Number),
+          title,
+          body,
+          in_app: true,
+          email: false,
+        })
+      ).unwrap();
+
+      setResultSuccess(true);
+      setResultMessage("Notification sent successfully!");
+      setSelected({});
+      setTitle("");
+      setBody("");
+      setAllSelected(false);
+    } catch (err: any) {
+      setResultSuccess(false);
+      setResultMessage(err?.message || "Failed to send notification");
+    } finally {
+      setSending(false);
+      setResultOpen(true);
     }
   };
 
-  const toggleVendor = (id: number) => {
-    setSelected((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
-    );
-  };
-
-  const send = () => {
-    dispatch(
-      sendVendorNotification({
-        vendor_ids: selected,
-        title,
-        body,
-        in_app: true,
-        email: false,
-      })
-    );
-    setSelected([]);
-    setTitle("");
-    setBody("");
-    setStep("select");
-  };
-
-  const totalPages = meta?.total_pages ?? 1;
-
-  const getVisiblePages = (page: number, totalPages: number) => {
-    if (totalPages <= MAX_VISIBLE) {
-      return Array.from({ length: totalPages }, (_, i) => i + 1);
-    }
-
-    const pages: (number | "...")[] = [];
-
-    const start = Math.max(2, page - 1);
-    const end = Math.min(totalPages - 1, page + 1);
-
-    pages.push(1);
-
-    if (start > 2) pages.push("...");
-
-    for (let p = start; p <= end; p++) {
-      pages.push(p);
-    }
-
-    if (end < totalPages - 1) pages.push("...");
-
-    pages.push(totalPages);
-
-    return pages;
+  const editorConfig = {
+    readonly: false,
+    height: 280,
+    placeholder: "Write your message...",
+    toolbarAdaptive: false,
+    statusbar: false,
+    buttons:
+      "bold,italic,underline,strikethrough,ul,ol,link,paragraph,fontsize,brush,undo,redo",
   };
 
   return (
+    <>
+      <BlockingLoader show={sending}/>
+
+      <ResultModal
+        open={resultOpen}
+        success={resultSuccess}
+        message={resultMessage}
+        onClose={() => setResultOpen(false)}
+      />
     <div className="min-h-screen p-6">
-      <div className="mx-auto">
-        <h1 className="text-3xl font-semibold text-gray-800 mb-8">
-          Notifications
-        </h1>
+      <div className="max-w-3xl mx-auto bg-white rounded-xl border shadow-sm p-6 space-y-4">
+        <div className="flex justify-between items-center">
+          <h1 className="text-xl font-semibold text-gray-800">
+            New Notification
+          </h1>
+          <button
+            onClick={selectAll}
+            disabled={selectAllLoading}
+            className="text-sm px-3 py-1 border rounded disabled:opacity-40"
+          >
+            {allSelected
+              ? "Unselect All"
+              : selectAllLoading
+              ? "Selecting..."
+              : "Select All"}
+          </button>
+        </div>
 
-        {step === "select" && (
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h2 className="text-lg font-medium text-gray-700">
-                  Select Vendors
-                </h2>
-                <p className="text-sm text-gray-500">{selected.length} selected</p>
-              </div>
+        {/* TO FIELD */}
+        <div ref={wrapperRef} className="relative w-full">
+          <div
+            className="flex flex-wrap items-center gap-2 border rounded-lg px-3 py-2 cursor-text max-h-32 overflow-y-auto"
+            onClick={() => setOpen(true)}
+          >
+            <span className="text-gray-500 text-sm mr-1">To:</span>
 
-              <input
-                className="bg-white border rounded-lg px-3 py-2 text-sm w-64 focus:ring-2 focus:ring-purple-500"
-                placeholder="Search vendors..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-            </div>
+            {Object.values(selected).map((v) => (
+              <span
+                key={v.id}
+                className="flex items-center gap-1 bg-purple-100 text-purple-700 px-2 py-1 rounded-full text-sm"
+              >
+                {v.legal_name}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    removeVendor(v.id);
+                  }}
+                  className="text-purple-500 hover:text-purple-700"
+                >
+                  ×
+                </button>
+              </span>
+            ))}
 
-            <div className="">
+            <input
+              className="flex-1 outline-none text-sm min-w-[120px]"
+              placeholder="Type vendor name or email..."
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setOpen(true);
+              }}
+            />
+          </div>
 
-              {loading ? (
-                <div className="flex items-center justify-center min-h-screen">
-                  <BrandLoader />
-                </div>
-              ) : (
-                <div className="space-y-3">
+          {open && (
+            <div
+              ref={listRef}
+              onScroll={handleScroll}
+              className="absolute top-full left-0 z-10 w-full bg-white border rounded-lg mt-1 shadow h-60 overflow-auto"
+            >
+              {filtered.map((v) => {
+                const isSelected = Boolean(selected[v.id]);
 
-                  {/* Header row */}
-                  <div className="grid grid-cols-[40px_2fr_2fr] gap-4 px-4 py-2 text-xs font-medium text-gray-500 uppercase">
-                    <div>
-                      <input
-                        type="checkbox"
-                        checked={allSelected}
-                        ref={(el) => {
-                          if (el) el.indeterminate = someSelected;
-                        }}
-                        onChange={toggleSelectAll}
-                        className="accent-purple-600"
-                      />
+                return (
+                  <div
+                    key={v.id}
+                    onClick={() => !isSelected && toggleVendor(v)}
+                    className={`px-4 py-2 ${
+                      isSelected
+                        ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                        : "hover:bg-purple-50 cursor-pointer"
+                    }`}
+                  >
+                    <div className="font-medium text-sm">{v.legal_name}</div>
+                    <div className="text-xs text-gray-500">
+                      {v.primary_email}
                     </div>
-                    <div>Vendor Name</div>
-                    <div>Email</div>
                   </div>
+                );
+              })}
 
-                  {/* Rows */}
-                  {filtered.map((v) => {
-                    const checked = selected.includes(v.id);
-
-                    return (
-                      <div
-                        key={v.id}
-                        onClick={() => toggleVendor(v.id)}
-                        className={`grid grid-cols-[40px_2fr_2fr] gap-4 items-center px-4 py-4 rounded-2xl bg-white shadow-sm border transition cursor-pointer ${checked
-                            ? "ring-2 ring-purple-300 bg-purple-50"
-                            : "hover:shadow-md"
-                          }`}
-                      >
-                        <div>
-                          <input
-                            type="checkbox"
-                            checked={checked}
-                            readOnly
-                            className="accent-purple-600"
-                          />
-                        </div>
-
-                        <div className="font-medium text-gray-800">{v.legal_name}</div>
-                        <div className="text-gray-500">{v.primary_email}</div>
-                      </div>
-                    );
-                  })}
+              {(loadingMore || isSearching) && (
+                <div className="p-3 text-center text-sm text-gray-400">
+                  <BrandLoader />
                 </div>
               )}
             </div>
+          )}
+        </div>
 
+        <input
+          className="border rounded-lg px-4 py-2 w-full"
+          placeholder="Title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+        />
 
+        {/* JODIT EDITOR */}
+        <div className="border rounded-lg overflow-hidden">
+          <JoditEditor
+            value={body}
+            config={editorConfig}
+            onBlur={(newContent) => setBody(newContent)}
+          />
+        </div>
 
-            {totalPages > 1 && (
-              <div className="flex justify-center gap-2 pt-4 items-center">
-                <button
-                  disabled={page === 1}
-                  onClick={() => setPage(page - 1)}
-                  className="px-3 py-1 border rounded disabled:opacity-40"
-                >
-                  Prev
-                </button>
+        <div className="flex justify-end gap-3">
+          <button
+            onClick={() => {
+              setSelected({});
+              setTitle("");
+              setBody("");
+              setAllSelected(false);
+            }}
+            className="px-4 py-2 border rounded"
+          >
+            Clear
+          </button>
+          <button
+            onClick={send}
+            disabled={!Object.keys(selected).length || !title || !body}
+            className="bg-purple-600 text-white px-5 py-2 rounded disabled:opacity-40"
+          >
+            Send
+          </button>
+        </div>
 
-                {getVisiblePages(page, totalPages).map((p, i) =>
-                  p === "..." ? (
-                    <span
-                      key={`dots-${i}`}
-                      className="px-2 text-gray-400 select-none"
-                    >
-                      ...
-                    </span>
-                  ) : (
-                    <button
-                      key={p}
-                      onClick={() => setPage(p)}
-                      className={
-                        p === page
-                          ? "bg-purple-200 px-3 py-1 rounded"
-                          : "px-3 py-1 border rounded"
-                      }
-                    >
-                      {p}
-                    </button>
-                  )
-                )}
-
-                <button
-                  disabled={page === totalPages}
-                  onClick={() => setPage(page + 1)}
-                  className="px-3 py-1 border rounded disabled:opacity-40"
-                >
-                  Next
-                </button>
-              </div>
-            )}
-
-            <div className="mt-6 flex justify-end">
-              <button
-                onClick={() => setStep("compose")}
-                disabled={!selected.length}
-                className="bg-purple-600 text-white px-5 py-2 rounded-lg disabled:opacity-40"
-              >
-                Next
-              </button>
-            </div>
-          </div>
-        )}
-
-        {step === "compose" && (
-          <div className="bg-white border rounded-xl p-6 space-y-4">
-            <h2 className="text-lg font-medium text-gray-700">
-              Compose Message ({selected.length})
-            </h2>
-
-            <input
-              className="border rounded-lg px-4 py-2 w-full"
-              placeholder="Title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-            />
-
-            <textarea
-              className="border rounded-lg px-4 py-2 w-full h-40 resize-none"
-              placeholder="Message..."
-              value={body}
-              onChange={(e) => setBody(e.target.value)}
-            />
-
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => setStep("select")}
-                className="px-4 py-2 border rounded"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={send}
-                disabled={!title || !body}
-                className="bg-purple-600 text-white px-5 py-2 rounded disabled:opacity-40"
-              >
-                Send
-              </button>
-            </div>
+        {isInitialLoading && (
+          <div className="flex justify-center py-4">
+            <BrandLoader />
           </div>
         )}
       </div>
     </div>
+    </>
   );
 }

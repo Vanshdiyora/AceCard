@@ -63,8 +63,15 @@ export default function VendorsPage() {
   };
 
 useEffect(() => {
-  dispatch(fetchVendors({ page, page_size: pageSize, search }));
+  const params: any = { page, page_size: pageSize };
+
+  if (search.trim()) {
+    params.search = search.trim();
+  }
+  console.log("from")
+  dispatch(fetchVendors(params));
 }, [dispatch, page, pageSize, search]);
+
 
 const finalVendors = useMemo(() => {
   let list = [...vendors];
