@@ -1,11 +1,14 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppSelector, useAppDispatch } from "../../../app/hooks";
 import { fetchProducts, createProduct, updateProduct } from "../slice";
 import ProductFormModal from "../components/ProductFormModal";
 import PageHeader from "../../../common/components/layout/PageHeader";
 import PageFilters from "../../../common/components/layout/PageFilter";
-import DataTable, { type Column } from "../../../common/components/table/DataTable";
+import DataTable, {
+  type Column,
+  type DataTableRef,
+} from "../../../common/components/table/DataTable";
 import ErrorAlert from "../../../common/ui/ErrorAlert";
 import { Edit2 } from "lucide-react";
 import type { Product } from "../types";
@@ -18,6 +21,7 @@ type StatusFilter = "all" | "active" | "archived";
 export default function ProductsPage() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const tableRef = useRef<DataTableRef | null>(null);
 
   const { products: rawProducts = [], loading, meta, error } = useAppSelector(
     (s) => s.products ?? {}
@@ -36,26 +40,29 @@ export default function ProductsPage() {
   const pageSize = meta?.page_size ?? 10;
 
   const [blocking, setBlocking] = useState(false);
-  const [result, setResult] = useState<{
-    open: boolean;
-    success: boolean;
-    message: string;
-  }>({ open: false, success: true, message: "" });
+  const [result, setResult] = useState({
+    open: false,
+    success: true,
+    message: "",
+  });
 
+  /* -------- Fetch products -------- */
   useEffect(() => {
     dispatch(fetchProducts({ page, page_size: pageSize, search }));
   }, [dispatch, page, pageSize, search]);
 
-
+  /* -------- Reset page on filters/search -------- */
   useEffect(() => {
     setPage(1);
   }, [search, statusFilter, sortBy]);
 
-
+  /* -------- Final visible data -------- */
   const finalProducts = useMemo(() => {
     let list = [...products];
 
-    if (statusFilter !== "all") list = list.filter((p) => p.status === statusFilter);
+    if (statusFilter !== "all") {
+      list = list.filter((p) => p.status === statusFilter);
+    }
 
     switch (sortBy) {
       case "name":
@@ -67,13 +74,15 @@ export default function ProductsPage() {
       default:
         list.sort(
           (a, b) =>
-            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+            new Date(b.created_at).getTime() -
+            new Date(a.created_at).getTime()
         );
     }
 
     return list;
-  }, [products, statusFilter, sortBy, search]);
+  }, [products, statusFilter, sortBy]);
 
+  /* -------- Table columns -------- */
   const columns: Column<Product>[] = [
     { header: "Name", accessor: "name" },
     { header: "Category", accessor: "category" },
@@ -82,10 +91,11 @@ export default function ProductsPage() {
       header: "Status",
       render: (p) => (
         <span
-          className={`px-2 py-1 rounded text-xs ${p.status === "active"
+          className={`px-2 py-1 rounded text-xs ${
+            p.status === "active"
               ? "bg-green-100 text-green-700"
               : "bg-gray-200 text-gray-600"
-            }`}
+          }`}
         >
           {p.status}
         </span>
@@ -155,10 +165,13 @@ export default function ProductsPage() {
             ],
           },
         ]}
+        onExport={() => tableRef.current?.exportCSV()}
+        disableExport={finalProducts.length === 0}
       />
 
       <div className="mt-6">
         <DataTable
+          ref={tableRef}
           columns={columns}
           data={finalProducts}
           loading={loading}
@@ -170,7 +183,6 @@ export default function ProductsPage() {
             navigate(`/admin/products/${p.id}`, { state: { product: p } })
           }
         />
-
       </div>
 
       <ProductFormModal

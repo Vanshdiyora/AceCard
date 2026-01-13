@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, forwardRef, useImperativeHandle } from "react";
 import BrandLoader from "../../ui/BrandLoader";
 
 export type Column<T> = {
@@ -7,6 +7,10 @@ export type Column<T> = {
   width?: string;
   align?: "left" | "center" | "right";
   render?: (row: T) => React.ReactNode;
+};
+
+export type DataTableRef = {
+  exportCSV: () => void;
 };
 
 type Props<T> = {
@@ -34,56 +38,72 @@ function getVisiblePages(page: number, totalPages: number) {
   const end = Math.min(totalPages - 1, page + 1);
 
   pages.push(1);
-
   if (start > 2) pages.push("...");
-
-  for (let p = start; p <= end; p++) {
-    pages.push(p);
-  }
-
+  for (let p = start; p <= end; p++) pages.push(p);
   if (end < totalPages - 1) pages.push("...");
-
   pages.push(totalPages);
 
   return pages;
 }
 
-export default function DataTable<T>({
-  columns,
-  data,
-  loading = false,
-  emptyText = "No data found",
-  onRowClick,
-  page = 1,
-  totalPages = 1,
-  onPageChange,
-}: Props<T>) {
+function DataTableInner<T>(
+  {
+    columns,
+    data,
+    loading = false,
+    emptyText = "No data found",
+    onRowClick,
+    page = 1,
+    totalPages = 1,
+    onPageChange,
+  }: Props<T>,
+  ref: React.Ref<DataTableRef>
+) {
   const gridTemplate = columns.map((c) => c.width || "1fr").join(" ");
-
   const [localPage, setLocalPage] = useState(page);
 
-  useEffect(() => {
-    setLocalPage(page);
-  }, [page]);
+  useEffect(() => setLocalPage(page), [page]);
+
+  useImperativeHandle(ref, () => ({
+    exportCSV() {
+      if (!data.length) return;
+
+      const headers = columns.map((c) => `"${c.header}"`).join(",");
+
+      const rows = data.map((row) =>
+        columns
+          .map((c) => {
+            let value = "";
+
+            if (c.accessor) value = String((row as any)[c.accessor] ?? "");
+            else if (c.render) value = String(c.render(row) ?? "");
+
+            return `"${value.replace(/"/g, '""')}"`;
+          })
+          .join(",")
+      );
+
+      const csv = [headers, ...rows].join("\n");
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "export.csv";
+      a.click();
+      URL.revokeObjectURL(url);
+    },
+  }));
 
   return (
     <div className="w-full space-y-4 overflow-x-hidden">
       {/* Header */}
       <div
-        className="grid text-xs font-semibold uppercase tracking-wide text-gray-500 px-4 min-w-0"
+        className="grid text-xs font-semibold uppercase tracking-wide text-gray-500 px-4"
         style={{ gridTemplateColumns: gridTemplate, columnGap: "5px" }}
       >
         {columns.map((c, i) => (
-          <div
-            key={i}
-            className={`py-2 truncate overflow-hidden whitespace-nowrap ${
-              c.align === "center"
-                ? "text-center"
-                : c.align === "right"
-                ? "text-right"
-                : "text-left"
-            }`}
-          >
+          <div key={i} className="py-2 truncate">
             {c.header}
           </div>
         ))}
@@ -101,95 +121,39 @@ export default function DataTable<T>({
         </div>
       )}
 
-      {!loading && data.length > 0 && (
-        <div className="space-y-3">
-          {data.map((row, rowIndex) => (
-            <div
-              key={rowIndex}
-              onClick={() => onRowClick?.(row)}
-              className="grid items-center bg-white rounded-2xl border px-4 py-3 shadow-sm cursor-pointer hover:bg-gray-50 min-w-0 overflow-hidden"
-              style={{ gridTemplateColumns: gridTemplate, columnGap: "5px" }}
-            >
-              {columns.map((col, colIndex) => {
-                const content = col.render
-                  ? col.render(row)
-                  : col.accessor
-                  ? String((row as any)[col.accessor] ?? "—")
-                  : "—";
-
-                return (
-                  <div
-                    key={colIndex}
-                    className={`min-w-0 overflow-hidden ${
-                      col.align === "center"
-                        ? "text-center"
-                        : col.align === "right"
-                        ? "text-right"
-                        : "text-left"
-                    }`}
-                  >
-                    <div
-                      className="truncate overflow-hidden whitespace-nowrap"
-                      title={typeof content === "string" ? content : undefined}
-                    >
-                      {content}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          ))}
-        </div>
-      )}
+      {!loading &&
+        data.map((row, i) => (
+          <div
+            key={i}
+            onClick={() => onRowClick?.(row)}
+            className="grid bg-white border rounded-2xl px-4 py-3 cursor-pointer hover:bg-gray-50"
+            style={{ gridTemplateColumns: gridTemplate, columnGap: "5px" }}
+          >
+            {columns.map((c, j) => (
+              <div key={j} className="truncate">
+                {c.render ? c.render(row) : String((row as any)[c.accessor!] ?? "—")}
+              </div>
+            ))}
+          </div>
+        ))}
 
       {onPageChange && totalPages > 1 && (
-        <div className="flex justify-center gap-2 pt-2 items-center">
-          <button
-            disabled={localPage === 1}
-            onClick={() => {
-              setLocalPage(localPage - 1);
-              onPageChange(localPage - 1);
-            }}
-            className="px-3 py-1 disabled:opacity-50"
-          >
-            Prev
-          </button>
-
+        <div className="flex justify-center gap-2">
+          <button disabled={localPage === 1} onClick={() => onPageChange(localPage - 1)}>Prev</button>
           {getVisiblePages(localPage, totalPages).map((p, i) =>
-            p === "..." ? (
-              <span key={`dots-${i}`} className="px-2 text-gray-400 select-none">
-                ...
-              </span>
-            ) : (
-              <button
-                key={p}
-                onClick={() => {
-                  setLocalPage(p);
-                  onPageChange(p);
-                }}
-                className={
-                  p === localPage
-                    ? "bg-purple-200 px-3 py-1 rounded font-medium"
-                    : "px-3 py-1"
-                }
-              >
-                {p}
-              </button>
+            p === "..." ? <span key={i}>...</span> : (
+              <button key={p} onClick={() => onPageChange(p)}>{p}</button>
             )
           )}
-
-          <button
-            disabled={localPage === totalPages}
-            onClick={() => {
-              setLocalPage(localPage + 1);
-              onPageChange(localPage + 1);
-            }}
-            className="px-3 py-1 disabled:opacity-50"
-          >
-            Next
-          </button>
+          <button disabled={localPage === totalPages} onClick={() => onPageChange(localPage + 1)}>Next</button>
         </div>
       )}
     </div>
   );
 }
+
+const DataTable = forwardRef(DataTableInner) as <T>(
+  props: Props<T> & { ref?: React.Ref<DataTableRef> }
+) => React.ReactElement;
+
+export default DataTable;

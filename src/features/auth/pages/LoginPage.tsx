@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../../app/hooks";
 import { login } from "../slice";
+import BlockerLoader from "../../../common/ui/BlockingLoader";
 
 export default function LoginPage() {
   const dispatch = useAppDispatch();
@@ -37,48 +38,61 @@ export default function LoginPage() {
   }, [role, token, navigate]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="bg-white w-[400px] p-6 rounded-xl shadow-lg space-y-5">
-        <h2 className="text-xl font-semibold text-center">Login</h2>
+    <>
+      <BlockerLoader show={loading} />
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        <div className="bg-white w-[400px] p-6 rounded-xl shadow-lg space-y-5">
+          <h2 className="text-xl font-semibold text-center">Login</h2>
 
-        {error && <p className="text-red-600 text-center text-sm">{error}</p>}
+          {error && <p className="text-red-600 text-center text-sm">{error}</p>}
 
-        <div className="space-y-4">
-          <div>
-            <label className="text-sm">Email</label>
-            <input
-              type="email"
-              placeholder="Enter your email"
-              value={form.email}
-              onChange={(e) =>
-                setForm({ ...form, email: e.target.value })
-              }
-              className="w-full border rounded-lg p-2 mt-1"
-            />
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm">Email</label>
+              <input
+                type="email"
+                placeholder="Enter your email"
+                value={form.email}
+                onChange={(e) =>
+                  setForm({ ...form, email: e.target.value })
+                }
+                className="w-full border rounded-lg p-2 mt-1"
+              />
+            </div>
+
+            <div>
+              <label className="text-sm">Password</label>
+              <input
+                type="password"
+                placeholder="Enter your password"
+                value={form.password}
+                onChange={(e) =>
+                  setForm({ ...form, password: e.target.value })
+                }
+                className="w-full border rounded-lg p-2 mt-1"
+              />
+            </div>
+          </div>
+          <div className="text-right">
+            <button
+              type="button"
+              onClick={() => navigate("/forgot-password")}
+              className="text-sm text-purple-600 hover:underline"
+            >
+              Forgot password?
+            </button>
           </div>
 
-          <div>
-            <label className="text-sm">Password</label>
-            <input
-              type="password"
-              placeholder="Enter your password"
-              value={form.password}
-              onChange={(e) =>
-                setForm({ ...form, password: e.target.value })
-              }
-              className="w-full border rounded-lg p-2 mt-1"
-            />
-          </div>
+          <button
+            onClick={submit}
+            disabled={loading}
+            className="w-full bg-purple-600 text-white py-2 rounded-lg"
+          >
+            {loading ? "Logging in..." : "Login"}
+          </button>
         </div>
-
-        <button
-          onClick={submit}
-          disabled={loading}
-          className="w-full bg-purple-600 text-white py-2 rounded-lg"
-        >
-          {loading ? "Logging in..." : "Login"}
-        </button>
       </div>
-    </div>
+    </>
+
   );
 }

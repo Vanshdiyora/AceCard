@@ -7,6 +7,9 @@ import SuperAdminLayout from "./portals/superadmin/layout/SuperAdminLayout";
 import AdminLayout from "./portals/admin/layout/AdminLayout";
 import UnauthorizedPage from "./features/auth/pages/UnauthorizedPage";
 import PageNotFound from "./common/pages/PageNotFound";
+import ForgotPasswordPage from "./features/auth/pages/ForgotPasswordPage";
+import VerifyOtpPage from "./features/auth/pages/VerifyOtpPage";
+import ResetPasswordPage from "./features/auth/pages/ResetPasswordPage";
 
 // SUPER ADMIN PAGES
 import { SupportAdmin, VendorsPage } from "./features";
@@ -39,6 +42,9 @@ export default function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/unauthorized" element={<UnauthorizedPage />} />
         <Route path="/not-found" element={<PageNotFound />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/verify-otp" element={<VerifyOtpPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
 
         {/* SUPER ADMIN ROUTES */}
         <Route
