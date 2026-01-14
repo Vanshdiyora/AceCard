@@ -57,6 +57,33 @@ export const sendVendorNotification = createAsyncThunk(
   }
 );
 
+export const archiveAllNotifications = createAsyncThunk(
+  "notifications/archiveAll",
+  async (_, { rejectWithValue }) => {
+    try {
+      await notificationService.markAllAsArchived();
+      return true;
+    } catch (err: any) {
+      return rejectWithValue(
+        err?.response?.data?.message || "Archive all failed"
+      );
+    }
+  }
+);
+
+export const sendTeamNotification = createAsyncThunk(
+  "notifications/sendTeam",
+  async (payload: {
+    recipient_type: "single" | "multiple" | "all_reps" | "all_managers" | "all_team";
+    target_user_ids?: number[];
+    category?: string;
+    message_title: string;
+    message_body: string;
+  }) => {
+    await notificationService.sendToTeam(payload);
+  }
+);
+
 interface State {
   list: Notification[];
   loading: boolean;
@@ -134,7 +161,33 @@ const notificationSlice = createSlice({
       .addCase(archiveNotification.rejected, (state, action) => {
         state.archiving = false;
         state.archiveError = action.payload as string;
-      });
+      })
+
+      .addCase(archiveAllNotifications.pending, (state) => {
+  state.archiving = true;
+  state.archiveError = undefined;
+})
+
+.addCase(archiveAllNotifications.fulfilled, (state) => {
+  state.archiving = false;
+  state.list = []; // clear all notifications
+})
+
+.addCase(archiveAllNotifications.rejected, (state, action) => {
+  state.archiving = false;
+  state.archiveError = action.payload as string;
+})
+
+.addCase(sendTeamNotification.pending, (state) => {
+  state.sending = true;
+})
+.addCase(sendTeamNotification.fulfilled, (state) => {
+  state.sending = false;
+})
+.addCase(sendTeamNotification.rejected, (state) => {
+  state.sending = false;
+})
+
 
 
   },

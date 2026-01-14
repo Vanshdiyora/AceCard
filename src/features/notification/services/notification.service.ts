@@ -33,5 +33,17 @@ export const notificationService = {
   markAsArchived: async (id: number) => {
   await axiosClient.put(`${BASE}/${id}/archive`);
 },
+markAllAsArchived: async () => {
+  await axiosClient.put(`${BASE}/archive-all`);
+},
+sendToTeam: async (payload: {
+  recipient_type: string;
+  target_user_ids?: number[];
+  category?: string;
+  message_title: string;
+  message_body: string;
+}) => {
+  await axiosClient.post("/vendor/notifications/send", payload);
+},
 
 };

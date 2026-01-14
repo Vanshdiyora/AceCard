@@ -151,34 +151,52 @@ useEffect(() => {
     setAllSelected(true);
     setSelectAllLoading(false);
   };
+  const validate = (): string | null => {
+  if (!Object.keys(selected).length) return "Please select at least one vendor.";
+  if (!title.trim()) return "Notification title is required.";
+  if (!body || !body.replace(/<[^>]*>/g, "").trim())
+    return "Notification body is required.";
+  return null;
+};
 
-  const send = async () => {
-    setSending(true);
-    try {
-      await dispatch(
-        sendVendorNotification({
-          vendor_ids: Object.keys(selected).map(Number),
-          title,
-          body,
-          in_app: true,
-          email: false,
-        })
-      ).unwrap();
 
-      setResultSuccess(true);
-      setResultMessage("Notification sent successfully!");
-      setSelected({});
-      setTitle("");
-      setBody("");
-      setAllSelected(false);
-    } catch (err: any) {
-      setResultSuccess(false);
-      setResultMessage(err?.message || "Failed to send notification");
-    } finally {
-      setSending(false);
-      setResultOpen(true);
-    }
-  };
+ const send = async () => {
+  const error = validate();
+
+  if (error) {
+    setResultSuccess(false);
+    setResultMessage(error);
+    setResultOpen(true);
+    return;
+  }
+
+  setSending(true);
+  try {
+    await dispatch(
+      sendVendorNotification({
+        vendor_ids: Object.keys(selected).map(Number),
+        title,
+        body,
+        in_app: true,
+        email: false,
+      })
+    ).unwrap();
+
+    setResultSuccess(true);
+    setResultMessage("Notification sent successfully!");
+    setSelected({});
+    setTitle("");
+    setBody("");
+    setAllSelected(false);
+  } catch (err: any) {
+    setResultSuccess(false);
+    setResultMessage(err?.message || "Failed to send notification");
+  } finally {
+    setSending(false);
+    setResultOpen(true);
+  }
+};
+
 
   const editorConfig = {
     readonly: false,
@@ -222,8 +240,7 @@ useEffect(() => {
 
               <button
                 onClick={send}
-                disabled={!Object.keys(selected).length || !title || !body}
-                className="px-5 py-2 rounded-lg bg-purple-600 text-white shadow disabled:opacity-40"
+                className="px-5 py-2 rounded-lg bg-purple-600 text-white shadow"
               >
                 Send
               </button>

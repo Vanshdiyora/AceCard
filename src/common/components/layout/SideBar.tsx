@@ -25,6 +25,7 @@ export default function Sidebar({ type }: SidebarProps) {
     { label: "Team", path: `${adminBase}/team`, icon: "/sidebar/team.png" },
     { label: "Products", path: `${adminBase}/products`, icon: "/sidebar/products.png" },
     { label: "Support", path: `${adminBase}/support`, icon: "/sidebar/support.png" },
+    { label: "Notifications", path: `${adminBase}/notifications`, icon: "/sidebar/notifications.png" },
     { label: "Settings", path: `${adminBase}/settings`, icon: "/sidebar/settings.png" },
   ];
 

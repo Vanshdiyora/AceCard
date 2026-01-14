@@ -5,7 +5,7 @@ import { markAll } from "../slice";
 import NotificationItem from "./NotificationItem";
 import { selectNotifications } from "../selectors";
 import { useNotificationSocket } from "../hooks/useNotificationSocket";
-import { clearArchiveError } from "../slice";
+import { clearArchiveError, archiveAllNotifications } from "../slice";
 
 export default function NotificationSidebar({
   open,
@@ -67,6 +67,12 @@ export default function NotificationSidebar({
             className="text-sm text-blue-600 ml-auto"
           >
             Mark all as read
+          </button>
+          <button
+            onClick={() => dispatch(archiveAllNotifications())}
+            className="text-sm text-red-600"
+          >
+            Delete all
           </button>
 
           <X className="cursor-pointer" onClick={onClose} />

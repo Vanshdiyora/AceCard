@@ -29,6 +29,7 @@ import {
   ProductDetailsPage,
   VendorDetailsPage,
   NotificationsPage,
+  NotificationVendorPage
 } from "./features/index";
 
 export default function App() {
@@ -83,6 +84,7 @@ export default function App() {
           <Route path="products/:id" element={<ProductDetailsPage />} />
           <Route path="settings" element={<SettingsPage />} />
           <Route path="support" element={<SupportPage />} />
+          <Route path="notifications" element={<NotificationVendorPage />} />
           <Route path="*" element={<Navigate to="/not-found" replace />} />
         </Route>
 

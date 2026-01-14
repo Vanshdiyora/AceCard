@@ -1,4 +1,5 @@
 import { Trash2 } from "lucide-react";
+import DOMPurify from "dompurify";
 import { useAppDispatch, useAppSelector } from "../../../app/hooks";
 import { markRead, archiveNotification } from "../slice";
 import BlockerLoader from "../../../common/ui/BlockingLoader";
@@ -6,12 +7,14 @@ import BlockerLoader from "../../../common/ui/BlockingLoader";
 export default function NotificationItem({ item }: any) {
   const dispatch = useAppDispatch();
   const isUnread = item.status === "sent";
-const archiving = useAppSelector((s) => s.notifications.archiving);
+  const archiving = useAppSelector((s) => s.notifications.archiving);
 
   const handleArchive = (e: React.MouseEvent) => {
     e.stopPropagation();
     dispatch(archiveNotification(item.id));
   };
+
+  const safeHtml = DOMPurify.sanitize(item.message_body);
 
   return (
     <div
@@ -30,7 +33,13 @@ const archiving = useAppSelector((s) => s.notifications.archiving);
       </button>
 
       <h4 className="text-sm font-semibold">{item.message_title}</h4>
-      <p className="text-sm text-gray-600">{item.message_body}</p>
+
+      {/* Render HTML safely */}
+      <div
+        className="text-sm text-gray-600 prose prose-sm max-w-none"
+        dangerouslySetInnerHTML={{ __html: safeHtml }}
+      />
+
       <span className="text-xs text-gray-400">
         {new Date(item.created_at).toLocaleString()}
       </span>

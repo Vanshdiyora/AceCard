@@ -58,7 +58,9 @@ export type FetchTeamParams = {
   page?: number;
   page_size?: number;
   search?: string;
+  append?: boolean;   // 👈 add this
 };
+
 
 export const fetchTeam = createAsyncThunk(
   "team/fetch",
@@ -70,12 +72,14 @@ export const fetchTeam = createAsyncThunk(
       return {
         members: membersArray.map(normalizeMember),
         meta: res.meta,
+        append: params?.append ?? false, // 👈 pass through
       };
     } catch (err: any) {
       return rejectWithValue(extractApiError(err, "Failed to fetch team"));
     }
   }
 );
+
 
 
 export const fetchMemberById = createAsyncThunk(
@@ -172,9 +176,19 @@ const teamSlice = createSlice({
       })
       .addCase(fetchTeam.fulfilled, (state, action) => {
         state.loading = false;
-        state.members = action.payload.members;
         state.meta = action.payload.meta;
+
+        if (action.payload.append) {
+          const existingIds = new Set(state.members.map((m) => m.id));
+          const newOnes = action.payload.members.filter(
+            (m) => !existingIds.has(m.id)
+          );
+          state.members.push(...newOnes); // 👈 append safely
+        } else {
+          state.members = action.payload.members; // normal replace
+        }
       })
+
       .addCase(fetchTeam.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
@@ -201,12 +215,12 @@ const teamSlice = createSlice({
         }
       })
 
-     .addCase(updatePermissions.fulfilled, (state, action) => {
-  const idx = state.members.findIndex((m) => m.id === action.payload.id);
-  if (idx !== -1) {
-    state.members[idx].permissions = action.payload.permissions;
-  }
-})
+      .addCase(updatePermissions.fulfilled, (state, action) => {
+        const idx = state.members.findIndex((m) => m.id === action.payload.id);
+        if (idx !== -1) {
+          state.members[idx].permissions = action.payload.permissions;
+        }
+      })
 
 
       .addCase(deleteMember.fulfilled, (state, action) => {
