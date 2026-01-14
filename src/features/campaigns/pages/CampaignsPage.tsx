@@ -8,7 +8,7 @@ import PageFilters, { type TabItem } from "../../../common/components/layout/Pag
 import DataTable, { type Column } from "../../../common/components/table/DataTable";
 import CreateCampaignModal from "../components/CreateCampaignModal";
 import ErrorAlert from "../../../common/ui/ErrorAlert";
-import type { Campaign } from "../types";
+import type { Campaign, CampaignStatus } from "../types";
 
 const tabs: TabItem[] = [
   { label: "All", value: "all" },
@@ -16,9 +16,11 @@ const tabs: TabItem[] = [
   { label: "Draft", value: "draft" },
   { label: "Active", value: "active" },
   { label: "Paused", value: "paused" },
-  { label: "Completed", value: "completed" },
   { label: "Archived", value: "archived" },
+  { label: "Completed", value: "completed" },
+  { label: "Expired", value: "expired" },
 ];
+
 
 export default function CampaignsPage() {
   const dispatch = useAppDispatch();
@@ -34,7 +36,7 @@ export default function CampaignsPage() {
   const [page, setPage] = useState(1);
   const pageSize = 10;
 
-  const [activeTab, setActiveTab] = useState("all");
+  const [activeTab, setActiveTab] = useState<"all" | CampaignStatus>("all");
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<"recent" | "name_asc" | "pipeline_desc">("recent");
   const [openCreate, setOpenCreate] = useState(false);
@@ -66,8 +68,13 @@ export default function CampaignsPage() {
 
   /* -------- Fetch -------- */
   useEffect(() => {
-    dispatch(fetchCampaigns({ page, page_size: pageSize, search }));
-  }, [dispatch, page, pageSize, search]);
+    const params: any = { page, page_size: pageSize };
+
+    if (search) params.search = search;
+    if (activeTab !== "all") params.status = activeTab;
+
+    dispatch(fetchCampaigns(params));
+  }, [dispatch, page, pageSize, search, activeTab]);
 
   useEffect(() => {
     setPage(1);
@@ -89,15 +96,10 @@ export default function CampaignsPage() {
     ];
   }, [sort]);
 
-  const tabFiltered = useMemo(() => {
-    if (activeTab === "all") return items;
-    return items.filter((c) => c.status === activeTab);
-  }, [items, activeTab]);
-
-
   /* -------- Sorting -------- */
   const finalData = useMemo(() => {
-    const list = [...tabFiltered];
+    const list = [...items];
+
     switch (sort) {
       case "name_asc":
         return list.sort((a, b) => a.name.localeCompare(b.name));
@@ -109,7 +111,8 @@ export default function CampaignsPage() {
             new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
         );
     }
-  }, [tabFiltered, sort]);
+  }, [items, sort]);
+
 
 
   /* -------- Table Columns -------- */
@@ -140,7 +143,8 @@ export default function CampaignsPage() {
         <PageFilters
           tabs={tabs}
           activeTab={activeTab}
-          onTabChange={setActiveTab}
+       onTabChange={(v) => setActiveTab(v as CampaignStatus | "all")}
+
           searchPlaceholder="Search campaigns..."
           onSearch={setSearch}
           filters={sortFilter}

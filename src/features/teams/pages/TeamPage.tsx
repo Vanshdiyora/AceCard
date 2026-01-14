@@ -22,9 +22,9 @@ import ResultModal from "../../../common/ui/ResultModal";
 
 import type { TeamMember } from "../types";
 
-type Filter = "all" | "vendor_admin" | "manager" | "sales_rep" | "active" | "suspended";
 type UserRole = "vendor_admin" | "manager" | "sales_rep";
-
+type RoleFilter = "all" | "manager" | "sales_rep";
+type StatusFilter = "all" | "active" | "suspended";
 export default function TeamPage() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
@@ -39,12 +39,12 @@ export default function TeamPage() {
     : "sales_rep";
 
   const currentUserId = authState?.user?.user_id;
-
+const [roleFilter, setRoleFilter] = useState<RoleFilter>("all");
+const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [page, setPage] = useState(1);
   const pageSize = 10;
 
   const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState<Filter>("all");
 
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const selected = useMemo(
@@ -69,13 +69,20 @@ export default function TeamPage() {
 
   const managers = useMemo(() => members.filter((m) => m.role === "manager"), [members]);
 
-  useEffect(() => {
-    dispatch(fetchTeam({ page, page_size: pageSize, search }));
-  }, [dispatch, page, pageSize, search]);
+useEffect(() => {
+  const params: any = { page, page_size: pageSize };
+
+  if (search) params.search = search;
+  if (roleFilter !== "all") params.role = roleFilter;
+  if (statusFilter !== "all") params.status = statusFilter;
+
+  dispatch(fetchTeam(params));
+}, [dispatch, page, pageSize, search, roleFilter, statusFilter]);
+
 
   useEffect(() => {
     setPage(1);
-  }, [search, filter]);
+  }, [search, statusFilter]);
 
 
   const lockScroll = () => {
@@ -147,16 +154,7 @@ export default function TeamPage() {
     },
   ];
 
-  const finalMembers = useMemo(() => {
-    return members.filter((m) => {
-      if (!m) return false;
-      if (filter === "active" && m.status !== "active") return false;
-      if (filter === "suspended" && m.status !== "suspended") return false;
-      if (["vendor_admin", "manager", "sales_rep"].includes(filter) && m.role !== filter)
-        return false;
-      return true;
-    });
-  }, [members, filter]);
+  const finalMembers = members;
 
   return (
     <div className="p-6">
@@ -176,18 +174,27 @@ export default function TeamPage() {
       <ErrorAlert message={fetchError} />
 
       <PageFilters
-        tabs={[
-          { label: "All", value: "all" },
-          { label: "Admin", value: "vendor_admin" },
-          { label: "Manager", value: "manager" },
-          { label: "Sales Rep", value: "sales_rep" },
-          { label: "Active", value: "active" },
-          { label: "Suspended", value: "suspended" },
-        ]}
-        activeTab={filter}
-        onTabChange={(v) => setFilter(v as Filter)}
-        onSearch={setSearch}
-      />
+  tabs={[
+    { label: "All", value: "all" },
+    { label: "Active", value: "active" },
+    { label: "Suspended", value: "suspended" },
+  ]}
+  activeTab={roleFilter !== "all" ? roleFilter : statusFilter}
+  onTabChange={(v) => {
+    if (v === "manager" || v === "sales_rep") {
+      setRoleFilter(v as RoleFilter);
+      setStatusFilter("all");
+    } else if (v === "active" || v === "suspended") {
+      setStatusFilter(v as StatusFilter);
+      setRoleFilter("all");
+    } else {
+      setRoleFilter("all");
+      setStatusFilter("all");
+    }
+  }}
+  onSearch={setSearch}
+/>
+
 
       <div className="mt-6">
         <DataTable

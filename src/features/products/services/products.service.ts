@@ -8,7 +8,7 @@ import type { PaginationParams } from "../../../common/types";
 export const ProductsAPI = {
   /* -------- GET ALL PRODUCTS -------- */
 async getAll(
-  params: PaginationParams & { search?: string } = { page: 1, page_size: 10 }
+  params: PaginationParams & { search?: string,status?: "active" | "archived";} = { page: 1, page_size: 10 }
 ): Promise<ProductListResponse> {
   const res = await axiosClient.get("/vendor/products", { params });
   return res.data;

@@ -24,6 +24,7 @@ export type FetchVendorsParams = {
   page?: number;
   page_size?: number;
   search?: string;
+  status?: "active" | "archived";
   append?: boolean;
 };
 

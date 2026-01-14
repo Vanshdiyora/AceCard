@@ -45,9 +45,15 @@ export default function ProductsPage() {
   });
 
   /* -------- Fetch products -------- */
-  useEffect(() => {
-    dispatch(fetchProducts({ page, page_size: pageSize, search }));
-  }, [dispatch, page, pageSize, search]);
+useEffect(() => {
+  const params: any = { page, page_size: pageSize };
+
+  if (search) params.search = search;
+  if (statusFilter !== "all") params.status = statusFilter;
+
+  dispatch(fetchProducts(params));
+}, [dispatch, page, pageSize, search, statusFilter]);
+
 
   /* -------- Reset page on filters/search -------- */
   useEffect(() => {
@@ -55,30 +61,27 @@ export default function ProductsPage() {
   }, [search, statusFilter, sortBy]);
 
   /* -------- Final visible data -------- */
-  const finalProducts = useMemo(() => {
-    let list = [...products];
+const finalProducts = useMemo(() => {
+  let list = [...products];
 
-    if (statusFilter !== "all") {
-      list = list.filter((p) => p.status === statusFilter);
-    }
+  switch (sortBy) {
+    case "name":
+      list.sort((a, b) => a.name.localeCompare(b.name));
+      break;
+    case "price":
+      list.sort((a, b) => a.price - b.price);
+      break;
+    default:
+      list.sort(
+        (a, b) =>
+          new Date(b.created_at).getTime() -
+          new Date(a.created_at).getTime()
+      );
+  }
 
-    switch (sortBy) {
-      case "name":
-        list.sort((a, b) => a.name.localeCompare(b.name));
-        break;
-      case "price":
-        list.sort((a, b) => a.price - b.price);
-        break;
-      default:
-        list.sort(
-          (a, b) =>
-            new Date(b.created_at).getTime() -
-            new Date(a.created_at).getTime()
-        );
-    }
+  return list;
+}, [products, sortBy]);
 
-    return list;
-  }, [products, statusFilter, sortBy]);
 
   /* -------- Table columns -------- */
   const columns: Column<Product>[] = [

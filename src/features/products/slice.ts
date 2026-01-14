@@ -14,15 +14,18 @@ const extractApiError = (err: unknown, fallback: string): string =>
 
 export const fetchProducts = createAsyncThunk<
   ProductListResponse,
-  { page?: number; page_size?: number; search?: string },
+  { page?: number; page_size?: number; search?: string; status?: "active" | "archived" },
   { rejectValue: string }
->("products/fetchAll", async ({ page = 1, page_size = 10, search }, { rejectWithValue }) => {
-  try {
-    return await ProductsAPI.getAll({ page, page_size, search });
-  } catch (err) {
-    return rejectWithValue(extractApiError(err, "Failed to fetch products"));
+>(
+  "products/fetchAll",
+  async ({ page = 1, page_size = 10, search, status }, { rejectWithValue }) => {
+    try {
+      return await ProductsAPI.getAll({ page, page_size, search, status });
+    } catch (err) {
+      return rejectWithValue(extractApiError(err, "Failed to fetch products"));
+    }
   }
-});
+);
 
 
 export const fetchProductById = createAsyncThunk<Product, number, { rejectValue: string }>(

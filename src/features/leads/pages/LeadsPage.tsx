@@ -9,7 +9,7 @@ import EditLeadModal from "../components/EditLeadModal";
 import DataTable, { type Column } from "../../../common/components/table/DataTable";
 import ErrorAlert from "../../../common/ui/ErrorAlert";
 
-import type { Lead } from "../types";
+import type { Lead, LeadStage } from "../types";
 
 const tabs: TabItem[] = [
   { label: "All", value: "all" },
@@ -30,7 +30,7 @@ export default function LeadsPage() {
 
   const { leads, meta, loading, error } = useAppSelector((s) => s.leads);
 
-  const [activeTab, setActiveTab] = useState("all");
+  const [activeTab, setActiveTab] = useState<"all" | LeadStage>("all");
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<SortType>("recent");
 
@@ -40,13 +40,18 @@ export default function LeadsPage() {
   const [page, setPage] = useState(1);
   const pageSize = 10;
 
-useEffect(() => {
-  dispatch(fetchLeads({ page, pageSize, search }));
-}, [dispatch, page, pageSize, search]);
+  useEffect(() => {
+    const params: any = { page, pageSize, search };
 
-useEffect(() => {
-  setPage(1);
-}, [search, activeTab]);
+    if (activeTab !== "all") params.stage = activeTab;
+
+    dispatch(fetchLeads(params));
+  }, [dispatch, page, pageSize, search, activeTab]);
+
+
+  useEffect(() => {
+    setPage(1);
+  }, [search, activeTab]);
 
 
   const columns: Column<Lead>[] = [
@@ -79,31 +84,46 @@ useEffect(() => {
   ];
 
   const finalLeads = useMemo(() => {
-  const list = [...leads];
-  switch (sort) {
-    case "name_asc":
-      return list.sort((a, b) => a.lead_name.localeCompare(b.lead_name));
-    case "pipeline_desc":
-      return list.sort((a, b) => (b.deal_amount || 0) - (a.deal_amount || 0));
-    default:
-      return list.sort(
-        (a, b) =>
-          new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
-      );
-  }
-}, [leads, sort]);
+    const list = [...leads];
+    switch (sort) {
+      case "name_asc":
+        return list.sort((a, b) => a.lead_name.localeCompare(b.lead_name));
+      case "pipeline_desc":
+        return list.sort((a, b) => (b.deal_amount || 0) - (a.deal_amount || 0));
+      default:
+        return list.sort(
+          (a, b) =>
+            new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+        );
+    }
+  }, [leads, sort]);
 
   return (
     <div className="p-6 space-y-6">
       <PageHeader title="Leads" description="Manage and track your leads" />
       {error && <ErrorAlert message={error} />}
 
-      <PageFilters tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} searchPlaceholder="Search by name, email, or company..." onSearch={setSearch}
-        filters={[{ key: "sort", placeholder: "Sort by", value: sort, onChange: (v) => setSort(v as SortType), options: [
-          { label: "Recent", value: "recent" },
-          { label: "Name A–Z", value: "name_asc" },
-          { label: "Pipeline High → Low", value: "pipeline_desc" },
-        ]}]} />
+      <PageFilters
+        tabs={tabs}
+        activeTab={activeTab}
+        onTabChange={(v) => setActiveTab(v as "all" | LeadStage)}
+        searchPlaceholder="Search by name, email, or company..."
+        onSearch={setSearch}
+        filters={[
+          {
+            key: "sort",
+            placeholder: "Sort by",
+            value: sort,
+            onChange: (v) => setSort(v as SortType),
+            options: [
+              { label: "Recent", value: "recent" },
+              { label: "Name A–Z", value: "name_asc" },
+              { label: "Pipeline High → Low", value: "pipeline_desc" },
+            ],
+          },
+        ]}
+      />
+
 
       <DataTable columns={columns} data={finalLeads} loading={loading} page={meta?.page ?? page} totalPages={meta?.total_pages ?? 1} onPageChange={setPage} emptyText="No leads found" onRowClick={(lead) => navigate(`${lead.id}`)} />
 

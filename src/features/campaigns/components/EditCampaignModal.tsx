@@ -16,6 +16,7 @@ const STATUS_OPTIONS = [
   { label: "Paused", value: "paused" },
   { label: "Completed", value: "completed" },
   { label: "Archived", value: "archived" },
+  { label: "Expired", value: "expired" },
 ];
 
 export default function EditCampaignModal({ open, onClose, campaign }: Props) {

@@ -2,6 +2,7 @@ import axiosClient from "../../../services/axiosClient";
 import type {
   Campaign,
   CampaignListResponse,
+  CampaignStatus
 } from "../types";
 import type { PaginationParams } from "../../../common/types";
 
@@ -9,13 +10,14 @@ const BASE = "/vendor/campaigns";
 
 export const CampaignService = {
   // existing
-  getAll(
-    params: PaginationParams & { search?: string } = { page: 1, page_size: 10 }
-  ): Promise<CampaignListResponse> {
-    return axiosClient
-      .get(BASE, { params })
-      .then((res) => res.data);
-  },
+ getAll(
+  params: PaginationParams & { search?: string; status?: CampaignStatus } = {
+    page: 1,
+    page_size: 10,
+  }
+): Promise<CampaignListResponse> {
+  return axiosClient.get(BASE, { params }).then(res => res.data);
+},
 
 
   // ✅ NEW: fetch campaigns by team member

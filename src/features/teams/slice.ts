@@ -58,7 +58,9 @@ export type FetchTeamParams = {
   page?: number;
   page_size?: number;
   search?: string;
-  append?: boolean;   // 👈 add this
+  role?: "manager" | "sales_rep";
+  status?: "active" | "suspended";
+  append?: boolean;
 };
 
 

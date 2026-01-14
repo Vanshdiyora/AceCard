@@ -5,7 +5,8 @@ import type {
   UpdateLeadDto,
   LeadsApiResponse,
   LeadNote,
-  Meeting
+  Meeting,
+  LeadStage
 } from "../types";
 
 const BASE = "/vendor/leads";
@@ -15,7 +16,8 @@ async getLeads(
   page = 1,
   pageSize = 10,
   memberId?: number,
-  search?: string
+  search?: string,
+  stage?: LeadStage
 ): Promise<LeadsApiResponse> {
   const res = await axiosClient.get(BASE, {
     params: {
@@ -23,10 +25,12 @@ async getLeads(
       page_size: pageSize,
       member_id: memberId,
       search: search || undefined,
+      stage: stage || undefined,
     },
   });
   return res.data;
 },
+
 
 
 

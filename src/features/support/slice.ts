@@ -23,7 +23,7 @@ export const fetchTickets = createAsyncThunk(
 export const fetchAllTickets = createAsyncThunk(
   "support/fetchAll",
   async (
-    params: { page: number; page_size: number; search?: string },
+    params: { page: number; page_size: number; search?: string; status?: TicketStatus },
     { rejectWithValue }
   ) => {
     try {
@@ -33,6 +33,7 @@ export const fetchAllTickets = createAsyncThunk(
     }
   }
 );
+
 
 
 export const addTicket = createAsyncThunk(

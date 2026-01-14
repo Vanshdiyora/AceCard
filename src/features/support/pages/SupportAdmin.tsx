@@ -41,8 +41,13 @@ export default function SupportAdmin() {
   };
 
 useEffect(() => {
-  dispatch(fetchAllTickets({ page, page_size: pageSize, search }));
-}, [dispatch, page, search]);
+  const params: any = { page, page_size: pageSize };
+
+  if (search) params.search = search;
+  if (activeTab !== "all") params.status = activeTab;
+
+  dispatch(fetchAllTickets(params));
+}, [dispatch, page, search, activeTab]);
 
 
   useEffect(() => {
@@ -84,10 +89,7 @@ useEffect(() => {
     [tickets]
   );
 
-const finalTickets = useMemo(() => {
-  if (activeTab === "all") return tickets;
-  return tickets.filter((t) => t.status === activeTab);
-}, [tickets, activeTab]);
+const finalTickets = tickets;
 
   const openDetails = (ticket: any) => {
     setSelectedTicket(ticket);

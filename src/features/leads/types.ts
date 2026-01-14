@@ -75,3 +75,12 @@ export interface Meeting {
   created_by: number;
   created_at: string;
 }
+
+export type LeadStage =
+  | "new"
+  | "contacted"
+  | "engaged"
+  | "qualified"
+  | "proposal_sent"
+  | "converted"
+  | "lost";

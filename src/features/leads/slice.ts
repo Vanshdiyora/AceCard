@@ -7,7 +7,8 @@ import type {
   LeadsApiResponse,
   LeadNote,
   TimelineItem,
-  Meeting
+  Meeting,
+  LeadStage
 } from "./types";
 import { LeadsService } from "./services/leads.service";
 
@@ -54,19 +55,22 @@ const initialState: LeadsState = {
 
 export const fetchLeads = createAsyncThunk<
   LeadsApiResponse,
-  { page?: number; pageSize?: number; memberId?: number; search?: string },
+  { page?: number; pageSize?: number; memberId?: number; search?: string; stage?: LeadStage },
   { rejectValue: string }
->("leads/fetch", async ({ page = 1, pageSize = 10, memberId, search }, { rejectWithValue }) => {
-  try {
-    const res = await LeadsService.getLeads(page, pageSize, memberId, search);
-    return {
-      data: Array.isArray(res.data) ? res.data : [],
-      meta: res.meta,
-    };
-  } catch (err) {
-    return rejectWithValue(extractApiError(err, "Failed to load leads"));
+>(
+  "leads/fetch",
+  async ({ page = 1, pageSize = 10, memberId, search, stage }, { rejectWithValue }) => {
+    try {
+      const res = await LeadsService.getLeads(page, pageSize, memberId, search, stage);
+      return {
+        data: Array.isArray(res.data) ? res.data : [],
+        meta: res.meta,
+      };
+    } catch (err) {
+      return rejectWithValue(extractApiError(err, "Failed to load leads"));
+    }
   }
-});
+);
 
 
 export const fetchLeadMeetings = createAsyncThunk<
