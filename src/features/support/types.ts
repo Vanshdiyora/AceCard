@@ -29,6 +29,13 @@ export interface SupportTicket {
   updated_at: string;
 }
 
+export interface SupportStats {
+  open: number;
+  closed: number;
+  pending: number;
+}
+
+
 
 
 
@@ -52,9 +59,16 @@ export interface SupportListResponse {
 export interface SupportState {
   tickets: SupportTicket[];
   meta: SupportMeta | null;
+  stats: SupportStats | null;
   loading: boolean;
+  statsLoading: boolean;
   error?: string;
+  statsAdmin: SupportStats | null;
+statsAdminLoading: boolean;
+
 }
+
+
 
 export type NewSupportTicket = Omit<
   SupportTicket,

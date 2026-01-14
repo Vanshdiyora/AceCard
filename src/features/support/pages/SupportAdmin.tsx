@@ -1,6 +1,10 @@
 import { useEffect, useState, useMemo } from "react";
 import { useAppDispatch, useAppSelector } from "../../../app/hooks";
-import { fetchAllTickets, replyTicket } from "../slice";
+import {
+  fetchAllTickets,
+  replyTicket,
+  fetchAdminSupportStats,
+} from "../slice";
 
 import { MessageSquare, Clock, CheckCircle2 } from "lucide-react";
 
@@ -19,7 +23,14 @@ type TicketStatus = "open" | "pending" | "closed";
 export default function SupportAdmin() {
   const dispatch = useAppDispatch();
 
-  const { tickets, loading, error, meta } = useAppSelector((s) => s.support);
+  const {
+    tickets,
+    loading,
+    error,
+    meta,
+    statsAdmin,
+    statsAdminLoading,
+  } = useAppSelector((s) => s.support);
 
   const [page, setPage] = useState(1);
   const pageSize = 10;
@@ -40,15 +51,18 @@ export default function SupportAdmin() {
     setResultOpen(true);
   };
 
-useEffect(() => {
-  const params: any = { page, page_size: pageSize };
+  useEffect(() => {
+    const params: any = { page, page_size: pageSize };
 
-  if (search) params.search = search;
-  if (activeTab !== "all") params.status = activeTab;
+    if (search) params.search = search;
+    if (activeTab !== "all") params.status = activeTab;
 
-  dispatch(fetchAllTickets(params));
-}, [dispatch, page, search, activeTab]);
+    dispatch(fetchAllTickets(params));
+  }, [dispatch, page, search, activeTab]);
 
+  useEffect(() => {
+    dispatch(fetchAdminSupportStats());
+  }, [dispatch]);
 
   useEffect(() => {
     setPage(1);
@@ -72,24 +86,22 @@ useEffect(() => {
     () => [
       {
         title: "Open Tickets",
-        value: tickets.filter((t) => t.status === "open").length,
+        value: statsAdmin?.open ?? 0,
         icon: <MessageSquare className="text-purple-600" />,
       },
       {
         title: "Pending",
-        value: tickets.filter((t) => t.status === "pending").length,
+        value: statsAdmin?.pending ?? 0,
         icon: <Clock className="text-yellow-600" />,
       },
       {
         title: "Closed",
-        value: tickets.filter((t) => t.status === "closed").length,
+        value: statsAdmin?.closed ?? 0,
         icon: <CheckCircle2 className="text-green-600" />,
       },
     ],
-    [tickets]
+    [statsAdmin]
   );
-
-const finalTickets = tickets;
 
   const openDetails = (ticket: any) => {
     setSelectedTicket(ticket);
@@ -102,7 +114,9 @@ const finalTickets = tickets;
     {
       header: "Issue Type",
       render: (t) => (
-        <span className="px-2 py-1 rounded-md bg-gray-100 text-xs">{t.category}</span>
+        <span className="px-2 py-1 rounded-md bg-gray-100 text-xs">
+          {t.category}
+        </span>
       ),
     },
     { header: "Subject", render: (t) => t.subject },
@@ -110,13 +124,12 @@ const finalTickets = tickets;
       header: "Priority",
       render: (t) => (
         <span
-          className={`px-2 py-1 rounded-md text-xs ${
-            t.priority === "high"
+          className={`px-2 py-1 rounded-md text-xs ${t.priority === "high"
               ? "bg-red-100 text-red-600"
               : t.priority === "medium"
-              ? "bg-yellow-100 text-yellow-600"
-              : "bg-blue-100 text-blue-600"
-          }`}
+                ? "bg-yellow-100 text-yellow-600"
+                : "bg-blue-100 text-blue-600"
+            }`}
         >
           {t.priority}
         </span>
@@ -126,19 +139,22 @@ const finalTickets = tickets;
       header: "Status",
       render: (t) => (
         <span
-          className={`px-2 py-1 rounded-md text-xs ${
-            t.status === "open"
+          className={`px-2 py-1 rounded-md text-xs ${t.status === "open"
               ? "bg-blue-100 text-blue-600"
               : t.status === "pending"
-              ? "bg-yellow-100 text-yellow-600"
-              : "bg-green-100 text-green-600"
-          }`}
+                ? "bg-yellow-100 text-yellow-600"
+                : "bg-green-100 text-green-600"
+            }`}
         >
           {t.status}
         </span>
       ),
     },
-    { header: "Last Update",width:'1.5fr', render: (t) => formatDate(t.updated_at) },
+    {
+      header: "Last Update",
+      width: "1.5fr",
+      render: (t) => formatDate(t.updated_at),
+    },
     {
       header: "",
       align: "right",
@@ -155,11 +171,14 @@ const finalTickets = tickets;
 
   return (
     <div className="p-6">
-      <PageHeader title="Tickets & Support" description="Manage platform-wide support tickets" />
+      <PageHeader
+        title="Tickets & Support"
+        description="Manage platform-wide support tickets"
+      />
 
       {error && <ErrorAlert message={error} />}
 
-      {loading ? <StatsGridSkeleton /> : <StatsGrid items={stats} />}
+      {statsAdminLoading ? <StatsGridSkeleton /> : <StatsGrid items={stats} />}
 
       <div className="mt-6" />
 
@@ -180,7 +199,7 @@ const finalTickets = tickets;
 
       <DataTable
         columns={columns}
-        data={finalTickets}
+        data={tickets}
         loading={loading}
         emptyText="No tickets found"
         page={page}
@@ -198,6 +217,7 @@ const finalTickets = tickets;
             await dispatch(replyTicket({ ticketId, message, status })).unwrap();
             showResult(true, "Reply sent successfully.");
             setDetailsModal(false);
+            dispatch(fetchAdminSupportStats()); // refresh stats
           } catch {
             showResult(false, "Failed to send reply.");
           } finally {

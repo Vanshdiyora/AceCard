@@ -4,8 +4,10 @@ import {
   createSupportTicket,
   replyToSupportTicket,
   getAllSupportTickets,
+  getAdminSupportStats
 } from "./services/support.service";
 import type { SupportState, SupportTicket } from "./types";
+import { getVendorSupportStats } from "./services/support.service";
 
 /* ---------------- THUNKS ---------------- */
 
@@ -47,6 +49,17 @@ export const addTicket = createAsyncThunk(
   }
 );
 
+export const fetchSupportStats = createAsyncThunk(
+  "support/fetchStats",
+  async (_, { rejectWithValue }) => {
+    try {
+      return await getVendorSupportStats();
+    } catch (err: any) {
+      return rejectWithValue(err?.message ?? "Failed to fetch stats");
+    }
+  }
+);
+
 type TicketStatus = "open" | "pending" | "closed";
 
 export const replyTicket = createAsyncThunk(
@@ -75,14 +88,31 @@ export const replyTicket = createAsyncThunk(
   }
 );
 
-/* ---------------- STATE ---------------- */
+export const fetchAdminSupportStats = createAsyncThunk(
+  "support/fetchAdminStats",
+  async (_, { rejectWithValue }) => {
+    try {
+      return await getAdminSupportStats();
+    } catch (err: any) {
+      return rejectWithValue(err?.message ?? "Failed to fetch admin stats");
+    }
+  }
+);
 
+
+/* ---------------- STATE ---------------- */
 const initialState: SupportState = {
   tickets: [],
   meta: null,
+  stats: null,
   loading: false,
+  statsLoading: false,
   error: undefined,
+  statsAdmin: null,
+  statsAdminLoading: false,
+
 };
+
 
 /* ---------------- SLICE ---------------- */
 
@@ -138,18 +168,41 @@ const supportSlice = createSlice({
       })
 
       /* -------- REPLY TICKET -------- */
-    .addCase(replyTicket.fulfilled, (state, action) => {
-  const reply = action.payload;
-  if (!reply) return;
+      .addCase(replyTicket.fulfilled, (state, action) => {
+        const reply = action.payload;
+        if (!reply) return;
 
-  const ticket = state.tickets.find((t) => t.id === reply.ticket_id);
-  if (!ticket) return;
+        const ticket = state.tickets.find((t) => t.id === reply.ticket_id);
+        if (!ticket) return;
 
-  ticket.replies ??= [];
-  ticket.replies.push(reply);
+        ticket.replies ??= [];
+        ticket.replies.push(reply);
 
-  if (reply.status) ticket.status = reply.status;
-  ticket.updated_at = new Date().toISOString();
+        if (reply.status) ticket.status = reply.status;
+        ticket.updated_at = new Date().toISOString();
+      })
+
+      .addCase(fetchSupportStats.pending, (state) => {
+        state.statsLoading = true;
+      })
+      .addCase(fetchSupportStats.fulfilled, (state, action) => {
+        state.statsLoading = false;
+        state.stats = action.payload;
+      })
+      .addCase(fetchSupportStats.rejected, (state, action) => {
+        state.statsLoading = false;
+        state.error = action.payload as string;
+      })
+      .addCase(fetchAdminSupportStats.pending, (state) => {
+  state.statsAdminLoading = true;
+})
+.addCase(fetchAdminSupportStats.fulfilled, (state, action) => {
+  state.statsAdminLoading = false;
+  state.statsAdmin = action.payload;
+})
+.addCase(fetchAdminSupportStats.rejected, (state, action) => {
+  state.statsAdminLoading = false;
+  state.error = action.payload as string;
 });
 
   },

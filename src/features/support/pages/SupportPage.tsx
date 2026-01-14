@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../../app/hooks";
-import { fetchTickets } from "../slice";
+import { fetchTickets, fetchSupportStats } from "../slice";
 import NewTicketModal from "../components/NewTicketModal";
 import {
   AlertCircle,
@@ -16,9 +16,29 @@ import ErrorAlert from "../../../common/ui/ErrorAlert";
 import BlockingLoader from "../../../common/ui/BlockingLoader";
 import ResultModal from "../../../common/ui/ResultModal";
 
+/* ---------------- Skeleton ---------------- */
+
+function StatsSkeleton() {
+  return (
+    <div className="space-y-4 animate-pulse">
+      {[1, 2, 3].map((i) => (
+        <div key={i} className="flex justify-between items-center">
+          <div className="flex items-center gap-2">
+            <div className="w-5 h-5 bg-gray-200 rounded-full" />
+            <div className="h-4 w-28 bg-gray-200 rounded" />
+          </div>
+          <div className="h-4 w-8 bg-gray-200 rounded" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function SupportPage() {
   const dispatch = useAppDispatch();
-  const { tickets, loading, error } = useAppSelector((s) => s.support);
+  const { tickets, loading, error, stats, statsLoading } = useAppSelector(
+    (s) => s.support
+  );
 
   const token = localStorage.getItem("token");
   let vendorId: number | null = null;
@@ -32,29 +52,15 @@ export default function SupportPage() {
     }
   }
 
-  const formatDate = (iso?: string | null) => {
-    if (!iso) return "Just now";
-
-    const d = new Date(iso);
-
-    return d.toLocaleString("en-IN", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
-
   useEffect(() => {
     if (vendorId) {
       dispatch(fetchTickets(vendorId));
+      dispatch(fetchSupportStats());
     }
   }, [vendorId, dispatch]);
 
   const [showModal, setShowModal] = useState(false);
   const [expandedTicket, setExpandedTicket] = useState<number | null>(null);
-
   const [processing, setProcessing] = useState(false);
   const [resultOpen, setResultOpen] = useState(false);
   const [resultSuccess, setResultSuccess] = useState(true);
@@ -66,9 +72,21 @@ export default function SupportPage() {
     setResultOpen(true);
   };
 
-  const openTickets = tickets.filter((t) => t.status === "open").length;
-  const inProgress = tickets.filter((t) => t.status === "pending").length;
-  const resolved = tickets.filter((t) => t.status === "closed").length;
+  const openTickets = stats?.open ?? 0;
+  const inProgress = stats?.pending ?? 0;
+  const resolved = stats?.closed ?? 0;
+
+  const formatDate = (iso?: string | null) => {
+    if (!iso) return "Just now";
+    const d = new Date(iso);
+    return d.toLocaleString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
 
   const priorityColors: any = {
     high: "bg-red-100 text-red-600",
@@ -135,7 +153,6 @@ export default function SupportPage() {
                   <div className="flex justify-between items-start">
                     <div className="flex gap-4">
                       <div className="mt-1">{icons[t.category]}</div>
-
                       <div className="space-y-1">
                         <div className="flex items-center gap-3 text-xs">
                           <span className="text-gray-500 font-medium">
@@ -148,12 +165,10 @@ export default function SupportPage() {
                             {t.priority}
                           </span>
                         </div>
-
                         <h3 className="text-lg font-semibold text-gray-800">
                           {t.subject}
                         </h3>
                         <p className="text-sm text-gray-600">{t.description}</p>
-
                         <div className="flex items-center gap-5 text-xs text-gray-500 mt-2">
                           <span className="flex items-center gap-1">
                             <Clock size={14} /> {formatDate(t.created_at)}
@@ -162,7 +177,6 @@ export default function SupportPage() {
                         </div>
                       </div>
                     </div>
-
                     <MessageSquareMore
                       size={20}
                       className="text-gray-400 hover:text-gray-600 cursor-pointer"
@@ -171,30 +185,6 @@ export default function SupportPage() {
                       }
                     />
                   </div>
-
-                  {expandedTicket === t.id && (
-                    <div className="mt-4 border-t pt-4 space-y-4">
-                      {!t.replies?.length && (
-                        <div className="bg-yellow-50 text-yellow-700 p-3 rounded-lg text-sm">
-                          <strong>No replies yet.</strong> Your ticket is under review.
-                        </div>
-                      )}
-
-                      {t.replies?.length > 0 && (
-                        <div className="space-y-3">
-                          {t.replies.map((r: any) => (
-                            <div key={r.id} className="bg-gray-50 p-3 rounded-lg text-sm">
-                              <p className="font-medium text-gray-700">Admin Reply</p>
-                              <p className="text-gray-600">{r.message}</p>
-                              <p className="text-xs text-gray-400 mt-1">
-                                {formatDate(t.created_at)}
-                              </p>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )}
                 </div>
               ))}
             </div>
@@ -206,28 +196,32 @@ export default function SupportPage() {
           <div className="bg-white border rounded-2xl p-6 shadow-sm">
             <h3 className="font-semibold text-gray-800 mb-5">Support Stats</h3>
 
-            <div className="space-y-4 text-sm">
-              <div className="flex justify-between items-center">
-                <span className="flex items-center gap-2 text-gray-600">
-                  <AlertCircle size={18} className="text-blue-500" /> Open Tickets
-                </span>
-                <span className="font-semibold">{openTickets}</span>
-              </div>
+            {statsLoading || !stats ? (
+              <StatsSkeleton />
+            ) : (
+              <div className="space-y-4 text-sm">
+                <div className="flex justify-between items-center">
+                  <span className="flex items-center gap-2 text-gray-600">
+                    <AlertCircle size={18} className="text-blue-500" /> Open Tickets
+                  </span>
+                  <span className="font-semibold">{openTickets}</span>
+                </div>
 
-              <div className="flex justify-between items-center">
-                <span className="flex items-center gap-2 text-gray-600">
-                  <Clock size={18} className="text-orange-500" /> In Progress
-                </span>
-                <span className="font-semibold">{inProgress}</span>
-              </div>
+                <div className="flex justify-between items-center">
+                  <span className="flex items-center gap-2 text-gray-600">
+                    <Clock size={18} className="text-orange-500" /> In Progress
+                  </span>
+                  <span className="font-semibold">{inProgress}</span>
+                </div>
 
-              <div className="flex justify-between items-center">
-                <span className="flex items-center gap-2 text-gray-600">
-                  <CheckCircle2 size={18} className="text-green-600" /> Resolved
-                </span>
-                <span className="font-semibold">{resolved}</span>
+                <div className="flex justify-between items-center">
+                  <span className="flex items-center gap-2 text-gray-600">
+                    <CheckCircle2 size={18} className="text-green-600" /> Resolved
+                  </span>
+                  <span className="font-semibold">{resolved}</span>
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </div>

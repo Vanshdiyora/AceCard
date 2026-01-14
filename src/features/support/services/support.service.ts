@@ -3,6 +3,7 @@ import type {
   SupportListResponse,
   SupportTicket,
   SupportReply,
+  SupportStats
 } from "../types";
 
 import type { PaginationParams } from "../../../common/types";
@@ -48,5 +49,17 @@ export const getAllSupportTickets = async (
   params: PaginationParams & { search?: string; status?: TicketStatus } = { page: 1, page_size: 10 }
 ): Promise<SupportListResponse> => {
   const res = await axiosClient.get(`/admin/support/requests`, { params });
+  return res.data;
+};
+
+/* -------- VENDOR: Support stats -------- */
+export const getVendorSupportStats = async (): Promise<SupportStats> => {
+  const res = await axiosClient.get("/vendor/support/stats");
+  return res.data;
+};
+
+/* -------- ADMIN: Support stats -------- */
+export const getAdminSupportStats = async (): Promise<SupportStats> => {
+  const res = await axiosClient.get("/admin/support/stats");
   return res.data;
 };
