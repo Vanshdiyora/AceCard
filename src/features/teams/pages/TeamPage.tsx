@@ -129,7 +129,16 @@ useEffect(() => {
         </span>
       ),
     },
-    { header: "Role", align: "right", render: (m) => m.role.replace("_", " ") },
+  {
+  header: "Role",
+  align: "right",
+  render: (m) => {
+    if (m.role === "sales_rep") return "Sales Person";
+    if (m.role === "manager") return "Manager";
+    return m.role.replace("_", " ");
+  },
+},
+
     {
       header: "Manager",
       align: "right",
@@ -165,7 +174,7 @@ useEffect(() => {
           currentRole === "vendor_admin"
             ? "Add Member"
             : currentRole === "manager"
-              ? "Add Sales Rep"
+              ? "Add Sales Person"
               : undefined
         }
         onAdd={() => setAddOpen(true)}

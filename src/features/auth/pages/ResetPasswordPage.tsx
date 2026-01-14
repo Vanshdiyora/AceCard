@@ -13,12 +13,11 @@ export default function ResetPasswordPage() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
 
-  const email = state?.email;
-  const code = state?.code;
+  const reset_token = state?.reset_token as string | undefined;
 
   useEffect(() => {
-    if (!email || !code) navigate("/login");
-  }, [email, code, navigate]);
+    if (!reset_token) navigate("/login");
+  }, [reset_token, navigate]);
 
   const submit = async () => {
     if (newPassword.length < 8) {
@@ -26,16 +25,20 @@ export default function ResetPasswordPage() {
       return;
     }
 
+    if (!reset_token) return;
+
     setSubmitting(true);
     setError(null);
 
     try {
       await dispatch(
-        resetPassword({ email, code, new_password: newPassword })
+        resetPassword({ reset_token, new_password: newPassword })
       ).unwrap();
+
       navigate("/login");
-    } catch (err: any) {
-      setError(err || "Failed to reset password");
+    } catch (err: unknown) {
+      if (typeof err === "string") setError(err);
+      else setError("Failed to reset password");
     } finally {
       setSubmitting(false);
     }

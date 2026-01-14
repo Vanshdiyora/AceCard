@@ -12,7 +12,9 @@ export default function ForgotPasswordPage() {
   const navigate = useNavigate();
 
   const submit = async () => {
-    if (!email) {
+    const trimmedEmail = email.trim();
+
+    if (!trimmedEmail) {
       setError("Please enter your email address");
       return;
     }
@@ -21,10 +23,14 @@ export default function ForgotPasswordPage() {
     setError(null);
 
     try {
-      await dispatch(forgotPassword(email)).unwrap();
-      navigate("/verify-otp", { state: { email } });
-    } catch (err: any) {
-      setError(err || "Failed to send reset code");
+      navigate("/verify-otp", { state: { email: trimmedEmail } });
+      await dispatch(forgotPassword(trimmedEmail)).unwrap();
+    } catch (err: unknown) {
+      if (typeof err === "string") {
+        setError(err);
+      } else {
+        setError("Failed to send reset code");
+      }
     } finally {
       setSubmitting(false);
     }
@@ -48,7 +54,10 @@ export default function ForgotPasswordPage() {
             type="email"
             placeholder="you@example.com"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) => {
+              setEmail(e.target.value);
+              if (error) setError(null);
+            }}
             className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 ${
               error
                 ? "border-red-400 focus:ring-red-200"

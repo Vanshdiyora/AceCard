@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../../../app/hooks";
-import { fetchProducts } from "../../../products/slice";
+import { lookupProducts } from "../../../products/slice";
 import DataTable, { type Column } from "../../../../common/components/table/DataTable";
 
 type Props = {
@@ -19,22 +19,22 @@ export default function CampaignProductsTab({ assignedProducts = [] }: Props) {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
 
-  const { products, loading } = useAppSelector((s) => s.products);
+  const { lookup, loading } = useAppSelector((s) => s.products);
 
   useEffect(() => {
-    if (!products.length) dispatch(fetchProducts({ page: 1, page_size: 10 }));
-  }, [dispatch, products.length]);
+    if (assignedProducts.length) {
+      dispatch(lookupProducts(assignedProducts));
+    }
+  }, [dispatch, assignedProducts.join(",")]); // join to avoid ref change loops
 
   const rows: ProductRow[] = useMemo(() => {
-    return products
-      .filter((p) => assignedProducts.includes(p.id))
-      .map((p) => ({
-        id: p.id,
-        name: p.name,
-        category: p.category ?? "—",
-        price: p.price ?? 0,
-      }));
-  }, [products, assignedProducts]);
+    return lookup.map((p) => ({
+      id: p.id,
+      name: p.name,
+      category: p.category ?? "—",
+      price: p.price ?? 0,
+    }));
+  }, [lookup]);
 
   const columns: Column<ProductRow>[] = [
     { header: "Name", accessor: "name" },
@@ -47,18 +47,20 @@ export default function CampaignProductsTab({ assignedProducts = [] }: Props) {
     },
   ];
 
+  if (!assignedProducts.length) {
+    return <div className="py-6 text-gray-500">No products assigned</div>;
+  }
+
   if (loading) return <div className="py-6 text-gray-500">Loading…</div>;
 
   return (
-    <div className="space-y-6">
+    <div>
       <div>
         <h3 className="text-lg font-semibold">Products</h3>
-        <p className="text-sm text-gray-500">
-          Products linked to this campaign
-        </p>
+        <p className="text-sm text-gray-500">Products linked to this campaign</p>
       </div>
 
-      <div className="rounded-2xl border">
+      <div className="rounded-2xl border mt-6">
         <DataTable<ProductRow>
           columns={columns}
           data={rows}

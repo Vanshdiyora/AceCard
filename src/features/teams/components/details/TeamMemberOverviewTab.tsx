@@ -50,9 +50,6 @@ export default function TeamMemberOverviewTab({
           <div>
             <h3 className="text-base font-semibold">
               Campaigns Assigned
-              <span className="ml-2 text-sm text-gray-400">
-                ({campaigns.length})
-              </span>
             </h3>
             <p className="text-sm text-gray-500">
               Campaigns this member is involved in

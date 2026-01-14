@@ -1,30 +1,44 @@
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { forgotPassword } from "../slice";
+import { forgotPassword, verifyCode } from "../slice";
 import { useAppDispatch } from "../../../app/hooks";
 
 export default function VerifyOtpPage() {
   const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
   const [resending, setResending] = useState(false);
   const [resent, setResent] = useState(false);
 
   const { state } = useLocation();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const email = state?.email;
+  const email = state?.email as string | undefined;
 
   useEffect(() => {
     if (!email) navigate("/login");
   }, [email, navigate]);
 
-  const submit = () => {
+  const submit = async () => {
     if (code.length !== 4) {
       setError("Please enter the 4-digit code");
       return;
     }
 
-    navigate("/reset-password", { state: { email, code } });
+    if (!email) return;
+
+    setSubmitting(true);
+    setError(null);
+
+    try {
+      const res = await dispatch(verifyCode({ email, code })).unwrap();
+      navigate("/reset-password", { state: { reset_token: res.reset_token } });
+    } catch (err: unknown) {
+      if (typeof err === "string") setError(err);
+      else setError("Invalid or expired code");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const resend = async () => {
@@ -37,8 +51,9 @@ export default function VerifyOtpPage() {
     try {
       await dispatch(forgotPassword(email)).unwrap();
       setResent(true);
-    } catch (err: any) {
-      setError(err || "Failed to resend code");
+    } catch (err: unknown) {
+      if (typeof err === "string") setError(err);
+      else setError("Failed to resend code");
     } finally {
       setResending(false);
     }
@@ -90,9 +105,10 @@ export default function VerifyOtpPage() {
         {/* Button */}
         <button
           onClick={submit}
-          className="w-full bg-purple-600 hover:bg-purple-700 text-white rounded-lg py-2.5 text-sm font-medium transition"
+          disabled={submitting}
+          className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white rounded-lg py-2.5 text-sm font-medium transition"
         >
-          Continue
+          {submitting ? "Verifying..." : "Continue"}
         </button>
 
         {/* Footer */}

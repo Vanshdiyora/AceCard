@@ -8,8 +8,6 @@ import {
   archiveCampaign,
   duplicateCampaign,
 } from "../slice";
-import { fetchTeam } from "../../teams/slice";
-import { fetchProducts } from "../../products/slice";
 
 import EditCampaignModal from "../components/EditCampaignModal";
 import CampaignOverviewTab from "../components/details/CampaignOverviewTab";
@@ -63,8 +61,8 @@ export default function CampaignDetailsPage() {
 
   useEffect(() => {
     if (id) dispatch(fetchCampaignById(Number(id)));
-    dispatch(fetchTeam());
-    dispatch(fetchProducts({ page: 1, page_size: 10 }));
+    // dispatch(fetchTeam());
+    // dispatch(fetchProducts({ page: 1, page_size: 10 }));
   }, [id, dispatch]);
 
   useEffect(() => {

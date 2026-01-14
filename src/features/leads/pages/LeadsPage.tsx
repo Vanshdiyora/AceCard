@@ -117,7 +117,7 @@ export default function LeadsPage() {
             onChange: (v) => setSort(v as SortType),
             options: [
               { label: "Recent", value: "recent" },
-              { label: "Name A–Z", value: "name_asc" },
+              { label: "Name A-Z", value: "name_asc" },
               { label: "Pipeline High → Low", value: "pipeline_desc" },
             ],
           },

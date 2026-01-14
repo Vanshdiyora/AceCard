@@ -110,16 +110,18 @@ export const updateCampaign = createAsyncThunk<
 });
 
 export const archiveCampaign = createAsyncThunk<
-  Campaign,
+  { id: number; status: CampaignStatus },
   number,
   { rejectValue: string }
 >("campaigns/archive", async (id, { rejectWithValue }) => {
   try {
-    return await CampaignService.archive(id);
+    const res = await CampaignService.archive(id);
+    return { id, status: res.status };
   } catch (err) {
     return rejectWithValue(extractApiError(err, "Failed to archive campaign"));
   }
 });
+
 
 /* ---------------------------------------
    STATE
@@ -150,7 +152,7 @@ const campaignSlice = createSlice({
       })
       .addCase(fetchCampaigns.fulfilled, (state, action) => {
         state.loading = false;
-        state.items = action.payload.data;
+        state.items = action.payload.data ?? [];
         state.meta = action.payload.meta;
       })
       .addCase(fetchCampaigns.rejected, (state, action) => {
@@ -165,6 +167,8 @@ const campaignSlice = createSlice({
       })
       .addCase(createCampaign.fulfilled, (state, action) => {
         state.loading = false;
+        state.error = null;
+        if (!Array.isArray(state.items)) state.items = [];
         state.items.unshift(action.payload);
       })
       .addCase(createCampaign.rejected, (state, action) => {
@@ -179,7 +183,7 @@ const campaignSlice = createSlice({
       })
       .addCase(duplicateCampaign.fulfilled, (state, action) => {
         state.loading = false;
-        state.items.unshift(action.payload);
+        state.items = [action.payload, ...state.items];
       })
       .addCase(duplicateCampaign.rejected, (state, action) => {
         state.loading = false;
@@ -193,8 +197,9 @@ const campaignSlice = createSlice({
       })
       .addCase(updateCampaign.fulfilled, (state, action) => {
         state.loading = false;
-        const idx = state.items.findIndex((c) => c.id === action.payload.id);
-        if (idx !== -1) state.items[idx] = action.payload;
+        state.items = state.items.map((c) =>
+          c.id === action.payload.id ? action.payload : c
+        );
       })
       .addCase(updateCampaign.rejected, (state, action) => {
         state.loading = false;
@@ -208,8 +213,9 @@ const campaignSlice = createSlice({
       })
       .addCase(archiveCampaign.fulfilled, (state, action) => {
         state.loading = false;
-        const idx = state.items.findIndex((c) => c.id === action.payload.id);
-        if (idx !== -1) state.items[idx] = action.payload;
+        state.items = state.items.map((c) =>
+          c.id === action.payload.id ? { ...c, status: action.payload.status } : c
+        );
       })
       .addCase(archiveCampaign.rejected, (state, action) => {
         state.loading = false;
@@ -239,7 +245,7 @@ const campaignSlice = createSlice({
       })
       .addCase(fetchCampaignsByTeamMember.fulfilled, (state, action) => {
         state.loading = false;
-        state.items = action.payload.data;
+        state.items = action.payload.data ?? [];
         state.meta = action.payload.meta;
       })
       .addCase(fetchCampaignsByTeamMember.rejected, (state, action) => {

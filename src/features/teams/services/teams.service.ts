@@ -50,4 +50,5 @@ async getTeam(
   async deleteMember(id: number): Promise<void> {
     await axios.delete(`${BASE_URL}/${id}`);
   },
+  
 };

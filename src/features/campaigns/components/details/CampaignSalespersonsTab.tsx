@@ -85,7 +85,7 @@ export default function CampaignSalespersonsTab({
   if (loading) return <div className="py-6 text-gray-500">Loading…</div>;
 
 return (
-  <div className="space-y-6">
+  <div>
 
     {/* Header */}
     <div className="flex items-center justify-between">
@@ -105,7 +105,7 @@ return (
     </div>
 
     {/* Table Card */}
-    <div className="rounded-2xl border">
+    <div className="rounded-2xl border mt-6">
       <DataTable<SalespersonRow>
         columns={columns}
         data={salespersons}

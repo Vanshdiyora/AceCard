@@ -2,6 +2,7 @@ import { createAsyncThunk, createSlice, type PayloadAction } from "@reduxjs/tool
 import {
   loginRequest,
   forgotPasswordRequest,
+  verifyCodeRequest,
   resetPasswordRequest,
 } from "./services/auth.service";
 
@@ -18,6 +19,7 @@ interface AuthState {
   token: string | null;
   user: JwtPayload | null;
   role: string | null;
+  resetToken: string | null;
   loading: boolean;
   error: string | null;
 }
@@ -34,7 +36,7 @@ function decodeToken(token: string | null): { user: JwtPayload | null; role: str
     const jsonPayload = decodeURIComponent(
       atob(base64)
         .split("")
-        .map(c => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+        .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
         .join("")
     );
     const payload = JSON.parse(jsonPayload) as JwtPayload;
@@ -55,6 +57,7 @@ const initialState: AuthState = {
   token: savedToken,
   user: decoded.user,
   role: decoded.role,
+  resetToken: null,
   loading: false,
   error: null,
 };
@@ -80,19 +83,28 @@ export const forgotPassword = createAsyncThunk(
     try {
       return await forgotPasswordRequest(email);
     } catch (err: any) {
-      return rejectWithValue(err?.response?.data?.message || "Failed to send OTP");
+      return rejectWithValue(err?.response?.data?.message || "Failed to send code");
+    }
+  }
+);
+
+export const verifyCode = createAsyncThunk(
+  "auth/verifyCode",
+  async (payload: { email: string; code: string }, { rejectWithValue }) => {
+    try {
+      const res = await verifyCodeRequest(payload.email, payload.code);
+      return res.data; // { reset_token }
+    } catch (err: any) {
+      return rejectWithValue(err?.response?.data?.message || "Invalid code");
     }
   }
 );
 
 export const resetPassword = createAsyncThunk(
   "auth/resetPassword",
-  async (
-    payload: { email: string; code: string; new_password: string },
-    { rejectWithValue }
-  ) => {
+  async (payload: { reset_token: string; new_password: string }, { rejectWithValue }) => {
     try {
-      return await resetPasswordRequest(payload.email, payload.code, payload.new_password);
+      return await resetPasswordRequest(payload.reset_token, payload.new_password);
     } catch (err: any) {
       return rejectWithValue(err?.response?.data?.message || "Failed to reset password");
     }
@@ -111,6 +123,7 @@ const authSlice = createSlice({
       state.token = null;
       state.user = null;
       state.role = null;
+      state.resetToken = null;
       state.loading = false;
       state.error = null;
       localStorage.removeItem("token");
@@ -123,26 +136,21 @@ const authSlice = createSlice({
       .addCase(login.pending, (state) => {
         state.loading = true;
         state.error = null;
-        state.token = null;
-        state.user = null;
-        state.role = null;
       })
       .addCase(login.fulfilled, (state, action: PayloadAction<{ token: string }>) => {
         state.loading = false;
-        const token = action.payload.token;
-        state.token = token;
-        localStorage.setItem("token", token);
-
-        const decoded = decodeToken(token);
+        state.token = action.payload.token;
+        localStorage.setItem("token", action.payload.token);
+        const decoded = decodeToken(action.payload.token);
         state.user = decoded.user;
         state.role = decoded.role;
       })
       .addCase(login.rejected, (state, action) => {
         state.loading = false;
-        state.error = (action.payload as string) || "Invalid credentials";
+        state.error = action.payload as string;
       })
 
-      /* Forgot Password */
+      /* Forgot */
       .addCase(forgotPassword.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -155,13 +163,28 @@ const authSlice = createSlice({
         state.error = action.payload as string;
       })
 
-      /* Reset Password */
+      /* Verify */
+      .addCase(verifyCode.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(verifyCode.fulfilled, (state, action: PayloadAction<{ reset_token: string }>) => {
+        state.loading = false;
+        state.resetToken = action.payload.reset_token;
+      })
+      .addCase(verifyCode.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+
+      /* Reset */
       .addCase(resetPassword.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
       .addCase(resetPassword.fulfilled, (state) => {
         state.loading = false;
+        state.resetToken = null;
       })
       .addCase(resetPassword.rejected, (state, action) => {
         state.loading = false;

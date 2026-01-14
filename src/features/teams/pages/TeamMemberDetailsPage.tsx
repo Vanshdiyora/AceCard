@@ -15,10 +15,12 @@ import DetailPageHeader from "../../../common/components/layout/DetailPageHeader
 import ConfirmationModal from "../../../common/ui/ConfirmationModal";
 import BlockingLoader from "../../../common/ui/BlockingLoader";
 import ResultModal from "../../../common/ui/ResultModal";
+import TeamMemberTotalLeadsTab from "../components/details/TeamMemberTotalLeadsTab";
 
 import type { TeamMember } from "../types";
 
-const TABS = ["overview", "leads"] as const;
+const TABS = ["overview", "leads", "total-leads"] as const;
+
 
 export default function TeamMemberDetailsPage() {
   const { id } = useParams<{ id: string }>();
@@ -101,16 +103,6 @@ export default function TeamMemberDetailsPage() {
       unlockScroll();
     };
   }, [editOpen, permOpen, confirmOpen, resultOpen]);
-
-
-  if (!hasFetched || (loading && !member)) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <BrandLoader message="Loading member..." />
-      </div>
-    );
-  }
-
   if (!member) {
     return (
       <div className="flex flex-col h-full">
@@ -125,6 +117,28 @@ export default function TeamMemberDetailsPage() {
         <div className="flex flex-1 items-center justify-center text-red-500">
           Member not found
         </div>
+      </div>
+    );
+  }
+
+  const displayRole = useMemo(() => {
+    if (member.role === "sales_rep") return "Sales Person";
+    if (member.role === "vendor_admin") return "Vendor Admin";
+    if (member.role === "manager") return "Manager";
+    return member.role.replace("_", " ");
+  }, [member.role]);
+
+  const displayManager = useMemo(() => {
+    if (member.role !== "sales_rep") return null;
+    if (!member.manager_id) return null;
+    return managers.find((m) => m.id === member.manager_id)?.name || null;
+  }, [member.role, member.manager_id, managers]);
+
+
+  if (!hasFetched || (loading && !member)) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <BrandLoader message="Loading member..." />
       </div>
     );
   }
@@ -165,7 +179,12 @@ export default function TeamMemberDetailsPage() {
 
       <DetailPageHeader
         title={member.name}
-        subtitle={member.role.replace("_", " ")}
+        subtitle={
+          displayManager
+            ? `${displayRole} • Manager - ${displayManager}`
+            : displayRole
+        }
+
         avatar={(member.name?.charAt(0) || "S").toUpperCase()}
 
         status={{
@@ -204,22 +223,27 @@ export default function TeamMemberDetailsPage() {
       />
 
       <div className="flex gap-6 border-b text-sm mt-6">
-        {TABS.map((t) => (
+        {TABS.filter((t) => t !== "total-leads" || member.role === "manager").map((t) => (
           <button
             key={t}
             onClick={() => setActiveTab(t)}
             className={`pb-2 capitalize ${activeTab === t
-                ? "border-b-2 border-purple-600 text-purple-600 font-medium"
-                : "text-gray-500"
+              ? "border-b-2 border-purple-600 text-purple-600 font-medium"
+              : "text-gray-500"
               }`}
           >
-            {t}
+            {t.replace("-", " ")}
           </button>
         ))}
       </div>
 
+
       {activeTab === "overview" && <TeamMemberOverviewTab member={member} />}
       {activeTab === "leads" && <TeamMemberLeadsTab memberId={member.id} />}
+      {activeTab === "total-leads" && member.role === "manager" && (
+        <TeamMemberTotalLeadsTab managerId={member.id} />
+      )}
+
 
       <EditMemberModal
         open={editOpen}

@@ -122,8 +122,8 @@ const productsSlice = createSlice({
       })
       .addCase(fetchProducts.fulfilled, (state, action) => {
         state.loading = false;
-        state.products = action.payload.data;
-        state.meta = action.payload.meta;
+        state.products = action.payload.data ?? [];
+        state.meta = action.payload.meta ?? null;
       })
       .addCase(fetchProducts.rejected, (state, action) => {
         state.loading = false;
@@ -152,6 +152,11 @@ const productsSlice = createSlice({
       })
       .addCase(createProduct.fulfilled, (state, action) => {
         state.loading = false;
+
+        if (!Array.isArray(state.products)) {
+          state.products = [];
+        }
+
         if (!state.meta || state.meta.page === 1) {
           state.products.unshift(action.payload);
         }

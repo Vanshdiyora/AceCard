@@ -12,24 +12,29 @@ import type {
 const BASE = "/vendor/leads";
 
 export const LeadsService = {
-async getLeads(
-  page = 1,
-  pageSize = 10,
-  memberId?: number,
-  search?: string,
-  stage?: LeadStage
-): Promise<LeadsApiResponse> {
-  const res = await axiosClient.get(BASE, {
-    params: {
-      page,
-      page_size: pageSize,
-      member_id: memberId,
-      search: search || undefined,
-      stage: stage || undefined,
-    },
-  });
-  return res.data;
-},
+  async getLeads(
+    page = 1,
+    pageSize = 10,
+    team_member_id?: number,
+    memberId?: number,
+    search?: string,
+    stage?: LeadStage
+  ): Promise<LeadsApiResponse> {
+    const res = await axiosClient.get(BASE, {
+      params: {
+        page,
+        page_size: pageSize,
+
+        team_member_id: team_member_id,
+        member_id: memberId,
+
+        search: search || undefined,
+        stage: stage || undefined,
+      },
+
+    });
+    return res.data;
+  },
 
 
 

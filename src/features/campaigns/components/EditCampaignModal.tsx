@@ -3,6 +3,7 @@ import { useAppDispatch, useAppSelector } from "../../../app/hooks";
 import { updateCampaign } from "../slice";
 import type { EnrichedCampaign } from "../types";
 import DynamicForm, { type FieldConfig } from "../../../common/ui/DynamicForm";
+import BlockingLoader from "../../../common/ui/BlockingLoader";
 
 type Props = {
   open: boolean;
@@ -23,6 +24,8 @@ export default function EditCampaignModal({ open, onClose, campaign }: Props) {
   const dispatch = useAppDispatch();
   const { members } = useAppSelector((s) => s.team);
   const { products } = useAppSelector((s) => s.products);
+  const loading = useAppSelector((s) => s.campaigns.loading);
+
 
   const managers = useMemo(
     () => members.filter((m) => m.role === "manager"),
@@ -87,7 +90,8 @@ export default function EditCampaignModal({ open, onClose, campaign }: Props) {
     { name: "end_date", label: "End Date", type: "date" },
   ];
 
-  const save = async () => {
+const save = async () => {
+  try {
     const payload = {
       name: form.name,
       description: form.description || undefined,
@@ -104,9 +108,12 @@ export default function EditCampaignModal({ open, onClose, campaign }: Props) {
         : undefined,
     };
 
-    await dispatch(updateCampaign({ id: campaign.id, data: payload }));
+    await dispatch(updateCampaign({ id: campaign.id, data: payload })).unwrap();
     onClose();
-  };
+  } catch (err) {
+    console.error("Failed to update campaign", err);
+  }
+};
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
@@ -114,7 +121,7 @@ export default function EditCampaignModal({ open, onClose, campaign }: Props) {
         <div className="p-5 border-b">
           <h2 className="text-xl font-semibold">Edit Campaign</h2>
         </div>
-
+        
         <DynamicForm fields={fields} form={form} onChange={update} />
 
         <div className="p-4 border-t flex justify-end gap-3">
@@ -129,6 +136,8 @@ export default function EditCampaignModal({ open, onClose, campaign }: Props) {
           </button>
         </div>
       </div>
+      <BlockingLoader show={loading} />
+
     </div>
   );
 }
