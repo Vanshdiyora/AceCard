@@ -20,7 +20,6 @@ export default function NotificationsPage() {
 
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<Record<number, VendorItem>>({});
-  const [open, setOpen] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [selectAllLoading, setSelectAllLoading] = useState(false);
@@ -34,7 +33,6 @@ export default function NotificationsPage() {
   const [resultSuccess, setResultSuccess] = useState(false);
   const [resultMessage, setResultMessage] = useState("");
 
-  const wrapperRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
   const isInitialLoading =
@@ -58,13 +56,29 @@ export default function NotificationsPage() {
     return () => clearTimeout(t);
   }, [search, dispatch]);
 
-  useEffect(() => {
-    const close = (e: MouseEvent) => {
-      if (!wrapperRef.current?.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener("mousedown", close);
-    return () => document.removeEventListener("mousedown", close);
-  }, []);
+useEffect(() => {
+  const scrollContainers = [
+    document.body,
+    document.documentElement,
+    document.getElementById("root"),
+  ];
+
+  if (resultOpen) {
+    scrollContainers.forEach((el) => {
+      if (el) el.style.overflow = "hidden";
+    });
+  } else {
+    scrollContainers.forEach((el) => {
+      if (el) el.style.overflow = "";
+    });
+  }
+
+  return () => {
+    scrollContainers.forEach((el) => {
+      if (el) el.style.overflow = "";
+    });
+  };
+}, [resultOpen]);
 
   const filtered = useMemo(() => {
     if (!search) return vendors;
@@ -79,7 +93,6 @@ export default function NotificationsPage() {
     setSelected((prev) => ({ ...prev, [vendor.id]: vendor }));
     setAllSelected(false);
     setSearch("");
-    setOpen(false);
   };
 
   const removeVendor = (id: number) => {
@@ -179,150 +192,135 @@ export default function NotificationsPage() {
 
   return (
     <>
-      <BlockingLoader show={sending}/>
-
+      <BlockingLoader show={sending} />
       <ResultModal
         open={resultOpen}
         success={resultSuccess}
         message={resultMessage}
         onClose={() => setResultOpen(false)}
       />
-    <div className="min-h-screen p-6">
-      <div className="max-w-3xl mx-auto bg-white rounded-xl border shadow-sm p-6 space-y-4">
-        <div className="flex justify-between items-center">
-          <h1 className="text-xl font-semibold text-gray-800">
-            New Notification
-          </h1>
-          <button
-            onClick={selectAll}
-            disabled={selectAllLoading}
-            className="text-sm px-3 py-1 border rounded disabled:opacity-40"
-          >
-            {allSelected
-              ? "Unselect All"
-              : selectAllLoading
-              ? "Selecting..."
-              : "Select All"}
-          </button>
-        </div>
 
-        {/* TO FIELD */}
-        <div ref={wrapperRef} className="relative w-full">
-          <div
-            className="flex flex-wrap items-center gap-2 border rounded-lg px-3 py-2 cursor-text max-h-32 overflow-y-auto"
-            onClick={() => setOpen(true)}
-          >
-            <span className="text-gray-500 text-sm mr-1">To:</span>
+      <div className="min-h-screen p-6">
+        <div className="mx-auto space-y-5">
+          <div className="flex items-center justify-between">
+            <h1 className="text-3xl font-bold text-gray-800">
+              New Notification
+            </h1>
 
-            {Object.values(selected).map((v) => (
-              <span
-                key={v.id}
-                className="flex items-center gap-1 bg-purple-100 text-purple-700 px-2 py-1 rounded-full text-sm"
+            <div className="flex gap-3">
+              <button
+                onClick={selectAll}
+                disabled={selectAllLoading}
+                className="px-4 py-2 rounded-lg bg-white border shadow-sm text-sm"
               >
-                {v.legal_name}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    removeVendor(v.id);
-                  }}
-                  className="text-purple-500 hover:text-purple-700"
-                >
-                  ×
-                </button>
-              </span>
-            ))}
+                {allSelected
+                  ? "Unselect All"
+                  : selectAllLoading
+                  ? "Selecting..."
+                  : "Select All"}
+              </button>
 
-            <input
-              className="flex-1 outline-none text-sm min-w-[120px]"
-              placeholder="Type vendor name or email..."
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                setOpen(true);
-              }}
-            />
+              <button
+                onClick={send}
+                disabled={!Object.keys(selected).length || !title || !body}
+                className="px-5 py-2 rounded-lg bg-purple-600 text-white shadow disabled:opacity-40"
+              >
+                Send
+              </button>
+            </div>
           </div>
 
-          {open && (
-            <div
-              ref={listRef}
-              onScroll={handleScroll}
-              className="absolute top-full left-0 z-10 w-full bg-white border rounded-lg mt-1 shadow h-60 overflow-auto"
-            >
-              {filtered.map((v) => {
-                const isSelected = Boolean(selected[v.id]);
+          <div className="grid grid-cols-[2fr_1fr] gap-5">
+            <div className="bg-white rounded-2xl shadow p-5 space-y-4">
+              <h2 className="font-medium text-gray-700">Message</h2>
 
-                return (
-                  <div
+              <input
+                className="w-full border rounded-lg px-4 py-2"
+                placeholder="Notification title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+              />
+
+              <div className="border rounded-xl overflow-hidden">
+                <JoditEditor
+                  value={body}
+                  config={editorConfig}
+                  onBlur={(newContent) => setBody(newContent)}
+                />
+              </div>
+            </div>
+
+            <div className="bg-white rounded-2xl shadow p-5 space-y-4">
+              <h2 className="font-medium text-gray-700">
+                Recipients ({Object.keys(selected).length})
+              </h2>
+
+              <div className="flex flex-wrap gap-2 max-h-24 overflow-y-auto">
+                {Object.values(selected).map((v) => (
+                  <span
                     key={v.id}
-                    onClick={() => !isSelected && toggleVendor(v)}
-                    className={`px-4 py-2 ${
-                      isSelected
-                        ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                        : "hover:bg-purple-50 cursor-pointer"
-                    }`}
+                    className="flex items-center gap-1 bg-purple-100 text-purple-700 px-2 py-1 rounded-full text-sm"
                   >
-                    <div className="font-medium text-sm">{v.legal_name}</div>
-                    <div className="text-xs text-gray-500">
-                      {v.primary_email}
-                    </div>
-                  </div>
-                );
-              })}
+                    {v.legal_name}
+                    <button
+                      onClick={() => removeVendor(v.id)}
+                      className="hover:text-purple-900"
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+              </div>
 
-              {(loadingMore || isSearching) && (
-                <div className="p-3 text-center text-sm text-gray-400">
-                  <BrandLoader />
-                </div>
-              )}
+              <input
+                className="w-full border rounded-lg px-3 py-2 text-sm"
+                placeholder="Search vendors..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+
+              <div
+                ref={listRef}
+                onScroll={handleScroll}
+                className="border rounded-xl h-72 overflow-y-auto divide-y"
+              >
+                {filtered.map((v) => {
+                  const isSelected = Boolean(selected[v.id]);
+
+                  return (
+                    <div
+                      key={v.id}
+                      onClick={() => !isSelected && toggleVendor(v)}
+                      className={`px-4 py-3 text-sm ${
+                        isSelected
+                          ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                          : "hover:bg-purple-50 cursor-pointer"
+                      }`}
+                    >
+                      <div className="font-medium">{v.legal_name}</div>
+                      <div className="text-xs text-gray-500">
+                        {v.primary_email}
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {(loadingMore || isSearching) && (
+                  <div className="p-3 text-center text-sm text-gray-400">
+                    <BrandLoader />
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {isInitialLoading && (
+            <div className="flex justify-center py-4">
+              <BrandLoader />
             </div>
           )}
         </div>
-
-        <input
-          className="border rounded-lg px-4 py-2 w-full"
-          placeholder="Title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-        />
-
-        {/* JODIT EDITOR */}
-        <div className="border rounded-lg overflow-hidden">
-          <JoditEditor
-            value={body}
-            config={editorConfig}
-            onBlur={(newContent) => setBody(newContent)}
-          />
-        </div>
-
-        <div className="flex justify-end gap-3">
-          <button
-            onClick={() => {
-              setSelected({});
-              setTitle("");
-              setBody("");
-              setAllSelected(false);
-            }}
-            className="px-4 py-2 border rounded"
-          >
-            Clear
-          </button>
-          <button
-            onClick={send}
-            disabled={!Object.keys(selected).length || !title || !body}
-            className="bg-purple-600 text-white px-5 py-2 rounded disabled:opacity-40"
-          >
-            Send
-          </button>
-        </div>
-
-        {isInitialLoading && (
-          <div className="flex justify-center py-4">
-            <BrandLoader />
-          </div>
-        )}
       </div>
-    </div>
     </>
   );
 }

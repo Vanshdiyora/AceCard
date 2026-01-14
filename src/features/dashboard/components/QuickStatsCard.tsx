@@ -2,12 +2,12 @@ import type { TopPerformer } from "../types";
 import { useNavigate } from "react-router-dom";
 
 interface Props {
-  topPerformers: TopPerformer[];
+  topPerformers?: TopPerformer[] | null;
 }
 
 export default function QuickStatsCard({ topPerformers }: Props) {
   const navigate = useNavigate();
-
+  const list = topPerformers ?? [];
   return (
     <div className="flex flex-col gap-6 w-full h-full max-h-full">
       {/* Top Performers */}
@@ -24,12 +24,12 @@ export default function QuickStatsCard({ topPerformers }: Props) {
         </div>
 
         <div className="divide-y divide-purple-100">
-          {topPerformers.length === 0 ? (
+          {list.length === 0 ? (
             <div className="py-10 text-center text-sm text-gray-400">
               No top performers yet
             </div>
           ) : (
-            topPerformers.map((p, idx) => (
+            list.map((p, idx) => (
               <div
                 key={idx}
                 className="grid grid-cols-[48px_2fr_96px_72px] items-center py-4 text-sm"
