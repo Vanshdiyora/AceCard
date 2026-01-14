@@ -31,6 +31,12 @@ const initialState: SettingsState = {
     saving: false,
     error: null,
   },
+  integrations: {
+    data: [],
+    loading: false,
+    error: null,
+  },
+
 };
 
 /* ======================================================
@@ -152,6 +158,39 @@ export const resetPassword = createAsyncThunk<
   }
 });
 
+export const fetchIntegrations = createAsyncThunk(
+  "settings/fetchIntegrations",
+  async (_, thunkAPI) => {
+    try {
+      return await settingsService.listIntegrations();
+    } catch {
+      return thunkAPI.rejectWithValue("Failed to load integrations");
+    }
+  }
+);
+
+export const connectIntegration = createAsyncThunk<
+  void,
+  { provider: string; payload: any }
+>("settings/connectIntegration", async ({ provider, payload }, thunkAPI) => {
+  try {
+    await settingsService.exchangeCode(provider, payload);
+  } catch {
+    return thunkAPI.rejectWithValue("Failed to connect integration");
+  }
+});
+
+export const disconnectIntegration = createAsyncThunk<string, string>(
+  "settings/disconnectIntegration",
+  async (provider, thunkAPI) => {
+    try {
+      await settingsService.disconnectIntegration(provider);
+      return provider;
+    } catch {
+      return thunkAPI.rejectWithValue("Failed to disconnect integration");
+    }
+  }
+);
 
 /* ======================================================
    SLICE
@@ -259,16 +298,38 @@ const settingsSlice = createSlice({
         );
       })
       .addCase(resetPassword.pending, (s) => {
-  s.account.saving = true;
-  s.account.error = null;
-})
-.addCase(resetPassword.fulfilled, (s) => {
-  s.account.saving = false;
-})
-.addCase(resetPassword.rejected, (s, a) => {
-  s.account.saving = false;
-  s.account.error = a.payload as string;
-});
+        s.account.saving = true;
+        s.account.error = null;
+      })
+      .addCase(resetPassword.fulfilled, (s) => {
+        s.account.saving = false;
+      })
+      .addCase(resetPassword.rejected, (s, a) => {
+        s.account.saving = false;
+        s.account.error = a.payload as string;
+      })
+      .addCase(fetchIntegrations.pending, (s) => {
+        s.integrations.loading = true;
+        s.integrations.error = null;
+      })
+      .addCase(fetchIntegrations.fulfilled, (s, a) => {
+        s.integrations.loading = false;
+        s.integrations.data = a.payload;
+      })
+      .addCase(fetchIntegrations.rejected, (s, a) => {
+        s.integrations.loading = false;
+        s.integrations.error = a.payload as string;
+      })
+
+      .addCase(disconnectIntegration.fulfilled, (s, a) => {
+        const i = s.integrations.data.find(x => x.provider === a.payload);
+        if (i) i.connected = false;
+      })
+
+      .addCase(connectIntegration.fulfilled, (s, a) => {
+        const i = s.integrations.data.find(x => x.provider === a.meta.arg.provider);
+        if (i) i.connected = true;
+      });
 
   },
 });

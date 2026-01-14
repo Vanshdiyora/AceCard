@@ -4,6 +4,7 @@ import type {
   AccountProfile,
   UpdateAccountProfilePayload,
   LeadFormConfig,
+  CRMIntegration
 } from "../types";
 
 const BASE_URL = "/profile";
@@ -92,5 +93,26 @@ export const settingsService = {
   },
   async resetPassword(payload: { old_password: string; new_password: string }) {
     await axios.put("/profile/password", payload);
-  }
+  },
+  // ---------- CRM Integrations ----------
+
+async listIntegrations(): Promise<CRMIntegration[]> {
+  const res = await axios.get("/vendor/integrations");
+  return res.data;
+},
+
+async getAuthUrl(provider: string) {
+  const res = await axios.get(`/vendor/integrations/${provider}/auth-url`);
+  return res.data.url;
+},
+
+async exchangeCode(provider: string, payload: any) {
+  const res = await axios.post(`/vendor/integrations/${provider}/exchange`, payload);
+  return res.data;
+},
+
+async disconnectIntegration(provider: string) {
+  await axios.delete(`/vendor/integrations/${provider}`);
+},
+
 };

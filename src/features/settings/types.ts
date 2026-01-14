@@ -78,6 +78,7 @@ export interface SettingsState {
     error: string | null;
   };
   suggestedQuestions: SuggestedQuestionsState;
+  integrations: CRMIntegrationState;
 }
 
 // ---------- Suggested Questions ----------
@@ -92,5 +93,19 @@ export interface SuggestedQuestionsState {
   data: SuggestedQuestion[];
   loading: boolean;
   saving: boolean;
+  error: string | null;
+}
+
+export type CRMProvider = "hubspot" | "zoho" | "salesforce" | "odoo";
+
+export interface CRMIntegration {
+  provider: CRMProvider;
+  connected: boolean;
+  created_at?: string;
+}
+
+export interface CRMIntegrationState {
+  data: CRMIntegration[];
+  loading: boolean;
   error: string | null;
 }

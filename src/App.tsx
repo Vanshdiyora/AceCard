@@ -10,7 +10,7 @@ import PageNotFound from "./common/pages/PageNotFound";
 import ForgotPasswordPage from "./features/auth/pages/ForgotPasswordPage";
 import VerifyOtpPage from "./features/auth/pages/VerifyOtpPage";
 import ResetPasswordPage from "./features/auth/pages/ResetPasswordPage";
-
+import IntegrationCallback from "./features/settings/pages/IntegrationCallback";
 // SUPER ADMIN PAGES
 import { SupportAdmin, VendorsPage } from "./features";
 import LeadDetailsPage from "./features/leads/pages/LeadDetailsPage";
@@ -87,9 +87,13 @@ export default function App() {
           <Route path="notifications" element={<NotificationVendorPage />} />
           <Route path="*" element={<Navigate to="/not-found" replace />} />
         </Route>
+<Route
+  path="/integrations/:provider/callback"
+  element={<IntegrationCallback />}
+/>
 
         {/* GLOBAL FALLBACK */}
-        <Route path="*" element={<Navigate to="/not-found" replace />} />
+        {/* <Route path="*" element={<Navigate to="/not-found" replace />} /> */}
       </Routes>
     </BrowserRouter>
   );

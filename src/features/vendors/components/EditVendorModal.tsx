@@ -87,7 +87,7 @@ export default function EditVendorModal({
         { label: "Zoho", value: "zoho" },
         { label: "HubSpot", value: "hubspot" },
         { label: "Salesforce", value: "salesforce" },
-        { label: "Custom", value: "custom" },
+        { label: "Odoo", value: "odoo" },
       ],
     },
   ];
