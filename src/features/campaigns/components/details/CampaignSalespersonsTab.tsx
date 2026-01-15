@@ -1,8 +1,9 @@
 import { useNavigate } from "react-router-dom";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useAppDispatch, useAppSelector } from "../../../../app/hooks";
 
 import { updateCampaign } from "../../slice";
+import { fetchTeam } from "../../../teams/slice";
 import DataTable, { type Column } from "../../../../common/components/table/DataTable";
 import type { CampaignSalesperson } from "../../types";
 
@@ -28,6 +29,21 @@ export default function CampaignSalespersonsTab({
 
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState<number[]>([]);
+
+  const [salesPage, setSalesPage] = useState(1);
+  const [hasNextSales, setHasNextSales] = useState(true);
+  const [loadingMoreSales, setLoadingMoreSales] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setSalesPage(1);
+      setHasNextSales(true);
+
+      dispatch(fetchTeam({ page: 1, page_size: 10, role: "sales_rep", append: true }))
+        .unwrap()
+        .then((res: any) => setHasNextSales(res.meta.has_next));
+    }
+  }, [open, dispatch]);
 
   const allSalesReps = useMemo(
     () => members.filter((m) => m.role === "sales_rep" && m.status === "active"),
@@ -65,11 +81,21 @@ export default function CampaignSalespersonsTab({
     const updatedIds = Array.from(new Set([...assignedIds, ...selected]));
 
     await dispatch(
-      updateCampaign({ id: campaignId, data: { ids: updatedIds } })
+      updateCampaign({ id: campaignId, data: { assigned_rep_ids: updatedIds } })
     );
 
     setSelected([]);
     setOpen(false);
+  };
+
+  const loadMoreSales = async () => {
+    if (loadingMoreSales || !hasNextSales) return;
+    setLoadingMoreSales(true);
+    const next = salesPage + 1;
+    const res: any = await dispatch(fetchTeam({ page: next, page_size: 10, role: "sales_rep", append: true })).unwrap();
+    setSalesPage(next);
+    setHasNextSales(res.meta.has_next);
+    setLoadingMoreSales(false);
   };
 
   const columns: Column<SalespersonRow>[] = [
@@ -126,7 +152,15 @@ export default function CampaignSalespersonsTab({
               </p>
             </div>
 
-            <div className="p-5 space-y-2 overflow-y-auto">
+            <div
+              className="p-5 space-y-2 overflow-y-auto"
+              onScroll={(e) => {
+                const el = e.currentTarget;
+                if (el.scrollTop + el.clientHeight >= el.scrollHeight - 20) {
+                  loadMoreSales();
+                }
+              }}
+            >
               {available.length === 0 && (
                 <div className="text-sm text-gray-400 text-center py-6">
                   All salespersons are already assigned
@@ -147,6 +181,12 @@ export default function CampaignSalespersonsTab({
                   />
                 </label>
               ))}
+
+              {loadingMoreSales && (
+                <div className="text-center text-sm text-gray-400 py-3">
+                  Loading more…
+                </div>
+              )}
             </div>
 
             <div className="p-4 border-t flex justify-end gap-3 bg-gray-50">

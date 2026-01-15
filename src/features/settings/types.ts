@@ -60,6 +60,7 @@ export type CustomField = {
 };
 
 export interface LeadFormConfig {
+  standardFields: Record<string, boolean>;
   customFields: CustomField[];
 }
 

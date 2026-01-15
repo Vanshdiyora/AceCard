@@ -56,5 +56,10 @@ async getAll(
     const res = await axiosClient.post("/vendor/products/lookup", { ids });
     return res.data;
   },
+/* -------- UNARCHIVE -------- */
+async unarchiveProduct(id: number): Promise<Product> {
+  const res = await axiosClient.post(`/vendor/products/${id}/unarchive`);
+  return res.data;
+},
 
 };

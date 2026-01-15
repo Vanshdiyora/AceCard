@@ -8,6 +8,7 @@ import {
   clearSelectedProduct,
   updateProduct,
   archiveProduct,
+  unarchiveProduct
 } from "../slice";
 
 import ProductOverviewTab from "../components/details/ProductOverviewTab";
@@ -76,28 +77,35 @@ export default function ProductDetailsPage() {
 
   const isArchived = product!.status === "archived";
 
-  const handleConfirm = async () => {
-    try {
-      setProcessing(true);
+ const handleConfirm = async () => {
+  try {
+    setProcessing(true);
+
+    if (isArchived) {
+      await dispatch(unarchiveProduct(product!.id)).unwrap();
+    } else {
       await dispatch(archiveProduct(product!.id)).unwrap();
-      setResult({
-        open: true,
-        success: true,
-        message: isArchived
-          ? "Product activated successfully"
-          : "Product archived successfully",
-      });
-    } catch (err: any) {
-      setResult({
-        open: true,
-        success: false,
-        message: err?.message ?? "Action failed",
-      });
-    } finally {
-      setProcessing(false);
-      setConfirmOpen(false);
     }
-  };
+
+    setResult({
+      open: true,
+      success: true,
+      message: isArchived
+        ? "Product activated successfully"
+        : "Product archived successfully",
+    });
+  } catch (err: any) {
+    setResult({
+      open: true,
+      success: false,
+      message: err?.message ?? "Action failed",
+    });
+  } finally {
+    setProcessing(false);
+    setConfirmOpen(false);
+  }
+};
+
 
   return (
     <div className="p-6">

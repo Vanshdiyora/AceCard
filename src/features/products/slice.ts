@@ -90,6 +90,18 @@ export const lookupProducts = createAsyncThunk<
 });
 
 
+export const unarchiveProduct = createAsyncThunk<
+  { id: number },
+  number,
+  { rejectValue: string }
+>("products/unarchive", async (id, { rejectWithValue }) => {
+  try {
+    await ProductsAPI.unarchiveProduct(id);
+    return { id };
+  } catch (err) {
+    return rejectWithValue(extractApiError(err, "Failed to activate product"));
+  }
+});
 
 /* ---------------- STATE ---------------- */
 
@@ -228,7 +240,27 @@ const productsSlice = createSlice({
       .addCase(lookupProducts.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload ?? "Failed to lookup products";
-      });
+      })
+      /* ---------- UNARCHIVE ---------- */
+.addCase(unarchiveProduct.pending, (state) => {
+  state.loading = true;
+  state.error = null;
+})
+.addCase(unarchiveProduct.fulfilled, (state, action) => {
+  state.loading = false;
+  const id = action.payload.id;
+
+  const p = state.products.find(p => p.id === id);
+  if (p) p.status = "active";
+
+  if (state.selectedProduct?.id === id) {
+    state.selectedProduct.status = "active";
+  }
+})
+.addCase(unarchiveProduct.rejected, (state, action) => {
+  state.loading = false;
+  state.error = action.payload ?? "Failed to activate product";
+});
 
   },
 });

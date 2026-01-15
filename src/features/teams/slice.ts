@@ -74,15 +74,13 @@ export const fetchTeam = createAsyncThunk(
       return {
         members: membersArray.map(normalizeMember),
         meta: res.meta,
-        append: params?.append ?? false, // 👈 pass through
+        append: params?.append ?? false,
       };
     } catch (err: any) {
       return rejectWithValue(extractApiError(err, "Failed to fetch team"));
     }
   }
 );
-
-
 
 export const fetchMemberById = createAsyncThunk(
   "team/fetchById",
@@ -180,14 +178,16 @@ const teamSlice = createSlice({
         state.loading = false;
         state.meta = action.payload.meta;
 
+        const incoming = action.payload.members;
+        const existingIds = new Set(state.members.map((m) => m.id));
+
         if (action.payload.append) {
-          const existingIds = new Set(state.members.map((m) => m.id));
-          const newOnes = action.payload.members.filter(
-            (m) => !existingIds.has(m.id)
-          );
-          state.members.push(...newOnes); // 👈 append safely
+          // Append only new members (no duplicates)
+          const newOnes = incoming.filter((m) => !existingIds.has(m.id));
+          state.members.push(...newOnes);
         } else {
-          state.members = action.payload.members; // normal replace
+          // Replace completely (used for non-paginated fetch)
+          state.members = incoming;
         }
       })
 

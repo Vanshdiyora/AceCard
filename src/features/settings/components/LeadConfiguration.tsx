@@ -1,24 +1,9 @@
 import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../../app/hooks";
 import { fetchLeadConfig, saveLeadConfig } from "../slice";
-import type {
-  RequiredFields,
-  CustomField,
-  FieldType,
-  Option,
-} from "../types";
+import type { CustomField, FieldType, Option } from "../types";
 import BrandLoader from "../../../common/ui/BrandLoader";
-
-const requiredKeys = ["name", "phone", "email", "product"] as const;
-
-const DEFAULT_REQUIRED: RequiredFields = {
-  name: true,
-  phone: true,
-  email: true,
-  product: true,
-};
-
-const DEFAULT_STAGES = ["New", "Contacted", "Qualified", "Converted", "Lost"];
+import ResultModal from "../../../common/ui/ResultModal";
 
 export default function LeadConfiguration() {
   const dispatch = useAppDispatch();
@@ -26,11 +11,23 @@ export default function LeadConfiguration() {
     (s) => s.settings.leadConfig
   );
 
-  const [required, setRequired] = useState<RequiredFields>(DEFAULT_REQUIRED);
-  const [stages, setStages] = useState<string[]>(DEFAULT_STAGES);
+  const [standardFields, setStandardFields] = useState<Record<string, boolean>>(
+    {}
+  );
   const [customFields, setCustomFields] = useState<CustomField[]>([]);
+  const [result, setResult] = useState<{
+    open: boolean;
+    success: boolean;
+    message: string;
+  }>({
+    open: false,
+    success: true,
+    message: "",
+  });
+
 
   const [newStage, setNewStage] = useState("");
+
   const [fieldLabel, setFieldLabel] = useState("");
   const [type, setType] = useState<FieldType>("text");
   const [requiredField, setRequiredField] = useState(false);
@@ -41,32 +38,48 @@ export default function LeadConfiguration() {
   const isChoiceField =
     type === "dropdown" || type === "radio" || type === "checkbox";
 
+  const stageField = customFields.find((f) => f.fieldId === "stage");
+  const stages = stageField?.options ?? [];
+
+  /* ---------------- Load Config ---------------- */
+
   useEffect(() => {
     dispatch(fetchLeadConfig());
   }, [dispatch]);
 
   useEffect(() => {
     if (!data) return;
-    setCustomFields(data.customFields ?? []);
+
+    setStandardFields((prev) =>
+      Object.keys(prev).length ? prev : data.standardFields || {}
+    );
+
+    setCustomFields((prev) => (prev.length ? prev : data.customFields || []));
   }, [data]);
 
+
+  /* ---------------- Handlers ---------------- */
+
   const resetConfiguration = () => {
-    setCustomFields(data?.customFields ?? []);
-    setStages(DEFAULT_STAGES);
-    setRequired(DEFAULT_REQUIRED);
-    setNewStage("");
+    if (!data) return;
+    setStandardFields(data.standardFields || {});
+    setCustomFields(data.customFields || []);
     setFieldLabel("");
     setType("text");
     setRequiredField(false);
     setOptions([]);
     setOptionInput("");
+    setNewStage("");
   };
 
   const addOption = () => {
     if (!optionInput.trim()) return;
     setOptions((p) => [
       ...p,
-      { label: optionInput, value: optionInput.toLowerCase().replace(/\s+/g, "_") },
+      {
+        label: optionInput,
+        value: optionInput.toLowerCase().replace(/\s+/g, "_"),
+      },
     ]);
     setOptionInput("");
   };
@@ -93,24 +106,89 @@ export default function LeadConfiguration() {
     setOptions([]);
   };
 
-  const saveConfiguration = async () => {
-    await dispatch(saveLeadConfig({ customFields }));
-    alert("Configuration saved");
+  const addStage = () => {
+    if (!newStage.trim() || !stageField) return;
+
+    setCustomFields((prev) =>
+      prev.map((f) =>
+        f.fieldId === "stage"
+          ? {
+            ...f,
+            options: [
+              ...(f.options || []),
+              {
+                label: newStage,
+                value: newStage.toLowerCase().replace(/\s+/g, "_"),
+              },
+            ],
+          }
+          : f
+      )
+    );
+
+    setNewStage("");
   };
 
-if (loading)
-  return (
-    <div className="flex items-center justify-center min-h-[60vh]">
-      <BrandLoader />
-    </div>
-  );
+  const removeStage = (value: string) => {
+    setCustomFields((prev) =>
+      prev.map((f) =>
+        f.fieldId === "stage"
+          ? { ...f, options: f.options?.filter((o) => o.value !== value) }
+          : f
+      )
+    );
+  };
+
+  const saveConfiguration = async () => {
+    try {
+      await dispatch(
+        saveLeadConfig({
+          standardFields,
+          customFields,
+        })
+      ).unwrap();
+
+      setResult({
+        open: true,
+        success: true,
+        message: "Lead configuration saved successfully.",
+      });
+    } catch {
+      setResult({
+        open: true,
+        success: false,
+        message: "Failed to save lead configuration.",
+      });
+    }
+  };
+
+  if (saving)
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <BrandLoader />
+      </div>
+    );
+
+  /* ---------------- Render ---------------- */
+
+  if (loading)
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <BrandLoader />
+      </div>
+    );
 
   if (error) return <div className="p-6 text-red-600">{error}</div>;
 
   return (
     <div className="min-h-screen">
+      <ResultModal
+        open={result.open}
+        success={result.success}
+        message={result.message}
+        onClose={() => setResult((r) => ({ ...r, open: false }))}
+      />
       <div className="mx-auto bg-white rounded-3xl shadow-sm p-10">
-
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
@@ -136,29 +214,33 @@ if (loading)
           </div>
         </div>
 
-        {/* Mandatory Fields */}
+        {/* Standard Fields */}
         <section className="mb-10">
-          <h3 className="text-sm font-medium mb-3">Mandatory Fields</h3>
-          <div className="flex gap-4 flex-wrap">
-            {requiredKeys.map((key) => (
-              <label
-                key={key}
-                className="flex items-center gap-2 bg-gray-100 px-4 py-2 rounded-full text-sm cursor-pointer"
-              >
-                <input
-                  type="checkbox"
-                  checked={required[key]}
-                  onChange={() =>
-                    setRequired((prev) => ({
-                      ...prev,
-                      [key]: !prev[key],
-                    }))
-                  }
-                />
-                {key.toUpperCase()}
-              </label>
-            ))}
-          </div>
+          <h3 className="text-sm font-medium mb-3">Standard Fields</h3>
+
+          {Object.keys(standardFields).length === 0 ? (
+            <div className="text-gray-500 italic text-sm">
+              No standard fields configured.
+            </div>
+          ) : (
+            <div className="flex gap-4 flex-wrap">
+              {Object.entries(standardFields).map(([key, val]) => (
+                <label
+                  key={key}
+                  className="flex items-center gap-2 bg-gray-100 px-4 py-2 rounded-full text-sm"
+                >
+                  <input
+                    type="checkbox"
+                    checked={val}
+                    onChange={() =>
+                      setStandardFields((p) => ({ ...p, [key]: !p[key] }))
+                    }
+                  />
+                  {key}
+                </label>
+              ))}
+            </div>
+          )}
         </section>
 
         {/* Lead Stages */}
@@ -167,13 +249,14 @@ if (loading)
 
           <div className="space-y-2 mb-3">
             {stages.map((stage) => (
-              <div key={stage} className="flex justify-between border px-4 py-2 rounded-lg">
-                <span>{stage}</span>
+              <div
+                key={stage.value}
+                className="flex justify-between border px-4 py-2 rounded-lg"
+              >
+                <span>{stage.label}</span>
                 <button
                   className="text-red-500"
-                  onClick={() =>
-                    setStages((prev) => prev.filter((s) => s !== stage))
-                  }
+                  onClick={() => removeStage(stage.value)}
                 >
                   Delete
                 </button>
@@ -190,12 +273,7 @@ if (loading)
             />
             <button
               className="px-4 py-2 bg-gray-900 text-white rounded"
-              onClick={() => {
-                if (newStage.trim()) {
-                  setStages((prev) => [...prev, newStage.trim()]);
-                  setNewStage("");
-                }
-              }}
+              onClick={addStage}
             >
               Add
             </button>
@@ -206,33 +284,36 @@ if (loading)
         <section className="mb-10">
           <h3 className="text-sm font-medium mb-4">Custom Fields</h3>
           <div className="space-y-3">
-            {customFields.map((field, i) => (
-              <div
-                key={i}
-                className={`flex justify-between px-6 py-4 border rounded-2xl ${
-                  field.archived ? "opacity-50 italic" : ""
-                }`}
-              >
-                <div>
-                  <div className="font-medium">{field.label}</div>
-                  <div className="text-xs text-gray-500">
-                    {field.type} {field.required && "• Required"}
-                  </div>
-                </div>
-                <button
-                  className={field.archived ? "text-green-600" : "text-red-500"}
-                  onClick={() =>
-                    setCustomFields((p) =>
-                      p.map((f, idx) =>
-                        idx === i ? { ...f, archived: !f.archived } : f
-                      )
-                    )
-                  }
+            {customFields
+              .filter((f) => f.fieldId !== "stage")
+              .map((field, i) => (
+                <div
+                  key={i}
+                  className={`flex justify-between px-6 py-4 border rounded-2xl ${field.archived ? "opacity-50 italic" : ""
+                    }`}
                 >
-                  {field.archived ? "Unarchive" : "Archive"}
-                </button>
-              </div>
-            ))}
+                  <div>
+                    <div className="font-medium">{field.label}</div>
+                    <div className="text-xs text-gray-500">
+                      {field.type} {field.required && "• Required"}
+                    </div>
+                  </div>
+                  <button
+                    className={
+                      field.archived ? "text-green-600" : "text-red-500"
+                    }
+                    onClick={() =>
+                      setCustomFields((p) =>
+                        p.map((f, idx) =>
+                          idx === i ? { ...f, archived: !f.archived } : f
+                        )
+                      )
+                    }
+                  >
+                    {field.archived ? "Unarchive" : "Archive"}
+                  </button>
+                </div>
+              ))}
           </div>
         </section>
 
@@ -273,7 +354,10 @@ if (loading)
             <div className="bg-white p-4 rounded border mb-4">
               <div className="text-xs mb-2">Options</div>
               {options.map((o, i) => (
-                <div key={i} className="flex justify-between border rounded px-3 py-1 mb-1">
+                <div
+                  key={i}
+                  className="flex justify-between border rounded px-3 py-1 mb-1"
+                >
                   {o.label}
                   <button
                     className="text-red-500"
@@ -292,7 +376,10 @@ if (loading)
                   value={optionInput}
                   onChange={(e) => setOptionInput(e.target.value)}
                 />
-                <button className="bg-gray-900 text-white px-3 py-1 rounded" onClick={addOption}>
+                <button
+                  className="bg-gray-900 text-white px-3 py-1 rounded"
+                  onClick={addOption}
+                >
                   Add
                 </button>
               </div>

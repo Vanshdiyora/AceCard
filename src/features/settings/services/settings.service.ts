@@ -54,22 +54,18 @@ export const settingsService = {
   async getLeadsConfig(): Promise<LeadFormConfig> {
     const res = await axios.get<any>("/vendor/leads-config");
     const raw = res.data || {};
-    const cfg = raw.config || {};
 
     return {
-      customFields: cfg.customFields ?? [],
+      standardFields: raw.config?.standardFields ?? {},
+      customFields: raw.config?.customFields ?? [],
     };
   },
 
-  async updateLeadsConfig(payload: LeadFormConfig): Promise<LeadFormConfig> {
-    const res = await axios.put<any>("/vendor/leads-config", payload);
-    const raw = res.data || {};
-    const cfg = raw.config || payload;
+async updateLeadsConfig(payload: LeadFormConfig): Promise<LeadFormConfig> {
+  const res = await axios.put("/vendor/leads-config", payload);
+  return res.data;
+},
 
-    return {
-      customFields: cfg.customFields ?? payload.customFields,
-    };
-  },
 
   // ---------- Suggested Questions ----------
   async listSuggestedQuestions() {
@@ -96,23 +92,23 @@ export const settingsService = {
   },
   // ---------- CRM Integrations ----------
 
-async listIntegrations(): Promise<CRMIntegration[]> {
-  const res = await axios.get("/vendor/integrations");
-  return res.data;
-},
+  async listIntegrations(): Promise<CRMIntegration[]> {
+    const res = await axios.get("/vendor/integrations");
+    return res.data;
+  },
 
-async getAuthUrl(provider: string) {
-  const res = await axios.get(`/vendor/integrations/${provider}/auth-url`);
-  return res.data.url;
-},
+  async getAuthUrl(provider: string) {
+    const res = await axios.get(`/vendor/integrations/${provider}/auth-url`);
+    return res.data.url;
+  },
 
-async exchangeCode(provider: string, payload: any) {
-  const res = await axios.post(`/vendor/integrations/${provider}/exchange`, payload);
-  return res.data;
-},
+  async exchangeCode(provider: string, payload: any) {
+    const res = await axios.post(`/vendor/integrations/${provider}/exchange`, payload);
+    return res.data;
+  },
 
-async disconnectIntegration(provider: string) {
-  await axios.delete(`/vendor/integrations/${provider}`);
-},
+  async disconnectIntegration(provider: string) {
+    await axios.delete(`/vendor/integrations/${provider}`);
+  },
 
 };

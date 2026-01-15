@@ -252,86 +252,90 @@ const settingsSlice = createSlice({
       })
       .addCase(saveLeadConfig.fulfilled, (s, a) => {
         s.leadConfig.saving = false;
-        s.leadConfig.data = a.payload;
+        s.leadConfig.data = {
+          ...s.leadConfig.data,
+          standardFields: a.payload.standardFields,
+          customFields: a.payload.customFields,
+        };
       })
       .addCase(saveLeadConfig.rejected, (s, a) => {
         s.leadConfig.saving = false;
         s.leadConfig.error = a.payload as string;
       })
 
-      // ---------- Suggested Questions ----------
-      .addCase(fetchSuggestedQuestions.pending, (s) => {
-        s.suggestedQuestions.loading = true;
-        s.suggestedQuestions.error = null;
-      })
-      .addCase(fetchSuggestedQuestions.fulfilled, (s, a) => {
-        s.suggestedQuestions.loading = false;
-        s.suggestedQuestions.data = a.payload;
-      })
-      .addCase(fetchSuggestedQuestions.rejected, (s, a) => {
-        s.suggestedQuestions.loading = false;
-        s.suggestedQuestions.error = a.payload as string;
-      })
+    // ---------- Suggested Questions ----------
+    .addCase(fetchSuggestedQuestions.pending, (s) => {
+      s.suggestedQuestions.loading = true;
+      s.suggestedQuestions.error = null;
+    })
+    .addCase(fetchSuggestedQuestions.fulfilled, (s, a) => {
+      s.suggestedQuestions.loading = false;
+      s.suggestedQuestions.data = a.payload;
+    })
+    .addCase(fetchSuggestedQuestions.rejected, (s, a) => {
+      s.suggestedQuestions.loading = false;
+      s.suggestedQuestions.error = a.payload as string;
+    })
 
-      .addCase(addSuggestedQuestion.pending, (s) => {
-        s.suggestedQuestions.saving = true;
-      })
-      .addCase(addSuggestedQuestion.fulfilled, (s, a) => {
-        s.suggestedQuestions.saving = false;
-        s.suggestedQuestions.data.push(a.payload);
-      })
-      .addCase(addSuggestedQuestion.rejected, (s, a) => {
-        s.suggestedQuestions.saving = false;
-        s.suggestedQuestions.error = a.payload as string;
-      })
+    .addCase(addSuggestedQuestion.pending, (s) => {
+      s.suggestedQuestions.saving = true;
+    })
+    .addCase(addSuggestedQuestion.fulfilled, (s, a) => {
+      s.suggestedQuestions.saving = false;
+      s.suggestedQuestions.data.push(a.payload);
+    })
+    .addCase(addSuggestedQuestion.rejected, (s, a) => {
+      s.suggestedQuestions.saving = false;
+      s.suggestedQuestions.error = a.payload as string;
+    })
 
-      .addCase(editSuggestedQuestion.fulfilled, (s, a) => {
-        const idx = s.suggestedQuestions.data.findIndex(
-          (q) => q.id === a.payload.id
-        );
-        if (idx !== -1) s.suggestedQuestions.data[idx] = a.payload;
-      })
+    .addCase(editSuggestedQuestion.fulfilled, (s, a) => {
+      const idx = s.suggestedQuestions.data.findIndex(
+        (q) => q.id === a.payload.id
+      );
+      if (idx !== -1) s.suggestedQuestions.data[idx] = a.payload;
+    })
 
-      .addCase(removeSuggestedQuestion.fulfilled, (s, a) => {
-        s.suggestedQuestions.data = s.suggestedQuestions.data.filter(
-          (q) => q.id !== a.payload
-        );
-      })
-      .addCase(resetPassword.pending, (s) => {
-        s.account.saving = true;
-        s.account.error = null;
-      })
-      .addCase(resetPassword.fulfilled, (s) => {
-        s.account.saving = false;
-      })
-      .addCase(resetPassword.rejected, (s, a) => {
-        s.account.saving = false;
-        s.account.error = a.payload as string;
-      })
-      .addCase(fetchIntegrations.pending, (s) => {
-        s.integrations.loading = true;
-        s.integrations.error = null;
-      })
-      .addCase(fetchIntegrations.fulfilled, (s, a) => {
-        s.integrations.loading = false;
-        s.integrations.data = a.payload;
-      })
-      .addCase(fetchIntegrations.rejected, (s, a) => {
-        s.integrations.loading = false;
-        s.integrations.error = a.payload as string;
-      })
+    .addCase(removeSuggestedQuestion.fulfilled, (s, a) => {
+      s.suggestedQuestions.data = s.suggestedQuestions.data.filter(
+        (q) => q.id !== a.payload
+      );
+    })
+    .addCase(resetPassword.pending, (s) => {
+      s.account.saving = true;
+      s.account.error = null;
+    })
+    .addCase(resetPassword.fulfilled, (s) => {
+      s.account.saving = false;
+    })
+    .addCase(resetPassword.rejected, (s, a) => {
+      s.account.saving = false;
+      s.account.error = a.payload as string;
+    })
+    .addCase(fetchIntegrations.pending, (s) => {
+      s.integrations.loading = true;
+      s.integrations.error = null;
+    })
+    .addCase(fetchIntegrations.fulfilled, (s, a) => {
+      s.integrations.loading = false;
+      s.integrations.data = a.payload;
+    })
+    .addCase(fetchIntegrations.rejected, (s, a) => {
+      s.integrations.loading = false;
+      s.integrations.error = a.payload as string;
+    })
 
-      .addCase(disconnectIntegration.fulfilled, (s, a) => {
-        const i = s.integrations.data.find(x => x.provider === a.payload);
-        if (i) i.connected = false;
-      })
+    .addCase(disconnectIntegration.fulfilled, (s, a) => {
+      const i = s.integrations.data.find(x => x.provider === a.payload);
+      if (i) i.connected = false;
+    })
 
-      .addCase(connectIntegration.fulfilled, (s, a) => {
-        const i = s.integrations.data.find(x => x.provider === a.meta.arg.provider);
-        if (i) i.connected = true;
-      });
+    .addCase(connectIntegration.fulfilled, (s, a) => {
+      const i = s.integrations.data.find(x => x.provider === a.meta.arg.provider);
+      if (i) i.connected = true;
+    });
 
-  },
+},
 });
 
 export const { resetSettings } = settingsSlice.actions;

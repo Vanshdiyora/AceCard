@@ -4,6 +4,7 @@ import { fetchIntegrations, disconnectIntegration } from "../slice";
 import { settingsService } from "../services/settings.service";
 import type { CRMProvider } from "../types";
 import OdooConnectModal from "./OdooConnectModal";
+import BrandLoader from "../../../common/ui/BrandLoader";
 
 const PROVIDERS: { id: CRMProvider; name: string }[] = [
   { id: "hubspot", name: "HubSpot" },
@@ -38,7 +39,13 @@ export default function CRMIntegration() {
     }
   };
 
-  if (loading) return <div className="p-8">Loading...</div>;
+
+  if (loading)
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <BrandLoader />
+      </div>
+    );
   if (error) return <div className="p-8 text-red-600">{error}</div>;
 
   return (

@@ -111,8 +111,8 @@ export default function CampaignDetailsPage() {
 
   const isReadOnly =
     campaign.status === "archived" ||
-    campaign.status === "expired" ||
-    campaign.status === "completed";
+    campaign.status === "expired";
+    // campaign.status === "completed";
 
   const handleArchive = async () => {
     try {
