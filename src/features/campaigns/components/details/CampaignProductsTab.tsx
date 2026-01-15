@@ -1,11 +1,10 @@
-import { useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAppDispatch, useAppSelector } from "../../../../app/hooks";
-import { lookupProducts } from "../../../products/slice";
 import DataTable, { type Column } from "../../../../common/components/table/DataTable";
+import type { CampaignProduct } from "../../types";
 
 type Props = {
-  assignedProducts?: number[];
+  assignedProducts?: CampaignProduct[];
 };
 
 type ProductRow = {
@@ -17,24 +16,15 @@ type ProductRow = {
 
 export default function CampaignProductsTab({ assignedProducts = [] }: Props) {
   const navigate = useNavigate();
-  const dispatch = useAppDispatch();
-
-  const { lookup, loading } = useAppSelector((s) => s.products);
-
-  useEffect(() => {
-    if (assignedProducts.length) {
-      dispatch(lookupProducts(assignedProducts));
-    }
-  }, [dispatch, assignedProducts.join(",")]); // join to avoid ref change loops
 
   const rows: ProductRow[] = useMemo(() => {
-    return lookup.map((p) => ({
+    return assignedProducts.map((p) => ({
       id: p.id,
       name: p.name,
       category: p.category ?? "—",
       price: p.price ?? 0,
     }));
-  }, [lookup]);
+  }, [assignedProducts]);
 
   const columns: Column<ProductRow>[] = [
     { header: "Name", accessor: "name" },
@@ -50,8 +40,6 @@ export default function CampaignProductsTab({ assignedProducts = [] }: Props) {
   if (!assignedProducts.length) {
     return <div className="py-6 text-gray-500">No products assigned</div>;
   }
-
-  if (loading) return <div className="py-6 text-gray-500">Loading…</div>;
 
   return (
     <div>

@@ -8,22 +8,15 @@ export const selectEnrichedCampaignById = (id: number) =>
       (s: RootState) => s.campaigns.items,
       (s: RootState) => s.team.members,
     ],
-    (campaigns, members): EnrichedCampaign | null => {
+    (campaigns): EnrichedCampaign | null => {
       const campaign = campaigns.find((c) => c.id === id);
       if (!campaign) return null;
 
-      const owner = members.find((m) => m.id === campaign.manager_id);
-      const salespersons = members.filter((m) =>
-        campaign.assigned_reps?.includes(m.id)
-      );
-
       return {
         ...campaign,
-        owner_name: owner?.name,
-        salespersons: salespersons.map((s) => ({
-          id: s.id,
-          name: s.name,
-        })),
+
+        // Prefer backend value, fallback to team lookup
+        owner_name: campaign.manager_name,
       };
     }
   );

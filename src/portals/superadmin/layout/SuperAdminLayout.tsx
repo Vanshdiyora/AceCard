@@ -9,7 +9,7 @@ const SuperAdminLayout = () => {
   const dispatch = useAppDispatch();
   
   useEffect(() => {
-    dispatch(fetchNotifications());
+    dispatch(fetchNotifications({page:1}));
   }, []);
   return (
      <div className="flex">

@@ -9,7 +9,7 @@ const AdminLayout = () => {
   const dispatch = useAppDispatch();
 
   useEffect(() => {
-    dispatch(fetchNotifications());
+    dispatch(fetchNotifications({page:1}));
   }, [dispatch]);
 
   return (

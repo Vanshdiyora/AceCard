@@ -122,7 +122,18 @@ const productsSlice = createSlice({
       })
       .addCase(fetchProducts.fulfilled, (state, action) => {
         state.loading = false;
-        state.products = action.payload.data ?? [];
+
+        const page = action.meta.arg.page ?? 1;
+        const newItems = action.payload.data ?? [];
+
+        if (page === 1) {
+          state.products = newItems;
+        } else {
+          const existingIds = new Set(state.products.map(p => p.id));
+          const filtered = newItems.filter(p => !existingIds.has(p.id));
+          state.products.push(...filtered);
+        }
+
         state.meta = action.payload.meta ?? null;
       })
       .addCase(fetchProducts.rejected, (state, action) => {

@@ -56,7 +56,7 @@ export default function CampaignDetailsPage() {
   const campaign = useAppSelector(
     selectEnrichedCampaignById(Number(id))
   ) as EnrichedCampaign | null;
-
+  console.log(campaign)
   const loading = useAppSelector((s) => s.campaigns.loading);
 
   useEffect(() => {
@@ -163,9 +163,8 @@ export default function CampaignDetailsPage() {
             <button
               disabled={isReadOnly || processing}
               onClick={() => setOpenEdit(true)}
-              className={`px-4 py-2 rounded-xl border flex items-center gap-2 text-sm ${
-                isReadOnly ? "opacity-50 cursor-not-allowed" : "hover:bg-purple-50"
-              }`}
+              className={`px-4 py-2 rounded-xl border flex items-center gap-2 text-sm ${isReadOnly ? "opacity-50 cursor-not-allowed" : "hover:bg-purple-50"
+                }`}
             >
               <Edit size={16} /> Edit
             </button>
@@ -174,9 +173,8 @@ export default function CampaignDetailsPage() {
               <button
                 disabled={processing}
                 onClick={() => setConfirmOpen("duplicate")}
-                className={`px-4 py-2 rounded-xl border flex items-center gap-2 text-sm ${
-                  processing ? "opacity-50 cursor-not-allowed" : "hover:bg-green-50"
-                }`}
+                className={`px-4 py-2 rounded-xl border flex items-center gap-2 text-sm ${processing ? "opacity-50 cursor-not-allowed" : "hover:bg-green-50"
+                  }`}
               >
                 <Copy size={16} /> Duplicate
               </button>
@@ -184,9 +182,8 @@ export default function CampaignDetailsPage() {
               <button
                 disabled={processing || isReadOnly}
                 onClick={() => setConfirmOpen("archive")}
-                className={`px-4 py-2 rounded-xl bg-red-50 text-red-600 flex items-center gap-2 text-sm ${
-                  isReadOnly ? "opacity-50 cursor-not-allowed" : "hover:bg-red-100"
-                }`}
+                className={`px-4 py-2 rounded-xl bg-red-50 text-red-600 flex items-center gap-2 text-sm ${isReadOnly ? "opacity-50 cursor-not-allowed" : "hover:bg-red-100"
+                  }`}
               >
                 <Trash2 size={16} /> Archive
               </button>
@@ -200,11 +197,10 @@ export default function CampaignDetailsPage() {
           <button
             key={t}
             onClick={() => setActiveTab(t)}
-            className={`relative pb-3 text-sm capitalize transition ${
-              activeTab === t
+            className={`relative pb-3 text-sm capitalize transition ${activeTab === t
                 ? "text-purple-600 font-medium"
                 : "text-gray-400 hover:text-gray-600"
-            }`}
+              }`}
           >
             {t}
             {activeTab === t && (

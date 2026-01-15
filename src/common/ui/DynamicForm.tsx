@@ -1,19 +1,24 @@
+import BrandLoader from "./BrandLoader";
+
 export interface FieldConfig {
   name: string;
   label: string;
   type:
-    | "text"
-    | "number"
-    | "email"
-    | "select"
-    | "textarea"
-    | "date"
-    | "checkbox"
-    | "multiselect"
-    | "radio"
-    | "datetime";
+  | "text"
+  | "number"
+  | "email"
+  | "select"
+  | "textarea"
+  | "date"
+  | "checkbox"
+  | "multiselect"
+  | "radio"
+  | "datetime";
   placeholder?: string;
   options?: { label: string; value: any }[];
+  onScrollEnd?: () => void;
+  showLoader?: boolean;
+  disabled?: boolean;
 }
 
 interface DynamicFormProps {
@@ -82,26 +87,36 @@ export default function DynamicForm({
             />
           )}
 
-          {field.type === "select" && (
-            <div className="relative w-full max-w-full">
-              <select
-                className={baseInputClass}
-                value={form[field.name] ?? ""}
-                onChange={(e) => onChange(field.name, e.target.value)}
-              >
-                <option value="">Select {field.label}</option>
-                {field.options?.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
+    {field.type === "select" && (
+  <div className="relative w-full max-w-full">
+    {field.disabled ? (
+      <div className="border rounded-lg p-2 flex items-center justify-center">
+        <BrandLoader />
+      </div>
+    ) : (
+      <>
+        <select
+          className={baseInputClass}
+          value={form[field.name] ?? ""}
+          onChange={(e) => onChange(field.name, e.target.value)}
+        >
+          <option value="">Select {field.label}</option>
+          {field.options?.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
+        </select>
 
-              <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs opacity-60">
-                ▼
-              </span>
-            </div>
-          )}
+        <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs opacity-60">
+          ▼
+        </span>
+      </>
+    )}
+  </div>
+)}
+
+
 
           {field.type === "radio" && (
             <div className="flex flex-col gap-2">
@@ -125,7 +140,15 @@ export default function DynamicForm({
           )}
 
           {field.type === "multiselect" && (
-            <div className="border rounded-lg p-2 space-y-1 max-h-40 overflow-y-auto overflow-x-hidden">
+            <div
+              className="border rounded-lg p-2 space-y-1 max-h-40 overflow-y-auto overflow-x-hidden"
+              onScroll={(e) => {
+                const el = e.currentTarget;
+                if (el.scrollTop + el.clientHeight >= el.scrollHeight - 10) {
+                  field.onScrollEnd?.();
+                }
+              }}
+            >
               {(!form[field.name] || form[field.name].length === 0) && (
                 <p className="text-xs text-gray-400 italic truncate">
                   {field.placeholder || "Select one or more options"}
@@ -145,26 +168,32 @@ export default function DynamicForm({
                       checked={isSelected}
                       onChange={(e) => {
                         let updatedValues = [...(form[field.name] || [])];
-
-                        if (e.target.checked) {
-                          updatedValues.push(opt.value);
-                        } else {
-                          updatedValues = updatedValues.filter(
-                            (v) => v !== opt.value
-                          );
-                        }
-
+                        if (e.target.checked) updatedValues.push(opt.value);
+                        else updatedValues = updatedValues.filter((v) => v !== opt.value);
                         onChange(field.name, updatedValues);
                       }}
-                      className="h-4 w-4 shrink-0 focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2"
+                      className="h-4 w-4"
                     />
-
                     <span className="text-sm truncate">{opt.label}</span>
                   </label>
                 );
               })}
+
+              {/* 🔽 Bottom loader */}
+              {field.showLoader && (
+                <div className="flex justify-center py-2">
+                  {/* <span className="text-xs text-gray-400 animate-pulse">Loading more...</span> */}
+                </div>
+              )}
+              {field.disabled && (
+                <div className="flex items-center justify-center py-2 text-xs text-gray-400">
+                  <BrandLoader />
+                </div>
+              )}
+
             </div>
           )}
+
 
           {field.type === "datetime" && (
             <input

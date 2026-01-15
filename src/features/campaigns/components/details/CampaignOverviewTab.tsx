@@ -16,7 +16,7 @@ export default function CampaignOverviewTab({ campaign }: Props) {
       {/* Info Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-10 gap-y-6">
         <Info label="Campaign Name" value={campaign.name} />
-        <Info label="Owner" value={campaign.owner_name ?? "—"} />
+        <Info label="Owner" value={campaign.manager_name ?? "—"} />
         <Info label="Budget / Target" value={`$${campaign.budget}`} />
         <Info label="Start Date" value={formatDate(campaign.start_date)} />
         <Info label="End Date" value={formatDate(campaign.end_date)} />

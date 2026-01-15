@@ -1,11 +1,16 @@
 import { X } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../../app/hooks";
-import { markAll } from "../slice";
+import {
+  markAll,
+  clearArchiveError,
+  archiveAllNotifications,
+  fetchNotifications,
+} from "../slice";
 import NotificationItem from "./NotificationItem";
 import { selectNotifications } from "../selectors";
 import { useNotificationSocket } from "../hooks/useNotificationSocket";
-import { clearArchiveError, archiveAllNotifications } from "../slice";
+import BrandLoader from "../../../common/ui/BrandLoader";
 
 export default function NotificationSidebar({
   open,
@@ -17,12 +22,27 @@ export default function NotificationSidebar({
   const dispatch = useAppDispatch();
   const notifications = useAppSelector(selectNotifications);
   const token = useAppSelector((s) => s.auth.token);
-  useNotificationSocket(token);
-  const { archiveError } = useAppSelector((s) => s.notifications);
+  const { archiveError, meta, loading } = useAppSelector(
+    (s) => s.notifications
+  );
 
+  useNotificationSocket(token);
+
+  const [page, setPage] = useState(1);
+  const [loadingMore, setLoadingMore] = useState(false);
+
+  /* Fetch first page when opened */
   useEffect(() => {
     if (open) {
-      document.documentElement.style.overflow = "hidden"; // html
+      setPage(1);
+      dispatch(fetchNotifications({ page: 1 }));
+    }
+  }, [open, dispatch]);
+
+  /* Lock background scroll */
+  useEffect(() => {
+    if (open) {
+      document.documentElement.style.overflow = "hidden";
       document.body.style.overflow = "hidden";
     } else {
       document.documentElement.style.overflow = "";
@@ -35,16 +55,25 @@ export default function NotificationSidebar({
     };
   }, [open]);
 
+  /* Auto-clear archive error */
   useEffect(() => {
     if (!archiveError) return;
-
-    const timer = setTimeout(() => {
-      dispatch(clearArchiveError());
-    }, 10000); // 10 second
-
+    const timer = setTimeout(() => dispatch(clearArchiveError()), 10000);
     return () => clearTimeout(timer);
   }, [archiveError, dispatch]);
 
+  const loadMore = async () => {
+    if (loadingMore || loading) return;
+    if (!meta?.has_next) return;
+
+    setLoadingMore(true);
+    const next = page + 1;
+
+    await dispatch(fetchNotifications({ page: next }));
+    setPage(next);
+
+    setLoadingMore(false);
+  };
 
   return (
     <>
@@ -80,23 +109,45 @@ export default function NotificationSidebar({
 
         {archiveError && (
           <div className="px-4">
-
             <div className="w-[60%] px-4 py-2 text-sm text-red-600 bg-red-50 border rounded-sm border-red-200">
               {archiveError}
             </div>
           </div>
         )}
 
-        <div className="p-4 space-y-3 overflow-y-auto h-[calc(100%-64px)]">
-          {notifications.length === 0 && (
-            <p className="text-center text-gray-500">
-              No notifications
-            </p>
+        <div
+          className="p-4 space-y-3 overflow-y-auto h-[calc(100%-64px)]"
+          onScroll={(e) => {
+            const el = e.currentTarget;
+            if (el.scrollTop + el.clientHeight >= el.scrollHeight - 40) {
+              loadMore();
+            }
+          }}
+        >
+       {/* Initial loader */}
+{loading && page === 1 && (
+  <div className="flex items-center justify-center h-full">
+    <BrandLoader />
+  </div>
+)}
+
+
+          {/* Empty state */}
+          {!loading && notifications.length === 0 && (
+            <p className="text-center text-gray-500">No notifications</p>
           )}
 
+          {/* List */}
           {notifications.map((n) => (
             <NotificationItem key={n.id} item={n} />
           ))}
+
+          {/* Infinite loader */}
+          {loadingMore && (
+            <div className="flex justify-center py-2 text-xs text-gray-400">
+              <BrandLoader/>
+            </div>
+          )}
         </div>
       </div>
     </>

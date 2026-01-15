@@ -4,16 +4,19 @@ import type { Notification } from "./types";
 
 export const fetchNotifications = createAsyncThunk(
   "notifications/fetch",
-  async () => {
-    const res = await notificationService.getMyNotifications();
-    const list = res.data ?? [];
-
-    return list.map((n: any) => ({
-      ...n,
-      is_read: n.status === "read",
-    }));
+  async ({ page = 1 }: { page?: number }) => {
+    const res = await notificationService.getMyNotifications(page);
+    return {
+      list: (res.data ?? []).map((n: any) => ({
+        ...n,
+        is_read: n.status === "read",
+      })),
+      meta: res.meta,
+      page,
+    };
   }
 );
+
 
 export const markRead = createAsyncThunk(
   "notifications/markRead",
@@ -90,6 +93,12 @@ interface State {
   sending: boolean;
   archiving: boolean;
   archiveError?: string;
+  meta?: {
+    page: number;
+    page_size: number;
+    total_pages: number;
+    has_next: boolean;
+  };
 }
 
 const initialState: State = {
@@ -97,6 +106,7 @@ const initialState: State = {
   loading: false,
   sending: false,
   archiving: false,
+  meta: undefined,
 };
 
 const notificationSlice = createSlice({
@@ -109,7 +119,7 @@ const notificationSlice = createSlice({
         is_read: action.payload.status === "read",
       });
     },
-     clearArchiveError: (state) => {
+    clearArchiveError: (state) => {
       state.archiveError = undefined;
     },
   },
@@ -119,10 +129,19 @@ const notificationSlice = createSlice({
         state.loading = true;
       })
       .addCase(fetchNotifications.fulfilled, (state, action) => {
-        state.list = action.payload ?? [];
+        const { list, meta, page } = action.payload;
+
+        if (page === 1) {
+          state.list = list;
+        } else {
+          const existing = new Set(state.list.map((n) => n.id));
+          const filtered = list.filter((n) => !existing.has(n.id));
+          state.list.push(...filtered);
+        }
+
+        state.meta = meta;
         state.loading = false;
       })
-
       .addCase(markRead.fulfilled, (state, action) => {
         const n = state.list.find((i) => i.id === action.payload);
         if (n) {
@@ -131,66 +150,66 @@ const notificationSlice = createSlice({
         }
       })
 
-      .addCase(markAll.fulfilled, (state) => {
-        state.list.forEach((n) => {
-          n.is_read = true;
-          n.status = "read";
-        });
-      })
+    .addCase(markAll.fulfilled, (state) => {
+      state.list.forEach((n) => {
+        n.is_read = true;
+        n.status = "read";
+      });
+    })
 
-      .addCase(sendVendorNotification.pending, (state) => {
-        state.sending = true;
-      })
-      .addCase(sendVendorNotification.fulfilled, (state) => {
-        state.sending = false;
-      })
-      .addCase(sendVendorNotification.rejected, (state) => {
-        state.sending = false;
-      })
+    .addCase(sendVendorNotification.pending, (state) => {
+      state.sending = true;
+    })
+    .addCase(sendVendorNotification.fulfilled, (state) => {
+      state.sending = false;
+    })
+    .addCase(sendVendorNotification.rejected, (state) => {
+      state.sending = false;
+    })
 
-      .addCase(archiveNotification.pending, (state) => {
-        state.archiving = true;
-        state.archiveError = undefined;
-      })
+    .addCase(archiveNotification.pending, (state) => {
+      state.archiving = true;
+      state.archiveError = undefined;
+    })
 
-      .addCase(archiveNotification.fulfilled, (state, action) => {
-        state.archiving = false;
-        state.list = state.list.filter((n) => n.id !== action.payload);
-      })
+    .addCase(archiveNotification.fulfilled, (state, action) => {
+      state.archiving = false;
+      state.list = state.list.filter((n) => n.id !== action.payload);
+    })
 
-      .addCase(archiveNotification.rejected, (state, action) => {
-        state.archiving = false;
-        state.archiveError = action.payload as string;
-      })
+    .addCase(archiveNotification.rejected, (state, action) => {
+      state.archiving = false;
+      state.archiveError = action.payload as string;
+    })
 
-      .addCase(archiveAllNotifications.pending, (state) => {
-  state.archiving = true;
-  state.archiveError = undefined;
-})
+    .addCase(archiveAllNotifications.pending, (state) => {
+      state.archiving = true;
+      state.archiveError = undefined;
+    })
 
-.addCase(archiveAllNotifications.fulfilled, (state) => {
-  state.archiving = false;
-  state.list = []; // clear all notifications
-})
+    .addCase(archiveAllNotifications.fulfilled, (state) => {
+      state.archiving = false;
+      state.list = []; // clear all notifications
+    })
 
-.addCase(archiveAllNotifications.rejected, (state, action) => {
-  state.archiving = false;
-  state.archiveError = action.payload as string;
-})
+    .addCase(archiveAllNotifications.rejected, (state, action) => {
+      state.archiving = false;
+      state.archiveError = action.payload as string;
+    })
 
-.addCase(sendTeamNotification.pending, (state) => {
-  state.sending = true;
-})
-.addCase(sendTeamNotification.fulfilled, (state) => {
-  state.sending = false;
-})
-.addCase(sendTeamNotification.rejected, (state) => {
-  state.sending = false;
-})
+    .addCase(sendTeamNotification.pending, (state) => {
+      state.sending = true;
+    })
+    .addCase(sendTeamNotification.fulfilled, (state) => {
+      state.sending = false;
+    })
+    .addCase(sendTeamNotification.rejected, (state) => {
+      state.sending = false;
+    })
 
 
 
-  },
+},
 });
 
 export const { pushNotification, clearArchiveError } = notificationSlice.actions;
