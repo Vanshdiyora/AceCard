@@ -1,11 +1,11 @@
 import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../../app/hooks";
-import { fetchLeads, updateLead } from "../slice";
+import { fetchLeads } from "../slice";
 
 import PageHeader from "../../../common/components/layout/PageHeader";
 import PageFilters, { type TabItem } from "../../../common/components/layout/PageFilter";
-import EditLeadModal from "../components/EditLeadModal";
+// import EditLeadModal from "../components/EditLeadModal";
 import DataTable, { type Column } from "../../../common/components/table/DataTable";
 import ErrorAlert from "../../../common/ui/ErrorAlert";
 
@@ -34,8 +34,8 @@ export default function LeadsPage() {
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<SortType>("recent");
 
-  const [editOpen, setEditOpen] = useState(false);
-  const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
+  // const [editOpen, setEditOpen] = useState(false);
+  // const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
 
   const [page, setPage] = useState(1);
   const pageSize = 10;
@@ -65,22 +65,6 @@ export default function LeadsPage() {
     { header: "Deal Amount", render: (lead) => lead.deal_amount ?? "—" },
     { header: "Stage", render: (lead) => <span className="px-2 py-1 rounded bg-gray-100 text-xs">{lead.stage}</span> },
     { header: "Updated", render: (lead) => new Date(lead.updated_at).toLocaleDateString() },
-    {
-      header: "",
-      align: "right",
-      render: (lead) => (
-        <button
-          className="text-purple-600"
-          onClick={(e) => {
-            e.stopPropagation();
-            setSelectedLead(lead);
-            setEditOpen(true);
-          }}
-        >
-          Edit
-        </button>
-      ),
-    },
   ];
 
   const finalLeads = useMemo(() => {
@@ -127,7 +111,7 @@ export default function LeadsPage() {
 
       <DataTable columns={columns} data={finalLeads} loading={loading} page={meta?.page ?? page} totalPages={meta?.total_pages ?? 1} onPageChange={setPage} emptyText="No leads found" onRowClick={(lead) => navigate(`${lead.id}`)} />
 
-      <EditLeadModal open={editOpen} lead={selectedLead} onClose={() => setEditOpen(false)} onSubmit={(d) => selectedLead && dispatch(updateLead({ id: selectedLead.id, data: d }))} />
+      {/* <EditLeadModal open={editOpen} lead={selectedLead} onClose={() => setEditOpen(false)} onSubmit={(d) => selectedLead && dispatch(updateLead({ id: selectedLead.id, data: d }))} /> */}
     </div>
   );
 }
