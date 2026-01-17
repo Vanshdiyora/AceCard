@@ -2,13 +2,14 @@ import { useEffect, useState, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../../app/hooks";
 import { fetchCampaigns } from "../slice";
-
+import { downloadCSV } from "../../../common/components/helper/DownloadCsv";
 import PageHeader from "../../../common/components/layout/PageHeader";
 import PageFilters, { type TabItem } from "../../../common/components/layout/PageFilter";
 import DataTable, { type Column } from "../../../common/components/table/DataTable";
 import CreateCampaignModal from "../components/CreateCampaignModal";
 import ErrorAlert from "../../../common/ui/ErrorAlert";
 import type { Campaign, CampaignStatus } from "../types";
+import { CampaignService } from "../services/campaign.service";
 
 const tabs: TabItem[] = [
   { label: "All", value: "all" },
@@ -127,6 +128,40 @@ export default function CampaignsPage() {
     { header: "Updated", render: (c) => c.updated_at.split("T")[0] },
   ];
 
+  const handleExportCampaigns = async () => {
+    try {
+      const totalCount = meta?.total_count ?? 0;
+      if (!totalCount) return;
+
+      const params = {
+        page: 1,
+        page_size: totalCount, // fetch all campaigns
+        // search,
+        // status: activeTab !== "all" ? activeTab : undefined,
+      };
+
+      // 🚫 NO REDUX DISPATCH
+      const result = await CampaignService.getAll(params);
+
+      const csvData = result.data.map((c) => ({
+        "Campaign Name": c.name,
+        "Campaign Description": c.description ?? "",
+        "Target / Budget": c.budget,
+        Status: c.status,
+        "Start Date": c.start_date
+          ? new Date(c.start_date).toLocaleDateString()
+          : "",
+        "End Date": c.end_date
+          ? new Date(c.end_date).toLocaleDateString()
+          : "",
+      }));
+
+      downloadCSV(csvData, "campaigns_export.csv");
+    } catch (error) {
+      console.error("Campaign export failed", error);
+    }
+  };
+
   return (
     <div className="p-6">
       <PageHeader
@@ -143,14 +178,14 @@ export default function CampaignsPage() {
         <PageFilters
           tabs={tabs}
           activeTab={activeTab}
-       onTabChange={(v) => setActiveTab(v as CampaignStatus | "all")}
-
+          onTabChange={(v) => setActiveTab(v as CampaignStatus | "all")}
           searchPlaceholder="Search campaigns..."
           onSearch={setSearch}
           filters={sortFilter}
-          onExport={() => console.log("Export CSV")}
-          onImport={() => console.log("Import CSV")}
+          onExport={handleExportCampaigns}
+          disableExport={loading}
         />
+
       </div>
 
 

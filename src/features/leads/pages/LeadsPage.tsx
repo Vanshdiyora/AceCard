@@ -2,13 +2,13 @@ import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../../app/hooks";
 import { fetchLeads } from "../slice";
-
+import { downloadCSV } from "../../../common/components/helper/DownloadCsv";
 import PageHeader from "../../../common/components/layout/PageHeader";
 import PageFilters, { type TabItem } from "../../../common/components/layout/PageFilter";
 // import EditLeadModal from "../components/EditLeadModal";
 import DataTable, { type Column } from "../../../common/components/table/DataTable";
 import ErrorAlert from "../../../common/ui/ErrorAlert";
-
+import { LeadsService } from "../services/leads.service";
 import type { Lead, LeadStage } from "../types";
 
 const tabs: TabItem[] = [
@@ -81,12 +81,41 @@ export default function LeadsPage() {
         );
     }
   }, [leads, sort]);
+const handleExport = async () => {
+  try {
+    const totalCount = meta?.total_count ?? 0;
+    if (!totalCount) return;
+
+    const result = await LeadsService.getLeads(
+      1,                // page
+      totalCount,       // pageSize
+      undefined,        // team_member_id
+      undefined,        // memberId
+      undefined,           // search
+      undefined // stage
+    );
+
+    const csvData = result.data.map((lead: Lead) => ({
+      Name: lead.lead_name,
+      Company: lead.company ?? "",
+      Owner: lead.assigned_rep_name ?? "",
+      "Deal Amount": lead.deal_amount ?? "",
+      Stage: lead.stage,
+      "Updated At": new Date(lead.updated_at).toLocaleString(),
+    }));
+
+    downloadCSV(csvData, "leads_export.csv");
+  } catch (err) {
+    console.error("Export failed", err);
+  }
+};
+
+
 
   return (
     <div className="p-6 space-y-6">
       <PageHeader title="Leads" description="Manage and track your leads" />
       {error && <ErrorAlert message={error} />}
-
       <PageFilters
         tabs={tabs}
         activeTab={activeTab}
@@ -106,8 +135,9 @@ export default function LeadsPage() {
             ],
           },
         ]}
+        onExport={handleExport}
+        disableExport={loading}
       />
-
 
       <DataTable columns={columns} data={finalLeads} loading={loading} page={meta?.page ?? page} totalPages={meta?.total_pages ?? 1} onPageChange={setPage} emptyText="No leads found" onRowClick={(lead) => navigate(`${lead.id}`)} />
 

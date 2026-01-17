@@ -13,8 +13,8 @@ const BASE = "/vendor/leads";
 
 export const LeadsService = {
   async getLeads(
-    page = 1,
-    pageSize = 10,
+    page?: number,
+    pageSize?: number,
     team_member_id?: number,
     memberId?: number,
     search?: string,

@@ -12,15 +12,28 @@ import {
 import AddMemberModal from "../components/AddMemberModal";
 import EditMemberModal from "../components/EditMemberModal";
 import PermissionsModal from "../components/PermissionsModal";
-
+import { downloadCSV } from "../../../common/components/helper/DownloadCsv";
 import PageHeader from "../../../common/components/layout/PageHeader";
 import PageFilters from "../../../common/components/layout/PageFilter";
 import DataTable, { type Column } from "../../../common/components/table/DataTable";
 import ErrorAlert from "../../../common/ui/ErrorAlert";
 import BlockingLoader from "../../../common/ui/BlockingLoader";
 import ResultModal from "../../../common/ui/ResultModal";
+import { teamService } from "../services/teams.service";
 
 import type { TeamMember } from "../types";
+import type { TeamPermissions } from "../types";
+
+const EDITABLE_PERMISSIONS: Record<keyof TeamPermissions, string> = {
+  manage_team: "Manage Team",
+  manage_products: "Manage Products",
+  manage_campaigns: "Manage Campaigns",
+  view_leads: "View Leads",
+  edit_leads: "Edit Leads",
+  archive_leads: "Archive Leads",
+  send_notifications: "Send Notifications",
+  view_analytics: "View Analytics",
+};
 
 type UserRole = "vendor_admin" | "manager" | "sales_rep";
 type RoleFilter = "all" | "manager" | "sales_rep";
@@ -39,8 +52,8 @@ export default function TeamPage() {
     : "sales_rep";
 
   const currentUserId = authState?.user?.user_id;
-const [roleFilter, setRoleFilter] = useState<RoleFilter>("all");
-const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const [roleFilter, setRoleFilter] = useState<RoleFilter>("all");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [page, setPage] = useState(1);
   const pageSize = 10;
 
@@ -69,15 +82,15 @@ const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
 
   const managers = useMemo(() => members.filter((m) => m.role === "manager"), [members]);
 
-useEffect(() => {
-  const params: any = { page, page_size: pageSize };
+  useEffect(() => {
+    const params: any = { page, page_size: pageSize };
 
-  if (search) params.search = search;
-  if (roleFilter !== "all") params.role = roleFilter;
-  if (statusFilter !== "all") params.status = statusFilter;
+    if (search) params.search = search;
+    if (roleFilter !== "all") params.role = roleFilter;
+    if (statusFilter !== "all") params.status = statusFilter;
 
-  dispatch(fetchTeam(params));
-}, [dispatch, page, pageSize, search, roleFilter, statusFilter]);
+    dispatch(fetchTeam(params));
+  }, [dispatch, page, pageSize, search, roleFilter, statusFilter]);
 
 
   useEffect(() => {
@@ -121,23 +134,23 @@ useEffect(() => {
       render: (m) => (
         <span
           className={`px-2 py-1 rounded text-xs ${m.status === "active"
-              ? "bg-green-100 text-green-700"
-              : "bg-red-100 text-red-700"
+            ? "bg-green-100 text-green-700"
+            : "bg-red-100 text-red-700"
             }`}
         >
           {m.status}
         </span>
       ),
     },
-  {
-  header: "Role",
-  align: "right",
-  render: (m) => {
-    if (m.role === "sales_rep") return "Sales Person";
-    if (m.role === "manager") return "Manager";
-    return m.role.replace("_", " ");
-  },
-},
+    {
+      header: "Role",
+      align: "right",
+      render: (m) => {
+        if (m.role === "sales_rep") return "Sales Person";
+        if (m.role === "manager") return "Manager";
+        return m.role.replace("_", " ");
+      },
+    },
 
     {
       header: "Manager",
@@ -163,6 +176,63 @@ useEffect(() => {
     },
   ];
 
+
+
+
+const handleExportTeam = async () => {
+  try {
+    const totalCount = meta?.total_count ?? 0;
+    if (!totalCount) return;
+
+    const params = {
+      page: 1,
+      page_size: totalCount,
+      // search,
+      // role,
+      // status,
+    };
+
+    // 🚫 NO REDUX DISPATCH
+    const result = await teamService.getTeam(params);
+
+    const csvData = result.data.map((m: TeamMember) => ({
+      Name: m.name,
+      Email: m.email,
+      Status: m.status,
+
+      Role:
+        m.role === "sales_rep"
+          ? "Sales Person"
+          : m.role === "manager"
+          ? "Manager"
+          : m.role.replace("_", " "),
+
+      // Salesperson → Manager, Manager → NA
+      Manager:
+        m.role === "sales_rep"
+          ? m.assigned_manager?.name ?? "NA"
+          : "NA",
+
+      Leads: m.total_leads ?? m.leads ?? 0,
+
+      "Last Active": m.last_active_at
+        ? new Date(m.last_active_at).toLocaleString()
+        : "—",
+
+      Permissions: m.permissions
+        ? Object.entries(EDITABLE_PERMISSIONS)
+            .filter(([key]) => m.permissions?.[key as keyof TeamPermissions])
+            .map(([, label]) => label)
+            .join(", ")
+        : "",
+    }));
+
+    downloadCSV(csvData, "team_members_export.csv");
+  } catch (error) {
+    console.error("Team export failed:", error);
+  }
+};
+
   const finalMembers = members;
 
   return (
@@ -183,26 +253,29 @@ useEffect(() => {
       <ErrorAlert message={fetchError} />
 
       <PageFilters
-  tabs={[
-    { label: "All", value: "all" },
-    { label: "Active", value: "active" },
-    { label: "Suspended", value: "suspended" },
-  ]}
-  activeTab={roleFilter !== "all" ? roleFilter : statusFilter}
-  onTabChange={(v) => {
-    if (v === "manager" || v === "sales_rep") {
-      setRoleFilter(v as RoleFilter);
-      setStatusFilter("all");
-    } else if (v === "active" || v === "suspended") {
-      setStatusFilter(v as StatusFilter);
-      setRoleFilter("all");
-    } else {
-      setRoleFilter("all");
-      setStatusFilter("all");
-    }
-  }}
-  onSearch={setSearch}
-/>
+        tabs={[
+          { label: "All", value: "all" },
+          { label: "Active", value: "active" },
+          { label: "Suspended", value: "suspended" },
+        ]}
+        activeTab={roleFilter !== "all" ? roleFilter : statusFilter}
+        onTabChange={(v) => {
+          if (v === "manager" || v === "sales_rep") {
+            setRoleFilter(v as RoleFilter);
+            setStatusFilter("all");
+          } else if (v === "active" || v === "suspended") {
+            setStatusFilter(v as StatusFilter);
+            setRoleFilter("all");
+          } else {
+            setRoleFilter("all");
+            setStatusFilter("all");
+          }
+        }}
+        onSearch={setSearch}
+        onExport={handleExportTeam}
+        disableExport={loading}
+      />
+
 
 
       <div className="mt-6">

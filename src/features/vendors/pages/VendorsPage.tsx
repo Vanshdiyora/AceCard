@@ -16,7 +16,8 @@ import UpdateSeatsModal from "../components/UpdateSeatModal";
 import ArchiveVendorModal from "../components/ArchiveVendorModal";
 import RowActionsDropdown from "../components/RowActionsDropdown";
 import { useNavigate } from "react-router-dom";
-
+import { downloadCSV } from "../../../common/components/helper/DownloadCsv";
+import { vendorsService } from "../services/vendors.service";
 import type { VendorItem } from "../types";
 
 function deriveStage(v: VendorItem): string {
@@ -62,24 +63,55 @@ export default function VendorsPage() {
     setResultOpen(true);
   };
 
-useEffect(() => {
-  const params: any = { page, page_size: pageSize };
+  useEffect(() => {
+    const params: any = { page, page_size: pageSize };
 
-  if (search.trim()) params.search = search.trim();
-  if (activeTab !== "all") params.status = activeTab;
+    if (search.trim()) params.search = search.trim();
+    if (activeTab !== "all") params.status = activeTab;
 
-  dispatch(fetchVendors(params));
-}, [dispatch, page, pageSize, search, activeTab]);
+    dispatch(fetchVendors(params));
+  }, [dispatch, page, pageSize, search, activeTab]);
 
-const finalVendors = useMemo(() => {
-  let list = [...vendors];
+  const finalVendors = useMemo(() => {
+    let list = [...vendors];
 
-  if (activeTab !== "all") list = list.filter(v => v.status === activeTab);
+    if (activeTab !== "all") list = list.filter(v => v.status === activeTab);
 
-  if (sort === "name") list.sort((a, b) => a.legal_name.localeCompare(b.legal_name));
+    if (sort === "name") list.sort((a, b) => a.legal_name.localeCompare(b.legal_name));
 
-  return list;
-}, [vendors, activeTab, sort]);
+    return list;
+  }, [vendors, activeTab, sort]);
+
+  const handleExportVendors = async () => {
+    try {
+      const totalCount = meta?.total_count ?? 0;
+      if (!totalCount) return;
+
+      const params = {
+        page: 1,
+        page_size: totalCount,
+        search: search.trim() || undefined,
+        status: activeTab !== "all" ? activeTab : undefined,
+      };
+
+      // 🚫 NO REDUX DISPATCH
+      const result = await vendorsService.list(params);
+
+      const csvData = result.data.map((v: VendorItem) => ({
+        "Vendor Name": v.legal_name,
+        "Vendor Email": v.primary_email,
+        "Vendor Phone": v.primary_phone,
+        "Vendor GST": v.gst ?? "",
+        Seats: v.seats_appointed,
+        Status: v.status === "active" ? "Active" : "Archived",
+        Stage: deriveStage(v),
+      }));
+
+      downloadCSV(csvData, "vendors_export.csv");
+    } catch (err) {
+      console.error("Vendor export failed:", err);
+    }
+  };
 
   const columns: Column<VendorItem>[] = [
     { header: "Vendor Name", accessor: "legal_name", width: "2fr" },
@@ -90,9 +122,8 @@ const finalVendors = useMemo(() => {
     {
       header: "Vendor Status",
       render: (v) => (
-        <span className={`px-2 py-1 rounded-full text-xs ${
-          v.status === "active" ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"
-        }`}>
+        <span className={`px-2 py-1 rounded-full text-xs ${v.status === "active" ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"
+          }`}>
           {v.status === "active" ? "Active" : "Archived"}
         </span>
       ),
@@ -128,7 +159,7 @@ const finalVendors = useMemo(() => {
   return (
     <div className="p-6">
       <PageHeader title="Vendor Management" description="Manage vendor onboarding & verification" addButtonLabel="Add Vendor" onAdd={() => setAddOpen(true)} />
-      <ErrorAlert message={fetchError } />
+      <ErrorAlert message={fetchError} />
 
       <AddVendorModal
         open={addOpen}
@@ -173,17 +204,22 @@ const finalVendors = useMemo(() => {
         onTabChange={(v) => { setActiveTab(v as "all" | "active" | "archived"); setPage(1); }}
         searchPlaceholder="Search vendors..."
         onSearch={(v) => { setSearch(v); setPage(1); }}
-        filters={[{
-          key: "sort",
-          placeholder: "Sort by",
-          value: sort,
-          onChange: (v) => { setSort(v as "recent" | "name"); setPage(1); },
-          options: [
-            { label: "Recent", value: "recent" },
-            { label: "Name A–Z", value: "name" },
-          ],
-        }]}
+        filters={[
+          {
+            key: "sort",
+            placeholder: "Sort by",
+            value: sort,
+            onChange: (v) => { setSort(v as "recent" | "name"); setPage(1); },
+            options: [
+              { label: "Recent", value: "recent" },
+              { label: "Name A–Z", value: "name" },
+            ],
+          },
+        ]}
+        onExport={handleExportVendors}
+        disableExport={loading}
       />
+
 
       <div className="mt-6">
         <DataTable<VendorItem>

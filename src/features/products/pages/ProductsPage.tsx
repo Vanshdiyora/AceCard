@@ -13,6 +13,8 @@ import { Edit2 } from "lucide-react";
 import type { Product } from "../types";
 import BlockingLoader from "../../../common/ui/BlockingLoader";
 import ResultModal from "../../../common/ui/ResultModal";
+import { downloadCSV } from "../../../common/components/helper/DownloadCsv";
+import { ProductsAPI } from "../services/products.service";
 
 type SortBy = "recent" | "name" | "price";
 type StatusFilter = "all" | "active" | "archived";
@@ -59,6 +61,40 @@ useEffect(() => {
   useEffect(() => {
     setPage(1);
   }, [search, statusFilter, sortBy]);
+
+const handleExport = async () => {
+  try {
+    const totalCount = meta?.total_count ?? 0;
+    if (!totalCount) return;
+
+    const params: any = {
+      page: 1,
+      page_size: totalCount,
+    };
+
+    if (search) params.search = search;
+    if (statusFilter !== "all") params.status = statusFilter;
+
+    // 🚫 NO REDUX DISPATCH HERE
+    const result = await ProductsAPI.getAll(params);
+
+    const csvData = result.data.map((product: Product) => ({
+      Name: product.name,
+      Category: product.category,
+      Price: product.price,
+      Status: product.status,
+      Description: product.description ?? "",
+      "Created At": new Date(product.created_at).toLocaleString(),
+      "Updated At": new Date(product.updated_at).toLocaleString(),
+    }));
+
+    downloadCSV(csvData, "products_export.csv");
+  } catch (err) {
+    console.error("Export failed", err);
+  }
+};
+
+
 
   /* -------- Final visible data -------- */
 const finalProducts = useMemo(() => {
@@ -165,7 +201,7 @@ const finalProducts = useMemo(() => {
             ],
           },
         ]}
-        onExport={() => console.log("Export")}
+        onExport={() => handleExport()}
         disableExport={finalProducts.length === 0}
       />
 
