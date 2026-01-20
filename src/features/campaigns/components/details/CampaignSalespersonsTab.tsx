@@ -81,7 +81,7 @@ export default function CampaignSalespersonsTab({
     const updatedIds = Array.from(new Set([...assignedIds, ...selected]));
 
     await dispatch(
-      updateCampaign({ id: campaignId, data: { assigned_rep_ids: updatedIds } })
+      updateCampaign({ id: campaignId, data: { assigned_reps_ids: updatedIds } })
     );
 
     setSelected([]);
