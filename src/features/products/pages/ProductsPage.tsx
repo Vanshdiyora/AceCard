@@ -47,14 +47,14 @@ export default function ProductsPage() {
   });
 
   /* -------- Fetch products -------- */
-useEffect(() => {
-  const params: any = { page, page_size: pageSize };
+  useEffect(() => {
+    const params: any = { page, page_size: pageSize };
 
-  if (search) params.search = search;
-  if (statusFilter !== "all") params.status = statusFilter;
+    if (search) params.search = search;
+    if (statusFilter !== "all") params.status = statusFilter;
 
-  dispatch(fetchProducts(params));
-}, [dispatch, page, pageSize, search, statusFilter]);
+    dispatch(fetchProducts(params));
+  }, [dispatch, page, pageSize, search, statusFilter]);
 
 
   /* -------- Reset page on filters/search -------- */
@@ -62,61 +62,61 @@ useEffect(() => {
     setPage(1);
   }, [search, statusFilter, sortBy]);
 
-const handleExport = async () => {
-  try {
-    const totalCount = meta?.total_count ?? 0;
-    if (!totalCount) return;
+  const handleExport = async () => {
+    try {
+      const totalCount = meta?.total_count ?? 0;
+      if (!totalCount) return;
 
-    const params: any = {
-      page: 1,
-      page_size: totalCount,
-    };
+      const params: any = {
+        page: 1,
+        page_size: totalCount,
+      };
 
-    if (search) params.search = search;
-    if (statusFilter !== "all") params.status = statusFilter;
+      if (search) params.search = search;
+      if (statusFilter !== "all") params.status = statusFilter;
 
-    // 🚫 NO REDUX DISPATCH HERE
-    const result = await ProductsAPI.getAll(params);
+      // 🚫 NO REDUX DISPATCH HERE
+      const result = await ProductsAPI.getAll(params);
 
-    const csvData = result.data.map((product: Product) => ({
-      Name: product.name,
-      Category: product.category,
-      Price: product.price,
-      Status: product.status,
-      Description: product.description ?? "",
-      "Created At": new Date(product.created_at).toLocaleString(),
-      "Updated At": new Date(product.updated_at).toLocaleString(),
-    }));
+      const csvData = result.data.map((product: Product) => ({
+        Name: product.name,
+        Category: product.category,
+        Price: product.price,
+        Status: product.status,
+        Description: product.description ?? "",
+        "Created At": new Date(product.created_at).toLocaleString(),
+        "Updated At": new Date(product.updated_at).toLocaleString(),
+      }));
 
-    downloadCSV(csvData, "products_export.csv");
-  } catch (err) {
-    console.error("Export failed", err);
-  }
-};
+      downloadCSV(csvData, "products_export.csv");
+    } catch (err) {
+      console.error("Export failed", err);
+    }
+  };
 
 
 
   /* -------- Final visible data -------- */
-const finalProducts = useMemo(() => {
-  let list = [...products];
+  const finalProducts = useMemo(() => {
+    let list = [...products];
 
-  switch (sortBy) {
-    case "name":
-      list.sort((a, b) => a.name.localeCompare(b.name));
-      break;
-    case "price":
-      list.sort((a, b) => a.price - b.price);
-      break;
-    default:
-      list.sort(
-        (a, b) =>
-          new Date(b.created_at).getTime() -
-          new Date(a.created_at).getTime()
-      );
-  }
+    switch (sortBy) {
+      case "name":
+        list.sort((a, b) => a.name.localeCompare(b.name));
+        break;
+      case "price":
+        list.sort((a, b) => a.price - b.price);
+        break;
+      default:
+        list.sort(
+          (a, b) =>
+            new Date(b.created_at).getTime() -
+            new Date(a.created_at).getTime()
+        );
+    }
 
-  return list;
-}, [products, sortBy]);
+    return list;
+  }, [products, sortBy]);
 
 
   /* -------- Table columns -------- */
@@ -129,8 +129,8 @@ const finalProducts = useMemo(() => {
       render: (p) => (
         <span
           className={`px-2 py-1 rounded text-xs ${p.status === "active"
-              ? "bg-green-100 text-green-700"
-              : "bg-gray-200 text-gray-600"
+            ? "bg-green-100 text-green-700"
+            : "bg-gray-200 text-gray-600"
             }`}
         >
           {p.status}

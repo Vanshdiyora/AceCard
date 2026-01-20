@@ -77,34 +77,34 @@ export default function ProductDetailsPage() {
 
   const isArchived = product!.status === "archived";
 
- const handleConfirm = async () => {
-  try {
-    setProcessing(true);
+  const handleConfirm = async () => {
+    try {
+      setProcessing(true);
 
-    if (isArchived) {
-      await dispatch(unarchiveProduct(product!.id)).unwrap();
-    } else {
-      await dispatch(archiveProduct(product!.id)).unwrap();
+      if (isArchived) {
+        await dispatch(unarchiveProduct(product!.id)).unwrap();
+      } else {
+        await dispatch(archiveProduct(product!.id)).unwrap();
+      }
+
+      setResult({
+        open: true,
+        success: true,
+        message: isArchived
+          ? "Product activated successfully"
+          : "Product archived successfully",
+      });
+    } catch (err: any) {
+      setResult({
+        open: true,
+        success: false,
+        message: err?.message ?? "Action failed",
+      });
+    } finally {
+      setProcessing(false);
+      setConfirmOpen(false);
     }
-
-    setResult({
-      open: true,
-      success: true,
-      message: isArchived
-        ? "Product activated successfully"
-        : "Product archived successfully",
-    });
-  } catch (err: any) {
-    setResult({
-      open: true,
-      success: false,
-      message: err?.message ?? "Action failed",
-    });
-  } finally {
-    setProcessing(false);
-    setConfirmOpen(false);
-  }
-};
+  };
 
 
   return (
@@ -147,8 +147,8 @@ export default function ProductDetailsPage() {
               onClick={() => setConfirmOpen(true)}
               disabled={processing}
               className={`flex items-center gap-2 px-4 py-2 text-sm border rounded-lg disabled:opacity-50 ${isArchived
-                  ? "text-green-600 border-green-200 hover:bg-green-50"
-                  : "text-red-600 border-red-200 hover:bg-red-50"
+                ? "text-green-600 border-green-200 hover:bg-green-50"
+                : "text-red-600 border-red-200 hover:bg-red-50"
                 }`}
             >
               {isArchived ? (

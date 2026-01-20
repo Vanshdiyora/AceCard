@@ -1,5 +1,8 @@
 import { useState, useEffect } from "react";
-import DynamicForm, { type FieldConfig } from "../../../common/ui/DynamicForm";
+import DynamicForm, {
+  type FieldConfig,
+} from "../../../common/ui/DynamicForm";
+import { validateField } from "../../../common/utils/formValidator";
 
 interface ProductFormModalProps {
   open: boolean;
@@ -14,34 +17,48 @@ export default function ProductFormModal({
   onSubmit,
   product,
 }: ProductFormModalProps) {
-  // Base editable fields
+  /* ---------------- FORM STATE ---------------- */
+
   const [base, setBase] = useState({
     name: "",
-    price: 0,
+    price: "",
     category: "",
     description: "",
   });
 
-  // Dynamic extra fields
-  const [extraProps, setExtraProps] = useState<{ key: string; value: string }[]>([]);
+  const [errors, setErrors] = useState<
+    Record<string, string | null>
+  >({});
 
-  // Backend meta (id, vendor_id etc)
+  // Dynamic extra fields
+  const [extraProps, setExtraProps] = useState<
+    { key: string; value: string }[]
+  >([]);
+
+  // Backend meta
   const [meta, setMeta] = useState<any>({});
 
-  // Load product data into form
+  /* ---------------- LOAD PRODUCT ---------------- */
+
   useEffect(() => {
     if (product) {
       setBase({
-        name: product.name,
-        price: product.price,
-        category: product.category,
-        description: product.description,
+        name: product.name ?? "",
+        price: product.price ?? "",
+        category: product.category ?? "",
+        description: product.description ?? "",
       });
 
-      const list = Object.entries(product.extra_properties || {}).map(
-        ([key, value]) => ({ key, value: String(value) })
+      const list = Object.entries(
+        product.extra_properties || {}
+      ).map(([key, value]) => ({
+        key,
+        value: String(value),
+      }));
+
+      setExtraProps(
+        list.length ? list : [{ key: "", value: "" }]
       );
-      setExtraProps(list.length ? list : [{ key: "", value: "" }]);
 
       setMeta({
         id: product.id,
@@ -53,89 +70,122 @@ export default function ProductFormModal({
     } else {
       setBase({
         name: "",
-        price: 0,
+        price: "",
         category: "",
         description: "",
       });
       setExtraProps([{ key: "", value: "" }]);
       setMeta({});
     }
-  }, [product]);
+
+    setErrors({});
+  }, [product, open]);
+
+  /* ---------------- LOCK BODY SCROLL ---------------- */
 
   useEffect(() => {
-  if (!open) return;
+    if (!open) return;
 
-  const scrollY = window.scrollY;
+    const scrollY = window.scrollY;
+    document.body.style.position = "fixed";
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.width = "100%";
 
-  document.body.style.position = "fixed";
-  document.body.style.top = `-${scrollY}px`;
-  document.body.style.width = "100%";
-
-  return () => {
-    document.body.style.position = "";
-    document.body.style.top = "";
-    document.body.style.width = "";
-    window.scrollTo(0, scrollY);
-  };
-}, [open]);
-
+    return () => {
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.width = "";
+      window.scrollTo(0, scrollY);
+    };
+  }, [open]);
 
   if (!open) return null;
 
-  // DynamicForm fields
+  /* ---------------- FIELD CONFIG ---------------- */
+
   const fields: FieldConfig[] = [
     {
       name: "name",
       label: "Product Name",
       type: "text",
       placeholder: "Enter product name",
+      required: true,
+      minLength: 3,
     },
     {
       name: "price",
       label: "Price",
       type: "number",
       placeholder: "Enter price",
+      required: true,
+      min: 1,
     },
     {
       name: "category",
       label: "Category",
       type: "text",
       placeholder: "Enter category",
+      required: true,
     },
     {
       name: "description",
       label: "Description",
       type: "textarea",
       placeholder: "Write product description",
+      maxLength: 500,
     },
   ];
 
-  // Handle DynamicForm updates
+  /* ---------------- HANDLE FIELD UPDATE ---------------- */
+
   const update = (key: string, value: any) => {
-    const field = fields.find((f) => f.name === key);
-
-    // Convert to number if numeric field
-    if (field?.type === "number") value = Number(value);
-
     setBase((prev) => ({
       ...prev,
       [key]: value,
     }));
   };
 
-  // Build final extra_properties object
-  const extraProperties: Record<string, any> = {};
-  extraProps.forEach((p) => {
-    if (p.key.trim()) extraProperties[p.key] = p.value;
-  });
+  /* ---------------- SUBMIT HANDLER ---------------- */
 
-  // Final payload (same as your backend expects)
-  const payload = {
-    ...meta,
-    ...base,
-    price: Number(base.price),
-    extra_properties: extraProperties,
+  const handleSubmit = () => {
+    // 🔒 BLOCK SUBMIT IF INVALID
+    const hasErrors = fields.some((field) => {
+      const error = validateField(
+        field,
+        base[field.name as keyof typeof base],
+        base
+      );
+
+      setErrors((prev) => ({
+        ...prev,
+        [field.name]: error,
+      }));
+
+      return error;
+    });
+
+    if (hasErrors) return;
+
+    // Build extra_properties
+    const extra_properties: Record<string, any> = {};
+    extraProps.forEach((p) => {
+      if (p.key.trim()) {
+        extra_properties[p.key] = p.value;
+      }
+    });
+
+    // Final payload
+    const payload = {
+      ...meta,
+      ...base,
+      price: Number(base.price),
+      extra_properties,
+    };
+
+    onSubmit(payload);
   };
+
+  /* ---------------- UI ---------------- */
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
@@ -145,25 +195,26 @@ export default function ProductFormModal({
           {product ? "Edit Product" : "Add Product"}
         </h2>
 
-        {/* BASE PRODUCT FIELDS (DynamicForm) */}
+        {/* -------- BASE PRODUCT FIELDS -------- */}
         <DynamicForm
           fields={fields}
           form={base}
           onChange={update}
-          // extraProps={extraProps}
-          // onExtraAdd={addExtraField}
-          // onExtraChange={handleExtraChange}
-          // onExtraRemove={removeExtraField}
+          errors={errors}
+          setErrors={setErrors}
         />
 
-        {/* ACTION BUTTONS */}
+        {/* -------- ACTIONS -------- */}
         <div className="flex justify-end gap-3 mt-4">
-          <button onClick={onClose} className="border px-4 py-2 rounded-lg">
+          <button
+            onClick={onClose}
+            className="border px-4 py-2 rounded-lg"
+          >
             Cancel
           </button>
 
           <button
-            onClick={() => onSubmit(payload)}
+            onClick={handleSubmit}
             className="bg-purple-600 text-white px-4 py-2 rounded-lg"
           >
             {product ? "Update Product" : "Create Product"}
