@@ -5,6 +5,7 @@ import { fetchTeam } from "../../teams/slice";
 import { fetchProducts } from "../../products/slice";
 import type { CampaignStatus } from "../types";
 import DynamicForm, { type FieldConfig } from "../../../common/ui/DynamicForm";
+import { validateField } from "../../../common/utils/formValidator";
 import BlockingLoader from "../../../common/ui/BlockingLoader";
 import ResultModal from "../../../common/ui/ResultModal";
 
@@ -23,7 +24,7 @@ const STATUS_OPTIONS = [
 const EMPTY_FORM = {
   name: "",
   description: "",
-  budget: 0,
+  budget: "",
   status: "planned" as CampaignStatus,
   owner_id: "",
   salesperson_ids: [] as number[],
@@ -32,23 +33,31 @@ const EMPTY_FORM = {
   end_date: "",
 };
 
-export default function CreateCampaignModal({ open, onClose }: CreateCampaignModalProps) {
+export default function CreateCampaignModal({
+  open,
+  onClose,
+}: CreateCampaignModalProps) {
   const dispatch = useAppDispatch();
 
   const { members, loading: teamLoading } = useAppSelector((s) => s.team);
-  const { products, meta, loading: productsLoading } = useAppSelector((s) => s.products);
+  const { products, loading: productsLoading } = useAppSelector(
+    (s) => s.products
+  );
 
   const [form, setForm] = useState(EMPTY_FORM);
+  const [errors, setErrors] = useState<Record<string, string | null>>({});
   const [processing, setProcessing] = useState(false);
 
   const [resultOpen, setResultOpen] = useState(false);
   const [resultSuccess, setResultSuccess] = useState(true);
   const [resultMessage, setResultMessage] = useState("");
 
+  /* ---------- PAGINATION STATE ---------- */
   const [productPage, setProductPage] = useState(1);
   const [managerPage, setManagerPage] = useState(1);
   const [salesPage, setSalesPage] = useState(1);
 
+  const [hasNextProducts, setHasNextProducts] = useState(true);
   const [hasNextManagers, setHasNextManagers] = useState(true);
   const [hasNextSales, setHasNextSales] = useState(true);
 
@@ -56,33 +65,48 @@ export default function CreateCampaignModal({ open, onClose }: CreateCampaignMod
   const [loadingMoreManagers, setLoadingMoreManagers] = useState(false);
   const [loadingMoreSales, setLoadingMoreSales] = useState(false);
 
-  const showResult = (success: boolean, message: string) => {
-    setResultSuccess(success);
-    setResultMessage(message);
-    setResultOpen(true);
-  };
-
+  /* ---------- INIT ---------- */
   useEffect(() => {
-    if (open) {
-      setForm(EMPTY_FORM);
-      setProductPage(1);
-      setManagerPage(1);
-      setSalesPage(1);
-      setHasNextManagers(true);
-      setHasNextSales(true);
+    if (!open) return;
 
-      dispatch(fetchTeam({ page: 1, page_size: 10, role: "manager", append: true }))
-        .unwrap()
-        .then((res: any) => setHasNextManagers(res.meta.has_next));
+    setForm(EMPTY_FORM);
+    setErrors({});
 
-      dispatch(fetchTeam({ page: 1, page_size: 10, role: "sales_rep", append: true }))
-        .unwrap()
-        .then((res: any) => setHasNextSales(res.meta.has_next));
+    setProductPage(1);
+    setManagerPage(1);
+    setSalesPage(1);
 
-      dispatch(fetchProducts({ page: 1, page_size: 10 }));
-    }
+    setHasNextProducts(true);
+    setHasNextManagers(true);
+    setHasNextSales(true);
+
+    /* Managers */
+    dispatch(
+      fetchTeam({ page: 1, page_size: 10, role: "manager", append: true })
+    )
+      .unwrap()
+      .then((res: any) => setHasNextManagers(res.meta.has_next));
+
+    /* Sales reps */
+    dispatch(
+      fetchTeam({ page: 1, page_size: 10, role: "sales_rep", append: true })
+    )
+      .unwrap()
+      .then((res: any) => setHasNextSales(res.meta.has_next));
+
+    /* Products (RESET LIST) */
+    dispatch(
+      fetchProducts({
+        page: 1,
+        page_size: 10,
+        mode: "paginate",
+      })
+    )
+      .unwrap()
+      .then((res: any) => setHasNextProducts(res.meta.has_next));
   }, [dispatch, open]);
 
+  /* ---------- BODY SCROLL LOCK ---------- */
   useEffect(() => {
     if (!open) return;
     const scrollY = window.scrollY;
@@ -95,27 +119,51 @@ export default function CreateCampaignModal({ open, onClose }: CreateCampaignMod
     };
   }, [open]);
 
-  const managers = useMemo(() => members.filter((m) => m.role === "manager"), [members]);
-  const salespeople = useMemo(() => members.filter((m) => m.role === "sales_rep"), [members]);
+  const managers = useMemo(
+    () => members.filter((m) => m.role === "manager"),
+    [members]
+  );
 
+  const salespeople = useMemo(
+    () => members.filter((m) => m.role === "sales_rep"),
+    [members]
+  );
+
+  /* ---------- FORM UPDATE ---------- */
   const update = (key: string, value: any) => {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
+  /* ---------- LOAD MORE ---------- */
   const loadMoreProducts = async () => {
-    if (loadingMoreProducts || !meta?.has_next) return;
+    if (loadingMoreProducts || !hasNextProducts) return;
+
     setLoadingMoreProducts(true);
     const next = productPage + 1;
-    await dispatch(fetchProducts({ page: next, page_size: 10 }));
+
+    const res: any = await dispatch(
+      fetchProducts({
+        page: next,
+        page_size: 10,
+        mode: "infinite",
+      })
+    ).unwrap();
+
     setProductPage(next);
+    setHasNextProducts(res.meta.has_next);
     setLoadingMoreProducts(false);
   };
 
   const loadMoreManagers = async () => {
     if (loadingMoreManagers || !hasNextManagers) return;
+
     setLoadingMoreManagers(true);
     const next = managerPage + 1;
-    const res: any = await dispatch(fetchTeam({ page: next, page_size: 10, role: "manager", append: true })).unwrap();
+
+    const res: any = await dispatch(
+      fetchTeam({ page: next, page_size: 10, role: "manager", append: true })
+    ).unwrap();
+
     setManagerPage(next);
     setHasNextManagers(res.meta.has_next);
     setLoadingMoreManagers(false);
@@ -123,24 +171,52 @@ export default function CreateCampaignModal({ open, onClose }: CreateCampaignMod
 
   const loadMoreSales = async () => {
     if (loadingMoreSales || !hasNextSales) return;
+
     setLoadingMoreSales(true);
     const next = salesPage + 1;
-    const res: any = await dispatch(fetchTeam({ page: next, page_size: 10, role: "sales_rep", append: true })).unwrap();
+
+    const res: any = await dispatch(
+      fetchTeam({ page: next, page_size: 10, role: "sales_rep", append: true })
+    ).unwrap();
+
     setSalesPage(next);
     setHasNextSales(res.meta.has_next);
     setLoadingMoreSales(false);
   };
 
+  /* ---------- FIELD CONFIG ---------- */
   const fields: FieldConfig[] = [
-    { name: "name", label: "Campaign Name", type: "text", placeholder: "Enter campaign name", disabled: teamLoading },
-    { name: "description", label: "Campaign Description", type: "textarea" },
-    { name: "budget", label: "Target / Budget", type: "number" },
-    { name: "status", label: "Status", type: "select", options: STATUS_OPTIONS },
-
+    {
+      name: "name",
+      label: "Campaign Name",
+      type: "text",
+      required: true,
+      minLength: 3,
+    },
+    {
+      name: "description",
+      label: "Campaign Description",
+      type: "textarea",
+    },
+    {
+      name: "budget",
+      label: "Target / Budget",
+      type: "number",
+      required: true,
+      min: 1,
+    },
+    {
+      name: "status",
+      label: "Status",
+      type: "select",
+      required: true,
+      options: STATUS_OPTIONS,
+    },
     {
       name: "owner_id",
       label: "Owner (Manager)",
       type: "select",
+      required: true,
       options: managers.map((m) => ({ label: m.name, value: m.id })),
       disabled: teamLoading,
       onScrollEnd: loadMoreManagers,
@@ -159,34 +235,66 @@ export default function CreateCampaignModal({ open, onClose }: CreateCampaignMod
       name: "product_ids",
       label: "Products",
       type: "multiselect",
+      required: true,
+      minItems: 1,
       options: products.map((p) => ({ label: p.name, value: p.id })),
+      disabled: productsLoading,
       onScrollEnd: loadMoreProducts,
       showLoader: loadingMoreProducts || productsLoading,
-      disabled: productsLoading,
     },
-    { name: "start_date", label: "Start Date", type: "date" },
-    { name: "end_date", label: "End Date (Optional)", type: "date" },
+    {
+      name: "start_date",
+      label: "Start Date",
+      type: "date",
+      required: true,
+    },
+    {
+      name: "end_date",
+      label: "End Date (Optional)",
+      type: "date",
+    },
   ];
 
+  /* ---------- SUBMIT ---------- */
   const handleSubmit = async () => {
+    const hasErrors = fields.some((field) => {
+      const error = validateField(
+        field,
+        form[field.name as keyof typeof form],
+        form
+      );
+      setErrors((prev) => ({ ...prev, [field.name]: error }));
+      return error;
+    });
+
+    if (hasErrors) return;
+
     try {
       setProcessing(true);
-      const payload = {
-        name: form.name,
-        description: form.description || undefined,
-        manager_id: form.owner_id ? Number(form.owner_id) : undefined,
-        assigned_reps_ids: form.salesperson_ids.length ? form.salesperson_ids : undefined,
-        product_ids: form.product_ids.length ? form.product_ids : undefined,
-        start_date: form.start_date ? new Date(form.start_date).toISOString() : undefined,
-        end_date: form.end_date ? new Date(form.end_date).toISOString() : undefined,
-        status: form.status,
-        budget: form.budget ? Number(form.budget) : undefined,
-      };
 
-      await dispatch(createCampaign(payload as any)).unwrap();
-      showResult(true, "Campaign created successfully.");
+      await dispatch(
+        createCampaign({
+          name: form.name,
+          description: form.description || undefined,
+          manager_id: Number(form.owner_id),
+          assigned_reps_ids: form.salesperson_ids,
+          product_ids: form.product_ids,
+          start_date: new Date(form.start_date).toISOString(),
+          end_date: form.end_date
+            ? new Date(form.end_date).toISOString()
+            : undefined,
+          status: form.status,
+          budget: Number(form.budget),
+        } as any)
+      ).unwrap();
+
+      setResultSuccess(true);
+      setResultMessage("Campaign created successfully.");
+      setResultOpen(true);
     } catch {
-      showResult(false, "Failed to create campaign.");
+      setResultSuccess(false);
+      setResultMessage("Failed to create campaign.");
+      setResultOpen(true);
     } finally {
       setProcessing(false);
     }
@@ -202,10 +310,20 @@ export default function CreateCampaignModal({ open, onClose }: CreateCampaignMod
             <h2 className="text-xl font-semibold">Create Campaign</h2>
           </div>
 
-          <DynamicForm fields={fields} form={form} onChange={update} />
+          <DynamicForm
+            fields={fields}
+            form={form}
+            onChange={update}
+            errors={errors}
+            setErrors={setErrors}
+          />
 
           <div className="p-4 border-t flex justify-end gap-3">
-            <button className="px-4 py-2 bg-gray-200 rounded" onClick={onClose} disabled={processing}>
+            <button
+              className="px-4 py-2 bg-gray-200 rounded"
+              onClick={onClose}
+              disabled={processing}
+            >
               Cancel
             </button>
             <button

@@ -1,7 +1,10 @@
 import { useState, useEffect } from "react";
 import { useAppDispatch } from "../../../app/hooks";
 import { addTicket } from "../slice";
-import DynamicForm, { type FieldConfig } from "../../../common/ui/DynamicForm";
+import DynamicForm, {
+  type FieldConfig,
+} from "../../../common/ui/DynamicForm";
+import { validateField } from "../../../common/utils/formValidator";
 import type { NewSupportTicketForm } from "../types";
 
 interface Props {
@@ -26,8 +29,11 @@ export default function NewTicketModal({
     description: "",
   });
 
-  const [error, setError] = useState<string | null>(null);
+  const [errors, setErrors] = useState<
+    Record<string, string | null>
+  >({});
 
+  /* ---------- BODY SCROLL LOCK ---------- */
   useEffect(() => {
     if (!open) return;
     const scrollY = window.scrollY;
@@ -42,19 +48,36 @@ export default function NewTicketModal({
     };
   }, [open]);
 
+  /* ---------- RESET FORM ---------- */
+  useEffect(() => {
+    if (!open) return;
+
+    setForm({
+      subject: "",
+      priority: "medium",
+      category: "technical",
+      description: "",
+    });
+    setErrors({});
+  }, [open]);
+
   if (!open) return null;
 
+  /* ---------- FIELD CONFIG ---------- */
   const fields: FieldConfig[] = [
     {
       name: "subject",
       label: "Subject",
-      type: "text",
+      type: "text" as const,
       placeholder: "Enter subject",
+      required: true,
+      minLength: 3,
     },
     {
       name: "priority",
       label: "Priority",
-      type: "select",
+      type: "select" as const,
+      required: true,
       options: [
         { label: "Low", value: "low" },
         { label: "Medium", value: "medium" },
@@ -65,7 +88,8 @@ export default function NewTicketModal({
     {
       name: "category",
       label: "Category",
-      type: "select",
+      type: "select" as const,
+      required: true,
       options: [
         { label: "Technical", value: "technical" },
         { label: "Billing", value: "billing" },
@@ -77,19 +101,37 @@ export default function NewTicketModal({
     {
       name: "description",
       label: "Description",
-      type: "textarea",
+      type: "textarea" as const,
       placeholder: "Describe the issue...",
+      required: true,
+      minLength: 10,
     },
   ];
 
+  /* ---------- UPDATE ---------- */
   const update = (key: string, value: any) => {
     setForm((prev) => ({ ...prev, [key]: value }));
-    setError(null);
   };
 
+  /* ---------- SUBMIT ---------- */
   const submit = async () => {
-    if (!form.subject.trim()) return setError("Subject is required");
-    if (!form.description.trim()) return setError("Description is required");
+    // 🔒 VALIDATE ALL FIELDS
+    const hasErrors = fields.some((field) => {
+      const error = validateField(
+        field,
+        form[field.name as keyof NewSupportTicketForm],
+        form
+      );
+
+      setErrors((prev) => ({
+        ...prev,
+        [field.name]: error,
+      }));
+
+      return error;
+    });
+
+    if (hasErrors) return;
 
     try {
       onSubmitStart?.();
@@ -101,14 +143,21 @@ export default function NewTicketModal({
     }
   };
 
+  /* ---------- UI ---------- */
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
       <div className="bg-white w-[480px] rounded-xl p-6 shadow-xl flex flex-col">
-        <h2 className="text-xl font-semibold mb-1">Create Support Ticket</h2>
+        <h2 className="text-xl font-semibold mb-1">
+          Create Support Ticket
+        </h2>
 
-        <DynamicForm fields={fields} form={form} onChange={update} noValidate />
-
-        {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
+        <DynamicForm
+          fields={fields}
+          form={form}
+          onChange={update}
+          errors={errors}
+          setErrors={setErrors}
+        />
 
         <div className="flex justify-end gap-3 mt-6">
           <button

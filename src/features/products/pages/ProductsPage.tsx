@@ -48,7 +48,11 @@ export default function ProductsPage() {
 
   /* -------- Fetch products -------- */
   useEffect(() => {
-    const params: any = { page, page_size: pageSize };
+    const params: any = {
+      page,
+      page_size: pageSize,
+      mode: "paginate", // 👈 IMPORTANT
+    };
 
     if (search) params.search = search;
     if (statusFilter !== "all") params.status = statusFilter;

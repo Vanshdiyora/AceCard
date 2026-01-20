@@ -68,6 +68,25 @@ export default function SupportAdmin() {
     setPage(1);
   }, [activeTab, search]);
 
+  useEffect(() => {
+  if (!detailsModal) return;
+
+  const scrollY = window.scrollY;
+
+  document.body.style.position = "fixed";
+  document.body.style.top = `-${scrollY}px`;
+  document.body.style.left = "0";
+  document.body.style.right = "0";
+
+  return () => {
+    document.body.style.position = "";
+    document.body.style.top = "";
+    document.body.style.left = "";
+    document.body.style.right = "";
+    window.scrollTo(0, scrollY);
+  };
+}, [detailsModal]);
+
   const formatDate = (value?: string) => {
     if (!value) return "—";
     const d = new Date(value);

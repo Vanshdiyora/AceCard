@@ -3,6 +3,7 @@ import { ProductsAPI } from "./services/products.service";
 import type { ProductState, ProductListResponse, Product, ProductLookup } from "./types";
 
 type ApiError = { response?: { data?: { error?: string; message?: string } } };
+type FetchMode = "paginate" | "infinite";
 
 const extractApiError = (err: unknown, fallback: string): string =>
   (err as ApiError)?.response?.data?.error ||
@@ -14,11 +15,20 @@ const extractApiError = (err: unknown, fallback: string): string =>
 
 export const fetchProducts = createAsyncThunk<
   ProductListResponse,
-  { page?: number; page_size?: number; search?: string; status?: "active" | "archived" },
+  {
+    page?: number;
+    page_size?: number;
+    search?: string;
+    status?: "active" | "archived";
+    mode?: FetchMode;
+  },
   { rejectValue: string }
 >(
   "products/fetchAll",
-  async ({ page = 1, page_size = 10, search, status }, { rejectWithValue }) => {
+  async (
+    { page = 1, page_size = 10, search, status },
+    { rejectWithValue }
+  ) => {
     try {
       return await ProductsAPI.getAll({ page, page_size, search, status });
     } catch (err) {
@@ -133,21 +143,25 @@ const productsSlice = createSlice({
         state.error = null;
       })
       .addCase(fetchProducts.fulfilled, (state, action) => {
-        state.loading = false;
+  state.loading = false;
 
-        const page = action.meta.arg.page ?? 1;
-        const newItems = action.payload.data ?? [];
+  const page = action.meta.arg.page ?? 1;
+  const mode = action.meta.arg.mode ?? "paginate";
+  const newItems = action.payload.data ?? [];
 
-        if (page === 1) {
-          state.products = newItems;
-        } else {
-          const existingIds = new Set(state.products.map(p => p.id));
-          const filtered = newItems.filter(p => !existingIds.has(p.id));
-          state.products.push(...filtered);
-        }
+  if (mode === "paginate" || page === 1) {
+    // 🔥 Classic pagination
+    state.products = newItems;
+  } else {
+    // 🚀 Infinite scroll
+    const existingIds = new Set(state.products.map(p => p.id));
+    const filtered = newItems.filter(p => !existingIds.has(p.id));
+    state.products.push(...filtered);
+  }
 
-        state.meta = action.payload.meta ?? null;
-      })
+  state.meta = action.payload.meta ?? null;
+})
+
       .addCase(fetchProducts.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload ?? "Failed to fetch products";

@@ -31,8 +31,9 @@ export interface Campaign {
   manager_id?: number;
   manager_name: string;
   products?: CampaignProduct[];
+  product_ids?: number[];    
   assigned_reps?: CampaignSalesperson[];
-  assigned_rep_ids?: number[];
+  assigned_reps_ids?: number[];
   start_date?: string;
   end_date?: string | null;
   status: CampaignStatus;

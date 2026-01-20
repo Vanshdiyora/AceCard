@@ -5,6 +5,7 @@ import { fetchTeam } from "../../teams/slice";
 import { fetchProducts } from "../../products/slice";
 import type { EnrichedCampaign } from "../types";
 import DynamicForm, { type FieldConfig } from "../../../common/ui/DynamicForm";
+import { validateField } from "../../../common/utils/formValidator";
 import BlockingLoader from "../../../common/ui/BlockingLoader";
 
 type Props = {
@@ -22,93 +23,127 @@ const STATUS_OPTIONS = [
   { label: "Expired", value: "expired" },
 ];
 
-export default function EditCampaignModal({ open, onClose, campaign }: Props) {
+export default function EditCampaignModal({
+  open,
+  onClose,
+  campaign,
+}: Props) {
   const dispatch = useAppDispatch();
+
   const { members } = useAppSelector((s) => s.team);
-  const { products, meta, loading: productsLoading } = useAppSelector((s) => s.products);
+  const { products, loading: productsLoading } = useAppSelector(
+    (s) => s.products
+  );
   const loading = useAppSelector((s) => s.campaigns.loading);
 
+  const [form, setForm] = useState<any>(null);
+  const [errors, setErrors] = useState<Record<string, string | null>>({});
+
+  /* ---------- PAGINATION STATE ---------- */
   const [managerPage, setManagerPage] = useState(1);
   const [salesPage, setSalesPage] = useState(1);
   const [productPage, setProductPage] = useState(1);
 
   const [hasNextManagers, setHasNextManagers] = useState(true);
   const [hasNextSales, setHasNextSales] = useState(true);
-  const [hasLoaded, setHasLoaded] = useState(false);
+  const [hasNextProducts, setHasNextProducts] = useState(true);
 
   const [loadingMoreManagers, setLoadingMoreManagers] = useState(false);
   const [loadingMoreSales, setLoadingMoreSales] = useState(false);
   const [loadingMoreProducts, setLoadingMoreProducts] = useState(false);
 
-  const managers = useMemo(() => members.filter((m) => m.role === "manager"), [members]);
-  const salespeople = useMemo(() => members.filter((m) => m.role === "sales_rep"), [members]);
+  const managers = useMemo(
+    () => members.filter((m) => m.role === "manager"),
+    [members]
+  );
 
+  const salespeople = useMemo(
+    () => members.filter((m) => m.role === "sales_rep"),
+    [members]
+  );
+
+  /* ---------- FORM BUILDER ---------- */
   const buildForm = (c: EnrichedCampaign) => ({
-    name: c.name,
-    description: c.description,
+    name: c.name ?? "",
+    description: c.description ?? "",
     status: c.status,
-    budget: c.budget,
+    budget: c.budget ?? "",
     manager_id: c.manager_id?.toString() ?? "",
-    salesperson_ids: c.assigned_reps?.map((r) => r.id) ?? [],
-    products: c.products?.map((p) => p.id) ?? [],
+    assigned_reps_ids: c.assigned_reps?.map((r) => r.id) ?? [],
+    product_ids: c.products?.map((p) => p.id) ?? [],
     start_date: c.start_date?.split("T")[0] ?? "",
     end_date: c.end_date?.split("T")[0] ?? "",
   });
 
-  const [form, setForm] = useState(() => buildForm(campaign));
-
+  /* ---------- INIT ---------- */
   useEffect(() => {
-    if (!open) {
-      setHasLoaded(false);
-      return;
-    }
-
-    if (hasLoaded) return;
-    setHasLoaded(true);
+    if (!open) return;
 
     setForm(buildForm(campaign));
+    setErrors({});
+
     setManagerPage(1);
     setSalesPage(1);
     setProductPage(1);
+
     setHasNextManagers(true);
     setHasNextSales(true);
+    setHasNextProducts(true);
 
-    dispatch(fetchTeam({ page: 1, page_size: 10, role: "manager", append: true }))
+    /* Managers */
+    dispatch(
+      fetchTeam({ page: 1, page_size: 10, role: "manager", append: true })
+    )
       .unwrap()
       .then((res: any) => setHasNextManagers(res.meta.has_next));
 
-    dispatch(fetchTeam({ page: 1, page_size: 10, role: "sales_rep", append: true }))
+    /* Sales reps */
+    dispatch(
+      fetchTeam({ page: 1, page_size: 10, role: "sales_rep", append: true })
+    )
       .unwrap()
       .then((res: any) => setHasNextSales(res.meta.has_next));
 
-    dispatch(fetchProducts({ page: 1, page_size: 10 }));
-  }, [open, dispatch, hasLoaded, campaign]);
+    /* Products – RESET list */
+    dispatch(
+      fetchProducts({
+        page: 1,
+        page_size: 10,
+        mode: "paginate",
+      })
+    )
+      .unwrap()
+      .then((res: any) => setHasNextProducts(res.meta.has_next));
+  }, [open, campaign, dispatch]);
 
+  /* ---------- BODY SCROLL LOCK ---------- */
   useEffect(() => {
-    if (open) setForm(buildForm(campaign));
-  }, [campaign, open]);
-
-  useEffect(() => {
-    if (open) {
-      const originalOverflow = document.body.style.overflow;
-      document.body.style.overflow = "hidden";
-      return () => {
-        document.body.style.overflow = originalOverflow;
-      };
-    }
+    if (!open) return;
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = originalOverflow;
+    };
   }, [open]);
 
-  if (!open) return null;
+  if (!open || !form) return null;
 
+  /* ---------- FORM UPDATE ---------- */
   const update = (key: string, value: any) => {
-    setForm((prev) => ({ ...prev, [key]: value }));
+    setForm((prev: any) => ({ ...prev, [key]: value }));
   };
 
+  /* ---------- LOAD MORE ---------- */
   const loadMoreManagers = async () => {
     if (loadingMoreManagers || !hasNextManagers) return;
+
     setLoadingMoreManagers(true);
     const next = managerPage + 1;
-    const res: any = await dispatch(fetchTeam({ page: next, page_size: 10, role: "manager", append: true })).unwrap();
+
+    const res: any = await dispatch(
+      fetchTeam({ page: next, page_size: 10, role: "manager", append: true })
+    ).unwrap();
+
     setManagerPage(next);
     setHasNextManagers(res.meta.has_next);
     setLoadingMoreManagers(false);
@@ -116,78 +151,158 @@ export default function EditCampaignModal({ open, onClose, campaign }: Props) {
 
   const loadMoreSales = async () => {
     if (loadingMoreSales || !hasNextSales) return;
+
     setLoadingMoreSales(true);
     const next = salesPage + 1;
-    const res: any = await dispatch(fetchTeam({ page: next, page_size: 10, role: "sales_rep", append: true })).unwrap();
+
+    const res: any = await dispatch(
+      fetchTeam({ page: next, page_size: 10, role: "sales_rep", append: true })
+    ).unwrap();
+
     setSalesPage(next);
     setHasNextSales(res.meta.has_next);
     setLoadingMoreSales(false);
   };
 
   const loadMoreProducts = async () => {
-    if (loadingMoreProducts || !meta?.has_next) return;
+    if (loadingMoreProducts || !hasNextProducts) return;
+
     setLoadingMoreProducts(true);
     const next = productPage + 1;
-    await dispatch(fetchProducts({ page: next, page_size: 10 }));
+
+    const res: any = await dispatch(
+      fetchProducts({
+        page: next,
+        page_size: 10,
+        mode: "infinite", // ✅ APPEND
+      })
+    ).unwrap();
+
     setProductPage(next);
+    setHasNextProducts(res.meta.has_next);
     setLoadingMoreProducts(false);
   };
 
+  /* ---------- FIELD CONFIG ---------- */
   const fields: FieldConfig[] = [
-    { name: "name", label: "Campaign Name", type: "text" },
-    { name: "description", label: "Description", type: "textarea" },
-    { name: "budget", label: "Budget", type: "number" },
-    { name: "status", label: "Status", type: "select", options: STATUS_OPTIONS },
+    {
+      name: "name",
+      label: "Campaign Name",
+      type: "text",
+      required: true,
+      minLength: 3,
+    },
+    {
+      name: "description",
+      label: "Description",
+      type: "textarea",
+    },
+    {
+      name: "budget",
+      label: "Budget",
+      type: "number",
+      required: true,
+      min: 1,
+    },
+    {
+      name: "status",
+      label: "Status",
+      type: "select",
+      required: true,
+      options: STATUS_OPTIONS,
+    },
     {
       name: "manager_id",
       label: "Owner (Manager)",
       type: "select",
-      options: managers.map((m) => ({ label: m.name, value: m.id })),
+      required: true,
+      options: managers.map((m) => ({
+        label: m.name,
+        value: m.id,
+      })),
       onScrollEnd: loadMoreManagers,
       showLoader: loadingMoreManagers,
     },
     {
-      name: "salesperson_ids",
+      name: "assigned_reps_ids",
       label: "Assigned Salespersons",
       type: "multiselect",
-      options: salespeople.map((s) => ({ label: s.name, value: s.id })),
+      options: salespeople.map((s) => ({
+        label: s.name,
+        value: s.id,
+      })),
       onScrollEnd: loadMoreSales,
       showLoader: loadingMoreSales,
     },
     {
-      name: "products",
+      name: "product_ids",
       label: "Products",
       type: "multiselect",
-      options: products.map((p) => ({ label: p.name, value: p.id })),
+      required: true,
+      options: products.map((p) => ({
+        label: p.name,
+        value: p.id,
+      })),
       onScrollEnd: loadMoreProducts,
       showLoader: loadingMoreProducts || productsLoading,
       disabled: productsLoading,
     },
-    { name: "start_date", label: "Start Date", type: "date" },
-    { name: "end_date", label: "End Date", type: "date" },
+    {
+      name: "start_date",
+      label: "Start Date",
+      type: "date",
+      required: true,
+    },
+    {
+      name: "end_date",
+      label: "End Date",
+      type: "date",
+    },
   ];
 
+  /* ---------- SAVE ---------- */
   const save = async () => {
-    try {
-      const payload = {
-        name: form.name,
-        description: form.description || undefined,
-        status: form.status,
-        budget: Number(form.budget),
-        manager_id: form.manager_id ? Number(form.manager_id) : undefined,
-        assigned_rep_ids: form.salesperson_ids.length ? form.salesperson_ids : undefined,
-        product_ids: form.products.length ? form.products : undefined,
-        start_date: form.start_date ? new Date(form.start_date).toISOString() : undefined,
-        end_date: form.end_date ? new Date(form.end_date).toISOString() : undefined,
-      };
+    const hasErrors = fields.some((field) => {
+      const error = validateField(field, form[field.name], form);
+      setErrors((prev) => ({ ...prev, [field.name]: error }));
+      return error;
+    });
 
-      await dispatch(updateCampaign({ id: campaign.id, data: payload })).unwrap();
+    if (hasErrors) return;
+
+    try {
+      await dispatch(
+        updateCampaign({
+          id: campaign.id,
+          data: {
+            name: form.name,
+            description: form.description || undefined,
+            status: form.status,
+            budget: Number(form.budget),
+            manager_id: Number(form.manager_id),
+            assigned_reps_ids: form.assigned_reps_ids.length
+              ? form.assigned_reps_ids
+              : undefined,
+            product_ids: form.product_ids.length
+              ? form.product_ids
+              : undefined,
+            start_date: form.start_date
+              ? new Date(form.start_date).toISOString()
+              : undefined,
+            end_date: form.end_date
+              ? new Date(form.end_date).toISOString()
+              : undefined,
+          },
+        })
+      ).unwrap();
+
       onClose();
     } catch (err) {
       console.error("Failed to update campaign", err);
     }
   };
 
+  /* ---------- UI ---------- */
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
       <div className="bg-white w-[520px] max-h-[90vh] rounded-xl shadow-lg flex flex-col">
@@ -195,13 +310,25 @@ export default function EditCampaignModal({ open, onClose, campaign }: Props) {
           <h2 className="text-xl font-semibold">Edit Campaign</h2>
         </div>
 
-        <DynamicForm fields={fields} form={form} onChange={update} />
+        <DynamicForm
+          fields={fields}
+          form={form}
+          onChange={update}
+          errors={errors}
+          setErrors={setErrors}
+        />
 
         <div className="p-4 border-t flex justify-end gap-3">
-          <button className="px-4 py-2 bg-gray-200 rounded" onClick={onClose}>
+          <button
+            className="px-4 py-2 bg-gray-200 rounded"
+            onClick={onClose}
+          >
             Cancel
           </button>
-          <button className="px-4 py-2 bg-purple-600 text-white rounded" onClick={save}>
+          <button
+            className="px-4 py-2 bg-purple-600 text-white rounded"
+            onClick={save}
+          >
             Save Changes
           </button>
         </div>

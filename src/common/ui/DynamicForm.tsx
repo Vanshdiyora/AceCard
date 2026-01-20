@@ -26,6 +26,7 @@ export interface FieldConfig {
   max?: number;
   minLength?: number;
   maxLength?: number;
+  minItems?: number; // ✅ ADD THIS
   pattern?: RegExp;
   validate?: (value: any, form: any) => string | null;
 
@@ -112,9 +113,8 @@ export default function DynamicForm({
               <>
                 <input
                   type={field.type}
-                  className={`${baseInputClass} ${
-                    showError ? "border-red-500" : ""
-                  }`}
+                  className={`${baseInputClass} ${showError ? "border-red-500" : ""
+                    }`}
                   placeholder={field.placeholder}
                   value={form[field.name] ?? ""}
                   onChange={(e) =>
@@ -136,9 +136,8 @@ export default function DynamicForm({
                 <input
                   type="number"
                   inputMode="numeric"
-                  className={`${baseInputClass} no-spinner ${
-                    showError ? "border-red-500" : ""
-                  }`}
+                  className={`${baseInputClass} no-spinner ${showError ? "border-red-500" : ""
+                    }`}
                   placeholder={field.placeholder}
                   value={
                     form[field.name] === 0
@@ -167,9 +166,8 @@ export default function DynamicForm({
               <>
                 <textarea
                   rows={3}
-                  className={`${baseInputClass} resize-none ${
-                    showError ? "border-red-500" : ""
-                  }`}
+                  className={`${baseInputClass} resize-none ${showError ? "border-red-500" : ""
+                    }`}
                   placeholder={field.placeholder}
                   value={form[field.name] ?? ""}
                   onChange={(e) =>
@@ -196,9 +194,8 @@ export default function DynamicForm({
                   ) : (
                     <>
                       <select
-                        className={`${baseInputClass} ${
-                          showError ? "border-red-500" : ""
-                        }`}
+                        className={`${baseInputClass} ${showError ? "border-red-500" : ""
+                          }`}
                         value={form[field.name] ?? ""}
                         onChange={(e) =>
                           handleChange(field, e.target.value)
@@ -269,15 +266,22 @@ export default function DynamicForm({
             {field.type === "multiselect" && (
               <>
                 <div
-                  className={`border rounded-lg p-2 space-y-1 max-h-40 overflow-y-auto ${
-                    showError ? "border-red-500" : ""
-                  }`}
+                  className={`border rounded-lg p-2 space-y-1 max-h-40 overflow-y-auto ${showError ? "border-red-500" : ""
+                    }`}
+                  onScroll={(e) => {
+                    const target = e.currentTarget;
+                    const isBottom =
+                      target.scrollTop + target.clientHeight >=
+                      target.scrollHeight - 5;
+
+                    if (isBottom && field.onScrollEnd) {
+                      field.onScrollEnd(); // 🔥 THIS WAS MISSING
+                    }
+                  }}
                   onBlur={() => handleBlur(field.name)}
                 >
                   {field.options?.map((opt) => {
-                    const isSelected = (
-                      form[field.name] || []
-                    ).includes(opt.value);
+                    const isSelected = (form[field.name] || []).includes(opt.value);
 
                     return (
                       <label
@@ -288,41 +292,39 @@ export default function DynamicForm({
                           type="checkbox"
                           checked={isSelected}
                           onChange={(e) => {
-                            let updated = [
-                              ...(form[field.name] || []),
-                            ];
-                            if (e.target.checked)
-                              updated.push(opt.value);
-                            else
-                              updated = updated.filter(
-                                (v) => v !== opt.value
-                              );
+                            let updated = [...(form[field.name] || [])];
+                            if (e.target.checked) updated.push(opt.value);
+                            else updated = updated.filter((v) => v !== opt.value);
                             handleChange(field, updated);
                           }}
                         />
-                        <span className="text-sm">
-                          {opt.label}
-                        </span>
+                        <span className="text-sm">{opt.label}</span>
                       </label>
                     );
                   })}
+
+                  {/* 👇 LOADER INSIDE DROPDOWN */}
+                  {field.showLoader && (
+                    <div className="flex justify-center py-2">
+                      <BrandLoader />
+                    </div>
+                  )}
                 </div>
+
                 {showError && (
-                  <p className="text-xs text-red-500 mt-1">
-                    {error}
-                  </p>
+                  <p className="text-xs text-red-500 mt-1">{error}</p>
                 )}
               </>
             )}
+
 
             {/* ---------- DATETIME ---------- */}
             {field.type === "datetime" && (
               <>
                 <input
                   type="datetime-local"
-                  className={`${baseInputClass} ${
-                    showError ? "border-red-500" : ""
-                  }`}
+                  className={`${baseInputClass} ${showError ? "border-red-500" : ""
+                    }`}
                   value={form[field.name] ?? ""}
                   onChange={(e) =>
                     handleChange(field, e.target.value)
