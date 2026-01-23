@@ -111,4 +111,11 @@ async updateLeadsConfig(payload: LeadFormConfig): Promise<LeadFormConfig> {
     await axios.delete(`/vendor/integrations/${provider}`);
   },
 
+  // ---------- CRM Integrations ----------
+async syncIntegration(provider: string) {
+  const res = await axios.post(`/vendor/integrations/${provider}/sync`);
+  return res.data;
+},
+
+
 };

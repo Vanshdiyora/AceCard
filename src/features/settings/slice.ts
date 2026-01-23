@@ -36,7 +36,6 @@ const initialState: SettingsState = {
     loading: false,
     error: null,
   },
-
 };
 
 /* ======================================================
@@ -143,6 +142,7 @@ export const removeSuggestedQuestion = createAsyncThunk<number, number>(
   }
 );
 
+// ---------- Password ----------
 export const resetPassword = createAsyncThunk<
   void,
   { old_password: string; new_password: string }
@@ -152,12 +152,13 @@ export const resetPassword = createAsyncThunk<
   } catch (err: any) {
     return thunkAPI.rejectWithValue(
       err.response?.data?.error ||
-      err.response?.data?.message ||
-      "Failed to update password"
+        err.response?.data?.message ||
+        "Failed to update password"
     );
   }
 });
 
+// ---------- Integrations ----------
 export const fetchIntegrations = createAsyncThunk(
   "settings/fetchIntegrations",
   async (_, thunkAPI) => {
@@ -188,6 +189,18 @@ export const disconnectIntegration = createAsyncThunk<string, string>(
       return provider;
     } catch {
       return thunkAPI.rejectWithValue("Failed to disconnect integration");
+    }
+  }
+);
+
+export const syncIntegration = createAsyncThunk<string, string>(
+  "settings/syncIntegration",
+  async (provider, thunkAPI) => {
+    try {
+      await settingsService.syncIntegration(provider);
+      return provider;
+    } catch {
+      return thunkAPI.rejectWithValue("Failed to sync integration");
     }
   }
 );
@@ -263,79 +276,122 @@ const settingsSlice = createSlice({
         s.leadConfig.error = a.payload as string;
       })
 
-    // ---------- Suggested Questions ----------
-    .addCase(fetchSuggestedQuestions.pending, (s) => {
-      s.suggestedQuestions.loading = true;
-      s.suggestedQuestions.error = null;
-    })
-    .addCase(fetchSuggestedQuestions.fulfilled, (s, a) => {
-      s.suggestedQuestions.loading = false;
-      s.suggestedQuestions.data = a.payload;
-    })
-    .addCase(fetchSuggestedQuestions.rejected, (s, a) => {
-      s.suggestedQuestions.loading = false;
-      s.suggestedQuestions.error = a.payload as string;
-    })
+      // ---------- Suggested Questions ----------
+      .addCase(fetchSuggestedQuestions.pending, (s) => {
+        s.suggestedQuestions.loading = true;
+        s.suggestedQuestions.error = null;
+      })
+      .addCase(fetchSuggestedQuestions.fulfilled, (s, a) => {
+        s.suggestedQuestions.loading = false;
+        s.suggestedQuestions.data = a.payload;
+      })
+      .addCase(fetchSuggestedQuestions.rejected, (s, a) => {
+        s.suggestedQuestions.loading = false;
+        s.suggestedQuestions.error = a.payload as string;
+      })
 
-    .addCase(addSuggestedQuestion.pending, (s) => {
-      s.suggestedQuestions.saving = true;
-    })
-    .addCase(addSuggestedQuestion.fulfilled, (s, a) => {
-      s.suggestedQuestions.saving = false;
-      s.suggestedQuestions.data.push(a.payload);
-    })
-    .addCase(addSuggestedQuestion.rejected, (s, a) => {
-      s.suggestedQuestions.saving = false;
-      s.suggestedQuestions.error = a.payload as string;
-    })
+      .addCase(addSuggestedQuestion.pending, (s) => {
+        s.suggestedQuestions.saving = true;
+      })
+      .addCase(addSuggestedQuestion.fulfilled, (s, a) => {
+        s.suggestedQuestions.saving = false;
+        s.suggestedQuestions.data.push(a.payload);
+      })
+      .addCase(addSuggestedQuestion.rejected, (s, a) => {
+        s.suggestedQuestions.saving = false;
+        s.suggestedQuestions.error = a.payload as string;
+      })
 
-    .addCase(editSuggestedQuestion.fulfilled, (s, a) => {
-      const idx = s.suggestedQuestions.data.findIndex(
-        (q) => q.id === a.payload.id
-      );
-      if (idx !== -1) s.suggestedQuestions.data[idx] = a.payload;
-    })
+      .addCase(editSuggestedQuestion.fulfilled, (s, a) => {
+        const idx = s.suggestedQuestions.data.findIndex(
+          (q) => q.id === a.payload.id
+        );
+        if (idx !== -1) s.suggestedQuestions.data[idx] = a.payload;
+      })
 
-    .addCase(removeSuggestedQuestion.fulfilled, (s, a) => {
-      s.suggestedQuestions.data = s.suggestedQuestions.data.filter(
-        (q) => q.id !== a.payload
-      );
-    })
-    .addCase(resetPassword.pending, (s) => {
-      s.account.saving = true;
-      s.account.error = null;
-    })
-    .addCase(resetPassword.fulfilled, (s) => {
-      s.account.saving = false;
-    })
-    .addCase(resetPassword.rejected, (s, a) => {
-      s.account.saving = false;
-      s.account.error = a.payload as string;
-    })
-    .addCase(fetchIntegrations.pending, (s) => {
-      s.integrations.loading = true;
-      s.integrations.error = null;
-    })
-    .addCase(fetchIntegrations.fulfilled, (s, a) => {
-      s.integrations.loading = false;
-      s.integrations.data = a.payload;
-    })
-    .addCase(fetchIntegrations.rejected, (s, a) => {
-      s.integrations.loading = false;
-      s.integrations.error = a.payload as string;
-    })
+      .addCase(removeSuggestedQuestion.fulfilled, (s, a) => {
+        s.suggestedQuestions.data = s.suggestedQuestions.data.filter(
+          (q) => q.id !== a.payload
+        );
+      })
 
-    .addCase(disconnectIntegration.fulfilled, (s, a) => {
-      const i = s.integrations.data.find(x => x.provider === a.payload);
-      if (i) i.connected = false;
-    })
+      // ---------- Integrations ----------
+      .addCase(fetchIntegrations.pending, (s) => {
+        s.integrations.loading = true;
+        s.integrations.error = null;
+      })
+      .addCase(fetchIntegrations.fulfilled, (s, a) => {
+        s.integrations.loading = false;
+        s.integrations.data = a.payload;
+      })
+      .addCase(fetchIntegrations.rejected, (s, a) => {
+        s.integrations.loading = false;
+        s.integrations.error = a.payload as string;
+      })
 
-    .addCase(connectIntegration.fulfilled, (s, a) => {
-      const i = s.integrations.data.find(x => x.provider === a.meta.arg.provider);
-      if (i) i.connected = true;
-    });
+      // CONNECT loading
+      .addCase(connectIntegration.pending, (s, a) => {
+        const i = s.integrations.data.find(
+          x => x.provider === a.meta.arg.provider
+        );
+        if (i) i.connecting = true;
+      })
+      .addCase(connectIntegration.fulfilled, (s, a) => {
+        const i = s.integrations.data.find(
+          x => x.provider === a.meta.arg.provider
+        );
+        if (i) {
+          i.connecting = false;
+          i.connected = true;
+        }
+      })
+      .addCase(connectIntegration.rejected, (s, a) => {
+        const i = s.integrations.data.find(
+          x => x.provider === a.meta.arg.provider
+        );
+        if (i) i.connecting = false;
+        s.integrations.error = a.payload as string;
+      })
 
-},
+      // DISCONNECT loading
+      .addCase(disconnectIntegration.pending, (s, a) => {
+        const i = s.integrations.data.find(
+          x => x.provider === a.meta.arg
+        );
+        if (i) i.disconnecting = true;
+      })
+      .addCase(disconnectIntegration.fulfilled, (s, a) => {
+        const i = s.integrations.data.find(
+          x => x.provider === a.payload
+        );
+        if (i) {
+          i.disconnecting = false;
+          i.connected = false;
+        }
+      })
+      .addCase(disconnectIntegration.rejected, (s, a) => {
+        const i = s.integrations.data.find(
+          x => x.provider === a.meta.arg
+        );
+        if (i) i.disconnecting = false;
+        s.integrations.error = a.payload as string;
+      })
+
+      // SYNC loading (existing)
+      .addCase(syncIntegration.pending, (s, a) => {
+        const i = s.integrations.data.find(x => x.provider === a.meta.arg);
+        if (i) i.syncing = true;
+      })
+      .addCase(syncIntegration.fulfilled, (s, a) => {
+        const i = s.integrations.data.find(x => x.provider === a.payload);
+        if (i) i.syncing = false;
+      })
+      .addCase(syncIntegration.rejected, (s, a) => {
+        const i = s.integrations.data.find(x => x.provider === a.meta.arg);
+        if (i) i.syncing = false;
+        s.integrations.error = a.payload as string;
+      });
+  },
 });
 
 export const { resetSettings } = settingsSlice.actions;

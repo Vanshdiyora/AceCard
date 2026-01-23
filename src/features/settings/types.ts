@@ -99,14 +99,20 @@ export interface SuggestedQuestionsState {
 
 export type CRMProvider = "hubspot" | "zoho" | "salesforce" | "odoo";
 
-export interface CRMIntegration {
-  provider: CRMProvider;
-  connected: boolean;
-  created_at?: string;
-}
-
 export interface CRMIntegrationState {
   data: CRMIntegration[];
   loading: boolean;
   error: string | null;
+}
+
+export interface CRMIntegration {
+  provider: CRMProvider;
+  connected: boolean;
+
+  // loading flags (UI only)
+  syncing?: boolean;
+  connecting?: boolean;
+  disconnecting?: boolean;
+
+  created_at?: string;
 }
