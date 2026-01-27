@@ -45,8 +45,8 @@ export default function Sidebar({ type }: SidebarProps) {
 
       style={{ backgroundColor: "white" }}
     >
-      <div className="flex justify-center mb-10">
-        <img src="/AcecardSmallLogo.png" className="h-20 object-contain" />
+      <div className="flex justify-center mb-2">
+        <img src="/fullLogo.png" className="h-20 object-contain text-black" />
       </div>
 
       <ul className="space-y-2">
