@@ -32,11 +32,11 @@ export interface FieldConfig {
   pattern?: RegExp;
   validate?: (value: any, form: any) => string | null;
 
-  /* UI */  
+  /* UI */
   disabled?: boolean;
   onScrollEnd?: () => void;
   showLoader?: boolean;
-   onSearch?: (value: string) => void;
+  onSearch?: (value: string) => void;
 }
 
 interface DynamicFormProps {
@@ -342,33 +342,33 @@ export default function DynamicForm({
               </>
             )}
 
-          {field.type === "search-select" && (
-  <SearchableSelect
-    value={form[field.name]}
-    onChange={(v) => handleChange(field, v)}
-    options={field.options || []}
-    placeholder={`Select ${field.label}`}
-    disabled={field.disabled}
-    onScrollEnd={field.onScrollEnd}
-    loading={field.showLoader}
-    onSearch={field.onSearch}   // ✅ ADD THIS LINE
-  />
-)}
+            {field.type === "search-select" && (
+              <SearchableSelect
+                value={form[field.name]}
+                onChange={(v) => handleChange(field, v)}
+                options={field.options || []}
+                placeholder={`Select ${field.label}`}
+                disabled={field.disabled}
+                onScrollEnd={field.onScrollEnd}
+                loading={field.showLoader}
+                onSearch={field.onSearch}   // ✅ ADD THIS LINE
+              />
+            )}
 
 
-          {field.type === "search-multiselect" && (
-  <SearchableSelect
-    multiple
-    value={form[field.name] || []}
-    onChange={(v) => handleChange(field, v)}
-    options={field.options || []}
-    placeholder={`Select ${field.label}`}
-    disabled={field.disabled}
-    onScrollEnd={field.onScrollEnd}
-    loading={field.showLoader}
-    onSearch={field.onSearch}   // ✅ ADD THIS LINE
-  />
-)}
+            {field.type === "search-multiselect" && (
+              <SearchableSelect
+                multiple
+                value={form[field.name] || []}
+                onChange={(v) => handleChange(field, v)}
+                options={field.options || []}
+                placeholder={`Select ${field.label}`}
+                disabled={field.disabled}
+                onScrollEnd={field.onScrollEnd}
+                loading={field.showLoader}
+                onSearch={field.onSearch}   // ✅ ADD THIS LINE
+              />
+            )}
 
 
 

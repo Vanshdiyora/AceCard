@@ -53,7 +53,7 @@ export default function DataTable<T>({
   onPageChange,
 }: Props<T>) {
   const gridTemplate = columns.map((c) => c.width || "1fr").join(" ");
-  
+
   const [uiPage, setUiPage] = useState(page);
 
   // Sync UI page when external page changes (API response)
@@ -113,11 +113,10 @@ export default function DataTable<T>({
               setUiPage(p);
               onPageChange(p);
             }}
-            className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition
-              ${
-                uiPage === 1
-                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                  : "bg-white hover:bg-gray-50 text-gray-700"
+            className={`w-16 px-3 py-1.5 rounded-lg text-sm font-medium border transition
+        ${uiPage === 1
+                ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                : "bg-white hover:bg-gray-50 text-gray-700"
               }`}
           >
             Prev
@@ -126,7 +125,10 @@ export default function DataTable<T>({
           {/* Page Numbers */}
           {getVisiblePages(uiPage, totalPages).map((p, i) =>
             p === "..." ? (
-              <span key={i} className="px-2 text-gray-400 select-none">
+              <span
+                key={i}
+                className="w-9 text-center text-gray-400 select-none"
+              >
                 …
               </span>
             ) : (
@@ -136,11 +138,10 @@ export default function DataTable<T>({
                   setUiPage(p);
                   onPageChange(p);
                 }}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition
-                  ${
-                    p === uiPage
-                      ? "bg-purple-600 text-white border-purple-600 shadow-sm"
-                      : "bg-white text-gray-700 hover:bg-gray-50"
+                className={`w-9 h-9 flex items-center justify-center rounded-lg text-sm font-medium border transition
+            ${p === uiPage
+                    ? "bg-purple-600 text-white border-purple-600 shadow-sm"
+                    : "bg-white text-gray-700 hover:bg-gray-50"
                   }`}
               >
                 {p}
@@ -156,17 +157,17 @@ export default function DataTable<T>({
               setUiPage(p);
               onPageChange(p);
             }}
-            className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition
-              ${
-                uiPage === totalPages
-                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                  : "bg-white hover:bg-gray-50 text-gray-700"
+            className={`w-16 px-3 py-1.5 rounded-lg text-sm font-medium border transition
+        ${uiPage === totalPages
+                ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                : "bg-white hover:bg-gray-50 text-gray-700"
               }`}
           >
             Next
           </button>
         </div>
       )}
+
     </div>
   );
 }
