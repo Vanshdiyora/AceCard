@@ -41,7 +41,7 @@ export default function Sidebar({ type }: SidebarProps) {
   return (
  <aside className="sticky top-0 h-screen w-64 p-6 shrink-0"
 
-  style={{ backgroundColor: "#E6E4F2" }}
+  style={{ backgroundColor: "white" }}
 >
       <div className="flex justify-center mb-10">
         <img src="/AcecardSmallLogo.png" className="h-20 object-contain" />

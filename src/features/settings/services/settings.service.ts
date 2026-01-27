@@ -61,10 +61,10 @@ export const settingsService = {
     };
   },
 
-async updateLeadsConfig(payload: LeadFormConfig): Promise<LeadFormConfig> {
-  const res = await axios.put("/vendor/leads-config", payload);
-  return res.data;
-},
+  async updateLeadsConfig(payload: LeadFormConfig): Promise<LeadFormConfig> {
+    const res = await axios.put("/vendor/leads-config", payload);
+    return res.data;
+  },
 
 
   // ---------- Suggested Questions ----------
@@ -112,10 +112,10 @@ async updateLeadsConfig(payload: LeadFormConfig): Promise<LeadFormConfig> {
   },
 
   // ---------- CRM Integrations ----------
-async syncIntegration(provider: string) {
-  const res = await axios.post(`/vendor/integrations/${provider}/sync`);
-  return res.data;
-},
+  async syncIntegration(provider: string) {
+    const res = await axios.post(`/vendor/integrations/${provider}/sync`);
+    return res.data;
+  },
 
 
 };

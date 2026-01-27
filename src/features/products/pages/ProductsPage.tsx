@@ -3,11 +3,10 @@ import { useNavigate } from "react-router-dom";
 import { useAppSelector, useAppDispatch } from "../../../app/hooks";
 import { fetchProducts, createProduct, updateProduct } from "../slice";
 import ProductFormModal from "../components/ProductFormModal";
+import ProductImportModal from "../components/ProductImportModal";
 import PageHeader from "../../../common/components/layout/PageHeader";
 import PageFilters from "../../../common/components/layout/PageFilter";
-import DataTable, {
-  type Column,
-} from "../../../common/components/table/DataTable";
+import DataTable, { type Column } from "../../../common/components/table/DataTable";
 import ErrorAlert from "../../../common/ui/ErrorAlert";
 import { Edit2 } from "lucide-react";
 import type { Product } from "../types";
@@ -15,6 +14,7 @@ import BlockingLoader from "../../../common/ui/BlockingLoader";
 import ResultModal from "../../../common/ui/ResultModal";
 import { downloadCSV } from "../../../common/components/helper/DownloadCsv";
 import { ProductsAPI } from "../services/products.service";
+import { parseCSV } from "../../../common/utils/parseCsv";
 
 type SortBy = "recent" | "name" | "price";
 type StatusFilter = "all" | "active" | "archived";
@@ -31,6 +31,7 @@ export default function ProductsPage() {
 
   const [open, setOpen] = useState(false);
   const [editProduct, setEditProduct] = useState<Product | null>(null);
+  const [importOpen, setImportOpen] = useState(false);
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
@@ -51,7 +52,7 @@ export default function ProductsPage() {
     const params: any = {
       page,
       page_size: pageSize,
-      mode: "paginate", // 👈 IMPORTANT
+      mode: "paginate",
     };
 
     if (search) params.search = search;
@@ -60,36 +61,29 @@ export default function ProductsPage() {
     dispatch(fetchProducts(params));
   }, [dispatch, page, pageSize, search, statusFilter]);
 
-
-  /* -------- Reset page on filters/search -------- */
+  /* -------- Reset page -------- */
   useEffect(() => {
     setPage(1);
   }, [search, statusFilter, sortBy]);
 
+  /* -------- Export -------- */
   const handleExport = async () => {
     try {
       const totalCount = meta?.total_count ?? 0;
       if (!totalCount) return;
 
-      const params: any = {
-        page: 1,
-        page_size: totalCount,
-      };
-
+      const params: any = { page: 1, page_size: totalCount };
       if (search) params.search = search;
       if (statusFilter !== "all") params.status = statusFilter;
 
-      // 🚫 NO REDUX DISPATCH HERE
       const result = await ProductsAPI.getAll(params);
 
-      const csvData = result.data.map((product: Product) => ({
-        Name: product.name,
-        Category: product.category,
-        Price: product.price,
-        Status: product.status,
-        Description: product.description ?? "",
-        "Created At": new Date(product.created_at).toLocaleString(),
-        "Updated At": new Date(product.updated_at).toLocaleString(),
+      const csvData = result.data.map((p: Product) => ({
+        Name: p.name,
+        Category: p.category,
+        Price: p.price,
+        Status: p.status,
+        Description: p.description ?? "",
       }));
 
       downloadCSV(csvData, "products_export.csv");
@@ -98,32 +92,78 @@ export default function ProductsPage() {
     }
   };
 
+  /* -------- Import -------- */
+  const handleImport = async (file: File) => {
+    try {
+      setBlocking(true);
 
+      const rows = await parseCSV(file);
 
-  /* -------- Final visible data -------- */
+      let success = 0;
+      let failed = 0;
+
+      for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
+
+        // REQUIRED fields
+        if (!row.Name || !row.Category || !row.Price) {
+          failed++;
+          continue;
+        }
+
+        try {
+          await ProductsAPI.createProduct({
+            name: row.Name,
+            category: row.Category,
+            price: Number(row.Price),
+            status: (row.Status as "active" | "archived") ?? "active",
+            description: row.Description ?? "",
+          });
+          success++;
+        } catch {
+          failed++;
+        }
+      }
+
+      setResult({
+        open: true,
+        success: failed === 0,
+        message:
+          failed === 0
+            ? `${success} products imported successfully`
+            : `${success} imported, ${failed} failed`,
+      });
+
+      setImportOpen(false);
+      dispatch(fetchProducts({ page: 1, page_size: pageSize }));
+    } catch (err: any) {
+      setResult({
+        open: true,
+        success: false,
+        message: err?.toString() ?? "Import failed",
+      });
+    } finally {
+      setBlocking(false);
+    }
+  };
+
+  /* -------- Final data -------- */
   const finalProducts = useMemo(() => {
     let list = [...products];
 
-    switch (sortBy) {
-      case "name":
-        list.sort((a, b) => a.name.localeCompare(b.name));
-        break;
-      case "price":
-        list.sort((a, b) => a.price - b.price);
-        break;
-      default:
-        list.sort(
-          (a, b) =>
-            new Date(b.created_at).getTime() -
-            new Date(a.created_at).getTime()
-        );
-    }
+    if (sortBy === "name") list.sort((a, b) => a.name.localeCompare(b.name));
+    else if (sortBy === "price") list.sort((a, b) => a.price - b.price);
+    else
+      list.sort(
+        (a, b) =>
+          new Date(b.created_at).getTime() -
+          new Date(a.created_at).getTime()
+      );
 
     return list;
   }, [products, sortBy]);
 
-
-  /* -------- Table columns -------- */
+  /* -------- Columns -------- */
   const columns: Column<Product>[] = [
     { header: "Name", accessor: "name" },
     { header: "Category", accessor: "category" },
@@ -133,8 +173,8 @@ export default function ProductsPage() {
       render: (p) => (
         <span
           className={`px-2 py-1 rounded text-xs ${p.status === "active"
-            ? "bg-green-100 text-green-700"
-            : "bg-gray-200 text-gray-600"
+              ? "bg-green-100 text-green-700"
+              : "bg-gray-200 text-gray-600"
             }`}
         >
           {p.status}
@@ -205,7 +245,8 @@ export default function ProductsPage() {
             ],
           },
         ]}
-        onExport={() => handleExport()}
+        onExport={handleExport}
+        onImport={() => setImportOpen(true)}
         disableExport={finalProducts.length === 0}
       />
 
@@ -222,7 +263,6 @@ export default function ProductsPage() {
             navigate(`/admin/products/${p.id}`, { state: { product: p } })
           }
         />
-
       </div>
 
       <ProductFormModal
@@ -235,22 +275,17 @@ export default function ProductsPage() {
         onSubmit={async (data) => {
           try {
             setBlocking(true);
+            editProduct
+              ? await dispatch(updateProduct({ id: editProduct.id, data })).unwrap()
+              : await dispatch(createProduct(data)).unwrap();
 
-            if (editProduct) {
-              await dispatch(updateProduct({ id: editProduct.id, data })).unwrap();
-              setResult({
-                open: true,
-                success: true,
-                message: "Product updated successfully",
-              });
-            } else {
-              await dispatch(createProduct(data)).unwrap();
-              setResult({
-                open: true,
-                success: true,
-                message: "Product created successfully",
-              });
-            }
+            setResult({
+              open: true,
+              success: true,
+              message: editProduct
+                ? "Product updated successfully"
+                : "Product created successfully",
+            });
 
             setOpen(false);
             setEditProduct(null);
@@ -258,12 +293,18 @@ export default function ProductsPage() {
             setResult({
               open: true,
               success: false,
-              message: err?.message ?? "Something went wrong. Please try again.",
+              message: err?.message ?? "Something went wrong",
             });
           } finally {
             setBlocking(false);
           }
         }}
+      />
+
+      <ProductImportModal
+        open={importOpen}
+        onClose={() => setImportOpen(false)}
+        onImport={handleImport}
       />
     </div>
   );
