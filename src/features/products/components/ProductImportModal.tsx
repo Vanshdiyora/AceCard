@@ -1,61 +1,128 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Modal from "../../../common/ui/Modal";
 import { downloadExampleCSV } from "../../../common/components/helper/downloadExampleCsv";
 
 interface ProductImportModalProps {
-    open: boolean;
-    onClose: () => void;
-    onImport: (file: File) => void;
+  open: boolean;
+  onClose: () => void;
+  onImport: (file: File) => void;
 }
 
 export default function ProductImportModal({
-    open,
-    onClose,
-    onImport,
+  open,
+  onClose,
+  onImport,
 }: ProductImportModalProps) {
-    const [file, setFile] = useState<File | null>(null);
+  const [file, setFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-    return (
-        <Modal open={open} onClose={onClose} width="420px">
-            <h2 className="text-lg font-semibold mb-4">
-                Import Products
-            </h2>
+  const handleFilePick = () => {
+    fileInputRef.current?.click();
+  };
 
-            <div className="space-y-1 mb-3">
-                <label className="text-sm font-medium">Upload CSV</label>
-                <input
-                    type="file"
-                    accept=".csv"
-                    className="w-full border rounded-lg p-2 text-sm"
-                    onChange={(e) =>
-                        setFile(e.target.files ? e.target.files[0] : null)
-                    }
-                />
-            </div>
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selected = e.target.files?.[0] ?? null;
+    setFile(selected);
+  };
 
-            <button
-                onClick={() => downloadExampleCSV("products_import_template.csv")}
-                className="text-purple-600 text-sm underline mb-6"
-            >
-                Download example CSV
-            </button>
+  const clearFile = () => {
+    setFile(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
 
-            <div className="flex justify-end gap-3">
+  const handleSubmit = () => {
+    if (!file) return;
+    onImport(file);
+    onClose();
+  };
+
+  return (
+    <Modal open={open} onClose={onClose} width="420px">
+      <div className="space-y-4">
+        <h2 className="text-lg font-semibold">Import Products</h2>
+
+        {/* Hidden file input */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".csv"
+          onChange={handleFileChange}
+          className="hidden"
+        />
+
+        {/* Upload box */}
+        <div className="border border-dashed rounded-lg p-4 text-center space-y-2">
+          {!file ? (
+            <>
+              <p className="text-sm text-gray-500">
+                Upload a CSV file to import products
+              </p>
+              <button
+                type="button"
+                onClick={handleFilePick}
+                className="px-4 py-2 text-sm rounded-lg bg-purple-600 text-white hover:bg-purple-700"
+              >
+                Choose CSV File
+              </button>
+            </>
+          ) : (
+            <>
+              <p className="text-sm text-gray-700 truncate">
+                📄 {file.name}
+              </p>
+              <div className="flex justify-center gap-2">
                 <button
-                    onClick={onClose}
-                    className="border px-4 py-2 rounded-lg"
+                  type="button"
+                  onClick={handleFilePick}
+                  className="text-sm text-purple-600 hover:underline"
                 >
-                    Cancel
+                  Change file
                 </button>
-
                 <button
-                    disabled={!file}
-                    onClick={() => file && onImport(file)}
-                    className="bg-purple-600 disabled:bg-purple-300 text-white px-4 py-2 rounded-lg"
+                  type="button"
+                  onClick={clearFile}
+                  className="text-sm text-red-500 hover:underline"
                 >
-                    Import
+                  Remove
                 </button>
-            </div>
-        </Modal>
-    );
+              </div>
+            </>
+          )}
+        </div>
+
+        <button
+          onClick={() =>
+            downloadExampleCSV("products_import_template.csv")
+          }
+          className="text-sm text-purple-600 hover:underline"
+        >
+          Download example CSV
+        </button>
+
+        {/* Actions */}
+        <div className="flex justify-end gap-3 pt-3">
+          <button
+            onClick={onClose}
+            className="border px-4 py-2 rounded-lg text-sm"
+          >
+            Cancel
+          </button>
+
+          <button
+            disabled={!file}
+            onClick={handleSubmit}
+            className={`px-4 py-2 rounded-lg text-sm text-white ${
+              file
+                ? "bg-purple-600 hover:bg-purple-700"
+                : "bg-gray-300 cursor-not-allowed"
+            }`}
+          >
+            Import
+          </button>
+        </div>
+      </div>
+    </Modal>
+  );
 }

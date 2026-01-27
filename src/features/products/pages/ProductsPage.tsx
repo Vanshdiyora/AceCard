@@ -66,6 +66,34 @@ export default function ProductsPage() {
     setPage(1);
   }, [search, statusFilter, sortBy]);
 
+    const lockScroll = () => {
+    const scrollBarWidth =
+      window.innerWidth - document.documentElement.clientWidth;
+
+    document.documentElement.style.overflow = "hidden";
+    document.body.style.overflow = "hidden";
+    document.body.style.paddingRight = `${scrollBarWidth}px`;
+  };
+
+  const unlockScroll = () => {
+    document.documentElement.style.overflow = "";
+    document.body.style.overflow = "";
+    document.body.style.paddingRight = "";
+  };
+  useEffect(() => {
+    const isAnyModalOpen = importOpen || result.open;
+
+    if (isAnyModalOpen) {
+      lockScroll();
+    } else {
+      unlockScroll();
+    }
+
+    return () => {
+      unlockScroll();
+    };
+  }, [importOpen, result.open]);
+
   /* -------- Export -------- */
   const handleExport = async () => {
     try {

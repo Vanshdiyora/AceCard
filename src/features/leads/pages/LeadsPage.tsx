@@ -50,6 +50,33 @@ export default function LeadsPage() {
     success: true,
     message: "",
   });
+  const lockScroll = () => {
+    const scrollBarWidth =
+      window.innerWidth - document.documentElement.clientWidth;
+
+    document.documentElement.style.overflow = "hidden";
+    document.body.style.overflow = "hidden";
+    document.body.style.paddingRight = `${scrollBarWidth}px`;
+  };
+
+  const unlockScroll = () => {
+    document.documentElement.style.overflow = "";
+    document.body.style.overflow = "";
+    document.body.style.paddingRight = "";
+  };
+  useEffect(() => {
+    const isAnyModalOpen = importOpen || result.open;
+
+    if (isAnyModalOpen) {
+      lockScroll();
+    } else {
+      unlockScroll();
+    }
+
+    return () => {
+      unlockScroll();
+    };
+  }, [importOpen, result.open]);
 
   /* ---------- Load lead config ---------- */
   useEffect(() => {
@@ -145,27 +172,23 @@ export default function LeadsPage() {
       const rawRows = await parseCSV(file);
       let success = 0;
       let failed = 0;
-const rows = rawRows; // ✅ FIX
+      const rows = rawRows; // ✅ FIX
 
-for (const row of rows) {
-  try {
-    const payload = normalizeLeadCsvRow(row);
+      for (const row of rows) {
+        try {
+          const payload = normalizeLeadCsvRow(row, leadConfig);
 
-    // REQUIRED FIELDS CHECK
-    if (!payload.lead_name || !payload.stage) {
-      console.error("Invalid payload (missing required fields):", payload);
-      failed++;
-      continue;
-    }
+          if (!payload.lead_name || !payload.stage) {
+            failed++;
+            continue;
+          }
 
-    // 🔥 THIS IS THE API CALL
-    await dispatch(createLead(payload)).unwrap();
-    success++;
-  } catch (err) {
-    console.error("Create lead failed:", err);
-    failed++;
-  }
-}
+          await dispatch(createLead(payload)).unwrap();
+          success++;
+        } catch (err) {
+          failed++;
+        }
+      }
 
 
       dispatch(
@@ -198,7 +221,7 @@ for (const row of rows) {
   };
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6">
       <BlockingLoader show={blocking} />
 
       <ResultModal
@@ -235,7 +258,7 @@ for (const row of rows) {
         onImport={() => setImportOpen(true)}
         disableExport={loading}
       />
-
+      <div className="mt-6" />
       <DataTable
         columns={columns}
         data={finalLeads}

@@ -6,7 +6,12 @@ const SOURCE_MAP: Record<string, string> = {
   import: "manual",
 };
 
-export function normalizeLeadCsvRow(row: any) {
+import { mapCustomFieldsFromCsv } from "./mapCustomFieldsFromCsv";
+
+export function normalizeLeadCsvRow(
+  row: Record<string, any>,
+  leadConfig: any
+) {
   const rawSource = row.leadSource?.toLowerCase();
 
   return {
@@ -21,7 +26,6 @@ export function normalizeLeadCsvRow(row: any) {
 
     stage: row.stage || row.Stage || "new",
 
-    // ✅ FIXED SOURCE
     source: SOURCE_MAP[rawSource] || "manual",
 
     deal_amount: row.estimatedDealValue
@@ -35,21 +39,10 @@ export function normalizeLeadCsvRow(row: any) {
           .filter(Boolean)
       : [],
 
-    custom_fields: {
-      testing_text: row["Testing text"],
-      testing_radio: row["Testing radio"],
-      testing_dropdown: row["Testing Dropdown"],
-
-      // ✅ FIX CHECKBOX BUG TOO
-      test_checkbox: row["Test checkbox"]
-        ? row["Test checkbox"]
-            .replace(/"/g, "")
-            .split("|")
-        : [],
-
-      test_datetime: row["Test Datetime"]
-        ? new Date(row["Test Datetime"]).toISOString()
-        : undefined,
-    },
+    // 🔥 DYNAMIC CUSTOM FIELDS
+    custom_fields: mapCustomFieldsFromCsv(
+      row,
+      leadConfig?.custom_fields ?? []
+    ),
   };
 }

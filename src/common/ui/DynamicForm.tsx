@@ -1,21 +1,23 @@
 import BrandLoader from "./BrandLoader";
 import { validateField } from "../utils/formValidator";
 import React, { useState } from "react";
-
+import SearchableSelect from "./SearchableSelect";
 export interface FieldConfig {
   name: string;
   label: string;
   type:
-    | "text"
-    | "number"
-    | "email"
-    | "select"
-    | "textarea"
-    | "date"
-    | "checkbox"
-    | "multiselect"
-    | "radio"
-    | "datetime";
+  | "text"
+  | "number"
+  | "email"
+  | "select"
+  | "textarea"
+  | "date"
+  | "checkbox"
+  | "multiselect"
+  | "radio"
+  | "datetime"
+  | "search-select"        // 👈 single select
+  | "search-multiselect";
 
   placeholder?: string;
   options?: { label: string; value: any }[];
@@ -30,10 +32,11 @@ export interface FieldConfig {
   pattern?: RegExp;
   validate?: (value: any, form: any) => string | null;
 
-  /* UI */
+  /* UI */  
   disabled?: boolean;
   onScrollEnd?: () => void;
   showLoader?: boolean;
+   onSearch?: (value: string) => void;
 }
 
 interface DynamicFormProps {
@@ -338,6 +341,36 @@ export default function DynamicForm({
                 )}
               </>
             )}
+
+          {field.type === "search-select" && (
+  <SearchableSelect
+    value={form[field.name]}
+    onChange={(v) => handleChange(field, v)}
+    options={field.options || []}
+    placeholder={`Select ${field.label}`}
+    disabled={field.disabled}
+    onScrollEnd={field.onScrollEnd}
+    loading={field.showLoader}
+    onSearch={field.onSearch}   // ✅ ADD THIS LINE
+  />
+)}
+
+
+          {field.type === "search-multiselect" && (
+  <SearchableSelect
+    multiple
+    value={form[field.name] || []}
+    onChange={(v) => handleChange(field, v)}
+    options={field.options || []}
+    placeholder={`Select ${field.label}`}
+    disabled={field.disabled}
+    onScrollEnd={field.onScrollEnd}
+    loading={field.showLoader}
+    onSearch={field.onSearch}   // ✅ ADD THIS LINE
+  />
+)}
+
+
 
             {/* ---------- CHECKBOX ---------- */}
             {field.type === "checkbox" && (

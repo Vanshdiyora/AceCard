@@ -28,18 +28,27 @@ const normalizeMember = (m: any): TeamMember => ({
 ====================================================== */
 
 interface TeamState {
-  members: TeamMember[];
-  meta: TeamMeta | null;
+  members: TeamMember[];      // ✅ combined (keep this)
+  managers: TeamMember[];     // ✅ new
+  salesReps: TeamMember[];    // ✅ new
+  meta: {
+    members?: TeamMeta;
+    managers?: TeamMeta;
+    salesReps?: TeamMeta;
+  };
   loading: boolean;
   error?: string;
 }
 
 const initialState: TeamState = {
   members: [],
-  meta: null,
+  managers: [],
+  salesReps: [],
+  meta: {},
   loading: false,
   error: undefined,
 };
+
 
 /* ======================================================
    HELPERS
@@ -176,21 +185,41 @@ const teamSlice = createSlice({
       })
       .addCase(fetchTeam.fulfilled, (state, action) => {
         state.loading = false;
-        state.meta = action.payload.meta;
 
+        const { role, append } = action.meta.arg || {};
         const incoming = action.payload.members;
-        const existingIds = new Set(state.members.map((m) => m.id));
 
-        if (action.payload.append) {
-          // Append only new members (no duplicates)
-          const newOnes = incoming.filter((m) => !existingIds.has(m.id));
-          state.members.push(...newOnes);
-        } else {
-          // Replace completely (used for non-paginated fetch)
-          state.members = incoming;
+        /* ---------- ROLE-SPECIFIC STORAGE ---------- */
+        if (role === "manager") {
+          const ids = new Set(state.managers.map(m => m.id));
+          state.managers = append
+            ? [...state.managers, ...incoming.filter(m => !ids.has(m.id))]
+            : incoming;
+
+          state.meta.managers = action.payload.meta;
+        }
+
+        if (role === "sales_rep") {
+          const ids = new Set(state.salesReps.map(m => m.id));
+          state.salesReps = append
+            ? [...state.salesReps, ...incoming.filter(m => !ids.has(m.id))]
+            : incoming;
+
+          state.meta.salesReps = action.payload.meta;
+        }
+
+        /* ---------- COMBINED STORAGE (ONLY WHEN NO SEARCH) ---------- */
+        if (!action.meta.arg?.search) {
+          const ids = new Set(state.members.map(m => m.id));
+
+          const newOnes = incoming.filter(m => !ids.has(m.id));
+          state.members = append
+            ? [...state.members, ...newOnes]
+            : incoming;
+
+          state.meta.members = action.payload.meta;
         }
       })
-
       .addCase(fetchTeam.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../../app/hooks";
 import { createCampaign } from "../slice";
 import { fetchTeam } from "../../teams/slice";
@@ -8,6 +8,10 @@ import DynamicForm, { type FieldConfig } from "../../../common/ui/DynamicForm";
 import { validateField } from "../../../common/utils/formValidator";
 import BlockingLoader from "../../../common/ui/BlockingLoader";
 import ResultModal from "../../../common/ui/ResultModal";
+
+/* ======================================================
+   CONSTANTS
+====================================================== */
 
 interface CreateCampaignModalProps {
   open: boolean;
@@ -33,17 +37,22 @@ const EMPTY_FORM = {
   end_date: "",
 };
 
+/* ======================================================
+   COMPONENT
+====================================================== */
+
 export default function CreateCampaignModal({
   open,
   onClose,
 }: CreateCampaignModalProps) {
   const dispatch = useAppDispatch();
 
-  const { members, loading: teamLoading } = useAppSelector((s) => s.team);
+  const { managers, salesReps } = useAppSelector((s) => s.team);
   const { products, loading: productsLoading } = useAppSelector(
     (s) => s.products
   );
 
+  /* ---------- FORM ---------- */
   const [form, setForm] = useState(EMPTY_FORM);
   const [errors, setErrors] = useState<Record<string, string | null>>({});
   const [processing, setProcessing] = useState(false);
@@ -52,159 +61,201 @@ export default function CreateCampaignModal({
   const [resultSuccess, setResultSuccess] = useState(true);
   const [resultMessage, setResultMessage] = useState("");
 
-  /* ---------- PAGINATION STATE ---------- */
-  const [productPage, setProductPage] = useState(1);
+  /* ---------- SEARCH ---------- */
+  const [managerSearch, setManagerSearch] = useState("");
+  const [salesSearch, setSalesSearch] = useState("");
+  const [productSearch, setProductSearch] = useState("");
+
+  /* ---------- PAGINATION ---------- */
   const [managerPage, setManagerPage] = useState(1);
   const [salesPage, setSalesPage] = useState(1);
+  const [productPage, setProductPage] = useState(1);
 
-  const [hasNextProducts, setHasNextProducts] = useState(true);
   const [hasNextManagers, setHasNextManagers] = useState(true);
   const [hasNextSales, setHasNextSales] = useState(true);
+  const [hasNextProducts, setHasNextProducts] = useState(true);
 
-  const [loadingMoreProducts, setLoadingMoreProducts] = useState(false);
   const [loadingMoreManagers, setLoadingMoreManagers] = useState(false);
   const [loadingMoreSales, setLoadingMoreSales] = useState(false);
+  const [loadingMoreProducts, setLoadingMoreProducts] = useState(false);
 
-  /* ---------- INIT ---------- */
+  /* ======================================================
+     🔒 OPTION A — LOCAL PERSISTENT CACHE (THE REAL FIX)
+  ====================================================== */
+
+  const [managerOptionsCache, setManagerOptionsCache] = useState<
+    { label: string; value: number }[]
+  >([]);
+
+  const [salesOptionsCache, setSalesOptionsCache] = useState<
+    { label: string; value: number }[]
+  >([]);
+
+  const [productOptionsCache, setProductOptionsCache] = useState<
+    { label: string; value: number }[]
+  >([]);
+
+  /* ---------- MERGE REDUX → CACHE (NEVER REMOVE) ---------- */
+
+  useEffect(() => {
+    setManagerOptionsCache((prev) => {
+      const map = new Map(prev.map(o => [o.value, o]));
+      managers.forEach(m =>
+        map.set(m.id, { label: m.name, value: m.id })
+      );
+      return Array.from(map.values());
+    });
+  }, [managers]);
+
+  useEffect(() => {
+    setSalesOptionsCache((prev) => {
+      const map = new Map(prev.map(o => [o.value, o]));
+      salesReps.forEach(s =>
+        map.set(s.id, { label: s.name, value: s.id })
+      );
+      return Array.from(map.values());
+    });
+  }, [salesReps]);
+
+  useEffect(() => {
+    setProductOptionsCache((prev) => {
+      const map = new Map(prev.map(o => [o.value, o]));
+      products.forEach(p =>
+        map.set(p.id, { label: p.name, value: p.id })
+      );
+      return Array.from(map.values());
+    });
+  }, [products]);
+
+  /* ======================================================
+     INIT
+  ====================================================== */
+
   useEffect(() => {
     if (!open) return;
 
     setForm(EMPTY_FORM);
     setErrors({});
+    setManagerSearch("");
+    setSalesSearch("");
+    setProductSearch("");
 
-    setProductPage(1);
     setManagerPage(1);
     setSalesPage(1);
+    setProductPage(1);
 
-    setHasNextProducts(true);
-    setHasNextManagers(true);
-    setHasNextSales(true);
-
-    /* Managers */
-    dispatch(
-      fetchTeam({ page: 1, page_size: 10, role: "manager", append: true })
-    )
+    dispatch(fetchTeam({ page: 1, page_size: 10, role: "manager" }))
       .unwrap()
-      .then((res: any) => setHasNextManagers(res.meta.has_next));
+      .then((r: any) => setHasNextManagers(r.meta.has_next));
 
-    /* Sales reps */
-    dispatch(
-      fetchTeam({ page: 1, page_size: 10, role: "sales_rep", append: true })
-    )
+    dispatch(fetchTeam({ page: 1, page_size: 10, role: "sales_rep" }))
       .unwrap()
-      .then((res: any) => setHasNextSales(res.meta.has_next));
+      .then((r: any) => setHasNextSales(r.meta.has_next));
 
-    /* Products (RESET LIST) */
-    dispatch(
-      fetchProducts({
-        page: 1,
-        page_size: 10,
-        mode: "paginate",
-      })
-    )
+    dispatch(fetchProducts({ page: 1, page_size: 10, mode: "paginate" }))
       .unwrap()
-      .then((res: any) => setHasNextProducts(res.meta.has_next));
-  }, [dispatch, open]);
+      .then((r: any) => setHasNextProducts(r.meta.has_next));
+  }, [open, dispatch]);
 
-  /* ---------- BODY SCROLL LOCK ---------- */
+  /* ======================================================
+     SEARCH (DEBOUNCED)
+  ====================================================== */
+
   useEffect(() => {
-    if (!open) return;
-    const scrollY = window.scrollY;
-    document.body.style.position = "fixed";
-    document.body.style.top = `-${scrollY}px`;
-    return () => {
-      document.body.style.position = "";
-      document.body.style.top = "";
-      window.scrollTo(0, scrollY);
-    };
-  }, [open]);
+    if (!managerSearch.trim()) return;
+    const t = setTimeout(() => {
+      setManagerPage(1);
+      dispatch(fetchTeam({ page: 1, page_size: 10, role: "manager", search: managerSearch }));
+    }, 400);
+    return () => clearTimeout(t);
+  }, [managerSearch, dispatch]);
 
-  const managers = useMemo(
-    () => members.filter((m) => m.role === "manager"),
-    [members]
-  );
+  useEffect(() => {
+    if (!salesSearch.trim()) return;
+    const t = setTimeout(() => {
+      setSalesPage(1);
+      dispatch(fetchTeam({ page: 1, page_size: 10, role: "sales_rep", search: salesSearch }));
+    }, 400);
+    return () => clearTimeout(t);
+  }, [salesSearch, dispatch]);
 
-  const salespeople = useMemo(
-    () => members.filter((m) => m.role === "sales_rep"),
-    [members]
-  );
+  useEffect(() => {
+    if (!productSearch.trim()) return;
+    const t = setTimeout(() => {
+      setProductPage(1);
+      dispatch(fetchProducts({ page: 1, page_size: 10, search: productSearch, mode: "paginate" }));
+    }, 400);
+    return () => clearTimeout(t);
+  }, [productSearch, dispatch]);
 
-  /* ---------- FORM UPDATE ---------- */
-  const update = (key: string, value: any) => {
-    setForm((prev) => ({ ...prev, [key]: value }));
-  };
-
-  /* ---------- LOAD MORE ---------- */
-  const loadMoreProducts = async () => {
-    if (loadingMoreProducts || !hasNextProducts) return;
-
-    setLoadingMoreProducts(true);
-    const next = productPage + 1;
-
-    const res: any = await dispatch(
-      fetchProducts({
-        page: next,
-        page_size: 10,
-        mode: "infinite",
-      })
-    ).unwrap();
-
-    setProductPage(next);
-    setHasNextProducts(res.meta.has_next);
-    setLoadingMoreProducts(false);
-  };
+  /* ======================================================
+     LOAD MORE
+  ====================================================== */
 
   const loadMoreManagers = async () => {
-    if (loadingMoreManagers || !hasNextManagers) return;
-
+    if (!hasNextManagers || loadingMoreManagers) return;
     setLoadingMoreManagers(true);
-    const next = managerPage + 1;
 
-    const res: any = await dispatch(
-      fetchTeam({ page: next, page_size: 10, role: "manager", append: true })
+    const r: any = await dispatch(
+      fetchTeam({
+        page: managerPage + 1,
+        page_size: 10,
+        role: "manager",
+        search: managerSearch || undefined,
+        append: true,
+      })
     ).unwrap();
 
-    setManagerPage(next);
-    setHasNextManagers(res.meta.has_next);
+    setManagerPage(p => p + 1);
+    setHasNextManagers(r.meta.has_next);
     setLoadingMoreManagers(false);
   };
 
   const loadMoreSales = async () => {
-    if (loadingMoreSales || !hasNextSales) return;
-
+    if (!hasNextSales || loadingMoreSales) return;
     setLoadingMoreSales(true);
-    const next = salesPage + 1;
 
-    const res: any = await dispatch(
-      fetchTeam({ page: next, page_size: 10, role: "sales_rep", append: true })
+    const r: any = await dispatch(
+      fetchTeam({
+        page: salesPage + 1,
+        page_size: 10,
+        role: "sales_rep",
+        search: salesSearch || undefined,
+        append: true,
+      })
     ).unwrap();
 
-    setSalesPage(next);
-    setHasNextSales(res.meta.has_next);
+    setSalesPage(p => p + 1);
+    setHasNextSales(r.meta.has_next);
     setLoadingMoreSales(false);
   };
 
-  /* ---------- FIELD CONFIG ---------- */
+  const loadMoreProducts = async () => {
+    if (!hasNextProducts || loadingMoreProducts) return;
+    setLoadingMoreProducts(true);
+
+    const r: any = await dispatch(
+      fetchProducts({
+        page: productPage + 1,
+        page_size: 10,
+        search: productSearch || undefined,
+        mode: "infinite",
+      })
+    ).unwrap();
+
+    setProductPage(p => p + 1);
+    setHasNextProducts(r.meta.has_next);
+    setLoadingMoreProducts(false);
+  };
+
+  /* ======================================================
+     FIELD CONFIG
+  ====================================================== */
+
   const fields: FieldConfig[] = [
-    {
-      name: "name",
-      label: "Campaign Name",
-      type: "text",
-      required: true,
-      minLength: 3,
-    },
-    {
-      name: "description",
-      label: "Campaign Description",
-      type: "textarea",
-    },
-    {
-      name: "budget",
-      label: "Target / Budget",
-      type: "number",
-      required: true,
-      min: 1,
-    },
+    { name: "name", label: "Campaign Name", type: "text", required: true },
+    { name: "description", label: "Campaign Description", type: "textarea" },
+    { name: "budget", label: "Target / Budget", type: "number", required: true },
     {
       name: "status",
       label: "Status",
@@ -215,63 +266,53 @@ export default function CreateCampaignModal({
     {
       name: "owner_id",
       label: "Owner (Manager)",
-      type: "select",
+      type: "search-select",
       required: true,
-      options: managers.map((m) => ({ label: m.name, value: m.id })),
-      disabled: teamLoading,
+      options: managerOptionsCache,
+      onSearch: setManagerSearch,
       onScrollEnd: loadMoreManagers,
       showLoader: loadingMoreManagers,
     },
     {
       name: "salesperson_ids",
       label: "Assigned Salespersons",
-      type: "multiselect",
-      options: salespeople.map((s) => ({ label: s.name, value: s.id })),
-      disabled: teamLoading,
+      type: "search-multiselect",
+      options: salesOptionsCache,
+      onSearch: setSalesSearch,
       onScrollEnd: loadMoreSales,
       showLoader: loadingMoreSales,
     },
     {
       name: "product_ids",
       label: "Products",
-      type: "multiselect",
+      type: "search-multiselect",
       required: true,
       minItems: 1,
-      options: products.map((p) => ({ label: p.name, value: p.id })),
-      disabled: productsLoading,
+      options: productOptionsCache,
+      onSearch: setProductSearch,
       onScrollEnd: loadMoreProducts,
       showLoader: loadingMoreProducts || productsLoading,
     },
-    {
-      name: "start_date",
-      label: "Start Date",
-      type: "date",
-      required: true,
-    },
-    {
-      name: "end_date",
-      label: "End Date (Optional)",
-      type: "date",
-    },
+    { name: "start_date", label: "Start Date", type: "date", required: true },
+    { name: "end_date", label: "End Date (Optional)", type: "date" },
   ];
 
-  /* ---------- SUBMIT ---------- */
+  /* ======================================================
+     SUBMIT
+  ====================================================== */
+
   const handleSubmit = async () => {
-    const hasErrors = fields.some((field) => {
-      const error = validateField(
-        field,
-        form[field.name as keyof typeof form],
-        form
-      );
-      setErrors((prev) => ({ ...prev, [field.name]: error }));
-      return error;
+    const hasErrors = fields.some((f) => {
+      const key = f.name as keyof typeof form;
+      const e = validateField(f, form[key], form);
+      setErrors((p) => ({ ...p, [key]: e }));
+      return !!e;
     });
 
     if (hasErrors) return;
 
     try {
       setProcessing(true);
-
       await dispatch(
         createCampaign({
           name: form.name,
@@ -280,9 +321,7 @@ export default function CreateCampaignModal({
           assigned_reps_ids: form.salesperson_ids,
           product_ids: form.product_ids,
           start_date: new Date(form.start_date).toISOString(),
-          end_date: form.end_date
-            ? new Date(form.end_date).toISOString()
-            : undefined,
+          end_date: form.end_date ? new Date(form.end_date).toISOString() : undefined,
           status: form.status,
           budget: Number(form.budget),
         } as any)
@@ -290,14 +329,17 @@ export default function CreateCampaignModal({
 
       setResultSuccess(true);
       setResultMessage("Campaign created successfully.");
-      setResultOpen(true);
     } catch {
       setResultSuccess(false);
       setResultMessage("Failed to create campaign.");
-      setResultOpen(true);
     } finally {
       setProcessing(false);
+      setResultOpen(true);
     }
+  };
+
+  const update = (key: string, value: any) => {
+    setForm((prev) => ({ ...prev, [key]: value }));
   };
 
   if (!open) return null;
@@ -319,15 +361,11 @@ export default function CreateCampaignModal({
           />
 
           <div className="p-4 border-t flex justify-end gap-3">
-            <button
-              className="px-4 py-2 bg-gray-200 rounded"
-              onClick={onClose}
-              disabled={processing}
-            >
+            <button className="px-4 py-2 bg-gray-200 rounded" onClick={onClose}>
               Cancel
             </button>
             <button
-              className="px-4 py-2 bg-purple-600 text-white rounded disabled:opacity-50"
+              className="px-4 py-2 bg-purple-600 text-white rounded"
               onClick={handleSubmit}
               disabled={processing}
             >
