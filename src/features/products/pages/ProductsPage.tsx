@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAppSelector, useAppDispatch } from "../../../app/hooks";
 import { fetchProducts, createProduct, updateProduct } from "../slice";
 import ProductFormModal from "../components/ProductFormModal";
@@ -39,6 +39,7 @@ export default function ProductsPage() {
 
   const [page, setPage] = useState(1);
   const pageSize = meta?.page_size ?? 10;
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [blocking, setBlocking] = useState(false);
   const [result, setResult] = useState({
@@ -66,7 +67,7 @@ export default function ProductsPage() {
     setPage(1);
   }, [search, statusFilter, sortBy]);
 
-    const lockScroll = () => {
+  const lockScroll = () => {
     const scrollBarWidth =
       window.innerWidth - document.documentElement.clientWidth;
 
@@ -93,6 +94,13 @@ export default function ProductsPage() {
       unlockScroll();
     };
   }, [importOpen, result.open]);
+  useEffect(() => {
+    const open = searchParams.get("open");
+
+    if (open === "import") {
+      setImportOpen(true);
+    }
+  }, [searchParams]);
 
   /* -------- Export -------- */
   const handleExport = async () => {
@@ -163,6 +171,9 @@ export default function ProductsPage() {
       });
 
       setImportOpen(false);
+      searchParams.delete("open");
+      setSearchParams(searchParams, { replace: true });
+
       dispatch(fetchProducts({ page: 1, page_size: pageSize }));
     } catch (err: any) {
       setResult({
@@ -201,8 +212,8 @@ export default function ProductsPage() {
       render: (p) => (
         <span
           className={`px-2 py-1 rounded text-xs ${p.status === "active"
-              ? "bg-green-100 text-green-700"
-              : "bg-gray-200 text-gray-600"
+            ? "bg-green-100 text-green-700"
+            : "bg-gray-200 text-gray-600"
             }`}
         >
           {p.status}
@@ -331,9 +342,14 @@ export default function ProductsPage() {
 
       <ProductImportModal
         open={importOpen}
-        onClose={() => setImportOpen(false)}
+        onClose={() => {
+          setImportOpen(false);
+          searchParams.delete("open");
+          setSearchParams(searchParams, { replace: true });
+        }}
         onImport={handleImport}
       />
+
     </div>
   );
 }

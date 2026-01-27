@@ -91,7 +91,10 @@ export default function QuickStatsCard({ topPerformers }: Props) {
           label="Add New Member"
           onClick={() => navigate("/admin/team?open=create")}
         />
-        <ActionButton label="Import Products" />
+        <ActionButton
+          label="Import Products"
+          onClick={() => navigate("/admin/products?open=import")}
+        />
       </div>
     </div>
   );

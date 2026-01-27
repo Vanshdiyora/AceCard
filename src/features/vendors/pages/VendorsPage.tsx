@@ -37,7 +37,7 @@ export default function VendorsPage() {
   const navigate = useNavigate();
 
   const { vendors, loading, meta, error: fetchError } = useAppSelector((s) => s.vendors);
-
+const { seatsUpdating } = useAppSelector(s => s.vendors);
   const [activeTab, setActiveTab] = useState<"all" | "active" | "archived">("all");
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<"recent" | "name">("recent");
@@ -160,6 +160,7 @@ export default function VendorsPage() {
     <div className="p-6">
       <PageHeader title="Vendor Management" description="Manage vendor onboarding & verification" addButtonLabel="Add Vendor" onAdd={() => setAddOpen(true)} />
       <ErrorAlert message={fetchError} />
+<BlockingLoader show={processing || seatsUpdating} />
 
       <AddVendorModal
         open={addOpen}

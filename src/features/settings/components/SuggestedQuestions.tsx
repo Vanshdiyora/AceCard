@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+  import { useEffect, useRef, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../../app/hooks";
 import BrandLoader from "../../../common/ui/BrandLoader";
 import { Pencil, Check, X, Trash2, Plus } from "lucide-react";
@@ -105,7 +105,7 @@ export default function SuggestedQuestions() {
             return (
               <li
                 key={q.id}
-                className="flex items-center gap-3 border rounded-xl px-4 py-2 h-11"
+                className="flex items-center gap-3 border rounded-xl pr-4 pl-1 py-2 h-11"
               >
                 <div className="flex-1 flex items-center">
                   {isEditing ? (
@@ -116,7 +116,7 @@ export default function SuggestedQuestions() {
                       className="w-full border rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-purple-500 outline-none"
                     />
                   ) : (
-                    <span className="text-sm text-gray-800 truncate">
+                    <span className="text-sm text-gray-800 truncate pl-4">
                       {q.question}
                     </span>
                   )}

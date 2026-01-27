@@ -183,7 +183,7 @@ export default function CampaignsPage() {
           onSearch={setSearch}
           filters={sortFilter}
           onExport={handleExportCampaigns}
-          disableExport={loading}
+          disableExport={loading || !meta || meta.total_count === 0}
         />
 
       </div>

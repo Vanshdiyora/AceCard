@@ -1,23 +1,26 @@
-import BrandLoader from "./BrandLoader";
-import { validateField } from "../utils/formValidator";
 import React, { useState } from "react";
+import BrandLoader from "./BrandLoader";
 import SearchableSelect from "./SearchableSelect";
+import { validateField } from "../utils/formValidator";
+
+/* ---------- TYPES ---------- */
+
 export interface FieldConfig {
   name: string;
   label: string;
   type:
-  | "text"
-  | "number"
-  | "email"
-  | "select"
-  | "textarea"
-  | "date"
-  | "checkbox"
-  | "multiselect"
-  | "radio"
-  | "datetime"
-  | "search-select"        // 👈 single select
-  | "search-multiselect";
+    | "text"
+    | "number"
+    | "email"
+    | "select"
+    | "textarea"
+    | "date"
+    | "checkbox"
+    | "multiselect"
+    | "radio"
+    | "datetime"
+    | "search-select"
+    | "search-multiselect";
 
   placeholder?: string;
   options?: { label: string; value: any }[];
@@ -28,8 +31,9 @@ export interface FieldConfig {
   max?: number;
   minLength?: number;
   maxLength?: number;
-  minItems?: number; // ✅ ADD THIS
+  minItems?: number;
   pattern?: RegExp;
+  patternMessage?: string; // ✅ ADDED
   validate?: (value: any, form: any) => string | null;
 
   /* UI */
@@ -37,6 +41,7 @@ export interface FieldConfig {
   onScrollEnd?: () => void;
   showLoader?: boolean;
   onSearch?: (value: string) => void;
+  uppercase?: boolean; // ✅ for GST-like fields
 }
 
 interface DynamicFormProps {
@@ -50,10 +55,14 @@ interface DynamicFormProps {
   noValidate?: boolean;
 }
 
+/* ---------- STYLES ---------- */
+
 const baseInputClass =
   "border border-gray-300 rounded-lg w-full min-w-0 max-w-full p-2 text-sm truncate box-border appearance-none " +
   "focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 " +
   "focus-visible:ring-offset-2 focus-visible:ring-offset-white";
+
+/* ---------- COMPONENT ---------- */
 
 export default function DynamicForm({
   fields,
@@ -63,17 +72,21 @@ export default function DynamicForm({
   setErrors,
   noValidate = false,
 }: DynamicFormProps) {
-  /* 🧠 Track which fields were touched (blurred) */
   const [touched, setTouched] = useState<Record<string, boolean>>({});
 
-  /* 🔁 Update value + pre-validate (no UI yet) */
+  /* ---------- CHANGE HANDLER ---------- */
   const handleChange = (field: FieldConfig, value: any) => {
-    onChange(field.name, value);
+    const finalValue =
+      field.uppercase && typeof value === "string"
+        ? value.toUpperCase()
+        : value;
+
+    onChange(field.name, finalValue);
 
     const error = validateField(
       field,
-      value,
-      { ...form, [field.name]: value }
+      finalValue,
+      { ...form, [field.name]: finalValue }
     );
 
     setErrors((prev) => ({
@@ -82,17 +95,13 @@ export default function DynamicForm({
     }));
   };
 
-  /* 🎯 Mark field as touched on blur */
   const handleBlur = (name: string) => {
-    setTouched((prev) => ({
-      ...prev,
-      [name]: true,
-    }));
+    setTouched((prev) => ({ ...prev, [name]: true }));
   };
 
   return (
     <form
-      className="p-5 space-y-4 overflow-y-auto overflow-x-visible custom-scrollbar flex-1"
+      className="p-5 space-y-4 overflow-y-auto custom-scrollbar flex-1"
       noValidate={noValidate}
     >
       {fields.map((field) => {
@@ -100,11 +109,8 @@ export default function DynamicForm({
         const showError = touched[field.name] && error;
 
         return (
-          <div
-            key={field.name}
-            className="flex flex-col min-w-0 overflow-visible"
-          >
-            <label className="text-sm font-medium capitalize mb-1 truncate">
+          <div key={field.name} className="flex flex-col">
+            <label className="text-sm font-medium mb-1">
               {field.label}
               {field.required && (
                 <span className="text-red-500 ml-1">*</span>
@@ -116,8 +122,9 @@ export default function DynamicForm({
               <>
                 <input
                   type={field.type}
-                  className={`${baseInputClass} ${showError ? "border-red-500" : ""
-                    }`}
+                  className={`${baseInputClass} ${
+                    showError ? "border-red-500" : ""
+                  }`}
                   placeholder={field.placeholder}
                   value={form[field.name] ?? ""}
                   onChange={(e) =>
@@ -126,9 +133,7 @@ export default function DynamicForm({
                   onBlur={() => handleBlur(field.name)}
                 />
                 {showError && (
-                  <p className="text-xs text-red-500 mt-1">
-                    {error}
-                  </p>
+                  <p className="text-xs text-red-500 mt-1">{error}</p>
                 )}
               </>
             )}
@@ -138,28 +143,22 @@ export default function DynamicForm({
               <>
                 <input
                   type="number"
-                  inputMode="numeric"
-                  className={`${baseInputClass} no-spinner ${showError ? "border-red-500" : ""
-                    }`}
-                  placeholder={field.placeholder}
-                  value={
-                    form[field.name] === 0
-                      ? ""
-                      : form[field.name] ?? ""
-                  }
-                  onChange={(e) => {
-                    const val = e.target.value;
+                  className={`${baseInputClass} ${
+                    showError ? "border-red-500" : ""
+                  }`}
+                  value={form[field.name] ?? ""}
+                  onChange={(e) =>
                     handleChange(
                       field,
-                      val === "" ? "" : Number(val)
-                    );
-                  }}
+                      e.target.value === ""
+                        ? ""
+                        : Number(e.target.value)
+                    )
+                  }
                   onBlur={() => handleBlur(field.name)}
                 />
                 {showError && (
-                  <p className="text-xs text-red-500 mt-1">
-                    {error}
-                  </p>
+                  <p className="text-xs text-red-500 mt-1">{error}</p>
                 )}
               </>
             )}
@@ -169,9 +168,9 @@ export default function DynamicForm({
               <>
                 <textarea
                   rows={3}
-                  className={`${baseInputClass} resize-none ${showError ? "border-red-500" : ""
-                    }`}
-                  placeholder={field.placeholder}
+                  className={`${baseInputClass} ${
+                    showError ? "border-red-500" : ""
+                  }`}
                   value={form[field.name] ?? ""}
                   onChange={(e) =>
                     handleChange(field, e.target.value)
@@ -179,9 +178,7 @@ export default function DynamicForm({
                   onBlur={() => handleBlur(field.name)}
                 />
                 {showError && (
-                  <p className="text-xs text-red-500 mt-1">
-                    {error}
-                  </p>
+                  <p className="text-xs text-red-500 mt-1">{error}</p>
                 )}
               </>
             )}
@@ -189,78 +186,27 @@ export default function DynamicForm({
             {/* ---------- SELECT ---------- */}
             {field.type === "select" && (
               <>
-                <div className="relative w-full max-w-full">
-                  {field.disabled ? (
-                    <div className="border rounded-lg p-2 flex items-center justify-center">
-                      <BrandLoader />
-                    </div>
-                  ) : (
-                    <>
-                      <select
-                        className={`${baseInputClass} ${showError ? "border-red-500" : ""
-                          }`}
-                        value={form[field.name] ?? ""}
-                        onChange={(e) =>
-                          handleChange(field, e.target.value)
-                        }
-                        onBlur={() => handleBlur(field.name)}
-                      >
-                        <option value="">
-                          Select {field.label}
-                        </option>
-                        {field.options?.map((opt) => (
-                          <option
-                            key={opt.value}
-                            value={opt.value}
-                          >
-                            {opt.label}
-                          </option>
-                        ))}
-                      </select>
-                      <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs opacity-60">
-                        ▼
-                      </span>
-                    </>
-                  )}
-                </div>
-                {showError && (
-                  <p className="text-xs text-red-500 mt-1">
-                    {error}
-                  </p>
-                )}
-              </>
-            )}
-
-            {/* ---------- RADIO ---------- */}
-            {field.type === "radio" && (
-              <>
-                <div
-                  className="flex flex-col gap-2"
+                <select
+                  className={`${baseInputClass} ${
+                    showError ? "border-red-500" : ""
+                  }`}
+                  value={form[field.name] ?? ""}
+                  onChange={(e) =>
+                    handleChange(field, e.target.value)
+                  }
                   onBlur={() => handleBlur(field.name)}
                 >
+                  <option value="">
+                    Select {field.label}
+                  </option>
                   {field.options?.map((opt) => (
-                    <label
-                      key={opt.value}
-                      className="flex items-center gap-2 cursor-pointer"
-                    >
-                      <input
-                        type="radio"
-                        name={field.name}
-                        checked={form[field.name] === opt.value}
-                        onChange={() =>
-                          handleChange(field, opt.value)
-                        }
-                      />
-                      <span className="text-sm">
-                        {opt.label}
-                      </span>
-                    </label>
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
                   ))}
-                </div>
+                </select>
                 {showError && (
-                  <p className="text-xs text-red-500 mt-1">
-                    {error}
-                  </p>
+                  <p className="text-xs text-red-500 mt-1">{error}</p>
                 )}
               </>
             )}
@@ -269,35 +215,31 @@ export default function DynamicForm({
             {field.type === "multiselect" && (
               <>
                 <div
-                  className={`border rounded-lg p-2 space-y-1 max-h-40 overflow-y-auto ${showError ? "border-red-500" : ""
-                    }`}
-                  onScroll={(e) => {
-                    const target = e.currentTarget;
-                    const isBottom =
-                      target.scrollTop + target.clientHeight >=
-                      target.scrollHeight - 5;
-
-                    if (isBottom && field.onScrollEnd) {
-                      field.onScrollEnd(); // 🔥 THIS WAS MISSING
-                    }
-                  }}
+                  className={`border rounded-lg p-2 max-h-40 overflow-y-auto ${
+                    showError ? "border-red-500" : ""
+                  }`}
                   onBlur={() => handleBlur(field.name)}
                 >
                   {field.options?.map((opt) => {
-                    const isSelected = (form[field.name] || []).includes(opt.value);
+                    const selected =
+                      (form[field.name] || []).includes(opt.value);
 
                     return (
                       <label
                         key={opt.value}
-                        className="flex items-center gap-2 cursor-pointer"
+                        className="flex items-center gap-2"
                       >
                         <input
                           type="checkbox"
-                          checked={isSelected}
+                          checked={selected}
                           onChange={(e) => {
-                            let updated = [...(form[field.name] || [])];
-                            if (e.target.checked) updated.push(opt.value);
-                            else updated = updated.filter((v) => v !== opt.value);
+                            const current =
+                              form[field.name] || [];
+                            const updated = e.target.checked
+                              ? [...current, opt.value]
+                              : current.filter(
+                                  (v: any) => v !== opt.value
+                                );
                             handleChange(field, updated);
                           }}
                         />
@@ -306,7 +248,6 @@ export default function DynamicForm({
                     );
                   })}
 
-                  {/* 👇 LOADER INSIDE DROPDOWN */}
                   {field.showLoader && (
                     <div className="flex justify-center py-2">
                       <BrandLoader />
@@ -320,57 +261,42 @@ export default function DynamicForm({
               </>
             )}
 
-
-            {/* ---------- DATETIME ---------- */}
-            {field.type === "datetime" && (
+            {/* ---------- SEARCH SELECT ---------- */}
+            {field.type === "search-select" && (
               <>
-                <input
-                  type="datetime-local"
-                  className={`${baseInputClass} ${showError ? "border-red-500" : ""
-                    }`}
-                  value={form[field.name] ?? ""}
-                  onChange={(e) =>
-                    handleChange(field, e.target.value)
-                  }
-                  onBlur={() => handleBlur(field.name)}
+                <SearchableSelect
+                  value={form[field.name]}
+                  options={field.options || []}
+                  onChange={(v) => handleChange(field, v)}
+                  onSearch={field.onSearch}
+                  loading={field.showLoader}
+                  disabled={field.disabled}
+                  placeholder={`Select ${field.label}`}
                 />
                 {showError && (
-                  <p className="text-xs text-red-500 mt-1">
-                    {error}
-                  </p>
+                  <p className="text-xs text-red-500 mt-1">{error}</p>
                 )}
               </>
             )}
 
-            {field.type === "search-select" && (
-              <SearchableSelect
-                value={form[field.name]}
-                onChange={(v) => handleChange(field, v)}
-                options={field.options || []}
-                placeholder={`Select ${field.label}`}
-                disabled={field.disabled}
-                onScrollEnd={field.onScrollEnd}
-                loading={field.showLoader}
-                onSearch={field.onSearch}   // ✅ ADD THIS LINE
-              />
-            )}
-
-
+            {/* ---------- SEARCH MULTISELECT ---------- */}
             {field.type === "search-multiselect" && (
-              <SearchableSelect
-                multiple
-                value={form[field.name] || []}
-                onChange={(v) => handleChange(field, v)}
-                options={field.options || []}
-                placeholder={`Select ${field.label}`}
-                disabled={field.disabled}
-                onScrollEnd={field.onScrollEnd}
-                loading={field.showLoader}
-                onSearch={field.onSearch}   // ✅ ADD THIS LINE
-              />
+              <>
+                <SearchableSelect
+                  multiple
+                  value={form[field.name] || []}
+                  options={field.options || []}
+                  onChange={(v) => handleChange(field, v)}
+                  onSearch={field.onSearch}
+                  loading={field.showLoader}
+                  disabled={field.disabled}
+                  placeholder={`Select ${field.label}`}
+                />
+                {showError && (
+                  <p className="text-xs text-red-500 mt-1">{error}</p>
+                )}
+              </>
             )}
-
-
 
             {/* ---------- CHECKBOX ---------- */}
             {field.type === "checkbox" && (
@@ -384,14 +310,10 @@ export default function DynamicForm({
                     }
                     onBlur={() => handleBlur(field.name)}
                   />
-                  <span className="text-sm">
-                    {field.label}
-                  </span>
+                  <span className="text-sm">{field.label}</span>
                 </div>
                 {showError && (
-                  <p className="text-xs text-red-500 mt-1">
-                    {error}
-                  </p>
+                  <p className="text-xs text-red-500 mt-1">{error}</p>
                 )}
               </>
             )}

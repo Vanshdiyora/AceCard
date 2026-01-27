@@ -1,9 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAppDispatch } from "../../../app/hooks";
 import { createVendor } from "../slice";
-import DynamicForm, {
-  type FieldConfig,
-} from "../../../common/ui/DynamicForm";
+import DynamicForm, { type FieldConfig } from "../../../common/ui/DynamicForm";
 import { validateField } from "../../../common/utils/formValidator";
 import type { VendorItem } from "../types";
 
@@ -29,6 +27,7 @@ export default function AddVendorModal({
   const [form, setForm] = useState<VendorForm>({
     legal_name: "",
     address: "",
+    gst: "", // ✅ GST added
     primary_email: "",
     primary_phone: "",
     payment_terms: "",
@@ -37,9 +36,7 @@ export default function AddVendorModal({
     password: "",
   });
 
-  const [errors, setErrors] = useState<
-    Record<string, string | null>
-  >({});
+  const [errors, setErrors] = useState<Record<string, string | null>>({});
 
   /* ---------- BODY SCROLL LOCK ---------- */
   useEffect(() => {
@@ -62,7 +59,7 @@ export default function AddVendorModal({
     {
       name: "legal_name",
       label: "Legal Name",
-      type: "text" as const,
+      type: "text",
       placeholder: "Enter legal company name",
       required: true,
       minLength: 2,
@@ -70,21 +67,34 @@ export default function AddVendorModal({
     {
       name: "address",
       label: "Address",
-      type: "text" as const,
+      type: "text",
       placeholder: "Enter registered business address",
       required: true,
     },
+
+    // ✅ GST FIELD
+    {
+      name: "gst",
+      label: "GST Number",
+      type: "text",
+      placeholder: "27AAPFU0939F1ZV",
+      required: false,
+      pattern:
+        /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/,
+      patternMessage: "Enter a valid GST number",
+    },
+
     {
       name: "primary_email",
       label: "Primary Email",
-      type: "email" as const,
+      type: "email",
       placeholder: "contact@company.com",
       required: true,
     },
     {
       name: "primary_phone",
       label: "Primary Phone",
-      type: "text" as const,
+      type: "text",
       placeholder: "Enter primary contact number",
       required: true,
       pattern: /^[0-9+\-()\s]{7,15}$/,
@@ -92,7 +102,7 @@ export default function AddVendorModal({
     {
       name: "payment_terms",
       label: "Payment Terms",
-      type: "select" as const,
+      type: "select",
       required: true,
       placeholder: "Select payment terms",
       options: [
@@ -103,14 +113,14 @@ export default function AddVendorModal({
     {
       name: "vendor_poc_email",
       label: "Vendor POC Email",
-      type: "email" as const,
+      type: "email",
       required: true,
       placeholder: "poc@company.com",
     },
     {
       name: "password",
       label: "Password",
-      type: "text" as const,
+      type: "text",
       required: true,
       minLength: 6,
       placeholder: "Set a temporary password",
@@ -118,7 +128,7 @@ export default function AddVendorModal({
     {
       name: "allowed_crm_integrations",
       label: "CRM Systems",
-      type: "multiselect" as const,
+      type: "multiselect",
       placeholder: "Select CRM systems (optional)",
       options: [
         { label: "Zoho", value: "zoho" },
@@ -136,7 +146,6 @@ export default function AddVendorModal({
 
   /* ---------- SAVE ---------- */
   const save = async () => {
-    // 🔒 VALIDATE ALL FIELDS
     const hasErrors = fields.some((field) => {
       const error = validateField(
         field,
@@ -159,11 +168,12 @@ export default function AddVendorModal({
 
       const payload = {
         ...form,
+        gst: form.gst?.trim() || undefined, // ✅ clean GST
         allowed_crm_integrations:
           form.allowed_crm_integrations &&
           form.allowed_crm_integrations.length > 0
             ? form.allowed_crm_integrations
-            : ["none"], // fallback only in payload
+            : ["none"],
       };
 
       await dispatch(createVendor(payload)).unwrap();
@@ -195,10 +205,7 @@ export default function AddVendorModal({
         </div>
 
         <div className="p-4 border-t flex justify-end gap-3">
-          <button
-            className="px-4 py-2 border rounded"
-            onClick={onClose}
-          >
+          <button className="px-4 py-2 border rounded" onClick={onClose}>
             Cancel
           </button>
           <button

@@ -254,9 +254,9 @@ export default function LeadsPage() {
             ],
           },
         ]}
-        onExport={handleExport}
+       onExport={handleExport}
+  disableExport={loading || !meta || meta.total_count === 0}
         onImport={() => setImportOpen(true)}
-        disableExport={loading}
       />
       <div className="mt-6" />
       <DataTable

@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { useAppDispatch, useAppSelector } from "../../../app/hooks";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 import {
   fetchTeam,
@@ -8,7 +8,7 @@ import {
   updateMember,
   updatePermissions,
 } from "../slice";
-
+import SeatUsageBar from "../components/SeatUsageBar";
 import AddMemberModal from "../components/AddMemberModal";
 import EditMemberModal from "../components/EditMemberModal";
 import PermissionsModal from "../components/PermissionsModal";
@@ -49,6 +49,7 @@ type StatusFilter = "all" | "active" | "suspended";
 export default function TeamPage() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const {
     members = [],
@@ -123,6 +124,14 @@ export default function TeamPage() {
     dispatch(fetchTeam(params));
   }, [dispatch, page, pageSize, search, roleFilter, statusFilter]);
 
+  useEffect(() => {
+    const open = searchParams.get("open");
+
+    if (open === "create") {
+      setAddOpen(true);
+    }
+  }, [searchParams]);
+
   /* 🔥 CRITICAL FIX — reset page */
   useEffect(() => {
     setPage(1);
@@ -140,11 +149,10 @@ export default function TeamPage() {
       align: "center",
       render: (m) => (
         <span
-          className={`px-2 py-1 rounded text-xs ${
-            m.status === "active"
-              ? "bg-green-100 text-green-700"
-              : "bg-red-100 text-red-700"
-          }`}
+          className={`px-2 py-1 rounded text-xs ${m.status === "active"
+            ? "bg-green-100 text-green-700"
+            : "bg-red-100 text-red-700"
+            }`}
         >
           {m.status}
         </span>
@@ -157,8 +165,8 @@ export default function TeamPage() {
         m.role === "sales_rep"
           ? "Sales Person"
           : m.role === "manager"
-          ? "Manager"
-          : m.role.replace("_", " "),
+            ? "Manager"
+            : m.role.replace("_", " "),
     },
     {
       header: "Manager",
@@ -207,8 +215,8 @@ export default function TeamPage() {
           m.role === "sales_rep"
             ? "Sales Person"
             : m.role === "manager"
-            ? "Manager"
-            : m.role.replace("_", " "),
+              ? "Manager"
+              : m.role.replace("_", " "),
         Manager:
           m.role === "sales_rep"
             ? m.assigned_manager?.name ?? "NA"
@@ -238,8 +246,8 @@ export default function TeamPage() {
           currentRole === "vendor_admin"
             ? "Add Member"
             : currentRole === "manager"
-            ? "Add Sales Person"
-            : undefined
+              ? "Add Sales Person"
+              : undefined
         }
         onAdd={() => setAddOpen(true)}
       />
@@ -267,7 +275,12 @@ export default function TeamPage() {
         }}
         onSearch={setSearch}
         onExport={handleExportTeam}
-        disableExport={loading}
+        disableExport={loading || !meta || meta.members?.total_count === 0}
+        rightSlot={
+          <div className="min-w-[220px]">
+            <SeatUsageBar used={58} total={100} />
+          </div>
+        }
       />
 
       <div className="mt-6">
@@ -290,12 +303,20 @@ export default function TeamPage() {
         currentRole={currentRole}
         currentUserId={currentUserId}
         managers={managers}
-        onClose={() => setAddOpen(false)}
+        onClose={() => {
+          setAddOpen(false);
+          searchParams.delete("open");
+          setSearchParams(searchParams, { replace: true });
+        }}
         onSubmit={async (data) => {
           try {
             setBlocking(true);
             await dispatch(createMember(data)).unwrap();
             setAddOpen(false);
+
+            searchParams.delete("open");
+            setSearchParams(searchParams, { replace: true });
+
             showResult(true, "Team member added successfully.");
           } catch (err: any) {
             showResult(false, err || "Failed to add member.");
@@ -304,6 +325,7 @@ export default function TeamPage() {
           }
         }}
       />
+
 
       <EditMemberModal
         open={editOpen}

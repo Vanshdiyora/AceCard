@@ -76,7 +76,7 @@ export default function GlobalSearch({ mode }: GlobalSearchProps) {
           value={query}
           onChange={e => setQuery(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Search vendors..."
+          placeholder="Search ..."
           className="w-full pl-10 pr-10 py-2 border rounded-xl focus:ring-2 focus:ring-purple-600"
         />
 

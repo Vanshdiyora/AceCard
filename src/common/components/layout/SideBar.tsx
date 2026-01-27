@@ -1,14 +1,16 @@
 import { Link, useLocation } from "react-router-dom";
 import { useState } from "react";
-
-type SidebarProps = {
-  type: "admin" | "superadmin";
-};
+import type { IconType } from "react-icons";
+import { IoNotifications } from "react-icons/io5";
 
 type MenuItem = {
   label: string;
   path: string;
-  icon: string;
+  icon: string | IconType; // 👈 allow both
+};
+
+type SidebarProps = {
+  type: "admin" | "superadmin";
 };
 
 export default function Sidebar({ type }: SidebarProps) {
@@ -25,7 +27,7 @@ export default function Sidebar({ type }: SidebarProps) {
     { label: "Team", path: `${adminBase}/team`, icon: "/sidebar/team.png" },
     { label: "Products", path: `${adminBase}/products`, icon: "/sidebar/products.png" },
     { label: "Support", path: `${adminBase}/support`, icon: "/sidebar/support.png" },
-    { label: "Notifications", path: `${adminBase}/notifications`, icon: "/sidebar/notifications.png" },
+    { label: "Notifications", path: `${adminBase}/notifications`, icon: IoNotifications }, 
     { label: "Settings", path: `${adminBase}/settings`, icon: "/sidebar/settings.png" },
   ];
 
@@ -33,16 +35,16 @@ export default function Sidebar({ type }: SidebarProps) {
     { label: "Vendors", path: `${superBase}/vendors`, icon: "/sidebar/vendors.png" },
     { label: "Tickets & Support", path: `${superBase}/support`, icon: "/sidebar/support.png" },
     { label: "System Settings", path: `${superBase}/system-settings`, icon: "/sidebar/settings.png" },
-    { label: "Notifications", path: `${superBase}/notifications`, icon: "/sidebar/notifications.png" },
+    { label: "Notifications", path: `${superBase}/notifications`,  icon: IoNotifications },
   ];
 
   const menu = type === "superadmin" ? superMenu : adminMenu;
 
   return (
- <aside className="sticky top-0 h-screen w-64 p-6 shrink-0"
+    <aside className="sticky top-0 h-screen w-64 p-6 shrink-0"
 
-  style={{ backgroundColor: "white" }}
->
+      style={{ backgroundColor: "white" }}
+    >
       <div className="flex justify-center mb-10">
         <img src="/AcecardSmallLogo.png" className="h-20 object-contain" />
       </div>
@@ -78,13 +80,24 @@ export default function Sidebar({ type }: SidebarProps) {
                   color: isActive ? "#FFFFFF" : "#4B3B7A",
                 }}
               >
-                <img
-                  src={item.icon}
-                  className={`w-4 h-4 transition-transform duration-200 ${isHovered ? "scale-110" : "scale-100"}`}
-                  style={{
-                    filter: isActive ? "brightness(0) invert(1)" : "none",
-                  }}
-                />
+                {typeof item.icon === "string" ? (
+                  <img
+                    src={item.icon}
+                    className={`w-4 h-4 transition-transform duration-200 ${isHovered ? "scale-110" : "scale-100"
+                      }`}
+                    style={{
+                      filter: isActive ? "brightness(0) invert(1)" : "none",
+                    }}
+                  />
+                ) : (
+                  <item.icon
+                    size={18}
+                    className={`w-4 h-4 transition-transform duration-200 ${isHovered ? "scale-110" : "scale-100"
+                      }`}
+                    color={isActive ? "#FFFFFF" : "#4B3B7A"}
+                  />
+                )}
+
                 {item.label}
               </Link>
             </li>

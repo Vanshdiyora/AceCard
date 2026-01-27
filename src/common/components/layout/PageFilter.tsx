@@ -29,6 +29,7 @@ export interface PageFiltersProps {
   onExport?: () => void;
   onImport?: () => void;
   disableExport?: boolean; // optional
+  rightSlot?: React.ReactNode;
 }
 
 /* ---------------- COMPONENT ---------------- */
@@ -46,12 +47,13 @@ export default function PageFilters({
   onExport,
   onImport,
   disableExport = false,
+  rightSlot
 }: PageFiltersProps) {
   const [panelOpen, setPanelOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
 
   const [searchValue, setSearchValue] = useState("");
-const debounceRef = useRef<number | undefined>(undefined);
+  const debounceRef = useRef<number | undefined>(undefined);
 
   /* -------- Outside click -------- */
   useEffect(() => {
@@ -83,25 +85,33 @@ const debounceRef = useRef<number | undefined>(undefined);
     <div className="space-y-5">
       {/* Tabs */}
       {tabs.length > 0 && (
-        <div className="flex gap-2 overflow-x-auto scrollbar-hide">
-          {tabs.map((t) => {
-            const active = activeTab === t.value;
-            return (
-              <button
-                key={t.value}
-                onClick={() => onTabChange?.(t.value)}
-                className={`px-3 py-1.5 lg:px-4 lg:py-2 rounded-full text-xs lg:text-sm font-medium transition shadow-sm ${
-                  active
-                    ? "bg-[#D8B4FE] text-[#5e1b98]"
-                    : "bg-white text-gray-600 hover:bg-gray-100"
-                }`}
-              >
-                {t.label}
-              </button>
-            );
-          })}
+        <div className="flex items-center gap-3">
+          {/* Tabs */}
+          <div className="flex gap-2 overflow-x-auto scrollbar-hide">
+            {tabs.map((t) => {
+              const active = activeTab === t.value;
+              return (
+                <button
+                  key={t.value}
+                  onClick={() => onTabChange?.(t.value)}
+                  className={`px-3 py-1.5 lg:px-4 lg:py-2 rounded-full text-xs lg:text-sm font-medium transition shadow-sm ${active
+                      ? "bg-[#D8B4FE] text-[#5e1b98]"
+                      : "bg-white text-gray-600 hover:bg-gray-100"
+                    }`}
+                >
+                  {t.label}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Right slot */}
+          <div className="ml-auto">
+            {rightSlot}
+          </div>
         </div>
       )}
+
 
       {/* Search + Filter Bar */}
       <div className="bg-white rounded-3xl shadow-md border p-4 lg:p-5 flex flex-col gap-4">
@@ -132,11 +142,10 @@ const debounceRef = useRef<number | undefined>(undefined);
             <div className="relative" ref={panelRef}>
               <button
                 onClick={() => setPanelOpen((v) => !v)}
-                className={`flex items-center gap-2 px-3 py-2 lg:px-4 lg:py-2.5 rounded-xl border text-xs lg:text-sm transition shadow-sm ${
-                  panelOpen
+                className={`flex items-center gap-2 px-3 py-2 lg:px-4 lg:py-2.5 rounded-xl border text-xs lg:text-sm transition shadow-sm ${panelOpen
                     ? "bg-purple-600 text-white"
                     : "bg-white hover:bg-gray-50"
-                }`}
+                  }`}
               >
                 <Filter size={16} />
                 Filter
@@ -155,11 +164,10 @@ const debounceRef = useRef<number | undefined>(undefined);
                               f.onChange?.(opt.value);
                               setPanelOpen(false);
                             }}
-                            className={`text-left px-4 py-2.5 rounded-xl text-sm transition ${
-                              active
+                            className={`text-left px-4 py-2.5 rounded-xl text-sm transition ${active
                                 ? "bg-purple-50 text-purple-700 font-medium"
                                 : "hover:bg-gray-50 text-gray-700"
-                            }`}
+                              }`}
                           >
                             {opt.label}
                           </button>
@@ -188,11 +196,10 @@ const debounceRef = useRef<number | undefined>(undefined);
               <button
                 onClick={onExport}
                 disabled={disableExport}
-                className={`flex items-center gap-2 px-3 py-2 lg:px-4 lg:py-2.5 rounded-xl border text-xs lg:text-sm shadow-sm ${
-                  disableExport
+                className={`flex items-center gap-2 px-3 py-2 lg:px-4 lg:py-2.5 rounded-xl border text-xs lg:text-sm shadow-sm ${disableExport
                     ? "bg-gray-100 text-gray-400 cursor-not-allowed"
                     : "bg-white hover:bg-gray-50"
-                }`}
+                  }`}
               >
                 <Download size={16} />
                 Export

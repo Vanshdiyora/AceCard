@@ -8,15 +8,19 @@ interface VendorsState {
   meta: VendorMeta | null;
   stats: VendorStat[];
   loading: boolean;
+  seatsUpdating: boolean; // 👈 add
   error?: string;
 }
+
 
 const initialState: VendorsState = {
   vendors: [],
   meta: null,
   stats: [],
   loading: false,
+  seatsUpdating: false,
 };
+
 
 /* ---------- THUNKS ---------- */
 
@@ -104,19 +108,21 @@ export const updateVendor = createAsyncThunk<
 );
 
 export const updateSeats = createAsyncThunk<
-  VendorItem,
+  { id: number; seats: number },
   { id: number; seats: number },
   { rejectValue: string }
 >(
   "vendors/updateSeats",
   async ({ id, seats }, { rejectWithValue }) => {
     try {
-      return await vendorsService.updateSeats(id, seats);
+      await vendorsService.updateSeats(id, seats);
+      return { id, seats }; // 👈 manually return
     } catch (err: unknown) {
       return rejectWithValue(extractError(err, "Failed to update seats"));
     }
   }
 );
+
 
 export const archiveVendor = createAsyncThunk<
   number,
@@ -255,10 +261,25 @@ const vendorsSlice = createSlice({
       })
 
       /* UPDATE SEATS */
-      .addCase(updateSeats.fulfilled, (state, action) => {
-        const idx = state.vendors.findIndex((v) => v.id === action.payload.id);
-        if (idx !== -1) state.vendors[idx] = action.payload;
+      .addCase(updateSeats.pending, (state, action) => {
+        const { id, seats } = action.meta.arg;
+
+        state.seatsUpdating = true;
+        const vendor = state.vendors.find(v => v.id === id);
+        if (vendor) {
+          vendor.seats_appointed = seats; // ⚡ instant UI update
+        }
+      })
+
+      .addCase(updateSeats.fulfilled, (state) => {
+        // nothing else needed — state already updated
         state.stats = computeStats(state.vendors);
+        state.seatsUpdating = false;
+      })
+
+      .addCase(updateSeats.rejected, (state, action) => {
+        state.seatsUpdating = false;
+        state.error = action.payload;
       })
 
       /* ARCHIVE */

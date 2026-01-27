@@ -178,221 +178,317 @@ export default function LeadConfiguration() {
     );
 
   if (error) return <div className="p-6 text-red-600">{error}</div>;
+  const formatStandardFieldLabel = (key: string) =>
+    key
+      .replace(/([A-Z])/g, " $1")   // split camelCase
+      .replace(/^./, (c) => c.toUpperCase()); // capitalize first letter
 
   return (
-    <div className="min-h-screen">
+    <div className="">
       <ResultModal
         open={result.open}
         success={result.success}
         message={result.message}
         onClose={() => setResult((r) => ({ ...r, open: false }))}
       />
-      <div className="mx-auto bg-white rounded-3xl shadow-sm p-10">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h2 className="text-2xl font-semibold">Lead Configuration</h2>
-            <p className="text-gray-500 text-sm">
-              Customize how your leads are captured and managed
-            </p>
-          </div>
-          <div className="flex gap-3">
-            <button
-              className="px-6 py-2 rounded-full border text-gray-700"
-              onClick={resetConfiguration}
-            >
-              Cancel
-            </button>
-            <button
-              className="px-6 py-2 rounded-full bg-[#8b5cf6] text-white"
-              onClick={saveConfiguration}
-              disabled={saving}
-            >
-              {saving ? "Saving..." : "Save Configuration"}
-            </button>
+
+      {/* MAIN CARD */}
+      <div className="mx-auto bg-white rounded-3xl shadow-sm flex flex-col">
+
+        {/* ===== FIXED HEADER ===== */}
+        <div className="p-10 border-b bg-white rounded-t-3xl">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-semibold">Lead Configuration</h2>
+              <p className="text-gray-500 text-sm">
+                Customize how your leads are captured and managed
+              </p>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                className="px-6 py-2 rounded-full border text-gray-700"
+                onClick={resetConfiguration}
+              >
+                Cancel
+              </button>
+              <button
+                className="px-6 py-2 rounded-full bg-[#8b5cf6] text-white"
+                onClick={saveConfiguration}
+                disabled={saving}
+              >
+                {saving ? "Saving..." : "Save"}
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* Standard Fields */}
-        <section className="mb-10">
-          <h3 className="text-sm font-medium mb-3">Standard Fields</h3>
+        {/* ===== SCROLLABLE CONTENT ===== */}
+        <div className="flex-1 overflow-y-auto px-10 py-8 space-y-10">
 
-          {Object.keys(standardFields).length === 0 ? (
-            <div className="text-gray-500 italic text-sm">
-              No standard fields configured.
-            </div>
-          ) : (
-            <div className="flex gap-4 flex-wrap">
-              {Object.entries(standardFields).map(([key, val]) => (
-                <label
-                  key={key}
-                  className="flex items-center gap-2 bg-gray-100 px-4 py-2 rounded-full text-sm"
+          {/* Standard Fields */}
+          <section>
+            <h3 className="text-sm font-semibold mb-4 text-gray-700">
+              Standard Fields
+            </h3>
+
+            {Object.keys(standardFields).length === 0 ? (
+              <div className="text-gray-500 italic text-sm">
+                No standard fields configured.
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {Object.entries(standardFields).map(([key, val]) => (
+                  <label
+                    key={key}
+                    className={`flex items-center justify-between px-4 py-3 rounded-2xl border cursor-pointer transition
+                    ${val
+                        ? "bg-purple-50 border-purple-300 shadow-sm"
+                        : "bg-white hover:bg-gray-50 border-gray-200"
+                      }`}
+                  >
+                    <span className="text-sm font-medium text-gray-700">
+                      {formatStandardFieldLabel(key)}
+                    </span>
+
+                    <span className="relative">
+                      <input
+                        type="checkbox"
+                        checked={val}
+                        onChange={() =>
+                          setStandardFields((p) => ({ ...p, [key]: !p[key] }))
+                        }
+                        className="sr-only"
+                      />
+                      <span
+                        className={`w-5 h-5 flex items-center justify-center rounded-full border
+                        ${val
+                            ? "bg-purple-600 border-purple-600"
+                            : "bg-white border-gray-300"
+                          }`}
+                      >
+                        {val && (
+                          <span className="w-2.5 h-2.5 bg-white rounded-full" />
+                        )}
+                      </span>
+                    </span>
+                  </label>
+                ))}
+              </div>
+            )}
+          </section>
+
+          {/* Lead Stages */}
+          <section>
+            <h3 className="text-sm font-medium mb-3">Lead Stages</h3>
+
+            <div className="space-y-2 mb-3">
+              {stages.map((stage) => (
+                <div
+                  key={stage.value}
+                  className="flex items-center justify-between px-4 py-2 rounded-xl border bg-gray-50"
                 >
-                  <input
-                    type="checkbox"
-                    checked={val}
-                    onChange={() =>
-                      setStandardFields((p) => ({ ...p, [key]: !p[key] }))
-                    }
-                  />
-                  {key}
-                </label>
+                  <span className="font-medium text-gray-700">
+                    {stage.label}
+                  </span>
+                  <button
+                    className="text-red-500 text-sm"
+                    onClick={() => removeStage(stage.value)}
+                  >
+                    Remove
+                  </button>
+                </div>
               ))}
             </div>
-          )}
-        </section>
 
-        {/* Lead Stages */}
-        <section className="mb-10">
-          <h3 className="text-sm font-medium mb-3">Lead Stages</h3>
-
-          <div className="space-y-2 mb-3">
-            {stages.map((stage) => (
-              <div
-                key={stage.value}
-                className="flex justify-between border px-4 py-2 rounded-lg"
+            <div className="flex gap-2">
+              <input
+                className="border rounded px-3 py-2 flex-1"
+                placeholder="New stage"
+                value={newStage}
+                onChange={(e) => setNewStage(e.target.value)}
+              />
+              <button
+                className="px-4 py-2 bg-gray-900 text-white rounded"
+                onClick={addStage}
               >
-                <span>{stage.label}</span>
-                <button
-                  className="text-red-500"
-                  onClick={() => removeStage(stage.value)}
-                >
-                  Delete
-                </button>
-              </div>
-            ))}
-          </div>
+                Add
+              </button>
+            </div>
+          </section>
 
-          <div className="flex gap-2">
-            <input
-              className="border rounded px-3 py-2 flex-1"
-              placeholder="New stage"
-              value={newStage}
-              onChange={(e) => setNewStage(e.target.value)}
-            />
-            <button
-              className="px-4 py-2 bg-gray-900 text-white rounded"
-              onClick={addStage}
-            >
-              Add
-            </button>
-          </div>
-        </section>
+          {/* Custom Fields */}
+          <section>
+            <h3 className="text-sm font-medium mb-4">Custom Fields</h3>
 
-        {/* Custom Fields */}
-        <section className="mb-10">
-          <h3 className="text-sm font-medium mb-4">Custom Fields</h3>
-          <div className="space-y-3">
-            {customFields
-              .filter((f) => f.fieldId !== "stage")
-              .map((field, i) => (
-                <div
-                  key={i}
-                  className={`flex justify-between px-6 py-4 border rounded-2xl ${field.archived ? "opacity-50 italic" : ""
-                    }`}
-                >
-                  <div>
-                    <div className="font-medium">{field.label}</div>
-                    <div className="text-xs text-gray-500">
-                      {field.type} {field.required && "• Required"}
+            <div className="space-y-3">
+              {customFields
+                .filter((f) => f.fieldId !== "stage")
+                .map((field) => (
+                  <div
+                    key={field.fieldId}
+                    className={`flex justify-between items-center px-6 py-4 rounded-2xl border
+                    ${field.archived
+                        ? "bg-gray-100 opacity-60"
+                        : "bg-white hover:shadow-sm"
+                      }`}
+                  >
+                    <div>
+                      <div className="font-medium">{field.label}</div>
+                      <div className="text-xs text-gray-500">
+                        {field.type} {field.required && "• Required"}
+                      </div>
                     </div>
-                  </div>
-                  <button
-                    className={
-                      field.archived ? "text-green-600" : "text-red-500"
-                    }
-                    onClick={() =>
-                      setCustomFields((p) =>
-                        p.map((f, idx) =>
-                          idx === i ? { ...f, archived: !f.archived } : f
+
+                    <button
+                      className={
+                        field.archived
+                          ? "text-green-600"
+                          : "text-red-500"
+                      }
+                      onClick={() =>
+                        setCustomFields((prev) =>
+                          prev.map((f) =>
+                            f.fieldId === field.fieldId
+                              ? { ...f, archived: !f.archived }
+                              : f
+                          )
                         )
-                      )
-                    }
-                  >
-                    {field.archived ? "Unarchive" : "Archive"}
-                  </button>
-                </div>
-              ))}
-          </div>
-        </section>
+                      }
+                    >
+                      {field.archived ? "Unarchive" : "Archive"}
+                    </button>
+                  </div>
+                ))}
+            </div>
+          </section>
 
-        {/* Add Custom Field */}
-        <section className="bg-gray-50 p-6 rounded-2xl border">
-          <h4 className="text-sm font-medium mb-4">Add Custom Field</h4>
+          {/* Add Custom Field */}
+          <section className="bg-gradient-to-br from-gray-50 to-white p-6 rounded-2xl border shadow-sm">
+            {/* 🔹 unchanged add custom field section */}
+            {/* (exact same code you already have) */}
+            <div className="mb-5">
+              <h4 className="text-sm font-semibold text-gray-800">
+                Add Custom Field
+              </h4>
+              <p className="text-xs text-gray-500 mt-1">
+                Create additional fields to capture custom lead data
+              </p>
+            </div>
 
-          <div className="grid grid-cols-2 gap-4 mb-4">
-            <input
-              className="border rounded px-4 py-2"
-              placeholder="Field Label"
-              value={fieldLabel}
-              onChange={(e) => setFieldLabel(e.target.value)}
-            />
-            <select
-              className="border rounded px-4 py-2"
-              value={type}
-              onChange={(e) => setType(e.target.value as FieldType)}
-            >
-              <option value="text">Text</option>
-              <option value="dropdown">Dropdown</option>
-              <option value="radio">Radio</option>
-              <option value="checkbox">Checkbox</option>
-              <option value="datetime">Date & Time</option>
-            </select>
-          </div>
-
-          <label className="flex gap-2 mb-4 text-sm">
-            <input
-              type="checkbox"
-              checked={requiredField}
-              onChange={() => setRequiredField((p) => !p)}
-            />
-            Required
-          </label>
-
-          {isChoiceField && (
-            <div className="bg-white p-4 rounded border mb-4">
-              <div className="text-xs mb-2">Options</div>
-              {options.map((o, i) => (
-                <div
-                  key={i}
-                  className="flex justify-between border rounded px-3 py-1 mb-1"
-                >
-                  {o.label}
-                  <button
-                    className="text-red-500"
-                    onClick={() =>
-                      setOptions((p) => p.filter((_, idx) => idx !== i))
-                    }
-                  >
-                    ✕
-                  </button>
-                </div>
-              ))}
-              <div className="flex gap-2 mt-2">
+            {/* Field Inputs */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
+              <div>
+                <label className="text-xs font-medium text-gray-600 mb-1 block">
+                  Field Label
+                </label>
                 <input
-                  className="border rounded px-3 py-1 flex-1"
-                  placeholder="Option label"
-                  value={optionInput}
-                  onChange={(e) => setOptionInput(e.target.value)}
+                  className="w-full rounded-xl border px-4 py-2.5 text-sm focus:ring-2 focus:ring-purple-300 focus:border-purple-400 outline-none"
+                  placeholder="e.g. Budget Range"
+                  value={fieldLabel}
+                  onChange={(e) => setFieldLabel(e.target.value)}
                 />
-                <button
-                  className="bg-gray-900 text-white px-3 py-1 rounded"
-                  onClick={addOption}
+              </div>
+
+              <div>
+                <label className="text-xs font-medium text-gray-600 mb-1 block">
+                  Field Type
+                </label>
+                <select
+                  className="w-full rounded-xl border px-4 py-2.5 text-sm bg-white focus:ring-2 focus:ring-purple-300 focus:border-purple-400 outline-none"
+                  value={type}
+                  onChange={(e) => setType(e.target.value as FieldType)}
                 >
-                  Add
-                </button>
+                  <option value="text">Text</option>
+                  <option value="dropdown">Dropdown</option>
+                  <option value="radio">Radio</option>
+                  <option value="checkbox">Checkbox</option>
+                  <option value="datetime">Date & Time</option>
+                </select>
               </div>
             </div>
-          )}
 
-          <button
-            className="px-6 py-2 rounded-full bg-gray-900 text-white"
-            onClick={addCustomField}
-          >
-            Add Field
-          </button>
-        </section>
+            {/* Required Toggle */}
+            <label className="flex items-center gap-3 mb-5 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={requiredField}
+                onChange={() => setRequiredField((p) => !p)}
+                className="sr-only"
+              />
+              <span
+                className={`w-10 h-5 rounded-full transition relative
+        ${requiredField ? "bg-purple-600" : "bg-gray-300"}
+      `}
+              >
+                <span
+                  className={`absolute top-0.5 h-4 w-4 bg-white rounded-full transition
+          ${requiredField ? "right-0.5" : "left-0.5"}
+        `}
+                />
+              </span>
+              <span className="text-sm text-gray-700">
+                Required field
+              </span>
+            </label>
+
+            {/* Options */}
+            {isChoiceField && (
+              <div className="bg-white p-4 rounded-xl border mb-5">
+                <div className="text-xs font-medium text-gray-600 mb-2">
+                  Field Options
+                </div>
+
+                <div className="flex flex-wrap gap-2 mb-3">
+                  {options.map((o, i) => (
+                    <span
+                      key={i}
+                      className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-purple-50 text-purple-700 text-xs"
+                    >
+                      {o.label}
+                      <button
+                        className="text-purple-400 hover:text-red-500"
+                        onClick={() =>
+                          setOptions((p) => p.filter((_, idx) => idx !== i))
+                        }
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                </div>
+
+                <div className="flex gap-2">
+                  <input
+                    className="flex-1 rounded-xl border px-3 py-2 text-sm focus:ring-2 focus:ring-purple-300 focus:border-purple-400 outline-none"
+                    placeholder="Option label"
+                    value={optionInput}
+                    onChange={(e) => setOptionInput(e.target.value)}
+                  />
+                  <button
+                    className="px-4 py-2 rounded-xl bg-purple-600 text-white text-sm hover:bg-purple-700"
+                    onClick={addOption}
+                  >
+                    Add
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Action */}
+            <div className="flex justify-end">
+              <button
+                className="px-6 py-2.5 rounded-full bg-gray-900 text-white text-sm font-medium hover:bg-gray-800 transition"
+                onClick={addCustomField}
+              >
+                + Add Field
+              </button>
+            </div>
+          </section>
+
+        </div>
       </div>
     </div>
   );
 }
+
