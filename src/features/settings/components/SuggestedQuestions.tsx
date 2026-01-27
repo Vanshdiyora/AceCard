@@ -1,4 +1,4 @@
-  import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../../app/hooks";
 import BrandLoader from "../../../common/ui/BrandLoader";
 import { Pencil, Check, X, Trash2, Plus } from "lucide-react";
@@ -8,6 +8,7 @@ import {
   editSuggestedQuestion,
   removeSuggestedQuestion,
 } from "../slice";
+import ResultModal from "../../../common/ui/ResultModal";
 
 export default function SuggestedQuestions() {
   const dispatch = useAppDispatch();
@@ -19,10 +20,46 @@ export default function SuggestedQuestions() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editingValue, setEditingValue] = useState("");
   const [isMutating, setIsMutating] = useState(false);
+  const [result, setResult] = useState({
+    open: false,
+    success: true,
+    message: "",
+  });
+
+  const showResult = (success: boolean, message: string) => {
+    setResult({ open: true, success, message });
+  };
 
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   const isBusy = loading || saving || isMutating;
+const lockScroll = () => {
+    const scrollBarWidth =
+      window.innerWidth - document.documentElement.clientWidth;
+
+    document.documentElement.style.overflow = "hidden";
+    document.body.style.overflow = "hidden";
+    document.body.style.paddingRight = `${scrollBarWidth}px`;
+  };
+
+  const unlockScroll = () => {
+    document.documentElement.style.overflow = "";
+    document.body.style.overflow = "";
+    document.body.style.paddingRight = "";
+  };
+  useEffect(() => {
+    const isAnyModalOpen =  result.open;
+
+    if (isAnyModalOpen) {
+      lockScroll();
+    } else {
+      unlockScroll();
+    }
+
+    return () => {
+      unlockScroll();
+    };
+  }, [result.open]);
 
   useEffect(() => {
     dispatch(fetchSuggestedQuestions());
@@ -36,12 +73,29 @@ export default function SuggestedQuestions() {
   }, [editingId]);
 
   const handleAdd = async () => {
-    if (!newQuestion.trim()) return;
+  // ✅ HANDLE EMPTY INPUT
+  if (!newQuestion.trim()) {
+    showResult(false, "Please enter a question before adding.");
+    return;
+  }
+
+  try {
     setIsMutating(true);
-    await dispatch(addSuggestedQuestion(newQuestion));
-    setIsMutating(false);
+
+    await dispatch(addSuggestedQuestion(newQuestion)).unwrap();
+
     setNewQuestion("");
-  };
+    showResult(true, "Question added successfully.");
+  } catch (err: any) {
+    showResult(
+      false,
+      err?.message || "Failed to add suggested question."
+    );
+  } finally {
+    setIsMutating(false);
+  }
+};
+
 
   const startEdit = (id: number, value: string) => {
     setEditingId(id);
@@ -160,6 +214,12 @@ export default function SuggestedQuestions() {
           })}
         </ul>
       )}
+      <ResultModal
+        open={result.open}
+        success={result.success}
+        message={result.message}
+        onClose={() => setResult({ ...result, open: false })}
+      />
 
       {!isBusy && error && (
         <p className="text-red-500 text-sm mt-3">{error}</p>
