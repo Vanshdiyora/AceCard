@@ -11,6 +11,7 @@ import notificationsReducer from "../features/notification/slice";
 import vendorsReducer from "../features/vendors/slice";
 import settingsReducer from "../features/settings/slice";
 import globalSearchReducer from "../features/globalSearch/slice"; 
+import subscriptionReducer from "../features/teams/subscrption.slice";
 
 export const store = configureStore({
   reducer: {
@@ -25,7 +26,8 @@ export const store = configureStore({
     vendors: vendorsReducer, 
     notifications: notificationsReducer,
     globalSearch: globalSearchReducer,
-     
+    subscription: subscriptionReducer
+
   },
 });
 

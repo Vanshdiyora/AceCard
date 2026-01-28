@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import BrandLoader from "./BrandLoader";
 import SearchableSelect from "./SearchableSelect";
 import { validateField } from "../utils/formValidator";
+import CustomSelect from "./CustomSelect";
 
 /* ---------- TYPES ---------- */
 
@@ -9,18 +10,18 @@ export interface FieldConfig {
   name: string;
   label: string;
   type:
-    | "text"
-    | "number"
-    | "email"
-    | "select"
-    | "textarea"
-    | "date"
-    | "checkbox"
-    | "multiselect"
-    | "radio"
-    | "datetime"
-    | "search-select"
-    | "search-multiselect";
+  | "text"
+  | "number"
+  | "email"
+  | "select"
+  | "textarea"
+  | "date"
+  | "checkbox"
+  | "multiselect"
+  | "radio"
+  | "datetime"
+  | "search-select"
+  | "search-multiselect";
 
   placeholder?: string;
   options?: { label: string; value: any }[];
@@ -122,9 +123,8 @@ export default function DynamicForm({
               <>
                 <input
                   type={field.type}
-                  className={`${baseInputClass} ${
-                    showError ? "border-red-500" : ""
-                  }`}
+                  className={`${baseInputClass} ${showError ? "border-red-500" : ""
+                    }`}
                   placeholder={field.placeholder}
                   value={form[field.name] ?? ""}
                   onChange={(e) =>
@@ -143,9 +143,8 @@ export default function DynamicForm({
               <>
                 <input
                   type="number"
-                  className={`${baseInputClass} ${
-                    showError ? "border-red-500" : ""
-                  }`}
+                  className={`${baseInputClass} ${showError ? "border-red-500" : ""
+                    }`}
                   value={form[field.name] ?? ""}
                   onChange={(e) =>
                     handleChange(
@@ -168,9 +167,8 @@ export default function DynamicForm({
               <>
                 <textarea
                   rows={3}
-                  className={`${baseInputClass} ${
-                    showError ? "border-red-500" : ""
-                  }`}
+                  className={`${baseInputClass} ${showError ? "border-red-500" : ""
+                    }`}
                   value={form[field.name] ?? ""}
                   onChange={(e) =>
                     handleChange(field, e.target.value)
@@ -186,25 +184,14 @@ export default function DynamicForm({
             {/* ---------- SELECT ---------- */}
             {field.type === "select" && (
               <>
-                <select
-                  className={`${baseInputClass} ${
-                    showError ? "border-red-500" : ""
-                  }`}
-                  value={form[field.name] ?? ""}
-                  onChange={(e) =>
-                    handleChange(field, e.target.value)
-                  }
-                  onBlur={() => handleBlur(field.name)}
-                >
-                  <option value="">
-                    Select {field.label}
-                  </option>
-                  {field.options?.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
+                <CustomSelect
+                  value={form[field.name]}
+                  options={field.options || []}
+                  placeholder={`Select ${field.label}`}
+                  disabled={field.disabled}
+                  onChange={(v) => handleChange(field, v)}
+                />
+
                 {showError && (
                   <p className="text-xs text-red-500 mt-1">{error}</p>
                 )}
@@ -215,9 +202,8 @@ export default function DynamicForm({
             {field.type === "multiselect" && (
               <>
                 <div
-                  className={`border rounded-lg p-2 max-h-40 overflow-y-auto ${
-                    showError ? "border-red-500" : ""
-                  }`}
+                  className={`border rounded-lg p-2 max-h-40 overflow-y-auto ${showError ? "border-red-500" : ""
+                    }`}
                   onBlur={() => handleBlur(field.name)}
                 >
                   {field.options?.map((opt) => {
@@ -238,8 +224,8 @@ export default function DynamicForm({
                             const updated = e.target.checked
                               ? [...current, opt.value]
                               : current.filter(
-                                  (v: any) => v !== opt.value
-                                );
+                                (v: any) => v !== opt.value
+                              );
                             handleChange(field, updated);
                           }}
                         />

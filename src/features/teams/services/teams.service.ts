@@ -7,7 +7,19 @@ import type {
   UpdatePermissionsDTO,
 } from "../types";
 import type { PaginationParams } from "../../../common/types";
+
 const BASE_URL = "/vendor/team";
+
+export interface SubscriptionResponse {
+  vendor_id: number;
+  seats_purchased: number;
+  seats_used: number;
+  seats_free: number;
+  subscription_status: "active" | "expired" | string;
+  renewal_date: string;
+  payment_status: string;
+}
+
 
 export const teamService = {
   async getTeam(
@@ -56,4 +68,8 @@ export const teamService = {
     await axios.delete(`${BASE_URL}/${id}`);
   },
 
+  async getSubscription(): Promise<SubscriptionResponse> {
+    const res = await axios.get("/vendor/subscription");
+    return res.data;
+  },
 };

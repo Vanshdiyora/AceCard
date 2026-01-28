@@ -4,7 +4,6 @@ import { ArrowLeft, Edit, Shield, UserX, CheckCircle2 } from "lucide-react";
 
 import { useAppDispatch, useAppSelector } from "../../../app/hooks";
 import { updateMember, fetchMemberById, updatePermissions } from "../slice";
-
 import EditMemberModal from "../components/EditMemberModal";
 import PermissionsModal from "../components/PermissionsModal";
 
@@ -18,6 +17,7 @@ import ResultModal from "../../../common/ui/ResultModal";
 import TeamMemberTotalLeadsTab from "../components/details/TeamMemberTotalLeadsTab";
 
 import type { TeamMember } from "../types";
+import MemberMobileWebsite from "../components/MemberMobileWebsite";
 
 const TABS = ["overview", "leads", "total-leads"] as const;
 
@@ -168,81 +168,101 @@ export default function TeamMemberDetailsPage() {
   };
 
   return (
-    <div className="p-6">
-      <button
-        onClick={() => navigate(-1)}
-        className="flex items-center gap-2 text-sm text-gray-500 hover:text-black mb-6"
-      >
-        <ArrowLeft size={16} />
-        Back to Team
-      </button>
+    <div className="p-6 grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-6 h-[calc(100vh-80px)]">
+      {/* Left panel */}
+      <div className="overflow-y-auto pr-2">
 
-      <DetailPageHeader
-        title={member.name}
-        subtitle={
-          displayManager
-            ? `${displayRole} • Manager - ${displayManager}`
-            : displayRole
-        }
+        <button
+          onClick={() => navigate(-1)}
+          className="flex items-center gap-2 text-sm text-gray-500 hover:text-black mb-6"
+        >
+          <ArrowLeft size={16} />
+          Back to Team
+        </button>
 
-        avatar={(member.name?.charAt(0) || "S").toUpperCase()}
+        <DetailPageHeader
+          title={member.name}
+          subtitle={
+            displayManager
+              ? `${displayRole} • Manager - ${displayManager}`
+              : displayRole
+          }
 
-        status={{
-          label: member.status,
-          variant: member.status === "active" ? "active" : "suspended",
-        }}
-        actions={
-          <>
-            <button onClick={() => setEditOpen(true)} className="btn-outline">
-              <Edit size={16} /> Edit
-            </button>
+          avatar={(member.name?.charAt(0) || "S").toUpperCase()}
 
-            <button onClick={() => setPermOpen(true)} className="btn-outline">
-              <Shield size={16} /> Permissions
-            </button>
+          status={{
+            label: member.status,
+            variant: member.status === "active" ? "active" : "suspended",
+          }}
+          actions={
+            <>
+              <button onClick={() => setEditOpen(true)} className="btn-outline">
+                <Edit size={16} /> Edit
+              </button>
 
+              <button onClick={() => setPermOpen(true)} className="btn-outline">
+                <Shield size={16} /> Permissions
+              </button>
+
+              <button
+                onClick={() => {
+                  setSuspendMode(member.status === "active" ? "suspend" : "activate");
+                  setConfirmOpen(true);
+                }}
+                className={member.status === "active" ? "btn-danger" : "btn-success"}
+              >
+                {member.status === "active" ? (
+                  <>
+                    <UserX size={16} /> Suspend
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 size={16} /> Activate
+                  </>
+                )}
+              </button>
+            </>
+          }
+        />
+
+        <div className="flex gap-6 border-b text-sm mt-6">
+          {TABS.filter((t) => t !== "total-leads" || member.role === "manager").map((t) => (
             <button
-              onClick={() => {
-                setSuspendMode(member.status === "active" ? "suspend" : "activate");
-                setConfirmOpen(true);
-              }}
-              className={member.status === "active" ? "btn-danger" : "btn-success"}
+              key={t}
+              onClick={() => setActiveTab(t)}
+              className={`pb-2 capitalize ${activeTab === t
+                ? "border-b-2 border-purple-600 text-purple-600 font-medium"
+                : "text-gray-500"
+                }`}
             >
-              {member.status === "active" ? (
-                <>
-                  <UserX size={16} /> Suspend
-                </>
-              ) : (
-                <>
-                  <CheckCircle2 size={16} /> Activate
-                </>
-              )}
+              {t.replace("-", " ")}
             </button>
-          </>
-        }
-      />
-
-      <div className="flex gap-6 border-b text-sm mt-6">
-        {TABS.filter((t) => t !== "total-leads" || member.role === "manager").map((t) => (
-          <button
-            key={t}
-            onClick={() => setActiveTab(t)}
-            className={`pb-2 capitalize ${activeTab === t
-              ? "border-b-2 border-purple-600 text-purple-600 font-medium"
-              : "text-gray-500"
-              }`}
-          >
-            {t.replace("-", " ")}
-          </button>
-        ))}
+          ))}
+        </div>
+        {activeTab === "overview" && <TeamMemberOverviewTab member={member} />}
+        {activeTab === "leads" && <TeamMemberLeadsTab memberId={member.id} />}
+        {activeTab === "total-leads" && member.role === "manager" && (
+          <TeamMemberTotalLeadsTab managerId={member.id} />
+        )}
       </div>
 
+      {/* Right panel */}
+      <div className="hidden lg:flex justify-center items-center h-full overflow-hidden">
+        {/* Phone frame */}
+        <div
+          className="w-[340px] max-h-full aspect-[9/19.5] bg-black rounded-[2.5rem] p-2 flex-shrink-0"
+        >
+          {/* Phone screen */}
+          <div className="h-full bg-white rounded-[2rem] overflow-hidden flex flex-col">
 
-      {activeTab === "overview" && <TeamMemberOverviewTab member={member} />}
-      {activeTab === "leads" && <TeamMemberLeadsTab memberId={member.id} />}
-      {activeTab === "total-leads" && member.role === "manager" && (
-        <TeamMemberTotalLeadsTab managerId={member.id} />
-      )}
+            {/* ONLY scrollable area */}
+            <div className="flex-1 overflow-y-auto overscroll-contain">
+              <MemberMobileWebsite member={member} />
+            </div>
+
+          </div>
+        </div>
+      </div>
 
 
       <EditMemberModal

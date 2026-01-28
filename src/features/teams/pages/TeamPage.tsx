@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { useAppDispatch, useAppSelector } from "../../../app/hooks";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { fetchSubscription } from "../subscrption.slice";
 
 import {
   fetchTeam,
@@ -58,6 +59,9 @@ export default function TeamPage() {
     error: fetchError,
   } = useAppSelector((s) => s.team);
 
+  const subscription = useAppSelector((s) => s.subscription.data);
+
+
   const membersMeta = meta.members; // ✅ FIX
 
   const authState = useAppSelector((s) => s.auth);
@@ -110,6 +114,10 @@ export default function TeamPage() {
   /* ======================================================
      FETCH TEAM
   ====================================================== */
+  useEffect(() => {
+    dispatch(fetchSubscription());
+  }, [dispatch]);
+
 
   useEffect(() => {
     const params: any = {
@@ -278,9 +286,15 @@ export default function TeamPage() {
         disableExport={loading || !meta || meta.members?.total_count === 0}
         rightSlot={
           <div className="min-w-[220px]">
-            <SeatUsageBar used={58} total={100} />
+            {subscription && (
+              <SeatUsageBar
+                used={subscription.seats_used}
+                total={subscription.seats_purchased}
+              />
+            )}
           </div>
         }
+
       />
 
       <div className="mt-6">

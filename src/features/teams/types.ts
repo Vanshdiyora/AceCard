@@ -30,6 +30,9 @@ export interface TeamMember {
   role: "manager" | "sales_rep" | "vendor_admin" | string;
   status: "active" | "pending" | "suspended";
 
+  // 👇 ADD THIS
+  website?: string;
+
   // Backend computed fields
   total_leads?: number;
   total_deal_amount?: number;
@@ -50,8 +53,6 @@ export interface TeamMember {
   conversion?: string;
   lastActive?: string;
 }
-
-
 
 /* ======================================================
    PAGINATION

@@ -14,10 +14,16 @@ import type {
 
 const normalizeMember = (m: any): TeamMember => ({
   ...m,
+
+  // 👇 ADD THIS
+  website: m.website || m.profile_website || undefined,
+
   permissions: m.permissions ?? {},
   manager_id: m.assigned_manager?.id ?? m.manager_id ?? null,
   leads: m.total_leads ?? m.leads ?? 0,
-  pipeline: m.total_deal_amount ? `$${m.total_deal_amount}` : m.pipeline ?? "$0",
+  pipeline: m.total_deal_amount
+    ? `$${m.total_deal_amount}`
+    : m.pipeline ?? "$0",
   conversion: m.conversion ?? "0%",
   lastActive: m.lastActive ?? "Recently",
 });

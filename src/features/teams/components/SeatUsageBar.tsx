@@ -8,7 +8,7 @@ export default function SeatUsageBar({
   const percentage = Math.min((used / total) * 100, 100);
 
   return (
-    <div className="flex items-center gap-4 rounded-2xl border border-purple-100 bg-gradient-to-br from-white to-purple-50 px-4 py-1 shadow-sm">
+    <div className="flex items-center gap-4 rounded-2xl border border-purple-100 bg-gradient-to-br from-white to-purple-50 px-4 py-0.5 shadow-sm">
       {/* Label */}
       <div className="flex flex-col leading-tight">
         <span className="text-[11px] uppercase tracking-wide text-gray-500">
