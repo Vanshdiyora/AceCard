@@ -3,17 +3,16 @@ name: Deploy Frontend to EC2
 on:
   push:
     branches:
-      - main
+      - AceCard
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -21,10 +20,10 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Build frontend
+      - name: Build project
         run: npm run build
 
-      - name: Deploy to EC2
+      - name: Copy build files to EC2
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.EC2_HOST }}
@@ -33,11 +32,10 @@ jobs:
           source: "dist/*"
           target: "/home/ubuntu/AceCard-Frontend/dist"
 
-      - name: Restart nginx
+      - name: Reload Nginx
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          script: |
-            sudo systemctl reload nginx
+          script: sudo systemctl reload nginx
