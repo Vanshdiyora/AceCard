@@ -1,5 +1,5 @@
 import { createAsyncThunk, createSlice, type PayloadAction } from "@reduxjs/toolkit";
-import { setCookie, eraseCookie } from "../../utils/cookieUtils";
+import { setCookie, eraseCookie, getCookie } from "../../utils/cookieUtils";
 import {
   loginRequest,
   forgotPasswordRequest,
@@ -57,7 +57,7 @@ function decodeToken(token: string | null): { user: JwtPayload | null; role: str
    Initial State
 ----------------------------------------------------- */
 
-const savedToken = localStorage.getItem("token");
+const savedToken = localStorage.getItem("token") || getCookie("token");
 const decoded = decodeToken(savedToken);
 
 const initialState: AuthState = {
@@ -137,6 +137,14 @@ const authSlice = createSlice({
       localStorage.removeItem("token");
       eraseCookie("token");
     },
+    setCredentials(state, action: PayloadAction<{ token: string }>) {
+      state.token = action.payload.token;
+      localStorage.setItem("token", action.payload.token);
+      setCookie("token", action.payload.token);
+      const decoded = decodeToken(action.payload.token);
+      state.user = decoded.user;
+      state.role = decoded.role;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -206,5 +214,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { logout } = authSlice.actions;
+export const { logout, setCredentials } = authSlice.actions;
 export default authSlice.reducer;

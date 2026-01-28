@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../../app/hooks";
-import { login } from "../slice";
+import { login, setCredentials } from "../slice";
 import BlockerLoader from "../../../common/ui/BlockingLoader";
 
 export default function LoginPage() {
@@ -25,6 +25,33 @@ export default function LoginPage() {
   };
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const tokenParam = params.get("token");
+    
+    if (tokenParam) {
+      dispatch(setCredentials({ token: tokenParam }));
+      window.history.replaceState({}, document.title, window.location.pathname);
+      return; 
+    }
+
+    if (!token) {
+       const hostname = window.location.hostname;
+       let redirectUrl = null;
+
+       if (hostname.includes("localhost") && hostname !== "localhost") {
+          const port = window.location.port ? `:${window.location.port}` : "";
+          redirectUrl = `${window.location.protocol}//localhost${port}/login`;
+       } else if (hostname.includes("theacecard.co") && hostname !== "theacecard.co" && hostname !== "www.theacecard.co") {
+          redirectUrl = `${window.location.protocol}//theacecard.co/login`;
+       }
+
+       if (redirectUrl) {
+           window.location.href = redirectUrl;
+       }
+    }
+  }, [dispatch, token]);
+
+  useEffect(() => {
     if (!token || !role) return;
 
     if (role === "super_admin") {
@@ -35,11 +62,17 @@ export default function LoginPage() {
         const currentHost = window.location.hostname;
 
         if (!currentHost.startsWith(subdomain + ".")) {
-
+           const protocol = window.location.protocol;
+           const port = window.location.port ? `:${window.location.port}` : "";
+           
            if (currentHost.includes("theacecard.co")) {
-             const protocol = window.location.protocol;
              window.location.href = `${protocol}//${subdomain}.theacecard.co/admin`;
              return; 
+           }
+           
+           if (currentHost.includes("localhost")) {
+             window.location.href = `${protocol}//${subdomain}.localhost${port}/login?token=${token}`;
+             return;
            }
         }
       }
