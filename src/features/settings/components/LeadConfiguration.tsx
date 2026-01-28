@@ -47,15 +47,33 @@ export default function LeadConfiguration() {
     dispatch(fetchLeadConfig());
   }, [dispatch]);
 
-  useEffect(() => {
-    if (!data) return;
+useEffect(() => {
+  if (!data) return;
 
-    setStandardFields((prev) =>
-      Object.keys(prev).length ? prev : data.standardFields || {}
-    );
+  const existingCustom = data.customFields || [];
 
-    setCustomFields((prev) => (prev.length ? prev : data.customFields || []));
-  }, [data]);
+  const hasStage = existingCustom.some((f) => f.fieldId === "stage");
+
+  const withStage = hasStage
+    ? existingCustom
+    : [
+        {
+          fieldId: "stage",
+          label: "Stage",
+          type: "dropdown" as FieldType,
+          required: true,
+          archived: false,
+          options: [],
+        },
+        ...existingCustom,
+      ];
+
+  setStandardFields((prev) =>
+    Object.keys(prev).length ? prev : data.standardFields || {}
+  );
+
+  setCustomFields((prev) => (prev.length ? prev : withStage));
+}, [data]);
 
 
   /* ---------------- Handlers ---------------- */

@@ -15,12 +15,11 @@ import ConfirmationModal from "../../../common/ui/ConfirmationModal";
 import BlockingLoader from "../../../common/ui/BlockingLoader";
 import ResultModal from "../../../common/ui/ResultModal";
 import TeamMemberTotalLeadsTab from "../components/details/TeamMemberTotalLeadsTab";
-
-import type { TeamMember } from "../types";
 import MemberMobileWebsite from "../components/MemberMobileWebsite";
 
-const TABS = ["overview", "leads", "total-leads"] as const;
+import type { TeamMember } from "../types";
 
+const TABS = ["overview", "leads", "total-leads"] as const;
 
 export default function TeamMemberDetailsPage() {
   const { id } = useParams<{ id: string }>();
@@ -69,6 +68,25 @@ export default function TeamMemberDetailsPage() {
     setResultOpen(true);
   };
 
+  /* ---------------- SAFE MEMOS (NO CONDITIONAL HOOKS) ---------------- */
+
+  const displayRole = useMemo(() => {
+    if (!member) return "";
+    if (member.role === "sales_rep") return "Sales Person";
+    if (member.role === "vendor_admin") return "Vendor Admin";
+    if (member.role === "manager") return "Manager";
+    return member.role.replace("_", " ");
+  }, [member]);
+
+  const displayManager = useMemo(() => {
+    if (!member) return null;
+    if (member.role !== "sales_rep") return null;
+    if (!member.manager_id) return null;
+    return managers.find((m) => m.id === member.manager_id)?.name || null;
+  }, [member, managers]);
+
+  /* ---------------- DATA FETCH ---------------- */
+
   useEffect(() => {
     if (id && !member) {
       dispatch(fetchMemberById(Number(id))).finally(() => setHasFetched(true));
@@ -76,8 +94,12 @@ export default function TeamMemberDetailsPage() {
       setHasFetched(true);
     }
   }, [id, member, dispatch]);
+
+  /* ---------------- SCROLL LOCK ---------------- */
+
   const lockScroll = () => {
-    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+    const scrollbarWidth =
+      window.innerWidth - document.documentElement.clientWidth;
 
     document.documentElement.style.overflow = "hidden";
     document.body.style.overflow = "hidden";
@@ -92,17 +114,20 @@ export default function TeamMemberDetailsPage() {
 
   useEffect(() => {
     const lock = editOpen || permOpen || confirmOpen || resultOpen;
-
-    if (lock) {
-      lockScroll();
-    } else {
-      unlockScroll();
-    }
-
-    return () => {
-      unlockScroll();
-    };
+    lock ? lockScroll() : unlockScroll();
+    return unlockScroll;
   }, [editOpen, permOpen, confirmOpen, resultOpen]);
+
+  /* ---------------- LOADING STATES ---------------- */
+
+  if (!hasFetched || (loading && !member)) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <BrandLoader message="Loading member..." />
+      </div>
+    );
+  }
+
   if (!member) {
     return (
       <div className="flex flex-col h-full">
@@ -121,27 +146,7 @@ export default function TeamMemberDetailsPage() {
     );
   }
 
-  const displayRole = useMemo(() => {
-    if (member.role === "sales_rep") return "Sales Person";
-    if (member.role === "vendor_admin") return "Vendor Admin";
-    if (member.role === "manager") return "Manager";
-    return member.role.replace("_", " ");
-  }, [member.role]);
-
-  const displayManager = useMemo(() => {
-    if (member.role !== "sales_rep") return null;
-    if (!member.manager_id) return null;
-    return managers.find((m) => m.id === member.manager_id)?.name || null;
-  }, [member.role, member.manager_id, managers]);
-
-
-  if (!hasFetched || (loading && !member)) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <BrandLoader message="Loading member..." />
-      </div>
-    );
-  }
+  /* ---------------- ACTIONS ---------------- */
 
   const handleStatusChange = async () => {
     try {
@@ -149,7 +154,9 @@ export default function TeamMemberDetailsPage() {
       await dispatch(
         updateMember({
           id: member.id,
-          data: { status: suspendMode === "suspend" ? "suspended" : "active" },
+          data: {
+            status: suspendMode === "suspend" ? "suspended" : "active",
+          },
         })
       ).unwrap();
 
@@ -167,11 +174,12 @@ export default function TeamMemberDetailsPage() {
     }
   };
 
+  /* ---------------- UI ---------------- */
+
   return (
     <div className="p-6 grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-6 h-[calc(100vh-80px)]">
-      {/* Left panel */}
+      {/* LEFT */}
       <div className="overflow-y-auto pr-2">
-
         <button
           onClick={() => navigate(-1)}
           className="flex items-center gap-2 text-sm text-gray-500 hover:text-black mb-6"
@@ -187,9 +195,7 @@ export default function TeamMemberDetailsPage() {
               ? `${displayRole} • Manager - ${displayManager}`
               : displayRole
           }
-
           avatar={(member.name?.charAt(0) || "S").toUpperCase()}
-
           status={{
             label: member.status,
             variant: member.status === "active" ? "active" : "suspended",
@@ -206,10 +212,14 @@ export default function TeamMemberDetailsPage() {
 
               <button
                 onClick={() => {
-                  setSuspendMode(member.status === "active" ? "suspend" : "activate");
+                  setSuspendMode(
+                    member.status === "active" ? "suspend" : "activate"
+                  );
                   setConfirmOpen(true);
                 }}
-                className={member.status === "active" ? "btn-danger" : "btn-success"}
+                className={
+                  member.status === "active" ? "btn-danger" : "btn-success"
+                }
               >
                 {member.status === "active" ? (
                   <>
@@ -226,45 +236,46 @@ export default function TeamMemberDetailsPage() {
         />
 
         <div className="flex gap-6 border-b text-sm mt-6">
-          {TABS.filter((t) => t !== "total-leads" || member.role === "manager").map((t) => (
+          {TABS.filter(
+            (t) => t !== "total-leads" || member.role === "manager"
+          ).map((t) => (
             <button
               key={t}
               onClick={() => setActiveTab(t)}
-              className={`pb-2 capitalize ${activeTab === t
-                ? "border-b-2 border-purple-600 text-purple-600 font-medium"
-                : "text-gray-500"
-                }`}
+              className={`pb-2 capitalize ${
+                activeTab === t
+                  ? "border-b-2 border-purple-600 text-purple-600 font-medium"
+                  : "text-gray-500"
+              }`}
             >
               {t.replace("-", " ")}
             </button>
           ))}
         </div>
-        {activeTab === "overview" && <TeamMemberOverviewTab member={member} />}
-        {activeTab === "leads" && <TeamMemberLeadsTab memberId={member.id} />}
+
+        {activeTab === "overview" && (
+          <TeamMemberOverviewTab member={member} />
+        )}
+        {activeTab === "leads" && (
+          <TeamMemberLeadsTab memberId={member.id} />
+        )}
         {activeTab === "total-leads" && member.role === "manager" && (
           <TeamMemberTotalLeadsTab managerId={member.id} />
         )}
       </div>
 
-      {/* Right panel */}
+      {/* RIGHT */}
       <div className="hidden lg:flex justify-center items-center h-full overflow-hidden">
-        {/* Phone frame */}
-        <div
-          className="w-[340px] max-h-full aspect-[9/19.5] bg-black rounded-[2.5rem] p-2 flex-shrink-0"
-        >
-          {/* Phone screen */}
+        <div className="w-[340px] max-h-full aspect-[9/19.5] bg-black rounded-[2.5rem] p-2">
           <div className="h-full bg-white rounded-[2rem] overflow-hidden flex flex-col">
-
-            {/* ONLY scrollable area */}
             <div className="flex-1 overflow-y-auto overscroll-contain">
               <MemberMobileWebsite member={member} />
             </div>
-
           </div>
         </div>
       </div>
 
-
+      {/* MODALS */}
       <EditMemberModal
         open={editOpen}
         member={member}
@@ -306,7 +317,9 @@ export default function TeamMemberDetailsPage() {
 
       <ConfirmationModal
         open={confirmOpen}
-        title={suspendMode === "suspend" ? "Suspend Member" : "Activate Member"}
+        title={
+          suspendMode === "suspend" ? "Suspend Member" : "Activate Member"
+        }
         message={
           suspendMode === "suspend"
             ? `Are you sure you want to suspend ${member.name}?`

@@ -5,7 +5,6 @@ import {
   Youtube,
   Twitter,
   Facebook,
-  GripVertical,
 } from "lucide-react";
 
 /* ================= HELPERS ================= */
@@ -17,32 +16,44 @@ const getYouTubeId = (url: string) => {
   return match?.[1];
 };
 
-/* ================= STATIC PRODUCTS (REORDERABLE) ================= */
+/* ================= CAROUSEL CARDS ================= */
 
-const PRODUCTS = [
+const CARDS = [
   {
     id: "1",
     name: "AceCard Premium",
     category: "Digital Card",
     price: "₹1,999",
-    image:
-      "https://images.unsplash.com/photo-1586880244406-556ebe35f282",
+    image: "https://images.unsplash.com/photo-1586880244406-556ebe35f282",
   },
   {
     id: "2",
     name: "Personal Branding Kit",
     category: "Branding",
     price: "₹4,999",
-    image:
-      "https://images.unsplash.com/photo-1558655146-d09347e92766",
+    image: "https://images.unsplash.com/photo-1558655146-d09347e92766",
   },
   {
     id: "3",
     name: "Lead Automation Setup",
     category: "Growth",
     price: "₹9,999",
-    image:
-      "https://images.unsplash.com/photo-1556155092-8707de31f9c4",
+    image: "https://images.unsplash.com/photo-1556155092-8707de31f9c4",
+  },
+];
+
+const LINKS = [
+  {
+    id: 1,
+    title: "Manage your end-to-end LinkedIn",
+    type: "link",
+    url: "https://linkedin.com",
+  },
+  {
+    id: 2,
+    title: "AceCards Report",
+    type: "file",
+    url: "/files/acecards-report.pdf",
   },
 ];
 
@@ -58,6 +69,7 @@ export default function MemberMobileWebsite({ member }: Props) {
       {/* ================= COVER ================= */}
       <div className="absolute top-0 left-0 w-full h-52 z-0">
         <img
+          loading="lazy"
           src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4"
           className="w-full h-full object-cover"
         />
@@ -71,9 +83,10 @@ export default function MemberMobileWebsite({ member }: Props) {
       <div className="relative z-10 pt-36">
         {/* ================= PROFILE ================= */}
         <div className="px-4">
-          <div className="bg-white rounded-2xl shadow-lg p-4">
+          <div className="bg-white rounded-2xl shadow-md p-4">
             <div className="flex gap-4 items-center">
               <img
+                loading="lazy"
                 src={`https://ui-avatars.com/api/?name=${member.name}&background=111827&color=fff`}
                 className="w-24 h-24 rounded-xl -mt-14 border-4 border-white"
               />
@@ -105,71 +118,86 @@ export default function MemberMobileWebsite({ member }: Props) {
           </p>
         </div>
 
-        {/* ================= PRODUCTS (REORDERABLE UI) ================= */}
-        <div className="px-4 mt-8">
-          <h3 className="text-sm font-semibold mb-4">Products</h3>
+        {/* ================= SOCIAL ================= */}
+        <div className="px-4 mt-6">
+          <SocialLinks />
+        </div>
 
-          <div className="space-y-3">
-            {PRODUCTS.map((product) => (
-              <ProductRow key={product.id} product={product} />
+        {/* ================= CAROUSEL ================= */}
+        <div className="px-4 mt-6">
+          <h3 className="text-sm font-semibold mb-3">Products</h3>
+          <div className="flex gap-4 overflow-x-auto scrollbar-hide snap-x snap-mandatory scroll-smooth touch-pan-x will-change-transform">
+            {CARDS.map((item) => (
+              <div
+                key={item.id}
+                className="min-w-[220px] h-52 rounded-2xl relative overflow-hidden shadow-md snap-start"
+              >
+                <img
+                  loading="lazy"
+                  src={item.image}
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-black/50" />
+                <div className="absolute bottom-3 left-3 right-3 text-white">
+                  <p className="text-sm font-semibold">{item.name}</p>
+                  <p className="text-xs opacity-90">{item.category}</p>
+                  <p className="text-[10px] opacity-80 font-medium">
+                    {item.price}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* ================= LINKS & FILES ================= */}
+        <div className="px-4 mt-6">
+          <h3 className="text-sm font-semibold mb-3">Links & Files</h3>
+          <div className="bg-white rounded-2xl shadow-sm divide-y overflow-hidden">
+            {LINKS.map((item) => (
+              <a
+                key={item.id}
+                href={item.url}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="h-9 w-9 rounded-full bg-orange-100 text-orange-500 flex items-center justify-center text-sm">
+                    {item.type === "file" ? "📄" : "🔗"}
+                  </div>
+                  <p className="text-sm font-medium text-gray-800 truncate">
+                    {item.title}
+                  </p>
+                </div>
+                <span className="text-gray-400 text-lg">›</span>
+              </a>
             ))}
           </div>
         </div>
 
         {/* ================= YOUTUBE ================= */}
-        <div className="px-4 mt-8">
+        <div className="px-4 mt-6">
           <YouTubeCard url="https://www.youtube.com/watch?v=dQw4w9WgXcQ" />
+          <div className="mt-4 flex justify-center">
+            <button className="h-10 px-6 rounded-lg bg-orange-500 text-white text-sm font-semibold shadow hover:bg-orange-600 transition">
+              BOOK A MEETING
+            </button>
+          </div>
         </div>
 
-        {/* ================= SOCIAL ================= */}
-        <div className="px-4 mt-6 pb-10">
-          <SocialLinks />
+        {/* ================= BANNER ================= */}
+        <div className="px-4 mt-6">
+          <div className="relative rounded-2xl overflow-hidden shadow-sm">
+            <img
+              loading="lazy"
+              src="https://images.unsplash.com/photo-1521737604893-d14cc237f11d"
+              className="w-full h-28 object-cover"
+            />
+          </div>
         </div>
-      </div>
-    </div>
-  );
-}
 
-/* ================= PRODUCT ROW (DRAG READY) ================= */
-
-function ProductRow({
-  product,
-}: {
-  product: {
-    name: string;
-    category: string;
-    price: string;
-    image: string;
-  };
-}) {
-  return (
-    <div className="bg-white rounded-xl shadow-sm p-3 flex items-center gap-3">
-      {/* Drag Handle */}
-      <div className="text-gray-400 cursor-grab active:cursor-grabbing">
-        <GripVertical size={18} />
-      </div>
-
-      {/* Image */}
-      <img
-        src={product.image}
-        className="w-14 h-14 rounded-lg object-cover"
-      />
-
-      {/* Info */}
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium truncate">
-          {product.name}
-        </p>
-        <div className="flex items-center gap-2 mt-1">
-          <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
-            {product.category}
-          </span>
-        </div>
-      </div>
-
-      {/* Price */}
-      <div className="text-sm font-semibold whitespace-nowrap">
-        {product.price}
+        <div className="h-4" />
       </div>
     </div>
   );
@@ -189,6 +217,7 @@ function YouTubeCard({ url }: { url: string }) {
       className="relative block rounded-2xl overflow-hidden bg-black shadow-sm"
     >
       <img
+        loading="lazy"
         src={`https://img.youtube.com/vi/${videoId}/hqdefault.jpg`}
         className="w-full h-40 object-cover"
       />

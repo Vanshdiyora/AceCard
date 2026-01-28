@@ -43,3 +43,9 @@ html {
 body {
   @apply text-gray-900;
 }
+
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+* { -webkit-overflow-scrolling: touch; }
+
+
