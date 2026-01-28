@@ -1,4 +1,5 @@
 import { createAsyncThunk, createSlice, type PayloadAction } from "@reduxjs/toolkit";
+import { setCookie, eraseCookie } from "../../utils/cookieUtils";
 import {
   loginRequest,
   forgotPasswordRequest,
@@ -19,9 +20,15 @@ interface AuthState {
   token: string | null;
   user: JwtPayload | null;
   role: string | null;
+  subdomain: string | null;
   resetToken: string | null;
   loading: boolean;
   error: string | null;
+}
+
+interface LoginResponse {
+  token: string;
+  subdomain?: string;
 }
 
 /* -----------------------------------------------------
@@ -57,6 +64,7 @@ const initialState: AuthState = {
   token: savedToken,
   user: decoded.user,
   role: decoded.role,
+  subdomain: null,
   resetToken: null,
   loading: false,
   error: null,
@@ -127,6 +135,7 @@ const authSlice = createSlice({
       state.loading = false;
       state.error = null;
       localStorage.removeItem("token");
+      eraseCookie("token");
     },
   },
   extraReducers: (builder) => {
@@ -137,10 +146,14 @@ const authSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
-      .addCase(login.fulfilled, (state, action: PayloadAction<{ token: string }>) => {
+      .addCase(login.fulfilled, (state, action: PayloadAction<LoginResponse>) => {
         state.loading = false;
         state.token = action.payload.token;
+        state.subdomain = action.payload.subdomain || null;
+
         localStorage.setItem("token", action.payload.token);
+        setCookie("token", action.payload.token);
+
         const decoded = decodeToken(action.payload.token);
         state.user = decoded.user;
         state.role = decoded.role;

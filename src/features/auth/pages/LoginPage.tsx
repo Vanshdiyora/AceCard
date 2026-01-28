@@ -8,7 +8,7 @@ export default function LoginPage() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
 
-  const { loading, error, role, token } = useAppSelector((s) => s.auth);
+  const { loading, error, role, token, subdomain } = useAppSelector((s) => s.auth);
 
   const [form, setForm] = useState({ email: "", password: "" });
   const [show, setShow] = useState(false);
@@ -27,11 +27,28 @@ export default function LoginPage() {
   useEffect(() => {
     if (!token || !role) return;
 
-    if (role === "super_admin") navigate("/super");
-    else if (role === "manager" || role === "vendor_admin") navigate("/admin");
-    else navigate("/unauthorized");
+    if (role === "super_admin") {
+      navigate("/super");
+    } else if (role === "manager" || role === "vendor_admin") {
 
-  }, [role, token, navigate]);
+      if (subdomain) {
+        const currentHost = window.location.hostname;
+
+        if (!currentHost.startsWith(subdomain + ".")) {
+
+           if (currentHost.includes("theacecard.co")) {
+             const protocol = window.location.protocol;
+             window.location.href = `${protocol}//${subdomain}.theacecard.co/admin`;
+             return; 
+           }
+        }
+      }
+      navigate("/admin");
+    } else {
+      navigate("/unauthorized");
+    }
+
+  }, [role, token, navigate, subdomain]);
 
   return (
     <>
