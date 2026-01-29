@@ -52,33 +52,33 @@ export default function LoginPage() {
   }, [dispatch, token]);
 
   useEffect(() => {
-    if (!token || !role) return;
+    if (!token || !role || !subdomain) return;
 
-    if (role === "super_admin") {
-      navigate("/super");
-    } else if (role === "manager" || role === "vendor_admin") {
+    if (role === "manager" || role === "vendor_admin") {
+      const ROOT_DOMAIN = import.meta.env.VITE_ROOT_DOMAIN || "theacecard.co";
+      const currentHost = window.location.hostname;
 
-      if (subdomain) {
-        const currentHost = window.location.hostname;
-
-        if (!currentHost.startsWith(subdomain + ".")) {
-           const protocol = window.location.protocol;
-           const port = window.location.port ? `:${window.location.port}` : "";
-           
-           if (currentHost.includes("theacecard.co")) {
-             window.location.href = `${protocol}//${subdomain}.theacecard.co/admin`;
-             return; 
-           }
-           
-           if (currentHost.includes("localhost")) {
-             window.location.href = `${protocol}//${subdomain}.localhost${port}/login?token=${token}`;
-             return;
-           }
-        }
+      if (currentHost.includes("localhost")) {
+          const port = window.location.port ? `:${window.location.port}` : "";
+          const expectedHost = `${subdomain}.localhost${port}`;
+          if (currentHost !== expectedHost) {
+              window.location.replace(`${window.location.protocol}//${expectedHost}/admin`);
+          }
+          return;
       }
-      navigate("/admin");
+
+      const expectedHost = `${subdomain}.${ROOT_DOMAIN}`;
+
+      if (currentHost !== expectedHost) {
+        sessionStorage.setItem("login_token", token);
+        window.location.replace(`https://${expectedHost}/admin`);
+      } else {
+        navigate("/admin");
+      }
+    } else if (role === "super_admin") {
+        navigate("/super");
     } else {
-      navigate("/unauthorized");
+        navigate("/unauthorized");
     }
 
   }, [role, token, navigate, subdomain]);
