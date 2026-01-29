@@ -61,18 +61,19 @@ function decodeToken(token: string | null): { user: JwtPayload | null; role: str
    Initial State
 ----------------------------------------------------- */
 
-const savedToken = localStorage.getItem("token") || getCookie("token");
+const savedToken = getCookie("token");
 const decoded = decodeToken(savedToken);
 
 const initialState: AuthState = {
   token: savedToken,
   user: decoded.user,
   role: decoded.role,
-  subdomain: decoded.subdomain, // Initialize from token
+  subdomain: decoded.subdomain,
   resetToken: null,
   loading: false,
   error: null,
 };
+
 
 /* -----------------------------------------------------
    Thunks
@@ -138,12 +139,10 @@ const authSlice = createSlice({
       state.resetToken = null;
       state.loading = false;
       state.error = null;
-      localStorage.removeItem("token");
       eraseCookie("token");
     },
     setCredentials(state, action: PayloadAction<{ token: string; subdomain?: string }>) {
       state.token = action.payload.token;
-      localStorage.setItem("token", action.payload.token);
       setCookie("token", action.payload.token);
 
       const decoded = decodeToken(action.payload.token);
@@ -165,7 +164,6 @@ const authSlice = createSlice({
         state.token = action.payload.token;
         state.subdomain = action.payload.subdomain || null;
 
-        localStorage.setItem("token", action.payload.token);
         setCookie("token", action.payload.token);
 
         const decoded = decodeToken(action.payload.token);

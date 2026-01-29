@@ -15,6 +15,7 @@ import BrandLoader from "../../../common/ui/BrandLoader";
 import ErrorAlert from "../../../common/ui/ErrorAlert";
 import BlockingLoader from "../../../common/ui/BlockingLoader";
 import ResultModal from "../../../common/ui/ResultModal";
+import { getCookie } from "../../../utils/cookieUtils";
 
 /* ---------------- Skeleton ---------------- */
 
@@ -40,7 +41,7 @@ export default function SupportPage() {
     (s) => s.support
   );
 
-  const token = localStorage.getItem("token");
+  const token = getCookie("token");
   let vendorId: number | null = null;
 
   if (token) {

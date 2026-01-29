@@ -1,6 +1,7 @@
 import axios from "axios";
+import { eraseCookie, getCookie } from "../utils/cookieUtils";
 
-const BASE_URL = (import.meta as any).env?.VITE_API_BASE_URL || "http://localhost:8080";
+const BASE_URL = (import.meta as any).env?.VITE_API_BASE_URL;
 
 const axiosClient = axios.create({
   baseURL: BASE_URL,
@@ -11,7 +12,7 @@ const axiosClient = axios.create({
 // REQUEST INTERCEPTOR
 // -----------------------------
 axiosClient.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
+  const token = getCookie("token");
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   } else {
@@ -30,7 +31,7 @@ axiosClient.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       // Remove token
-      localStorage.removeItem("token");
+      eraseCookie("token");
 
       // Redirect user to login page
       window.location.href = "/login";
