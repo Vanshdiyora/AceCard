@@ -35,8 +35,8 @@ interface LoginResponse {
    Helpers
 ----------------------------------------------------- */
 
-function decodeToken(token: string | null): { user: JwtPayload | null; role: string | null } {
-  if (!token) return { user: null, role: null };
+function decodeToken(token: string | null): { user: JwtPayload | null; role: string | null; subdomain: string | null } {
+  if (!token) return { user: null, role: null, subdomain: null };
 
   try {
     const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
@@ -47,9 +47,13 @@ function decodeToken(token: string | null): { user: JwtPayload | null; role: str
         .join("")
     );
     const payload = JSON.parse(jsonPayload) as JwtPayload;
-    return { user: payload, role: payload.role || null };
+    return {
+      user: payload,
+      role: payload.role || null,
+      subdomain: payload.subdomain || payload.tenant || null // Attempt to extract subdomain
+    };
   } catch {
-    return { user: null, role: null };
+    return { user: null, role: null, subdomain: null };
   }
 }
 
@@ -64,7 +68,7 @@ const initialState: AuthState = {
   token: savedToken,
   user: decoded.user,
   role: decoded.role,
-  subdomain: null,
+  subdomain: decoded.subdomain, // Initialize from token
   resetToken: null,
   loading: false,
   error: null,
@@ -137,13 +141,15 @@ const authSlice = createSlice({
       localStorage.removeItem("token");
       eraseCookie("token");
     },
-    setCredentials(state, action: PayloadAction<{ token: string }>) {
+    setCredentials(state, action: PayloadAction<{ token: string; subdomain?: string }>) {
       state.token = action.payload.token;
       localStorage.setItem("token", action.payload.token);
       setCookie("token", action.payload.token);
+
       const decoded = decodeToken(action.payload.token);
       state.user = decoded.user;
       state.role = decoded.role;
+      state.subdomain = action.payload.subdomain || decoded.subdomain || null;
     },
   },
   extraReducers: (builder) => {
