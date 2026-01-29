@@ -1,37 +1,41 @@
+export function setCookie(name: string, value: string, days = 7) {
+  const date = new Date();
+  date.setTime(date.getTime() + days * 24 * 60 * 60 * 1000);
 
-export const setCookie = (name: string, value: string, days: number = 7) => {
-    const date = new Date();
-    date.setTime(date.getTime() + days * 24 * 60 * 60 * 1000);
-    const expires = "expires=" + date.toUTCString();
+  const host = location.hostname;
+  const isProd = host.endsWith("theacecard.co");
+  const isLocal = host === "localhost" || host.endsWith(".localhost");
 
-    const hostname = window.location.hostname;
-    let domainAttribute = "";
+  const parts = [
+    `${name}=${value}`,
+    `expires=${date.toUTCString()}`,
+    "path=/",
+  ];
 
-    if (hostname.endsWith("theacecard.co")) {
-        domainAttribute = ";domain=.theacecard.co";
-    } else if (hostname !== "localhost") {
-    }
+  if (isProd) {
+    parts.push("domain=.theacecard.co");
+    parts.push("SameSite=None");
+    parts.push("Secure"); // required
+  } else if (isLocal) {
+    parts.push("SameSite=Lax"); // allow non-secure
+  }
+
+  document.cookie = parts.join("; ");
+}
 
 
-    document.cookie = `${name}=${value};${expires};path=/${domainAttribute};SameSite=Lax`;
-};
+export function getCookie(name: string) {
+  const match = document.cookie.match(new RegExp("(^| )" + name + "=([^;]+)"));
+  return match ? match[2] : null;
+}
 
-export const getCookie = (name: string): string | null => {
-    const nameEQ = name + "=";
-    const ca = document.cookie.split(';');
-    for (let i = 0; i < ca.length; i++) {
-        let c = ca[i];
-        while (c.charAt(0) == ' ') c = c.substring(1, c.length);
-        if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
-    }
-    return null;
-};
+export function eraseCookie(name: string) {
+  const host = location.hostname;
+  const isProd = host.endsWith("theacecard.co");
 
-export const eraseCookie = (name: string) => {
-    const hostname = window.location.hostname;
-    let domainAttribute = "";
-    if (hostname.endsWith("theacecard.co")) {
-        domainAttribute = ";domain=.theacecard.co";
-    }
-    document.cookie = name + '=; Max-Age=-99999999; path=/' + domainAttribute;
+  const base = `${name}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;`;
+
+  document.cookie = isProd
+    ? base + " domain=.theacecard.co"
+    : base;
 }

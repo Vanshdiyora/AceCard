@@ -1,7 +1,10 @@
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect, useMemo } from "react";
 import { ArrowLeft, Edit, Shield, UserX, CheckCircle2 } from "lucide-react";
-
+// import { useEffect as usePublicEffect } from "react";
+import { loadPublicProfile } from "../../publicProfile/slice";
+import PublicMobileWebsite from "../../publicProfile/components/MobileWebsite";
+import TeamMemberPublicProfileTab from "../components/details/publicProfile/TeamMemberPublicProfileTab";
 import { useAppDispatch, useAppSelector } from "../../../app/hooks";
 import { updateMember, fetchMemberById, updatePermissions } from "../slice";
 import EditMemberModal from "../components/EditMemberModal";
@@ -15,11 +18,11 @@ import ConfirmationModal from "../../../common/ui/ConfirmationModal";
 import BlockingLoader from "../../../common/ui/BlockingLoader";
 import ResultModal from "../../../common/ui/ResultModal";
 import TeamMemberTotalLeadsTab from "../components/details/TeamMemberTotalLeadsTab";
-import MemberMobileWebsite from "../components/MemberMobileWebsite";
+// import MemberMobileWebsite from "../components/MemberMobileWebsite";
 
 import type { TeamMember } from "../types";
 
-const TABS = ["overview", "leads", "total-leads"] as const;
+const TABS = ["overview", "leads", "total-leads", "public-profile"] as const;
 
 export default function TeamMemberDetailsPage() {
   const { id } = useParams<{ id: string }>();
@@ -61,6 +64,19 @@ export default function TeamMemberDetailsPage() {
   const [resultOpen, setResultOpen] = useState(false);
   const [resultSuccess, setResultSuccess] = useState(true);
   const [resultMessage, setResultMessage] = useState("");
+  const { data: publicProfile } = useAppSelector(
+    (s) => s.publicProfile
+  );
+
+  useEffect(() => {
+    const handle =
+      member?.website ||
+      member?.email?.split("@")[0]; // fallback
+
+    if (handle) {
+      dispatch(loadPublicProfile(handle));
+    }
+  }, [member?.website, member?.email, dispatch]);
 
   const showResult = (success: boolean, message: string) => {
     setResultSuccess(success);
@@ -242,11 +258,10 @@ export default function TeamMemberDetailsPage() {
             <button
               key={t}
               onClick={() => setActiveTab(t)}
-              className={`pb-2 capitalize ${
-                activeTab === t
-                  ? "border-b-2 border-purple-600 text-purple-600 font-medium"
-                  : "text-gray-500"
-              }`}
+              className={`pb-2 capitalize ${activeTab === t
+                ? "border-b-2 border-purple-600 text-purple-600 font-medium"
+                : "text-gray-500"
+                }`}
             >
               {t.replace("-", " ")}
             </button>
@@ -262,16 +277,32 @@ export default function TeamMemberDetailsPage() {
         {activeTab === "total-leads" && member.role === "manager" && (
           <TeamMemberTotalLeadsTab managerId={member.id} />
         )}
+        {activeTab === "public-profile" && (
+          <TeamMemberPublicProfileTab
+            member={member}
+            publicProfile={publicProfile}
+          />
+        )}
+
       </div>
 
       {/* RIGHT */}
       <div className="hidden lg:flex justify-center items-center h-full overflow-hidden">
         <div className="w-[340px] max-h-full aspect-[9/19.5] bg-black rounded-[2.5rem] p-2">
-          <div className="h-full bg-white rounded-[2rem] overflow-hidden flex flex-col">
-            <div className="flex-1 overflow-y-auto overscroll-contain">
-              <MemberMobileWebsite member={member} />
+          <div className="w-[340px] max-h-full aspect-[9/19.5] bg-black rounded-[2.5rem] p-2">
+            <div className="h-full bg-white rounded-[2rem] overflow-hidden flex flex-col">
+              <div className="flex-1 overflow-y-auto overscroll-contain">
+                {publicProfile ? (
+                  <PublicMobileWebsite data={publicProfile} />
+                ) : (
+                  <div className="h-full flex items-center justify-center text-sm text-gray-400">
+                    No public profile yet
+                  </div>
+                )}
+              </div>
             </div>
           </div>
+
         </div>
       </div>
 

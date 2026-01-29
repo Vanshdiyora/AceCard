@@ -4,6 +4,7 @@ import { useAppSelector } from "../app/hooks";
 export default function RootRedirect() {
   const { token, role, loading } = useAppSelector((s) => s.auth);
 
+
   if (loading) return null; // ⬅ wait
 
   if (!token || !role) return <Navigate to="/login" replace />;

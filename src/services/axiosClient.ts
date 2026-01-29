@@ -6,6 +6,7 @@ const BASE_URL = (import.meta as any).env?.VITE_API_BASE_URL;
 const axiosClient = axios.create({
   baseURL: BASE_URL,
   timeout: 10000,
+  withCredentials: true,
 });
 
 // -----------------------------

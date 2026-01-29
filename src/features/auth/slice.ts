@@ -24,6 +24,7 @@ interface AuthState {
   resetToken: string | null;
   loading: boolean;
   error: string | null;
+  hydrated: boolean;
 }
 
 interface LoginResponse {
@@ -72,6 +73,7 @@ const initialState: AuthState = {
   resetToken: null,
   loading: false,
   error: null,
+  hydrated: false,
 };
 
 
@@ -140,6 +142,9 @@ const authSlice = createSlice({
       state.loading = false;
       state.error = null;
       eraseCookie("token");
+    },
+    markHydrated(state) {
+      state.hydrated = true;
     },
     setCredentials(state, action: PayloadAction<{ token: string; subdomain?: string }>) {
       state.token = action.payload.token;
@@ -218,5 +223,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { logout, setCredentials } = authSlice.actions;
+export const { logout, setCredentials, markHydrated } = authSlice.actions;
 export default authSlice.reducer;

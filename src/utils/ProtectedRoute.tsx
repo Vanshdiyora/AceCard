@@ -13,8 +13,9 @@ export default function ProtectedRoute({
   superOnly = false,
   adminOnly = false,
 }: ProtectedRouteProps) {
-  const { token, role, loading } = useAppSelector((s) => s.auth);
-
+  const { token, role, hydrated, loading } = useAppSelector((s) => s.auth);
+  console.log("ProtectedRoute auth state:", { token, role, hydrated, loading });
+  
   if (loading) return null; // ⬅ wait for auth resolution
 
   if (!token) return <Navigate to="/login" replace />;
