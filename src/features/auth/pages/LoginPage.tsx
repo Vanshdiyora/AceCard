@@ -27,9 +27,10 @@ export default function LoginPage() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const tokenParam = params.get("token");
+    const subdomainParam = params.get("subdomain");
     
     if (tokenParam) {
-      dispatch(setCredentials({ token: tokenParam }));
+      dispatch(setCredentials({ token: tokenParam, subdomain: subdomainParam || undefined }));
       window.history.replaceState({}, document.title, window.location.pathname);
       return; 
     }
@@ -60,9 +61,14 @@ export default function LoginPage() {
 
       if (currentHost.includes("localhost")) {
           const port = window.location.port ? `:${window.location.port}` : "";
-          const expectedHost = `${subdomain}.localhost${port}`;
-          if (currentHost !== expectedHost) {
-              window.location.replace(`${window.location.protocol}//${expectedHost}/admin`);
+          const expectedHostWithPort = `${subdomain}.localhost${port}`;
+          const currentHostWithPort = window.location.host;
+
+          if (currentHostWithPort !== expectedHostWithPort) {
+              // Redirect to login page on subdomain with token to establish session
+              window.location.replace(`${window.location.protocol}//${expectedHostWithPort}/login?token=${token}${subdomain ? `&subdomain=${subdomain}` : ""}`);
+          } else {
+              navigate("/admin");
           }
           return;
       }
