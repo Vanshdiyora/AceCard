@@ -13,7 +13,7 @@ interface AddVendorModalProps {
   setProcessing: (v: boolean) => void;
 }
 
-type VendorForm = Partial<VendorItem> & { password?: string };
+type VendorForm = Partial<VendorItem>;
 
 export default function AddVendorModal({
   open,
@@ -33,7 +33,6 @@ export default function AddVendorModal({
     payment_terms: "",
     vendor_poc_email: "",
     allowed_crm_integrations: [],
-    password: "",
   });
 
   const [errors, setErrors] = useState<Record<string, string | null>>({});
@@ -116,14 +115,6 @@ export default function AddVendorModal({
       type: "email",
       required: true,
       placeholder: "poc@company.com",
-    },
-    {
-      name: "password",
-      label: "Password",
-      type: "text",
-      required: true,
-      minLength: 6,
-      placeholder: "Set a temporary password",
     },
     {
       name: "allowed_crm_integrations",
