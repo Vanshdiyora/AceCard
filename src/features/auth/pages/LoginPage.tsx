@@ -1,14 +1,14 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../../app/hooks";
-import { login, setCredentials, markHydrated } from "../slice";
-import { getCookie } from "../../../utils/cookieUtils";
+import { login } from "../slice";
 import BlockerLoader from "../../../common/ui/BlockingLoader";
 
 export default function LoginPage() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const { loading, error, role, token, subdomain } = useAppSelector((s) => s.auth);
+
+  const { loading, error, role, token } = useAppSelector((s) => s.auth);
 
   const [form, setForm] = useState({ email: "", password: "" });
   const [show, setShow] = useState(false);
@@ -23,88 +23,18 @@ export default function LoginPage() {
     await dispatch(login(form));
   };
 
-  /* ----------------- BOOTSTRAP ----------------- */
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const tokenParam = params.get("token");
-    const subdomainParam = params.get("subdomain");
-
-    if (tokenParam) {
-      dispatch(setCredentials({ token: tokenParam, subdomain: subdomainParam || undefined }));
-      window.history.replaceState({}, document.title, window.location.pathname);
-      dispatch(markHydrated());
-      return;
-    }
-
-    if (!token) {
-      const cookieToken = getCookie("token");
-      console.log("Bootstrap cookie token:", cookieToken);
-      if (cookieToken) {
-        dispatch(setCredentials({ token: cookieToken }));
-      }
-    }
-
-    dispatch(markHydrated());
-  }, [dispatch, token]);
-
-  /* ----------- FORCE LOGIN ON ROOT (SAFE) ----------- */
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const tokenParam = params.get("token");
-
-    if (tokenParam) return; // 🔥 allow bootstrap
-
-    if (!token) {
-      const h = location.hostname;
-      let redirect: string | null = null;
-
-      if (h.endsWith(".localhost")) {
-        const port = location.port ? `:${location.port}` : "";
-        redirect = `${location.protocol}//localhost${port}/login`;
-      } else if (h.endsWith(".theacecard.co")) {
-        redirect = `${location.protocol}//theacecard.co/login`;
-      }
-
-      if (redirect) window.location.replace(redirect);
-    }
-  }, [token]);
-
   /* ---------------- ROLE ROUTING ---------------- */
   useEffect(() => {
-    if (!token || !role || !subdomain) return;
-
-    const ROOT = import.meta.env.VITE_ROOT_DOMAIN || "theacecard.co";
-    const host = location.hostname;
+    if (!token || !role) return;
 
     if (role === "manager" || role === "vendor_admin") {
-      if (host.includes("localhost")) {
-        const port = location.port ? `:${location.port}` : "";
-        const expected = `${subdomain}.localhost${port}`;
-
-        if (location.host !== expected) {
-          window.location.replace(
-            `${location.protocol}//${expected}/login?token=${token}&subdomain=${subdomain}`
-          );
-        } else {
-          navigate("/admin");
-        }
-        return;
-      }
-
-      const expected = `${subdomain}.${ROOT}`;
-      if (host !== expected) {
-        window.location.replace(
-          `https://${expected}/login?token=${token}&subdomain=${subdomain}`
-        );
-      } else {
-        navigate("/admin");
-      }
+      navigate("/admin");
     } else if (role === "super_admin") {
       navigate("/super");
     } else {
       navigate("/unauthorized");
     }
-  }, [token, role, subdomain, navigate]);
+  }, [token, role, navigate]);
 
   /* ---------------- UI ---------------- */
   return (
@@ -114,8 +44,12 @@ export default function LoginPage() {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-purple-100 px-4">
         <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8 space-y-6">
           <div className="text-center space-y-1">
-            <h2 className="text-2xl font-semibold text-gray-800">Welcome back</h2>
-            <p className="text-sm text-gray-500">Sign in to your account</p>
+            <h2 className="text-2xl font-semibold text-gray-800">
+              Welcome back
+            </h2>
+            <p className="text-sm text-gray-500">
+              Sign in to your account
+            </p>
           </div>
 
           {(error || localError) && (
@@ -126,23 +60,31 @@ export default function LoginPage() {
 
           <div className="space-y-4">
             <div className="space-y-1">
-              <label className="text-sm font-medium text-gray-700">Email address</label>
+              <label className="text-sm font-medium text-gray-700">
+                Email address
+              </label>
               <input
                 type="email"
                 value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                onChange={(e) =>
+                  setForm({ ...form, email: e.target.value })
+                }
                 placeholder="you@example.com"
                 className="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300"
               />
             </div>
 
             <div className="space-y-1">
-              <label className="text-sm font-medium text-gray-700">Password</label>
+              <label className="text-sm font-medium text-gray-700">
+                Password
+              </label>
               <div className="relative">
                 <input
                   type={show ? "text" : "password"}
                   value={form.password}
-                  onChange={(e) => setForm({ ...form, password: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, password: e.target.value })
+                  }
                   placeholder="••••••••"
                   className="w-full rounded-lg border px-3 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300"
                 />

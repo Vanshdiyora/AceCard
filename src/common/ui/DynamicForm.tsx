@@ -277,7 +277,9 @@ export default function DynamicForm({
                   loading={field.showLoader}
                   disabled={field.disabled}
                   placeholder={`Select ${field.label}`}
+                  hideValues={field.name === "product_ids"} // 👈 ONLY FOR PRODUCTS
                 />
+
                 {showError && (
                   <p className="text-xs text-red-500 mt-1">{error}</p>
                 )}

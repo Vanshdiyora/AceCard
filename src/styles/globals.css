@@ -49,3 +49,8 @@ body {
 * { -webkit-overflow-scrolling: touch; }
 
 
+
+.searchable-select-menu {
+  position: fixed !important;
+  z-index: 99999 !important;
+}

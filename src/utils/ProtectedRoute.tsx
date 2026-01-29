@@ -13,8 +13,7 @@ export default function ProtectedRoute({
   superOnly = false,
   adminOnly = false,
 }: ProtectedRouteProps) {
-  const { token, role, hydrated, loading } = useAppSelector((s) => s.auth);
-  console.log("ProtectedRoute auth state:", { token, role, hydrated, loading });
+  const { token, role, loading } = useAppSelector((s) => s.auth);
   
   if (loading) return null; // ⬅ wait for auth resolution
 

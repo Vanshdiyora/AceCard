@@ -1,5 +1,8 @@
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import BrandLoader from "./BrandLoader";
+
+/* ================= TYPES ================= */
 
 interface Option {
   label: string;
@@ -15,9 +18,12 @@ interface Props {
   disabled?: boolean;
   onScrollEnd?: () => void;
   loading?: boolean;
-  onSearch?: (value: string) => void; // ✅ ADD
+  onSearch?: (value: string) => void;
+  hideValues?: boolean; // 👈 ADD
 }
 
+
+/* ================= COMPONENT ================= */
 
 export default function SearchableSelect({
   value,
@@ -28,24 +34,36 @@ export default function SearchableSelect({
   disabled,
   onScrollEnd,
   loading,
-  onSearch
+  onSearch,
+  hideValues = false,
 }: Props) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const ref = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState({ top: 0, left: 0, width: 0 });
+
+  const triggerRef = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const filtered = options.filter((o) =>
     o.label.toLowerCase().includes(query.toLowerCase())
   );
 
+  /* ---------- CLOSE ON OUTSIDE CLICK ---------- */
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (!ref.current?.contains(e.target as Node)) setOpen(false);
+      const t = e.target as Node;
+      if (
+        !triggerRef.current?.contains(t) &&
+        !dropdownRef.current?.contains(t)
+      ) {
+        setOpen(false);
+      }
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
+  /* ---------- SELECT ---------- */
   const toggleValue = (val: any) => {
     if (!multiple) {
       onChange(val);
@@ -65,89 +83,112 @@ export default function SearchableSelect({
     multiple ? value?.includes(val) : value === val;
 
   return (
-    <div ref={ref} className="relative">
-      {/* INPUT */}
+    <>
+      {/* TRIGGER */}
       <div
-        onClick={() => !disabled && setOpen((s) => !s)}
+        ref={triggerRef}
+        onClick={() => {
+          if (disabled) return;
+          const r = triggerRef.current?.getBoundingClientRect();
+          if (r) {
+            setPos({
+              top: r.bottom + window.scrollY,
+              left: r.left + window.scrollX,
+              width: r.width,
+            });
+          }
+          setOpen((s) => !s);
+        }}
         className={`border rounded-lg px-3 py-2 text-sm cursor-pointer bg-white
           ${disabled ? "opacity-50" : ""}
         `}
       >
-        {multiple && Array.isArray(value) && value.length > 0 ? (
-          <div className="flex flex-wrap gap-1">
-            {options
-              .filter((o) => value.includes(o.value))
-              .map((o) => (
-                <span
-                  key={o.value}
-                  className="bg-purple-100 text-purple-700 px-2 py-0.5 rounded text-xs"
-                >
-                  {o.label}
-                </span>
-              ))}
-          </div>
-        ) : (
-          <span className="text-gray-600">
-            {options.find((o) => o.value === value)?.label ||
-              placeholder}
-          </span>
-        )}
+      {multiple && Array.isArray(value) && value.length > 0 && !hideValues ? (
+  <div className="flex flex-wrap gap-1">
+    {options
+      .filter((o) => value.includes(o.value))
+      .map((o) => (
+        <span
+          key={o.value}
+          className="bg-purple-100 text-purple-700 px-2 py-0.5 rounded text-xs"
+        >
+          {o.label}
+        </span>
+      ))}
+  </div>
+) : (
+  <span className="text-gray-600">
+    {placeholder}
+  </span>
+)}
+
       </div>
 
-      {/* DROPDOWN */}
-      {open && (
-        <div className="absolute z-50 mt-1 w-full bg-white border rounded-xl shadow-lg">
-          <input
-            autoFocus
-            placeholder="Search..."
-            value={query}
-            onChange={(e) => {
-  const v = e.target.value;
-  setQuery(v);        // keep local filtering
-  onSearch?.(v);      // 🔥 CALL API
-}}
-
-            className="w-full px-3 py-2 border-b outline-none text-sm"
-          />
-
+      {/* DROPDOWN (PORTAL) */}
+      {open &&
+        createPortal(
           <div
-            className="max-h-56 overflow-y-auto"
-            onScroll={(e) => {
-              const el = e.currentTarget;
-              if (
-                el.scrollTop + el.clientHeight >=
-                el.scrollHeight - 5
-              ) {
-                onScrollEnd?.();
-              }
+            ref={dropdownRef}
+            className="fixed z-[99999] bg-white border rounded-xl shadow-lg"
+            style={{
+              top: pos.top,
+              left: pos.left,
+              width: pos.width,
             }}
           >
-            {filtered.map((opt) => (
-              <div
-                key={opt.value}
-                onClick={() => toggleValue(opt.value)}
-                className={`px-3 py-2 text-sm cursor-pointer hover:bg-purple-50
-                  ${isSelected(opt.value) ? "bg-purple-100" : ""}
-                `}
-              >
-                {opt.label}
-              </div>
-            ))}
+            {/* SEARCH */}
+            <input
+              autoFocus
+              placeholder="Search..."
+              value={query}
+              onChange={(e) => {
+                const v = e.target.value;
+                setQuery(v);
+                onSearch?.(v);
+              }}
+              className="w-full px-3 py-2 border-b outline-none text-sm"
+            />
 
-            {loading && (
-              <div className="flex justify-center py-2">
-                <BrandLoader />
-              </div>
-            )}
+            {/* LIST */}
+            <div
+              className="max-h-64 overflow-y-auto custom-scrollbar"
+              onScroll={(e) => {
+                const el = e.currentTarget;
+                if (
+                  el.scrollTop + el.clientHeight >=
+                  el.scrollHeight - 5
+                ) {
+                  onScrollEnd?.();
+                }
+              }}
+            >
+              {filtered.map((opt) => (
+                <div
+                  key={opt.value}
+                  onClick={() => toggleValue(opt.value)}
+                  className={`px-3 py-2 text-sm cursor-pointer hover:bg-purple-50
+                    ${isSelected(opt.value) ? "bg-purple-100" : ""}
+                  `}
+                >
+                  {opt.label}
+                </div>
+              ))}
 
-            {!loading && filtered.length === 0 && (
-              <p className="text-sm text-gray-400 p-3">
-                No results
-              </p>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
+              {loading && (
+                <div className="flex justify-center py-2">
+                  <BrandLoader />
+                </div>
+              )}
+
+              {!loading && filtered.length === 0 && (
+                <p className="text-sm text-gray-400 p-3">
+                  No results
+                </p>
+              )}
+            </div>
+          </div>,
+          document.body
+        )}
+    </>
   );
 }

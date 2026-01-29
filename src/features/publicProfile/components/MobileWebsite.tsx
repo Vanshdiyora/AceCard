@@ -1,6 +1,5 @@
-import type { PublicProfileApi } from "../types";
 
-export default function MobileWebsite({ data }: { data: PublicProfileApi }) {
+export default function MobileWebsite({ data }: { data: any }) {
   const config = data?.configuration || {};
 
   const profile = config.profile || {};
@@ -68,7 +67,7 @@ export default function MobileWebsite({ data }: { data: PublicProfileApi }) {
       {/* SOCIAL */}
       {Array.isArray(social.items) && (
         <div className="px-4 mt-6 flex gap-3 justify-center">
-          {social.items.map((s) => (
+          {social.items.map((s: any) => (
             <a key={s.id} href={s.url} target="_blank" rel="noreferrer">
               {s.label}
             </a>

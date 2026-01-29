@@ -2,7 +2,6 @@ import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect, useMemo } from "react";
 import { ArrowLeft, Edit, Shield, UserX, CheckCircle2 } from "lucide-react";
 // import { useEffect as usePublicEffect } from "react";
-import { loadPublicProfile } from "../../publicProfile/slice";
 import PublicMobileWebsite from "../../publicProfile/components/MobileWebsite";
 import TeamMemberPublicProfileTab from "../components/details/publicProfile/TeamMemberPublicProfileTab";
 import { useAppDispatch, useAppSelector } from "../../../app/hooks";
@@ -67,16 +66,6 @@ export default function TeamMemberDetailsPage() {
   const { data: publicProfile } = useAppSelector(
     (s) => s.publicProfile
   );
-
-  useEffect(() => {
-    const handle =
-      member?.website ||
-      member?.email?.split("@")[0]; // fallback
-
-    if (handle) {
-      dispatch(loadPublicProfile(handle));
-    }
-  }, [member?.website, member?.email, dispatch]);
 
   const showResult = (success: boolean, message: string) => {
     setResultSuccess(success);
@@ -195,7 +184,7 @@ export default function TeamMemberDetailsPage() {
   return (
     <div className="p-6 grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-6 h-[calc(100vh-80px)]">
       {/* LEFT */}
-      <div className="overflow-y-auto pr-2">
+      <div className="overflow-y-auto">
         <button
           onClick={() => navigate(-1)}
           className="flex items-center gap-2 text-sm text-gray-500 hover:text-black mb-6"
@@ -278,10 +267,7 @@ export default function TeamMemberDetailsPage() {
           <TeamMemberTotalLeadsTab managerId={member.id} />
         )}
         {activeTab === "public-profile" && (
-          <TeamMemberPublicProfileTab
-            member={member}
-            publicProfile={publicProfile}
-          />
+          <TeamMemberPublicProfileTab />
         )}
 
       </div>

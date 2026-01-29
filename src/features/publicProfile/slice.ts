@@ -1,12 +1,11 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import { fetchPublicCard, updatePublicProfile } from "./services/publicProfile.api";
+import { fetchPublicCard, updatePublicProfile, fetchMyProfile } from "./services/publicProfile.api";
 import type { PublicProfileApi } from "./types";
 
 interface State {
   data: PublicProfileApi | null;
   loading: boolean;
   saving: boolean;
-  error?: string;
 }
 
 const initialState: State = {
@@ -19,6 +18,14 @@ export const loadPublicProfile = createAsyncThunk(
   "publicProfile/load",
   async (handle: string) => {
     const res = await fetchPublicCard(handle);
+    return res.data;
+  }
+);
+
+export const loadMyProfile = createAsyncThunk(
+  "publicProfile/loadMy",
+  async () => {
+    const res = await fetchMyProfile();
     return res.data;
   }
 );
@@ -36,7 +43,7 @@ const publicProfileSlice = createSlice({
   initialState,
   reducers: {
     previewPublicProfile(state, action) {
-      if (state.data?.configuration) {
+      if (state.data) {
         state.data.configuration = action.payload;
       }
     },
@@ -53,7 +60,6 @@ const publicProfileSlice = createSlice({
       .addCase(loadPublicProfile.rejected, (s) => {
         s.loading = false;
       })
-
       .addCase(savePublicProfile.pending, (s) => {
         s.saving = true;
       })
@@ -63,7 +69,18 @@ const publicProfileSlice = createSlice({
       })
       .addCase(savePublicProfile.rejected, (s) => {
         s.saving = false;
+      })
+      .addCase(loadMyProfile.pending, (s) => {
+        s.loading = true;
+      })
+      .addCase(loadMyProfile.fulfilled, (s, a) => {
+        s.loading = false;
+        s.data = a.payload;
+      })
+      .addCase(loadMyProfile.rejected, (s) => {
+        s.loading = false;
       });
+
   },
 });
 
