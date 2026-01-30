@@ -230,9 +230,6 @@ export default function TeamPage() {
             ? m.assigned_manager?.name ?? "NA"
             : "NA",
         Leads: m.total_leads ?? m.leads ?? 0,
-        "Last Active": m.last_active_at
-          ? new Date(m.last_active_at).toLocaleString()
-          : "—",
       }));
 
       downloadCSV(csvData, "team_members_export.csv");

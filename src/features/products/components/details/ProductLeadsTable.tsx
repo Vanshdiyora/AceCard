@@ -73,11 +73,11 @@ export default function ProductLeadsTable({ productId }: Props) {
 
   return (
     <div className="rounded-2xl border">
-      <div className="py-4 border-b px-6">
+      <div className="py-4 border-b">
         <h3 className="text-base font-semibold">Associated Leads</h3>
       </div>
 
-      <div className="px-4">
+      <div className="">
         <DataTable<LeadRow>
           columns={columns}
           data={rows}
