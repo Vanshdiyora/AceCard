@@ -275,17 +275,15 @@ export default function TeamMemberDetailsPage() {
       {/* RIGHT */}
       <div className="hidden lg:flex justify-center items-center h-full overflow-hidden">
         <div className="w-[340px] max-h-full aspect-[9/19.5] bg-black rounded-[2.5rem] p-2">
-          <div className="w-[340px] max-h-full aspect-[9/19.5] bg-black rounded-[2.5rem] p-2">
-            <div className="h-full bg-white rounded-[2rem] overflow-hidden flex flex-col">
-              <div className="flex-1 overflow-y-auto overscroll-contain">
-                {publicProfile ? (
-                  <PublicMobileWebsite data={publicProfile} />
-                ) : (
-                  <div className="h-full flex items-center justify-center text-sm text-gray-400">
-                    No public profile yet
-                  </div>
-                )}
-              </div>
+          <div className="h-full bg-white rounded-[2rem] overflow-hidden flex flex-col">
+            <div className="flex-1 overflow-y-auto overscroll-contain">
+              {publicProfile ? (
+                <PublicMobileWebsite data={publicProfile} />
+              ) : (
+                <div className="h-full flex items-center justify-center text-sm text-gray-400">
+                  No public profile yet
+                </div>
+              )}
             </div>
           </div>
 

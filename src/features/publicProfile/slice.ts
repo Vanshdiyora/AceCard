@@ -1,23 +1,35 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import { fetchPublicCard, updatePublicProfile, fetchMyProfile } from "./services/publicProfile.api";
+import { fetchPublicCard, updatePublicProfile, fetchMyProfile, sendVisitorConnect } from "./services/publicProfile.api";
 import type { PublicProfileApi } from "./types";
 
 interface State {
   data: PublicProfileApi | null;
   loading: boolean;
   saving: boolean;
+  connecting: boolean;   // 👈
 }
 
 const initialState: State = {
   data: null,
   loading: false,
   saving: false,
+  connecting: false,
 };
 
 export const loadPublicProfile = createAsyncThunk(
   "publicProfile/load",
   async (handle: string) => {
     const res = await fetchPublicCard(handle);
+    return res.data;
+  }
+);
+
+export const sendConnectRequest = createAsyncThunk(
+  "publicProfile/connect",
+  async (
+    { handle, payload }: { handle: string; payload: any }
+  ) => {
+    const res = await sendVisitorConnect(handle, payload);
     return res.data;
   }
 );
@@ -65,7 +77,11 @@ const publicProfileSlice = createSlice({
       })
       .addCase(savePublicProfile.fulfilled, (s, a) => {
         s.saving = false;
-        s.data = a.payload;
+
+        if (s.data) {
+          // merge instead of replace
+          s.data.configuration = a.payload.configuration;
+        }
       })
       .addCase(savePublicProfile.rejected, (s) => {
         s.saving = false;
@@ -79,7 +95,17 @@ const publicProfileSlice = createSlice({
       })
       .addCase(loadMyProfile.rejected, (s) => {
         s.loading = false;
-      });
+      })
+      .addCase(sendConnectRequest.pending, (s) => {
+  s.connecting = true;
+})
+.addCase(sendConnectRequest.fulfilled, (s) => {
+  s.connecting = false;
+})
+.addCase(sendConnectRequest.rejected, (s) => {
+  s.connecting = false;
+});
+
 
   },
 });

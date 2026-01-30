@@ -11,6 +11,10 @@ export const updatePublicProfile = (config: any) =>
     configuration: config,
   });
 
+export const sendVisitorConnect = (handle: string, payload: any) => {
+  return axiosClient.post(`/card/${handle}/connect`, payload);
+};
+
 export const uploadImage = (file: File) => {
   const form = new FormData();
   form.append("file", file);

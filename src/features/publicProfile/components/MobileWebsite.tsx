@@ -1,117 +1,285 @@
+import {
+  Instagram,
+  Linkedin,
+  Youtube,
+  Twitter,
+  Facebook,
+  Link2,
+  FileText,
+} from "lucide-react";
+
+/* ================= HELPERS ================= */
+
+const getYouTubeId = (url: string) => {
+  const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&]+)/);
+  return match?.[1];
+};
+
+const sortByRank = (arr: any[] = []) =>
+  [...arr]
+    .filter(i => i?.enabled !== false)
+    .sort((a, b) => (a.rank ?? 0) - (b.rank ?? 0));
+
+/* ================= COMPONENT ================= */
 
 export default function MobileWebsite({ data }: { data: any }) {
   const config = data?.configuration || {};
 
-  const profile = config.profile || {};
-  const theme = config.theme || {};
-  const banner = config.banner || {};
-  const meeting = config.meeting || {};
-  const social = config.social_links || {};
-  const youtube = config.youtube || {};
-  const links = config.links_files || {};
-  // const products = config.products || {};
+  const {
+    profile = {},
+    theme = {},
+    banner = {},
+    meeting = {},
+    social_links = {},
+    youtube = {},
+    links_files = {},
+    products = {},
+    sections = [],
+  } = config;
+
+  const orderedSections = sortByRank(sections);
+
+  const renderSection = (type: string) => {
+    switch (type) {
+      case "profile":
+        return <Profile profile={profile} theme={theme} user={data} />;
+
+      case "about":
+        return profile.description ? (
+          <Section title="About" theme={theme}>
+            <p style={{ color: theme.text_color }}>{profile.description}</p>
+          </Section>
+        ) : null;
+
+      case "social_links":
+        return <Social items={sortByRank(social_links.items)} theme={theme} />;
+
+      case "products":
+        return <Products items={sortByRank(products.items)} theme={theme} />;
+
+      case "youtube":
+        return <YouTube items={sortByRank(youtube.items)} theme={theme} />;
+
+      case "links_files":
+        return <Links items={sortByRank(links_files.items)} theme={theme} />;
+
+      case "meeting":
+        return meeting?.enabled ? <MeetingCTA meeting={meeting} theme={theme} /> : null;
+
+      case "banner":
+        return banner.enabled && banner.image_url ? (
+          <Banner image={banner.image_url} />
+        ) : null;
+
+      default:
+        return null;
+    }
+  };
 
   return (
     <div
       className="min-h-screen"
-      style={{ backgroundColor: theme.background_color || "#F3F4F6" }}
+      style={{ backgroundColor: theme.background_color || "#000" }}
     >
-      {/* COVER */}
-      <div className="h-52 relative">
-        {profile.cover_url ? (
-          <img
-            src={profile.cover_url}
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <div className="w-full h-full bg-gray-300" />
+      <div className="space-y-6 pb-6">
+        {orderedSections.map(s =>
+          s.enabled ? <div key={s.id}>{renderSection(s.type)}</div> : null
         )}
       </div>
+    </div>
+  );
+}
 
-      {/* PROFILE CARD */}
-      <div
-        className="mx-4 -mt-16 rounded-2xl shadow p-4"
-        style={{ backgroundColor: theme.card_color || "#FFFFFF" }}
-      >
-        <img
-          src={
-            profile.avatar_url ||
-            `https://ui-avatars.com/api/?name=${profile.name || "User"}`
-          }
-          className="w-20 h-20 rounded-xl -mt-10 border-4 border-white"
-        />
+/* ================= UI BLOCKS ================= */
 
-        <h2 className="mt-2 font-semibold text-gray-900">
-          {profile.name || ""}
-        </h2>
+function Section({ title, children, theme }: any) {
+  return (
+    <div className="px-4">
+      <h3 className="text-sm font-semibold mb-2" style={{ color: theme.text_color }}>
+        {title}
+      </h3>
+      {children}
+    </div>
+  );
+}
 
-        <p className="text-sm text-gray-500">{profile.role || ""}</p>
-        <p className="text-xs mt-2 text-gray-600">
-          {profile.description || ""}
-        </p>
+/* ================= PROFILE ================= */
+
+const formatRole = (role?: string) => {
+  switch (role) {
+    case "vendor_admin":
+      return "Vendor Admin";
+    case "sales_rep":
+      return "Sales Person";
+    case "manager":
+      return "Manager";
+    default:
+      return role || "";
+  }
+};
+
+function Profile({ profile, theme, user }: any) {
+  return (
+    <div>
+      <div className="relative h-[220px]">
+        <img src={profile.cover_url} className="w-full h-full object-cover" />
+        <div className="absolute inset-0 bg-black/50" />
+
+        <div className="absolute top-4 left-4 text-sm font-semibold" style={{ color: theme.accent_color }}>
+          {user.vendor_name}
+        </div>
+
+        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex flex-col items-center">
+          <div className="w-24 h-24 rounded-full bg-white shadow-lg flex items-center justify-center">
+            <img src={profile.avatar_url} className="w-20 h-20 rounded-full object-cover" />
+          </div>
+
+          <h2 className="mt-2 font-semibold" style={{ color: theme.text_color }}>
+            {user.name}
+          </h2>
+          <p className="text-xs" style={{ color: theme.accent_color }}>
+            {formatRole(user.job_title || user.role)}
+          </p>
+        </div>
       </div>
 
-      {/* MEETING */}
-      {meeting.enabled && meeting.meeting_url && (
-        <div className="px-4 mt-6">
-          <a
-            href={meeting.meeting_url}
-            className="block w-full text-center py-3 rounded-lg text-white"
-            style={{ backgroundColor: theme.primary_color || "#F97316" }}
+      <div className="grid grid-cols-2 gap-3 mt-4 px-4">
+        <button
+          className="h-11 rounded-xl border text-sm"
+          style={{ color: theme.text_color, borderColor: theme.accent_color }}
+        >
+          Save Contact
+        </button>
+
+        <button
+          className="h-11 rounded-xl text-sm font-medium"
+          style={{ backgroundColor: theme.card_color, color: theme.primary_color }}
+        >
+          Connect
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* ================= MEETING ================= */
+
+function MeetingCTA({ meeting, theme }: any) {
+  return (
+    <div className="px-4">
+      <a
+        href={meeting.meeting_url}
+        className="block text-center py-4 rounded-xl text-sm font-semibold shadow-md"
+        style={{ backgroundColor: theme.primary_color, color: "#fff" }}
+      >
+        {meeting.button_text || "BOOK A MEETING NOW!"}
+      </a>
+    </div>
+  );
+}
+
+/* ================= PRODUCTS ================= */
+
+function Products({ items, theme }: any) {
+  if (!items?.length) return null;
+
+  return (
+    <Section title="Products" theme={theme}>
+      <div className="flex gap-4 overflow-x-auto">
+        {items.map((p: any) => (
+          <div
+            key={p.id}
+            className="min-w-[220px] h-52 rounded-2xl relative overflow-hidden shadow-md"
+            style={{ backgroundColor: theme.card_color }}
           >
-            {meeting.button_text || "Book Meeting"}
-          </a>
-        </div>
-      )}
-
-      {/* SOCIAL */}
-      {Array.isArray(social.items) && (
-        <div className="px-4 mt-6 flex gap-3 justify-center">
-          {social.items.map((s: any) => (
-            <a key={s.id} href={s.url} target="_blank" rel="noreferrer">
-              {s.label}
-            </a>
-          ))}
-        </div>
-      )}
-
-      {/* BANNER */}
-      {banner.enabled && banner.image_url && (
-        <div className="px-4 mt-6">
-          <img
-            src={banner.image_url}
-            className="rounded-xl w-full"
-          />
-        </div>
-      )}
-
-      {/* YOUTUBE */}
-      {Array.isArray(youtube.items) &&
-        youtube.items.map((v: any) => (
-          <div key={v.id} className="px-4 mt-6">
-            <a href={v.url} target="_blank" rel="noreferrer">
-              <img
-                src={`https://img.youtube.com/vi/${v.id}/hqdefault.jpg`}
-                className="rounded-xl"
-              />
-            </a>
+            <img src={p.image_url || ""} className="w-full h-full object-cover" />
+            <div className="absolute inset-0 bg-black/50" />
+            <div className="absolute bottom-3 left-3 text-white">
+              <p className="text-sm font-semibold">{p.name}</p>
+              <p className="text-xs">₹{p.price}</p>
+            </div>
           </div>
         ))}
+      </div>
+    </Section>
+  );
+}
 
-      {/* LINKS */}
-      {Array.isArray(links.items) && (
-        <div className="px-4 mt-6">
-          {links.items.map((l: any) => (
-            <a
-              key={l.id}
-              href={l.url}
-              className="block py-2 text-sm text-blue-600"
+/* ================= YOUTUBE ================= */
+
+function YouTube({ items, theme }: any) {
+  if (!items?.length) return null;
+
+  return (
+    <Section title="Videos" theme={theme}>
+      {items.map((v: any) => {
+        const id = getYouTubeId(v.url);
+        return (
+          <a key={v.id} href={v.url} className="block rounded-2xl overflow-hidden">
+            <img src={`https://img.youtube.com/vi/${id}/hqdefault.jpg`} className="w-full h-40 object-cover" />
+          </a>
+        );
+      })}
+    </Section>
+  );
+}
+
+/* ================= SOCIAL ================= */
+
+function Social({ items, theme }: any) {
+  return (
+    <div className="flex justify-center gap-3">
+      {items.map((s: any) => (
+        <a
+          key={s.id}
+          href={s.url}
+          className="h-12 w-12 rounded-xl flex items-center justify-center"
+          style={{ backgroundColor: theme.card_color, color: theme.primary_color }}
+        >
+          {s.label === "Instagram" && <Instagram />}
+          {s.label === "LinkedIn" && <Linkedin />}
+          {s.label === "YouTube" && <Youtube />}
+          {s.label === "Twitter" && <Twitter />}
+          {s.label === "Facebook" && <Facebook />}
+        </a>
+      ))}
+    </div>
+  );
+}
+
+/* ================= LINKS ================= */
+
+function Links({ items, theme }: any) {
+  if (!items?.length) return null;
+
+  return (
+    <Section title="Links & Files" theme={theme}>
+      <div className="flex flex-col gap-4">
+        {items.map((l: any) => (
+          <a key={l.id} href={l.url || l.file_url} className="flex items-center gap-3">
+            <div
+              className="h-9 w-9 rounded-full flex items-center justify-center"
+              style={{ backgroundColor: theme.card_color, color: theme.primary_color }}
             >
+              {l.type === "file" ? <FileText size={16} /> : <Link2 size={16} />}
+            </div>
+
+            <p className="text-sm font-semibold" style={{ color: theme.text_color }}>
               {l.title}
-            </a>
-          ))}
-        </div>
-      )}
+            </p>
+          </a>
+        ))}
+      </div>
+    </Section>
+  );
+}
+
+/* ================= BANNER ================= */
+
+function Banner({ image }: any) {
+  return (
+    <div className="px-4">
+      <img src={image} className="w-full h-28 rounded-2xl object-cover" />
     </div>
   );
 }
