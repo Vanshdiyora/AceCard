@@ -84,57 +84,65 @@ export default function SearchableSelect({
   return (
     <>
       {/* ================= TRIGGER ================= */}
-      <div
-        ref={triggerRef}
-        onClick={() => {
-          if (disabled) return;
-          const r = triggerRef.current?.getBoundingClientRect();
-          if (r) {
-            setPos({
-              top: r.bottom + window.scrollY,
-              left: r.left + window.scrollX,
-              width: r.width,
-            });
-          }
-          setOpen((s) => !s);
-        }}
-        className={`border rounded-lg px-3 py-2 text-sm cursor-pointer bg-white
-          min-h-[42px] flex flex-col justify-center
-          ${disabled ? "opacity-50" : ""}
-        `}
-      >
-        {/* CHIP ROW (RESERVED HEIGHT) */}
-        <div className="flex flex-wrap gap-1 min-h-[20px] items-center">
-          {multiple &&
-            Array.isArray(value) &&
-            value.length > 0 &&
-            !hideValues &&
-            options
-              .filter((o) => value.includes(o.value))
-              .map((o) => (
-                <span
-                  key={o.value}
-                  className="bg-purple-100 text-purple-700 px-2 py-0.5 rounded text-xs"
-                >
-                  {o.label}
-                </span>
-              ))}
-        </div>
-
-        {/* SINGLE SELECT VALUE */}
-        {!multiple && value != null && !hideValues && (
-          <span className="text-gray-800">
-            {options.find((o) => o.value === value)?.label || placeholder}
+    <div
+  ref={triggerRef}
+  onClick={() => {
+    if (disabled) return;
+    const r = triggerRef.current?.getBoundingClientRect();
+    if (r) {
+      setPos({
+        top: r.bottom + window.scrollY,
+        left: r.left + window.scrollX,
+        width: r.width,
+      });
+    }
+    setOpen((s) => !s);
+  }}
+  className={`border rounded-lg px-3 py-2 text-sm cursor-pointer bg-white
+    min-h-[44px] flex items-center
+    ${disabled ? "opacity-50" : ""}
+  `}
+>
+  {/* FIXED CONTENT ROW */}
+  <div className="flex items-center w-full min-h-[20px]">
+    {/* MULTI CHIPS */}
+    {multiple &&
+      Array.isArray(value) &&
+      value.length > 0 &&
+      !hideValues &&
+      options
+        .filter((o) => value.includes(o.value))
+        .map((o) => (
+          <span
+            key={o.value}
+            className="bg-purple-100 text-purple-700 px-2 py-0.5 rounded text-xs mr-1"
+          >
+            {o.label}
           </span>
-        )}
+        ))}
 
-        {/* PLACEHOLDER (ALWAYS when hideValues=true) */}
-        {(
-          hideValues ||
-          (multiple && (!Array.isArray(value) || value.length === 0)) ||
-          (!multiple && value == null)
-        ) && <span className="text-gray-600">{placeholder}</span>}
-      </div>
+    {/* SINGLE VALUE */}
+    {!multiple && value != null && !hideValues && (
+      <span className="text-gray-800 truncate">
+        {options.find((o) => o.value === value)?.label || placeholder}
+      </span>
+    )}
+
+    {/* PLACEHOLDER (ALWAYS RENDERED, HIDDEN VIA OPACITY) */}
+    <span
+      className={`text-gray-600 ${
+        hideValues ||
+        (multiple && (!Array.isArray(value) || value.length === 0)) ||
+        (!multiple && value == null)
+          ? "opacity-100"
+          : "opacity-0"
+      }`}
+    >
+      {placeholder}
+    </span>
+  </div>
+</div>
+
 
       {/* ================= DROPDOWN ================= */}
       {open &&

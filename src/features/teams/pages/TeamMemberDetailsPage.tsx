@@ -30,7 +30,7 @@ export default function TeamMemberDetailsPage() {
   const location = useLocation();
   const dispatch = useAppDispatch();
   const phoneScrollRef = useRef<HTMLDivElement>(null);
-const [livePreviewConfig, setLivePreviewConfig] = useState<any | null>(null);
+  const [livePreviewConfig, setLivePreviewConfig] = useState<any | null>(null);
 
   const auth = useAppSelector((s) => s.auth);
   const { members, loading } = useAppSelector((s) => s.team);
@@ -133,19 +133,19 @@ const [livePreviewConfig, setLivePreviewConfig] = useState<any | null>(null);
     lock ? lockScroll() : unlockScroll();
     return unlockScroll;
   }, [editOpen, permOpen, confirmOpen, resultOpen]);
-  
-const mergedProfile = useMemo(() => {
-  if (!publicProfile) return null;
-  if (!livePreviewConfig) return publicProfile;
 
-  return {
-    ...publicProfile,
-    configuration: {
-      ...publicProfile.configuration,
-      ...livePreviewConfig,
-    },
-  };
-}, [publicProfile, livePreviewConfig]);
+  const mergedProfile = useMemo(() => {
+    if (!publicProfile) return null;
+    if (!livePreviewConfig) return publicProfile;
+
+    return {
+      ...publicProfile,
+      configuration: {
+        ...publicProfile.configuration,
+        ...livePreviewConfig,
+      },
+    };
+  }, [publicProfile, livePreviewConfig]);
 
   /* ---------------- LOADING STATES ---------------- */
 
@@ -292,11 +292,10 @@ const mergedProfile = useMemo(() => {
         )}
         {activeTab === "public-profile" && (
           <div className="mt-6">
-         <TeamMemberPublicProfileTab
-  key={member.username}
-  onLiveChange={(cfg) => setLivePreviewConfig(cfg)}
-/>
-
+            <TeamMemberPublicProfileTab
+              key={member.username}
+              onLiveChange={(cfg) => setLivePreviewConfig(cfg)}
+            />
           </div>
         )}
 
@@ -310,12 +309,12 @@ const mergedProfile = useMemo(() => {
               ref={phoneScrollRef}
               className="flex-1 overflow-y-auto overscroll-contain"
             >
-             {mergedProfile ? (
-  <PublicMobileWebsite
-    data={mergedProfile}
-    scrollRef={phoneScrollRef}
-  />
-) : (
+              {mergedProfile ? (
+                <PublicMobileWebsite
+                  data={mergedProfile}
+                  scrollRef={phoneScrollRef}
+                />
+              ) : (
 
                 <div className="h-full flex items-center justify-center text-sm text-gray-400">
                   No public profile yet
