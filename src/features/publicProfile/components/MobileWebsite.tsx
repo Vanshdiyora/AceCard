@@ -182,12 +182,16 @@ function Profile({ profile, theme, user, onConnect }: any) {
       </div>
 
       <div className="grid grid-cols-2 gap-3 mt-4 px-4">
-        <button
-          className="h-11 rounded-xl border text-sm"
-          style={{ color: theme.text_color, borderColor: theme.accent_color }}
-        >
-          Save Contact
-        </button>
+       <button
+  type="button"
+  onClick={() => openNativeContact(user)}
+  className="h-11 rounded-xl border text-sm"
+  style={{ color: theme.text_color, borderColor: theme.accent_color }}
+>
+  Save Contact
+</button>
+
+
 
         <button
           type="button"   // 👈 IMPORTANT
@@ -329,4 +333,31 @@ function Banner({ image }: any) {
       <img src={image} className="w-full h-28 rounded-2xl object-cover" />
     </div>
   );
+}
+
+function openNativeContact(user: any) {
+  const name = encodeURIComponent(user.name || "");
+  const phone = encodeURIComponent(user.phone || "");
+  const email = encodeURIComponent(user.email || "");
+  // const company = encodeURIComponent(user.vendor_name || "");
+  // const title = encodeURIComponent(user.job_title || user.role || "");
+
+  // 📱 Android intent
+  if (/Android/i.test(navigator.userAgent)) {
+    window.location.href =
+      `intent://contacts/people?name=${name}&phone=${phone}&email=${email}` +
+      `#Intent;scheme=content;action=android.intent.action.INSERT;` +
+      `type=vnd.android.cursor.dir/contact;end`;
+    return;
+  }
+
+  // 🍎 iOS (Safari)
+  if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+    window.location.href =
+      `contacts://new?name=${name}&phone=${phone}&email=${email}`;
+    return;
+  }
+
+  // 💻 Fallback
+  alert("Save contact is supported only on mobile devices.");
 }
