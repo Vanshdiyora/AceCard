@@ -17,6 +17,16 @@ export const updatePublicProfile = (config: any) =>
     configuration: config,
   });
 
+  export const updatePublicProfileByUsername = (
+  username: string,
+  config: any
+) => {
+  return axiosClient.put(`/profile/edit/${username}`, {
+    configuration: config,
+  });
+};
+
+
 export const sendVisitorConnect = (handle: string, payload: any) => {
   return axiosClient.post(`/card/${handle}/connect`, payload);
 };

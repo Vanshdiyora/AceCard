@@ -1,5 +1,5 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import { fetchPublicCard, updatePublicProfile, fetchMyProfile, sendVisitorConnect } from "./services/publicProfile.api";
+import { fetchPublicCard, updatePublicProfile, updatePublicProfileByUsername, fetchMyProfile, sendVisitorConnect } from "./services/publicProfile.api";
 import type { PublicProfileApi } from "./types";
 
 interface State {
@@ -26,6 +26,19 @@ export const loadPublicProfile = createAsyncThunk(
     type?: string;
   }) => {
     const res = await fetchPublicCard(handle, type);
+    return res.data;
+  }
+);
+export const savePublicProfileByUsername = createAsyncThunk(
+  "publicProfile/saveByUsername",
+  async ({
+    username,
+    config,
+  }: {
+    username: string;
+    config: any;
+  }) => {
+    const res = await updatePublicProfileByUsername(username, config);
     return res.data;
   }
 );
@@ -103,14 +116,28 @@ const publicProfileSlice = createSlice({
         s.loading = false;
       })
       .addCase(sendConnectRequest.pending, (s) => {
-  s.connecting = true;
-})
-.addCase(sendConnectRequest.fulfilled, (s) => {
-  s.connecting = false;
-})
-.addCase(sendConnectRequest.rejected, (s) => {
-  s.connecting = false;
-});
+        s.connecting = true;
+      })
+      .addCase(sendConnectRequest.fulfilled, (s) => {
+        s.connecting = false;
+      })
+      .addCase(sendConnectRequest.rejected, (s) => {
+        s.connecting = false;
+      })
+      .addCase(savePublicProfileByUsername.pending, (s) => {
+        s.saving = true;
+      })
+      .addCase(savePublicProfileByUsername.fulfilled, (s, a) => {
+        s.saving = false;
+
+        if (s.data) {
+          s.data.configuration = a.payload.configuration;
+        }
+      })
+      .addCase(savePublicProfileByUsername.rejected, (s) => {
+        s.saving = false;
+      });
+
 
 
   },

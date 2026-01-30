@@ -26,15 +26,12 @@ export default function SettingsPage() {
           </div>
 
           {/* Content */}
-          <div className="flex-1 rounded-3xl">
+          <div className="flex-1 rounded-3xl overflow-visible">
             {active === "account" && <AccountSettings />}
             {active === "crm" && <CRMIntegration />}
             {active === "lead" && <LeadConfiguration />}
-            {/* {active === "campaign" && <CampaignSettings />} */}
-            {/* {active === "notifications" && <NotificationPreferences />} */}
             {active === "profile" && <PublicProfileSettings />}
             {active === "questions" && <SuggestedQuestions />}
-            {/* {active === "vendor" && <VendorInformation />} */}
           </div>
         </div>
       </div>

@@ -31,8 +31,8 @@ export default function EditAccountModal({ open, onClose }: Props) {
       email: data.email ?? "",
       phone: data.phone ?? "",
       role: data.role ?? "",
-      avatar_url: data.avatar_url ?? "",
-      bio: data.bio ?? "",
+      // avatar_url: data.avatar_url ?? "",
+      // bio: data.bio ?? "",
       company_description: data.company_description ?? "",
       address: data.address ?? "",
     });
@@ -148,17 +148,17 @@ const fields: FieldConfig[] = [
     type: "text" as const,
     disabled: true, // usually not editable
   },
-  {
-    name: "avatar_url",
-    label: "Avatar URL",
-    type: "text" as const,
-  },
-  {
-    name: "bio",
-    label: "Bio",
-    type: "textarea" as const,
-    maxLength: 500,
-  },
+  // {
+  //   name: "avatar_url",
+  //   label: "Avatar URL",
+  //   type: "text" as const,
+  // },
+  // {
+  //   name: "bio",
+  //   label: "Bio",
+  //   type: "textarea" as const,
+  //   maxLength: 500,
+  // },
   {
     name: "company_description",
     label: "Company Description",

@@ -42,16 +42,7 @@ export default function TeamMemberTotalLeadsTab({ managerId }: { managerId: numb
       accessor: "deal_amount",
       align: "right",
       render: row => `₹${row.deal_amount?.toLocaleString() ?? "-"}`,
-    },
-    {
-      header: "Last Activity",
-      accessor: "last_interaction_at",
-      align: "right",
-      render: row =>
-        row.last_interaction_at
-          ? new Date(row.last_interaction_at).toLocaleDateString()
-          : "-",
-    },
+    }
   ];
 
   return (

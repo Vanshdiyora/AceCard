@@ -16,5 +16,5 @@ export default function PublicProfileSettings() {
     }
   }, [username, dispatch]);
 
-  return <TeamMemberPublicProfileTab key={username} />;
+  return <TeamMemberPublicProfileTab key={username} useSelfApi={true} />;
 }

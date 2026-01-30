@@ -32,8 +32,8 @@ export default function AccountSettings() {
         {renderView("Email", data.email)}
         {renderView("Phone", data.phone)}
         {renderView("Role", data.role)}
-        {renderView("Avatar URL", data.avatar_url)}
-        {renderView("Bio", data.bio)}
+        {/* {renderView("Avatar URL", data.avatar_url)} */}
+        {/* {renderView("Bio", data.bio)} */}
         {renderView("Company Description", data.company_description)}
         {renderView("Address", data.address)}
 

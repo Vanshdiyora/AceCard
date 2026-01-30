@@ -39,22 +39,13 @@ export default function TeamMemberLeadsTab({ memberId }: { memberId: number }) {
   const columns: Column<LeadRow>[] = [
     { header: "Lead", accessor: "lead_name" },
     { header: "Company", accessor: "company" },
-    { header: "Stage", accessor: "stage", align: "center", width: "120px" },
+    { header: "Stage", accessor: "stage", align: "right", width: "120px" },
     {
       header: "Deal",
       accessor: "deal_amount",
       align: "right",
       render: (row) => `₹${row.deal_amount?.toLocaleString() ?? "-"}`,
-    },
-    {
-      header: "Last Activity",
-      accessor: "last_interaction_at",
-      align: "right",
-      render: (row) =>
-        row.last_interaction_at
-          ? new Date(row.last_interaction_at).toLocaleDateString()
-          : "-",
-    },
+    }
   ];
 
   return (

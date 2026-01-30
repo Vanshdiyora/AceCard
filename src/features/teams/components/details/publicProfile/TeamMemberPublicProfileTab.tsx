@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useAppDispatch, useAppSelector } from "../../../../../app/hooks";
 import { uploadImage } from "../../../../publicProfile/services/publicProfile.api";
 import YoutubeSection from "./sections/YoutubeSection";
 import {
   savePublicProfile,
+  savePublicProfileByUsername,
 } from "../../../../publicProfile/slice";
 import ProductsReorder from "./sections/ProductsReorder";
 import LinksFilesSection from "./sections/LinksFilesSection";
@@ -110,9 +111,12 @@ interface PublicProfileConfig {
 
 export default function TeamMemberPublicProfileTab({
   onLiveChange,
+  useSelfApi = false,   // 👈 default = admin mode
 }: {
   onLiveChange?: (cfg: any) => void;
+  useSelfApi?: boolean;
 }) {
+
   const dispatch = useAppDispatch();
 
   const { data: publicProfile, loading } = useAppSelector(
@@ -250,28 +254,39 @@ export default function TeamMemberPublicProfileTab({
     onLiveChange?.(next); // 👈 push to preview
   };
 
-  const save = () => {
-    if (!config) return;
+const save = () => {
+  if (!config) return;
 
+  const payload = {
+    profile: config.profile,
+    theme: config.theme,
+    banner: config.banner,
+    meeting: config.meeting,
+    social_links: { items: config.social_links.items },
+    products: {
+      locked: config.products.locked,
+      items: config.products.items,
+    },
+    youtube: { items: config.youtube.items },
+    links_files: { items: config.links_files.items },
+    sections: config.sections,
+  };
+
+  // 👇 LAST MOMENT DECISION
+  if (useSelfApi) {
+    // old endpoint
+    dispatch(savePublicProfile({ config: payload }));
+  } else {
+    // new endpoint (admin)
     dispatch(
-      savePublicProfile({
-        config: {
-          profile: config.profile,
-          theme: config.theme,
-          banner: config.banner,
-          meeting: config.meeting,
-          social_links: { items: config.social_links.items },
-          products: {
-            locked: config.products.locked,
-            items: config.products.items,
-          },
-          youtube: { items: config.youtube.items },
-          links_files: { items: config.links_files.items },
-          sections: config.sections,
-        },
+      savePublicProfileByUsername({
+        username: publicProfile!.username!,
+        config: payload,
       })
     );
-  };
+  }
+};
+
 
 
   if (loading || !config)
@@ -584,7 +599,7 @@ function Card({
   scroll?: boolean;
 }) {
   return (
-    <div className="relative z-0 rounded-2xl bg-white/70 backdrop-blur p-6 space-y-4">
+   <div className="relative z-0 rounded-2xl bg-white/70 p-6 space-y-4">
       <h3 className="font-semibold text-lg">{title}</h3>
       <p className="text-sm text-gray-500">{desc}</p>
 
@@ -656,19 +671,59 @@ function ColorPickerField({
   label: string;
   value: string;
   onChange: (v: string) => void;
-  disabled?: boolean;   // 👈 ADD THIS
+  disabled?: boolean;
 }) {
-
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState({ top: 0, left: 0 });
+  const btnRef = useRef<HTMLButtonElement | null>(null);
+
+  const PICKER_W = 280;
+  const PICKER_H = 260;
+  const GAP = 8;
+
+  // close on unmount
+  useEffect(() => () => setOpen(false), []);
+
+  // close on scroll
+  useEffect(() => {
+    if (!open) return;
+    const close = () => setOpen(false);
+    window.addEventListener("scroll", close, true);
+    return () => window.removeEventListener("scroll", close, true);
+  }, [open]);
+
+  const openPicker = () => {
+    if (!btnRef.current) return;
+    const r = btnRef.current.getBoundingClientRect();
+
+    const spaceBelow = window.innerHeight - r.bottom;
+    const spaceAbove = r.top;
+   
+
+    let top = r.bottom + GAP;
+    let left = r.left;
+
+    // vertical flip
+    if (spaceBelow < PICKER_H && spaceAbove > PICKER_H) {
+      top = r.top - PICKER_H - GAP;
+    }
+
+    // horizontal shift
+    if (left + PICKER_W > window.innerWidth) {
+      left = window.innerWidth - PICKER_W - GAP;
+    }
+
+    if (left < GAP) left = GAP;
+
+    setPos({ top, left });
+    setOpen(true);
+  };
+
   if (disabled) {
     return (
       <div className="flex justify-between w-full border p-3 rounded bg-gray-100 text-gray-400 cursor-not-allowed">
         {label}
-        <span
-          className="w-8 h-5 rounded"
-          style={{ background: value }}
-        />
+        <span className="w-8 h-5 rounded" style={{ background: value }} />
       </div>
     );
   }
@@ -676,11 +731,9 @@ function ColorPickerField({
   return (
     <>
       <button
-        onClick={(e) => {
-          const r = e.currentTarget.getBoundingClientRect();
-          setPos({ top: r.bottom + window.scrollY, left: r.left + window.scrollX });
-          setOpen(true);
-        }}
+        ref={btnRef}
+        type="button"
+        onClick={openPicker}
         className="flex justify-between w-full border p-3 rounded"
       >
         {label}
@@ -689,8 +742,20 @@ function ColorPickerField({
 
       {open &&
         createPortal(
-          <div className="fixed inset-0 z-[9999]" onClick={() => setOpen(false)}>
-            <div style={pos} className="absolute">
+          <div
+            className="fixed inset-0 z-[99999]"
+            onClick={() => setOpen(false)}
+          >
+            <div
+              style={{
+                position: "fixed",
+                top: pos.top,
+                left: pos.left,
+                zIndex: 100000,
+              }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white rounded-lg shadow-xl p-3"
+            >
               <ProColorPicker value={value} onChange={onChange} />
             </div>
           </div>,
@@ -699,6 +764,7 @@ function ColorPickerField({
     </>
   );
 }
+
 
 function LockControl({
   value,
