@@ -17,6 +17,7 @@ import MeetingSection from "./sections/MeetingSections";
 import ProfileSection from "./sections/ProfileSection";
 import SocialSection from "./sections/SocialSection";
 import { fetchProducts } from "../../../../products/slice";
+import ResultModal from "../../../../../common/ui/ResultModal";
 
 const THEME_COLOR_KEYS = [
   "primary_color",
@@ -120,6 +121,9 @@ export default function TeamMemberPublicProfileTab({
 }) {
 
   const dispatch = useAppDispatch();
+  const [resultOpen, setResultOpen] = useState(false);
+  const [resultSuccess, setResultSuccess] = useState(true);
+  const [resultMessage, setResultMessage] = useState("");
 
   const { data: publicProfile, loading } = useAppSelector(
     (s) => s.publicProfile
@@ -256,39 +260,66 @@ export default function TeamMemberPublicProfileTab({
     onLiveChange?.(next); // 👈 push to preview
   };
 
-const save = () => {
+const save = async () => {
   if (!config) return;
+
+  const withLock = <T extends { locked: boolean; lock_mode?: LockMode }>(v: T) =>
+    showLockable
+      ? { ...v, locked: v.locked, lock_mode: v.lock_mode }
+      : { ...v, locked: v.locked };
 
   const payload = {
     profile: config.profile,
-    theme: config.theme,
-    banner: config.banner,
-    meeting: config.meeting,
+
+    theme: withLock(config.theme),
+
+    banner: withLock(config.banner),
+
+    meeting: withLock(config.meeting),
+
     social_links: { items: config.social_links.items },
+
     products: {
-      locked: config.products.locked,
+      ...withLock(config.products),
       items: config.products.items,
     },
-    youtube: { items: config.youtube.items },
-    links_files: { items: config.links_files.items },
-    sections: config.sections,
+
+    youtube: showLockable
+      ? { items: config.youtube.items, locked: config.youtube.locked, lock_mode: config.youtube.lock_mode }
+      : { items: config.youtube.items },
+
+    links_files: showLockable
+      ? { items: config.links_files.items, locked: config.links_files.locked, lock_mode: config.links_files.lock_mode }
+      : { items: config.links_files.items },
+
+    sections: config.sections.map((s) =>
+      showLockable
+        ? { ...s, locked: s.locked, lock_mode: s.lock_mode }
+        : { ...s, locked: s.locked }
+    ),
   };
 
-  // 👇 LAST MOMENT DECISION
-  if (useSelfApi) {
-    // old endpoint
-    dispatch(savePublicProfile({ config: payload }));
-  } else {
-    // new endpoint (admin)
-    dispatch(
-      savePublicProfileByUsername({
-        username: publicProfile!.username!,
-        config: payload,
-      })
-    );
+  try {
+    if (useSelfApi) {
+      await dispatch(savePublicProfile({ config: payload })).unwrap();
+    } else {
+      await dispatch(
+        savePublicProfileByUsername({
+          username: publicProfile!.username!,
+          config: payload,
+        })
+      ).unwrap();
+    }
+
+    setResultSuccess(true);
+    setResultMessage("Public profile saved successfully.");
+    setResultOpen(true);
+  } catch (err) {
+    setResultSuccess(false);
+    setResultMessage("Something went wrong while saving.");
+    setResultOpen(true);
   }
 };
-
 
 
   if (loading || !config)
@@ -312,6 +343,13 @@ const save = () => {
 
   return (
     <div className=" space-y-10 pb-10">
+      <ResultModal
+        open={resultOpen}
+        success={resultSuccess}
+        message={resultMessage}
+        onClose={() => setResultOpen(false)}
+      />
+
       <Card title="Profile" desc="Basic information shown on the card">
         <ProfileSection
           profile={config.profile}
@@ -332,15 +370,15 @@ const save = () => {
 
       <Card title="Theme" desc="Colors used across the profile">
         {showLockable && (
-        <LockControl
-          value={config.theme}
-          onChange={(v) =>
-            update({
-              ...config,
-              theme: { ...config.theme, ...v },
-            })
-          }
-        />
+          <LockControl
+            value={config.theme}
+            onChange={(v) =>
+              update({
+                ...config,
+                theme: { ...config.theme, ...v },
+              })
+            }
+          />
         )}
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           {THEME_COLOR_KEYS.map((k) => (
@@ -373,17 +411,17 @@ const save = () => {
         </div>
         {showLockable && (
           <div className="px-6 mt-3">
-          <LockControl
-            value={config.products}
-            onChange={(v) =>
-              update({
-                ...config,
-                products: { ...config.products, ...v },
-              })
-            }
+            <LockControl
+              value={config.products}
+              onChange={(v) =>
+                update({
+                  ...config,
+                  products: { ...config.products, ...v },
+                })
+              }
             />
-        </div>
-          )}
+          </div>
+        )}
 
         {/* SELECT */}
         <div className="px-1">
@@ -439,15 +477,15 @@ const save = () => {
       <Card title="Banner" desc="Top banner CTA section">
         {showLockable && (
           <LockControl
-          value={config.banner}
-          onChange={(v) =>
-            update({
-              ...config,
-              banner: { ...config.banner, ...v },
-            })
-          }
+            value={config.banner}
+            onChange={(v) =>
+              update({
+                ...config,
+                banner: { ...config.banner, ...v },
+              })
+            }
           />
-          
+
         )}
         <Toggle
           label="Enable banner"
@@ -518,17 +556,17 @@ const save = () => {
       </Card>
 
       <Card title="Videos" desc="Your YouTube / video links">
-      { showLockable && (
-        <LockControl
-        value={config.youtube}
-        onChange={(v) =>
-          update({
-            ...config,
-            youtube: { ...config.youtube, ...v },
-          })
-        }
-        />
-      )}
+        {showLockable && (
+          <LockControl
+            value={config.youtube}
+            onChange={(v) =>
+              update({
+                ...config,
+                youtube: { ...config.youtube, ...v },
+              })
+            }
+          />
+        )}
 
         <YoutubeSection
           items={config.youtube.items}
@@ -540,18 +578,18 @@ const save = () => {
 
 
       <Card title="Meeting Button" desc="Book a call / meeting link">
-      { showLockable && (
-        <LockControl
-        value={config.meeting}
-        onChange={(v) =>
-          update({
-            ...config,
-            meeting: { ...config.meeting, ...v },
-          })
-        }
-        />
-        
-      )}
+        {showLockable && (
+          <LockControl
+            value={config.meeting}
+            onChange={(v) =>
+              update({
+                ...config,
+                meeting: { ...config.meeting, ...v },
+              })
+            }
+          />
+
+        )}
         <MeetingSection
           value={config.meeting}
           onChange={(m: any) => update({ ...config, meeting: m })}
@@ -559,17 +597,17 @@ const save = () => {
       </Card>
 
       <Card title="Links & Files" desc="Add external links or downloadable files">
-        { showLockable && (
+        {showLockable && (
 
-        <LockControl
-          value={config.links_files}
-          onChange={(v) =>
-            update({
-              ...config,
-              links_files: { ...config.links_files, ...v },
-            })
-          }
-        />
+          <LockControl
+            value={config.links_files}
+            onChange={(v) =>
+              update({
+                ...config,
+                links_files: { ...config.links_files, ...v },
+              })
+            }
+          />
         )}
         <LinksFilesSection
           value={config.links_files}
@@ -612,7 +650,7 @@ function Card({
   scroll?: boolean;
 }) {
   return (
-   <div className="relative z-0 rounded-2xl bg-white/70 p-6 space-y-4">
+    <div className="relative z-0 rounded-2xl bg-white/70 p-6 space-y-4">
       <h3 className="font-semibold text-lg">{title}</h3>
       <p className="text-sm text-gray-500">{desc}</p>
 
@@ -711,7 +749,7 @@ function ColorPickerField({
 
     const spaceBelow = window.innerHeight - r.bottom;
     const spaceAbove = r.top;
-   
+
 
     let top = r.bottom + GAP;
     let left = r.left;
