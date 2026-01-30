@@ -1,13 +1,19 @@
 import axiosClient from "../../../services/axiosClient";
 
-export const fetchPublicCard = (handle: string) =>
-  axiosClient.get(`/card/${handle}?type=direct`);
+export const fetchPublicCard = (
+  handle: string,
+  type?: string
+) => {
+  const query = type ? `?type=${type}` : "";
+  return axiosClient.get(`/card/${handle}${query}`);
+};
+
 
 export const fetchMyProfile = () =>
   axiosClient.get("/profile");
 
 export const updatePublicProfile = (config: any) =>
-  axiosClient.put(`/profile?type=individual`, {
+  axiosClient.put(`/profile`, {
     configuration: config,
   });
 

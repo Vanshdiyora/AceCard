@@ -1,5 +1,6 @@
 // ---------- Profile ----------
 export interface AccountProfileResponse {
+  username: string; // 👈 ADD THIS
   name: string;
   email: string;
   phone: string;
@@ -15,6 +16,7 @@ export interface AccountProfileResponse {
 }
 
 export interface AccountProfile {
+  username: string; // 👈 ADD THIS
   name: string;
   email: string;
   phone: string;

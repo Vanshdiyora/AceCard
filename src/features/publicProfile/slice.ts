@@ -18,8 +18,14 @@ const initialState: State = {
 
 export const loadPublicProfile = createAsyncThunk(
   "publicProfile/load",
-  async (handle: string) => {
-    const res = await fetchPublicCard(handle);
+  async ({
+    handle,
+    type,
+  }: {
+    handle: string;
+    type?: string;
+  }) => {
+    const res = await fetchPublicCard(handle, type);
     return res.data;
   }
 );

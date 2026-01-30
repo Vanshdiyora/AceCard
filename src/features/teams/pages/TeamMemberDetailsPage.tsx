@@ -8,6 +8,7 @@ import { useAppDispatch, useAppSelector } from "../../../app/hooks";
 import { updateMember, fetchMemberById, updatePermissions } from "../slice";
 import EditMemberModal from "../components/EditMemberModal";
 import PermissionsModal from "../components/PermissionsModal";
+import { loadPublicProfile } from "../../publicProfile/slice";
 
 import TeamMemberOverviewTab from "../components/details/TeamMemberOverviewTab";
 import TeamMemberLeadsTab from "../components/details/TeamMemberLeadsTab";
@@ -20,7 +21,6 @@ import TeamMemberTotalLeadsTab from "../components/details/TeamMemberTotalLeadsT
 // import MemberMobileWebsite from "../components/MemberMobileWebsite";
 
 import type { TeamMember } from "../types";
-import { loadMyProfile } from "../../publicProfile/slice";
 
 const TABS = ["overview", "leads", "total-leads", "public-profile"] as const;
 
@@ -30,6 +30,7 @@ export default function TeamMemberDetailsPage() {
   const location = useLocation();
   const dispatch = useAppDispatch();
   const phoneScrollRef = useRef<HTMLDivElement>(null);
+const [livePreviewConfig, setLivePreviewConfig] = useState<any | null>(null);
 
   const auth = useAppSelector((s) => s.auth);
   const { members, loading } = useAppSelector((s) => s.team);
@@ -94,8 +95,14 @@ export default function TeamMemberDetailsPage() {
 
   /* ---------------- DATA FETCH ---------------- */
   useEffect(() => {
-     dispatch(loadMyProfile());
-  }, [dispatch]);
+    if (member?.username) {
+      dispatch(
+        loadPublicProfile({
+          handle: member.username,
+        })
+      );
+    }
+  }, [member?.username, dispatch]);
   useEffect(() => {
     if (id && !member) {
       dispatch(fetchMemberById(Number(id))).finally(() => setHasFetched(true));
@@ -126,6 +133,19 @@ export default function TeamMemberDetailsPage() {
     lock ? lockScroll() : unlockScroll();
     return unlockScroll;
   }, [editOpen, permOpen, confirmOpen, resultOpen]);
+  
+const mergedProfile = useMemo(() => {
+  if (!publicProfile) return null;
+  if (!livePreviewConfig) return publicProfile;
+
+  return {
+    ...publicProfile,
+    configuration: {
+      ...publicProfile.configuration,
+      ...livePreviewConfig,
+    },
+  };
+}, [publicProfile, livePreviewConfig]);
 
   /* ---------------- LOADING STATES ---------------- */
 
@@ -272,7 +292,11 @@ export default function TeamMemberDetailsPage() {
         )}
         {activeTab === "public-profile" && (
           <div className="mt-6">
-            <TeamMemberPublicProfileTab />
+         <TeamMemberPublicProfileTab
+  key={member.username}
+  onLiveChange={(cfg) => setLivePreviewConfig(cfg)}
+/>
+
           </div>
         )}
 
@@ -286,13 +310,13 @@ export default function TeamMemberDetailsPage() {
               ref={phoneScrollRef}
               className="flex-1 overflow-y-auto overscroll-contain"
             >
-              {publicProfile ? (
-                <PublicMobileWebsite
-                  data={publicProfile}
-                  scrollRef={phoneScrollRef}
-                />
+             {mergedProfile ? (
+  <PublicMobileWebsite
+    data={mergedProfile}
+    scrollRef={phoneScrollRef}
+  />
+) : (
 
-              ) : (
                 <div className="h-full flex items-center justify-center text-sm text-gray-400">
                   No public profile yet
                 </div>

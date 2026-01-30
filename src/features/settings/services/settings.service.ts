@@ -15,6 +15,7 @@ export const settingsService = {
     const data = res.data;
 
     return {
+       username: (data as any).username,
       name: data.name ?? "",
       email: data.email ?? "",
       phone: data.phone ?? "",
@@ -36,6 +37,7 @@ export const settingsService = {
     const data = res.data;
 
     return {
+       username: (data as any).username,
       name: data.name ?? "",
       email: data.email ?? "",
       phone: data.phone ?? "",

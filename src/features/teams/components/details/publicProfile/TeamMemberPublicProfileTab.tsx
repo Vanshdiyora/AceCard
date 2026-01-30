@@ -5,7 +5,6 @@ import { uploadImage } from "../../../../publicProfile/services/publicProfile.ap
 import YoutubeSection from "./sections/YoutubeSection";
 import {
   savePublicProfile,
-  previewPublicProfile,
 } from "../../../../publicProfile/slice";
 import ProductsReorder from "./sections/ProductsReorder";
 import LinksFilesSection from "./sections/LinksFilesSection";
@@ -18,7 +17,21 @@ import ProfileSection from "./sections/ProfileSection";
 import SocialSection from "./sections/SocialSection";
 import { fetchProducts } from "../../../../products/slice";
 
+const THEME_COLOR_KEYS = [
+  "primary_color",
+  "background_color",
+  "card_color",
+  "text_color",
+  "accent_color",
+] as const;
+
 /* ================= TYPES ================= */
+export type LockMode = "global" | "individual" | "locked";
+
+export interface LockMeta {
+  locked: boolean;          // is this section locked?
+  lock_mode?: LockMode;    // who controls it
+}
 
 interface ProfileConfig {
   avatar_url: string;
@@ -39,40 +52,67 @@ export interface SectionItem {
   id: string;
   type: string;
   rank: number;
-  locked: boolean;
   enabled: boolean;
+
+  locked: boolean;
+  lock_mode?: LockMode; // 👈 who locked it
+}
+
+export interface ThemeConfig extends LockMeta {
+  primary_color: string;
+  background_color: string;
+  card_color: string;
+  text_color: string;
+  accent_color: string;
+}
+
+export interface BannerConfig extends LockMeta {
+  enabled: boolean;
+  image_url?: string;
+  cta_text?: string;
+  cta_url?: string;
+}
+
+export interface ProductsConfig extends LockMeta {
+  items: ProductRef[];
+}
+
+export interface MeetingConfig extends LockMeta {
+  enabled: boolean;
+  type: string;
+  meeting_url: string;
+  button_text: string;
 }
 
 interface PublicProfileConfig {
   profile: ProfileConfig;
-  theme: Record<string, string>;
-  banner: {
-    enabled: boolean;
-    image_url?: string;
-    cta_text?: string;
-    cta_url?: string;
-  };
-  meeting: {
-    locked: boolean;
-    enabled: boolean;
-    type: string;
-    meeting_url: string;
-    button_text: string;
+
+  theme: ThemeConfig;
+
+  banner: BannerConfig;
+
+  meeting: MeetingConfig;
+
+  social_links: {
+    items: any[];
   };
 
-  social_links: { items: any[] };
-  products: {
-    locked: boolean;
-    items: ProductRef[];
-  };
-  youtube: { items: any[] };
-  links_files: { items: any[] };
+  products: ProductsConfig;
+
+  youtube: LockMeta & { items: any[] };
+  links_files: LockMeta & { items: any[] };
+
+
   sections: SectionItem[];
 }
 
 /* ================= COMPONENT ================= */
 
-export default function TeamMemberPublicProfileTab() {
+export default function TeamMemberPublicProfileTab({
+  onLiveChange,
+}: {
+  onLiveChange?: (cfg: any) => void;
+}) {
   const dispatch = useAppDispatch();
 
   const { data: publicProfile, loading } = useAppSelector(
@@ -85,7 +125,6 @@ export default function TeamMemberPublicProfileTab() {
   );
 
   const [config, setConfig] = useState<PublicProfileConfig | null>(null);
-  const [initialized, setInitialized] = useState(false);
 
   /* ---------- Product search state ---------- */
   const [productSearch, setProductSearch] = useState("");
@@ -109,13 +148,12 @@ export default function TeamMemberPublicProfileTab() {
   /* ================= NORMALIZE ================= */
 
   useEffect(() => {
-    if (publicProfile && !initialized) {
+    if (publicProfile) {
       const normalized = normalizeProfile(publicProfile) as PublicProfileConfig;
       setConfig(normalized);
-      dispatch(previewPublicProfile(normalized));
-      setInitialized(true);
     }
-  }, [publicProfile, initialized, dispatch]);
+  }, [publicProfile]);
+
 
   /* ================= CACHE OPTIONS ================= */
 
@@ -209,11 +247,12 @@ export default function TeamMemberPublicProfileTab() {
 
   const update = (next: PublicProfileConfig) => {
     setConfig(next);
-    dispatch(previewPublicProfile(next));
+    onLiveChange?.(next); // 👈 push to preview
   };
 
   const save = () => {
     if (!config) return;
+
     dispatch(
       savePublicProfile({
         config: {
@@ -226,7 +265,6 @@ export default function TeamMemberPublicProfileTab() {
             locked: config.products.locked,
             items: config.products.items,
           },
-
           youtube: { items: config.youtube.items },
           links_files: { items: config.links_files.items },
           sections: config.sections,
@@ -234,6 +272,7 @@ export default function TeamMemberPublicProfileTab() {
       })
     );
   };
+
 
   if (loading || !config)
     return <p className="text-gray-400">Loading profile config...</p>;
@@ -275,12 +314,22 @@ export default function TeamMemberPublicProfileTab() {
       </Card>
 
       <Card title="Theme" desc="Colors used across the profile">
+        <LockControl
+          value={config.theme}
+          onChange={(v) =>
+            update({
+              ...config,
+              theme: { ...config.theme, ...v },
+            })
+          }
+        />
+
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          {Object.entries(config.theme).map(([k, v]) => (
+          {THEME_COLOR_KEYS.map((k) => (
             <ColorPickerField
               key={k}
               label={k.replace("_", " ")}
-              value={v}
+              value={config.theme[k]}
               onChange={(val: string) =>
                 update({
                   ...config,
@@ -292,70 +341,90 @@ export default function TeamMemberPublicProfileTab() {
         </div>
       </Card>
 
-<div className="rounded-2xl bg-[#FBFAFF]">
 
-  {/* HEADER */}
-  <div className="px-6 pt-6">
-    <h3 className="text-xl font-semibold text-gray-900 pb-4">
-      Products
-    </h3>
-    <p className="text-sm text-gray-500">
-      Select which products appear on your public card
-    </p>
-  </div>
+      <div className="rounded-2xl bg-[#FBFAFF]">
 
-  {/* SELECT */}
-  <div className="px-1">
+        {/* HEADER */}
+        <div className="px-6 pt-6">
+          <h3 className="text-xl font-semibold text-gray-900 pb-4">
+            Products
+          </h3>
+          <p className="text-sm text-gray-500">
+            Select which products appear on your public card
+          </p>
+        </div>
+        <LockControl
+          value={config.products}
+          onChange={(v) =>
+            update({
+              ...config,
+              products: { ...config.products, ...v },
+            })
+          }
+        />
 
-    <DynamicForm
-      fields={productField}
-      form={{
-        product_ids: config.products.items.map((p) => p.id),
-      }}
-      onChange={(_, ids: (string | number)[]) =>
-        update({
-          ...config,
-          products: {
-            locked: config.products.locked,
-            items: mergeSelectedProducts(
-              ids,
-              products,
-              config.products.items
-            ),
-          },
-        })
-      }
-      errors={formErrors}
-      setErrors={setFormErrors}
-    />
-  </div>
+        {/* SELECT */}
+        <div className="px-1">
 
-<div className="px-6 pb-6 border-t">
+          <DynamicForm
+            fields={productField}
+            form={{
+              product_ids: config.products.items.map((p) => p.id),
+            }}
+            onChange={(_, ids: (string | number)[]) =>
+              update({
+                ...config,
+                products: {
+                  locked: config.products.locked,
+                  items: mergeSelectedProducts(
+                    ids,
+                    products,
+                    config.products.items
+                  ),
+                },
+              })
+            }
+            errors={formErrors}
+            setErrors={setFormErrors}
+          />
+        </div>
 
-  {/* REORDER (keep your existing component) */}
-  {config.products.items.length > 0 && (
-    <div className="space-y-3">
-      <ProductsReorder
-        items={config.products.items}
-        onChange={(items) =>
-          update({
-            ...config,
-            products: {
-              ...config.products,
-              items,
-            },
-          })
-        }
-      />
-    </div>
-  )}
-</div>
+        <div className="px-6 pb-6 border-t">
 
-</div>
+          {/* REORDER (keep your existing component) */}
+          {config.products.items.length > 0 && (
+            <div className="space-y-3">
+              <ProductsReorder
+                items={config.products.items}
+                onChange={(items) =>
+                  update({
+                    ...config,
+                    products: {
+                      ...config.products,
+                      items,
+                    },
+                  })
+                }
+              />
+            </div>
+          )}
+        </div>
+
+      </div>
 
 
 
       <Card title="Banner" desc="Top banner CTA section">
+        <LockControl
+          value={config.banner}
+          onChange={(v) =>
+            update({
+              ...config,
+              banner: { ...config.banner, ...v },
+            })
+          }
+        />
+
         <Toggle
           label="Enable banner"
           value={config.banner.enabled}
@@ -398,7 +467,7 @@ export default function TeamMemberPublicProfileTab() {
         </div>
 
         {/* CTA FIELDS */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
           <Input
             value={config.banner.cta_text || ""}
             onChange={(v) =>
@@ -425,6 +494,16 @@ export default function TeamMemberPublicProfileTab() {
       </Card>
 
       <Card title="Videos" desc="Your YouTube / video links">
+        <LockControl
+          value={config.youtube}
+          onChange={(v) =>
+            update({
+              ...config,
+              youtube: { ...config.youtube, ...v },
+            })
+          }
+        />
+
         <YoutubeSection
           items={config.youtube.items}
           onChange={(items) =>
@@ -433,7 +512,18 @@ export default function TeamMemberPublicProfileTab() {
         />
       </Card>
 
+
       <Card title="Meeting Button" desc="Book a call / meeting link">
+        <LockControl
+          value={config.meeting}
+          onChange={(v) =>
+            update({
+              ...config,
+              meeting: { ...config.meeting, ...v },
+            })
+          }
+        />
+
         <MeetingSection
           value={config.meeting}
           onChange={(m: any) => update({ ...config, meeting: m })}
@@ -441,13 +531,24 @@ export default function TeamMemberPublicProfileTab() {
       </Card>
 
       <Card title="Links & Files" desc="Add external links or downloadable files">
+        <LockControl
+          value={config.links_files}
+          onChange={(v) =>
+            update({
+              ...config,
+              links_files: { ...config.links_files, ...v },
+            })
+          }
+        />
+
         <LinksFilesSection
           value={config.links_files}
           onChange={(v) =>
-            update({ ...config, links_files: v })
+            update({ ...config, links_files: { ...config.links_files, ...v } })
           }
         />
       </Card>
+
       <Card title="Sections" desc="Reorder your public sections">
         <SectionsReorder
           sections={config.sections}
@@ -548,13 +649,27 @@ function ColorPickerField({
   label,
   value,
   onChange,
+  disabled = false,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
+  disabled?: boolean;   // 👈 ADD THIS
 }) {
+
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState({ top: 0, left: 0 });
+  if (disabled) {
+    return (
+      <div className="flex justify-between w-full border p-3 rounded bg-gray-100 text-gray-400 cursor-not-allowed">
+        {label}
+        <span
+          className="w-8 h-5 rounded"
+          style={{ background: value }}
+        />
+      </div>
+    );
+  }
 
   return (
     <>
@@ -580,5 +695,50 @@ function ColorPickerField({
           document.body
         )}
     </>
+  );
+}
+
+function LockControl({
+  value,
+  onChange,
+}: {
+  value: LockMeta;
+  onChange: (v: LockMeta) => void;
+}) {
+  return (
+    <div className="flex items-center gap-4 p-3 bg-gray-50 border rounded-lg mb-4">
+      <label className="flex items-center gap-2">
+        <input
+          type="checkbox"
+          checked={value.locked}
+          onChange={(e) =>
+            onChange({
+              ...value,
+              locked: e.target.checked,
+              lock_mode: e.target.checked
+                ? value.lock_mode ?? "individual"
+                : undefined,
+            })
+          }
+        />
+        <span className="text-sm">Locked</span>
+      </label>
+
+
+      <select
+        value={value.lock_mode ?? "individual"}
+        onChange={(e) =>
+          onChange({
+            ...value,
+            lock_mode: e.target.value as LockMode,
+          })
+        }
+        className="border rounded px-2 py-1 text-sm"
+      >
+        <option value="individual">Individual</option>
+        <option value="global">Global</option>
+        <option value="locked">System Locked</option>
+      </select>
+    </div>
   );
 }

@@ -11,16 +11,24 @@ type Props = {
 export default function PublicProfilePage({ handle: propHandle }: Props) {
   const { handle: routeHandle } = useParams<{ handle: string }>();
   const { username } = useParams();
+
   const handle = propHandle || routeHandle || username;
+
   const dispatch = useAppDispatch();
   const { data, loading } = useAppSelector((s) => s.publicProfile);
 
   useEffect(() => {
-    if (handle) dispatch(loadPublicProfile(handle));
+    if (handle) {
+      dispatch(
+        loadPublicProfile({
+          handle
+        })
+      );
+    }
   }, [handle, dispatch]);
 
   if (!handle) return <div className="p-6">No profile handle found.</div>;
   if (loading || !data) return <div className="p-6">Loading...</div>;
-
+console.log("Public Profile Data:", data);
   return <MobileWebsite data={data} />;
 }

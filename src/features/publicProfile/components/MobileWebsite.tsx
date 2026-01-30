@@ -9,19 +9,24 @@ import {
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { ConnectModal } from "./ConnectModal";
+
 /* ================= HELPERS ================= */
 
-const getYouTubeId = (url: string) => {
+const getYouTubeId = (url?: string) => {
+  if (!url) return null;
   const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&]+)/);
   return match?.[1];
 };
 
-const sortByRank = (arr: any[] = []) =>
-  [...arr]
+const sortByRank = (arr: any) => {
+  if (!Array.isArray(arr)) return [];
+  return arr
     .filter(i => i?.enabled !== false)
     .sort((a, b) => (a.rank ?? 0) - (b.rank ?? 0));
+};
 
 /* ================= COMPONENT ================= */
+
 export default function MobileWebsite({
   data,
   scrollRef,
@@ -29,37 +34,29 @@ export default function MobileWebsite({
   data: any;
   scrollRef?: React.RefObject<HTMLDivElement | null>;
 }) {
-
-
-  const config = data?.configuration || {};
+  const config = data?.configuration ?? {};
   const [open, setOpen] = useState(false);
-console.log("Configuration:", config);
+
   const {
     profile = {},
     theme = {},
     banner = {},
     meeting = {},
-    social_links = {},
-    youtube = {},
-    links_files = {},
-    products = {},
+    social_links = { items: [] },
+    youtube = { items: [] },
+    links_files = { items: [] },
+    products = { items: [] },
     sections = [],
   } = config;
 
   const orderedSections = sortByRank(sections);
-useEffect(() => {
-  if (!scrollRef?.current) return;
 
-  const el = scrollRef.current;
-
-  if (open) {
-    el.style.overflow = "hidden";
-    el.style.touchAction = "none";
-  } else {
-    el.style.overflow = "auto";
-    el.style.touchAction = "";
-  }
-}, [open, scrollRef]);
+  useEffect(() => {
+    if (!scrollRef?.current) return;
+    const el = scrollRef.current;
+    el.style.overflow = open ? "hidden" : "auto";
+    el.style.touchAction = open ? "none" : "";
+  }, [open, scrollRef]);
 
   const renderSection = (type: string) => {
     switch (type) {
@@ -72,7 +69,6 @@ useEffect(() => {
             onConnect={() => setOpen(true)}
           />
         );
-
 
       case "about":
         return profile.description ? (
@@ -94,10 +90,12 @@ useEffect(() => {
         return <Links items={sortByRank(links_files.items)} theme={theme} />;
 
       case "meeting":
-        return meeting?.enabled ? <MeetingCTA meeting={meeting} theme={theme} /> : null;
+        return meeting?.enabled ? (
+          <MeetingCTA meeting={meeting} theme={theme} />
+        ) : null;
 
       case "banner":
-        return banner.enabled && banner.image_url ? (
+        return banner?.enabled && banner?.image_url ? (
           <Banner image={banner.image_url} />
         ) : null;
 
@@ -111,17 +109,18 @@ useEffect(() => {
       className="relative min-h-screen w-full overflow-hidden"
       style={{ backgroundColor: theme.background_color || "#000" }}
     >
-
       <div className="space-y-6 pb-6">
-        {orderedSections.map(s =>
-          s.enabled ? <div key={s.id}>{renderSection(s.type)}</div> : null
+        {orderedSections.map((s: any) =>
+          s?.enabled ? (
+            <div key={s.id}>{renderSection(s.type)}</div>
+          ) : null
         )}
-
       </div>
+
       <ConnectModal
         open={open}
         onClose={() => setOpen(false)}
-        handle={data.username}
+        handle={data?.username}
         theme={theme}
       />
     </div>
@@ -160,42 +159,39 @@ function Profile({ profile, theme, user, onConnect }: any) {
   return (
     <div>
       <div className="relative h-[220px]">
-        <img src={profile.cover_url} className="w-full h-full object-cover" />
+        <img src={profile.cover_url || ""} className="w-full h-full object-cover" />
         <div className="absolute inset-0 bg-black/50" />
 
         <div className="absolute top-4 left-4 text-sm font-semibold" style={{ color: theme.accent_color }}>
-          {user.vendor_name}
+          {user?.vendor_name}
         </div>
 
         <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex flex-col items-center">
           <div className="w-24 h-24 rounded-full bg-black shadow-lg flex items-center justify-center">
-            <img src={profile.avatar_url} className="w-20 h-20 rounded-full object-cover" />
+            <img src={profile.avatar_url || ""} className="w-20 h-20 rounded-full object-cover" />
           </div>
 
           <h2 className="mt-2 font-semibold" style={{ color: theme.text_color }}>
-            {user.name}
+            {user?.name}
           </h2>
           <p className="text-xs" style={{ color: theme.accent_color }}>
-            {formatRole(user.job_title || user.role)}
+            {formatRole(user?.job_title || user?.role)}
           </p>
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-3 mt-4 px-4">
-     <button
-  type="button"
-  onClick={() => saveContact(user)}
-  className="h-11 rounded-xl border text-sm"
-  style={{ color: theme.text_color, borderColor: theme.accent_color }}
->
-  Save Contact
-</button>
-
-
-
+        <button
+          type="button"
+          onClick={() => saveContact(user)}
+          className="h-11 rounded-xl border text-sm"
+          style={{ color: theme.text_color, borderColor: theme.accent_color }}
+        >
+          Save Contact
+        </button>
 
         <button
-          type="button"   // 👈 IMPORTANT
+          type="button"
           onClick={onConnect}
           className="h-11 rounded-xl text-sm font-medium"
           style={{
@@ -205,8 +201,6 @@ function Profile({ profile, theme, user, onConnect }: any) {
         >
           Connect
         </button>
-
-
       </div>
     </div>
   );
@@ -219,8 +213,8 @@ function MeetingCTA({ meeting, theme }: any) {
     <div className="px-16">
       <a
         href={meeting.meeting_url}
-        target="_blank"              // 👈 open in new tab
-        rel="noopener noreferrer"    // 👈 security best practice
+        target="_blank"
+        rel="noopener noreferrer"
         className="block text-center py-4 rounded-xl text-sm font-semibold shadow-md"
         style={{ backgroundColor: theme.primary_color, color: "#fff" }}
       >
@@ -234,7 +228,6 @@ function MeetingCTA({ meeting, theme }: any) {
 
 function Products({ items, theme }: any) {
   if (!items?.length) return null;
-
   return (
     <Section title="Products" theme={theme}>
       <div className="flex gap-4 overflow-x-auto">
@@ -261,14 +254,17 @@ function Products({ items, theme }: any) {
 
 function YouTube({ items, theme }: any) {
   if (!items?.length) return null;
-
   return (
     <Section title="Videos" theme={theme}>
       {items.map((v: any) => {
         const id = getYouTubeId(v.url);
+        if (!id) return null;
         return (
           <a key={v.id} href={v.url} className="block rounded-2xl overflow-hidden">
-            <img src={`https://img.youtube.com/vi/${id}/hqdefault.jpg`} className="w-full h-40 object-cover" />
+            <img
+              src={`https://img.youtube.com/vi/${id}/hqdefault.jpg`}
+              className="w-full h-40 object-cover"
+            />
           </a>
         );
       })}
@@ -279,6 +275,7 @@ function YouTube({ items, theme }: any) {
 /* ================= SOCIAL ================= */
 
 function Social({ items, theme }: any) {
+  if (!items?.length) return null;
   return (
     <div className="flex justify-center gap-3">
       {items.map((s: any) => (
@@ -303,7 +300,6 @@ function Social({ items, theme }: any) {
 
 function Links({ items, theme }: any) {
   if (!items?.length) return null;
-
   return (
     <Section title="Links & Files" theme={theme}>
       <div className="flex flex-col gap-4">
@@ -315,7 +311,6 @@ function Links({ items, theme }: any) {
             >
               {l.type === "file" ? <FileText size={16} /> : <Link2 size={16} />}
             </div>
-
             <p className="text-sm font-semibold" style={{ color: theme.text_color }}>
               {l.title}
             </p>
@@ -335,7 +330,12 @@ function Banner({ image }: any) {
     </div>
   );
 }
+
+/* ================= VCARD ================= */
+
 function saveContact(user: any) {
+  if (!user) return;
+
   const vcard = `
 BEGIN:VCARD
 VERSION:3.0
@@ -351,7 +351,6 @@ END:VCARD
 
   const blob = new Blob([vcard], { type: "text/vcard;charset=utf-8" });
   const url = URL.createObjectURL(blob);
-
   const a = document.createElement("a");
   a.href = url;
   a.download = `${user.name || "contact"}.vcf`;

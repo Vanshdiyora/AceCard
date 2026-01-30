@@ -29,7 +29,7 @@ export interface TeamMember {
   phone: string;
   role: "manager" | "sales_rep" | "vendor_admin" | string;
   status: "active" | "pending" | "suspended";
-
+  username: string;
   // 👇 ADD THIS
   website?: string;
 
