@@ -6,7 +6,6 @@ import YoutubeSection from "./sections/YoutubeSection";
 import {
   savePublicProfile,
   previewPublicProfile,
-  loadMyProfile,
 } from "../../../../publicProfile/slice";
 import ProductsReorder from "./sections/ProductsReorder";
 import LinksFilesSection from "./sections/LinksFilesSection";
@@ -102,7 +101,6 @@ export default function TeamMemberPublicProfileTab() {
   /* ================= INIT ================= */
 
   useEffect(() => {
-    dispatch(loadMyProfile());
     dispatch(fetchProducts({ page: 1, page_size: 10, mode: "paginate" }))
       .unwrap()
       .then((r) => setHasNextProducts(Boolean(r.meta?.has_next)));

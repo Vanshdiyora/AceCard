@@ -10,8 +10,8 @@ type Props = {
 
 export default function PublicProfilePage({ handle: propHandle }: Props) {
   const { handle: routeHandle } = useParams<{ handle: string }>();
-  const handle = propHandle || routeHandle;
-
+  const { username } = useParams();
+  const handle = propHandle || routeHandle || username;
   const dispatch = useAppDispatch();
   const { data, loading } = useAppSelector((s) => s.publicProfile);
 

@@ -32,6 +32,9 @@ export default function AddVendorModal({
     primary_phone: "",
     payment_terms: "",
     vendor_poc_email: "",
+    vendor_poc_name: "",
+    pricing_per_card: undefined,
+    subscription_end_date: "",
     allowed_crm_integrations: [],
   });
 
@@ -110,12 +113,36 @@ export default function AddVendorModal({
       ],
     },
     {
+      name: "vendor_poc_name",
+      label: "Vendor POC Name",
+      type: "text",
+      required: true,
+      placeholder: "Enter point of contact name",
+      minLength: 2,
+    },
+    {
+      name: "pricing_per_card",
+      label: "Price per Card",
+      type: "number",
+      required: true,
+      placeholder: "Enter price per card",
+      min: 1,
+    },
+    {
       name: "vendor_poc_email",
       label: "Vendor POC Email",
       type: "email",
       required: true,
       placeholder: "poc@company.com",
     },
+    {
+      name: "subscription_end_date",
+      label: "Subscription End Date",
+      type: "date",
+      required: true,
+      placeholder: "Select subscription end date",
+    },
+
     {
       name: "allowed_crm_integrations",
       label: "CRM Systems",
@@ -159,13 +186,18 @@ export default function AddVendorModal({
 
       const payload = {
         ...form,
-        gst: form.gst?.trim() || undefined, // ✅ clean GST
+        vendor_poc_name: form.vendor_poc_name?.trim(),
+        vendor_poc_email: form.vendor_poc_email?.trim(),
+        gst: form.gst?.trim() || undefined,
+        subscription_end_date: form.subscription_end_date
+          ? new Date(form.subscription_end_date).toISOString()
+          : undefined,
         allowed_crm_integrations:
-          form.allowed_crm_integrations &&
-          form.allowed_crm_integrations.length > 0
+          form.allowed_crm_integrations?.length
             ? form.allowed_crm_integrations
             : ["none"],
       };
+
 
       await dispatch(createVendor(payload)).unwrap();
       onSuccess();

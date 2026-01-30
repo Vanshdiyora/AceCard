@@ -20,6 +20,7 @@ import TeamMemberTotalLeadsTab from "../components/details/TeamMemberTotalLeadsT
 // import MemberMobileWebsite from "../components/MemberMobileWebsite";
 
 import type { TeamMember } from "../types";
+import { loadMyProfile } from "../../publicProfile/slice";
 
 const TABS = ["overview", "leads", "total-leads", "public-profile"] as const;
 
@@ -92,7 +93,9 @@ export default function TeamMemberDetailsPage() {
   }, [member, managers]);
 
   /* ---------------- DATA FETCH ---------------- */
-
+  useEffect(() => {
+     dispatch(loadMyProfile());
+  }, [dispatch]);
   useEffect(() => {
     if (id && !member) {
       dispatch(fetchMemberById(Number(id))).finally(() => setHasFetched(true));

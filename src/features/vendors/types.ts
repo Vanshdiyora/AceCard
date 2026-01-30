@@ -4,7 +4,7 @@ export interface VendorItem {
   legal_name: string;
   address: string;
   gst?: string;
-
+  vendor_poc_name: string;
   primary_phone: string;
   primary_email: string;
 
@@ -18,12 +18,13 @@ export interface VendorItem {
 
   status: "active" | "archived";
 
+  subscription_end_date: string;
   seats_appointed: number;
   pricing_per_card: number;
   payment_terms: string;
   vendor_poc_email: string;
 
-  allowed_crm_integrations: string[], 
+  allowed_crm_integrations: string[],
   crm_manual_trigger: boolean;
   crm_realtime_sync: boolean;
 

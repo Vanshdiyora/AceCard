@@ -16,6 +16,7 @@ import {
   archiveVendor,
   fetchVendorById,
   fetchVendors,
+  unarchiveVendor,
 } from "../slice";
 import type { VendorItem } from "../types";
 
@@ -56,6 +57,12 @@ export default function VendorDetailsPage() {
     setResultMessage(message);
     setResultOpen(true);
   };
+  const formatDate = (value?: string) => {
+    if (!value) return "—";
+    const d = new Date(value);
+    return isNaN(d.getTime()) ? "—" : d.toDateString();
+  };
+const CRMS = ["zoho", "hubspot", "salesforce", "odoo"];
 
   useEffect(() => {
     if (!vendorFromStore && id) {
@@ -83,7 +90,7 @@ export default function VendorDetailsPage() {
 
   if (!vendorFromStore) {
     return (
-    <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <BrandLoader message="Loading vendor..." />
       </div>
     );
@@ -117,14 +124,44 @@ export default function VendorDetailsPage() {
           label: vendor.status === "active" ? "Active" : "Archived",
           variant: vendor.status === "active" ? "active" : "archived",
         }}
+
         actions={
           <>
-            <ActionButton icon={<Edit size={14} />} label="Edit" onClick={() => setEditOpen(true)} />
-            <ActionButton icon={<Layers size={14} />} label="Update Seats" onClick={() => setSeatsOpen(true)} />
-            <ActionButton icon={<Send size={14} />} label="Notify" onClick={() => setNotifyOpen(true)} />
-            <ActionButton icon={<Trash2 size={14} />} label="Archive" danger onClick={() => setConfirmArchiveOpen(true)} />
+            <ActionButton
+              icon={<Edit size={14} />}
+              label="Edit"
+              onClick={() => setEditOpen(true)}
+            />
+
+            <ActionButton
+              icon={<Layers size={14} />}
+              label="Update Seats"
+              onClick={() => setSeatsOpen(true)}
+            />
+
+            <ActionButton
+              icon={<Send size={14} />}
+              label="Notify"
+              onClick={() => setNotifyOpen(true)}
+            />
+
+            {vendor.status === "active" ? (
+              <ActionButton
+                icon={<Trash2 size={14} />}
+                label="Archive"
+                danger
+                onClick={() => setConfirmArchiveOpen(true)}
+              />
+            ) : (
+              <ActionButton
+                icon={<Activity size={14} />}
+                label="Unarchive"
+                onClick={() => setConfirmArchiveOpen(true)}
+              />
+            )}
           </>
         }
+
       />
       <div className="mt-6" />
 
@@ -137,29 +174,43 @@ export default function VendorDetailsPage() {
           <Info label="Status" value={<StatusBadge status={vendor.status} />} />
         </Section>
 
-        <Section title="Business" icon={<Layers size={16} />}>
-          <Info label="Seats" value={vendor.seats_appointed} />
-          <Info label="Stage" value={vendor.status === "active" ? "On-boarded" : "Suspended"} />
-          <Info label="POC Email" value={vendor.vendor_poc_email} />
-        </Section>
+      <Section title="Business" icon={<Layers size={16} />}>
+  <Info label="Seats" value={vendor.seats_appointed} />
+  <Info label="Stage" value={vendor.status === "active" ? "On-boarded" : "Suspended"} />
+  <Info label="POC Name" value={vendor.vendor_poc_name} />   {/* ✅ NEW */}
+  <Info label="POC Email" value={vendor.vendor_poc_email} />
+</Section>
+
 
         <Section title="Billing" icon={<BadgeIndianRupee size={16} />}>
           <Info label="Pricing / Card" value={`₹ ${vendor.pricing_per_card}`} />
           <Info label="Payment Terms" value={vendor.payment_terms} />
           <Info label="Joined" value={new Date(vendor.created_at).toDateString()} />
+
+          {/* ✅ NEW */}
+          <Info
+            label="Subscription End"
+            value={formatDate(vendor.subscription_end_date)}
+          />
         </Section>
+
       </div>
       <div className="mt-6" />
 
       {/* Row 2 */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Section title="CRM Integrations" icon={<Activity size={16} />}>
-          <div className="flex flex-wrap gap-2 col-span-2">
-            <Tag active={vendor.crm_manual_trigger} label="Manual Trigger" />
-            <Tag active={vendor.crm_realtime_sync} label="Realtime Sync" />
-            <Tag active={!!vendor.allowed_crm_integrations} label={vendor.allowed_crm_integrations || "No CRM"} />
-          </div>
-        </Section>
+       <Section title="CRM Integrations" icon={<Activity size={16} />}>
+  <div className="flex flex-wrap gap-2 col-span-2">
+    {CRMS.map((crm) => (
+      <Tag
+        key={crm}
+        active={vendor.allowed_crm_integrations?.includes(crm)}
+        label={crm.charAt(0).toUpperCase() + crm.slice(1)}
+      />
+    ))}
+  </div>
+</Section>
+
 
         <Section title="Usage Metrics" icon={<Activity size={16} />}>
           <Metric label="Total Leads" value={0} />
@@ -171,30 +222,38 @@ export default function VendorDetailsPage() {
       <EditVendorModal vendor={vendor} open={editOpen} onClose={() => setEditOpen(false)} />
       <NotifyVendorModal vendor={vendor} open={notifyOpen} onClose={() => setNotifyOpen(false)} />
       <UpdateSeatsModal vendor={vendor} open={seatsOpen} onClose={() => setSeatsOpen(false)} />
-
       <ConfirmationModal
         open={confirmArchiveOpen}
-        title="Archive Vendor"
-        message={`Are you sure you want to archive ${vendor.legal_name}?`}
-        confirmLabel="Archive"
-        confirmVariant="danger"
+        title={vendor.status === "active" ? "Archive Vendor" : "Unarchive Vendor"}
+        message={
+          vendor.status === "active"
+            ? `Are you sure you want to archive ${vendor.legal_name}?`
+            : `Are you sure you want to unarchive ${vendor.legal_name}?`
+        }
+        confirmLabel={vendor.status === "active" ? "Archive" : "Unarchive"}
+        confirmVariant={vendor.status === "active" ? "danger" : "primary"}
         loading={processing}
         onClose={() => setConfirmArchiveOpen(false)}
         onConfirm={async () => {
           try {
             setProcessing(true);
-            await dispatch(archiveVendor(vendor.id)).unwrap();
-            showResult(true, "Vendor archived successfully.");
+            if (vendor.status === "active") {
+              await dispatch(archiveVendor(vendor.id)).unwrap();
+              showResult(true, "Vendor archived successfully.");
+            } else {
+              await dispatch(unarchiveVendor(vendor.id)).unwrap();
+              showResult(true, "Vendor unarchived successfully.");
+            }
             dispatch(fetchVendors());
-            navigate("/super/vendors");
           } catch (err: any) {
-            showResult(false, err?.message || "Failed to archive vendor.");
+            showResult(false, err?.message || "Operation failed.");
           } finally {
             setProcessing(false);
             setConfirmArchiveOpen(false);
           }
         }}
       />
+
 
       <BlockingLoader show={processing} />
 
@@ -238,11 +297,10 @@ function Info({ label, value }: any) {
 function StatusBadge({ status }: any) {
   return (
     <span
-      className={`px-2 py-1 rounded-full text-xs ${
-        status === "active"
-          ? "bg-green-100 text-green-700"
-          : "bg-gray-100 text-gray-600"
-      }`}
+      className={`px-2 py-1 rounded-full text-xs ${status === "active"
+        ? "bg-green-100 text-green-700"
+        : "bg-gray-100 text-gray-600"
+        }`}
     >
       {status}
     </span>
@@ -252,9 +310,8 @@ function StatusBadge({ status }: any) {
 function Tag({ active, label }: any) {
   return (
     <span
-      className={`px-3 py-1 rounded-full text-xs ${
-        active ? "bg-purple-100 text-purple-700" : "bg-gray-100 text-gray-500"
-      }`}
+      className={`px-3 py-1 rounded-full text-xs ${active ? "bg-purple-100 text-purple-700" : "bg-gray-100 text-gray-500"
+        }`}
     >
       {label}
     </span>
@@ -274,11 +331,10 @@ function ActionButton({ icon, label, onClick, danger }: any) {
   return (
     <button
       onClick={onClick}
-      className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl border text-sm ${
-        danger
-          ? "border-red-200 text-red-600 hover:bg-red-50"
-          : "border-purple-200 text-purple-600 hover:bg-purple-50"
-      }`}
+      className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl border text-sm ${danger
+        ? "border-red-200 text-red-600 hover:bg-red-50"
+        : "border-purple-200 text-purple-600 hover:bg-purple-50"
+        }`}
     >
       {icon} {label}
     </button>

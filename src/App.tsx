@@ -31,6 +31,7 @@ import {
   NotificationsPage,
   NotificationVendorPage
 } from "./features/index";
+import PublicProfilePage from "./features/publicProfile/pages/PublicProfilePage";
 
 export default function App() {
   return (
@@ -46,6 +47,8 @@ export default function App() {
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/verify-otp" element={<VerifyOtpPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
+{/* PUBLIC PROFILE */}
+<Route path="/profile/:username" element={<PublicProfilePage />} />
 
         {/* SUPER ADMIN ROUTES */}
         <Route

@@ -37,7 +37,7 @@ export default function VendorsPage() {
   const navigate = useNavigate();
 
   const { vendors, loading, meta, error: fetchError } = useAppSelector((s) => s.vendors);
-const { seatsUpdating } = useAppSelector(s => s.vendors);
+  const { seatsUpdating } = useAppSelector(s => s.vendors);
   const [activeTab, setActiveTab] = useState<"all" | "active" | "archived">("all");
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<"recent" | "name">("recent");
@@ -99,13 +99,16 @@ const { seatsUpdating } = useAppSelector(s => s.vendors);
 
       const csvData = result.data.map((v: VendorItem) => ({
         "Vendor Name": v.legal_name,
+        "POC Name": v.vendor_poc_name, // ✅ added
         "Vendor Email": v.primary_email,
         "Vendor Phone": v.primary_phone,
         "Vendor GST": v.gst ?? "",
+        "Price per Card": v.pricing_per_card,
         Seats: v.seats_appointed,
         Status: v.status === "active" ? "Active" : "Archived",
         Stage: deriveStage(v),
       }));
+
 
       downloadCSV(csvData, "vendors_export.csv");
     } catch (err) {
@@ -117,10 +120,11 @@ const { seatsUpdating } = useAppSelector(s => s.vendors);
     { header: "Vendor Name", accessor: "legal_name", width: "2fr" },
     { header: "Vendor Email", accessor: "primary_email", width: "2fr" },
     { header: "Vendor Phone", accessor: "primary_phone", width: "1.5fr" },
+    { header: "POC Name", accessor: "vendor_poc_name", width: "1.5fr" },
     { header: "Vendor GST", width: "1.5fr", render: (v) => v.gst ?? "—" },
     { header: "Seats", accessor: "seats_appointed", align: "left", width: "1fr" },
     {
-      header: "Vendor Status",
+      header: "Status",
       render: (v) => (
         <span className={`px-2 py-1 rounded-full text-xs ${v.status === "active" ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"
           }`}>
@@ -160,7 +164,7 @@ const { seatsUpdating } = useAppSelector(s => s.vendors);
     <div className="p-6">
       <PageHeader title="Vendor Management" description="Manage vendor onboarding & verification" addButtonLabel="Add Vendor" onAdd={() => setAddOpen(true)} />
       <ErrorAlert message={fetchError} />
-<BlockingLoader show={processing || seatsUpdating} />
+      <BlockingLoader show={processing || seatsUpdating} />
 
       <AddVendorModal
         open={addOpen}

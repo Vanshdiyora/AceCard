@@ -124,12 +124,12 @@ export default function NotificationSidebar({
             }
           }}
         >
-       {/* Initial loader */}
-{loading && page === 1 && (
-  <div className="flex items-center justify-center h-full">
-    <BrandLoader />
-  </div>
-)}
+          {/* Initial loader */}
+          {loading && page === 1 && (
+            <div className="flex items-center justify-center h-full">
+              <BrandLoader />
+            </div>
+          )}
 
 
           {/* Empty state */}
@@ -145,7 +145,7 @@ export default function NotificationSidebar({
           {/* Infinite loader */}
           {loadingMore && (
             <div className="flex justify-center py-2 text-xs text-gray-400">
-              <BrandLoader/>
+              <BrandLoader />
             </div>
           )}
         </div>

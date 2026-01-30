@@ -53,8 +53,8 @@ export default function StatCard({
       ? Math.min(Math.abs(change), 100)
       : 0;
 
-  const strokeDash = 2 * Math.PI * 20;
-  const dashOffset = strokeDash - (strokeDash * percent) / 100;
+  // const strokeDash = 2 * Math.PI * 20;
+  // const dashOffset = strokeDash - (strokeDash * percent) / 100;
 
   return (
     <div className="group relative bg-white/80 backdrop-blur p-5 rounded-2xl border shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5">
@@ -78,37 +78,41 @@ export default function StatCard({
 
         {/* RIGHT - PROGRESS */}
         {change !== undefined && (
-          <div className="relative w-14 h-14">
+          <div className="relative w-20 h-20">
             <svg className="w-full h-full rotate-[-90deg]">
               <circle
-                cx="28"
-                cy="28"
-                r="20"
+                cx="40"
+                cy="40"
+                r="30"
                 stroke="#E5E7EB"
-                strokeWidth="4"
+                strokeWidth="5"
                 fill="none"
               />
               <circle
-                cx="28"
-                cy="28"
-                r="20"
+                cx="40"
+                cy="40"
+                r="30"
                 stroke={positive ? "#16A34A" : "#DC2626"}
-                strokeWidth="4"
+                strokeWidth="5"
                 fill="none"
-                strokeDasharray={strokeDash}
-                strokeDashoffset={dashOffset}
+                strokeDasharray={2 * Math.PI * 30}
+                strokeDashoffset={
+                  2 * Math.PI * 30 -
+                  ((2 * Math.PI * 30) * percent) / 100
+                }
                 strokeLinecap="round"
               />
             </svg>
 
             <span
-              className={`absolute inset-0 flex items-center justify-center text-xs font-semibold ${positive ? "text-green-600" : "text-red-600"
+              className={`absolute inset-0 flex items-center justify-center text-base ${positive ? "text-green-600" : "text-red-600"
                 }`}
             >
               {percent}%
             </span>
           </div>
         )}
+
       </div>
     </div>
   );
