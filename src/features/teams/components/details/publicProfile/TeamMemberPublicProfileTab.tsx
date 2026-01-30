@@ -257,7 +257,7 @@ export default function TeamMemberPublicProfileTab() {
   /* ================= UI ================= */
 
   return (
-    <div className="mt-6 space-y-10 pb-10">
+    <div className=" space-y-10 pb-10">
       <Card title="Profile" desc="Basic information shown on the card">
         <ProfileSection
           profile={config.profile}

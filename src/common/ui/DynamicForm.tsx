@@ -10,18 +10,18 @@ export interface FieldConfig {
   name: string;
   label: string;
   type:
-  | "text"
-  | "number"
-  | "email"
-  | "select"
-  | "textarea"
-  | "date"
-  | "checkbox"
-  | "multiselect"
-  | "radio"
-  | "datetime"
-  | "search-select"
-  | "search-multiselect";
+    | "text"
+    | "number"
+    | "email"
+    | "select"
+    | "textarea"
+    | "date"
+    | "checkbox"
+    | "multiselect"
+    | "radio"
+    | "datetime"
+    | "search-select"
+    | "search-multiselect";
 
   placeholder?: string;
   options?: { label: string; value: any }[];
@@ -34,7 +34,7 @@ export interface FieldConfig {
   maxLength?: number;
   minItems?: number;
   pattern?: RegExp;
-  patternMessage?: string; // ✅ ADDED
+  patternMessage?: string;
   validate?: (value: any, form: any) => string | null;
 
   /* UI */
@@ -42,8 +42,11 @@ export interface FieldConfig {
   onScrollEnd?: () => void;
   showLoader?: boolean;
   onSearch?: (value: string) => void;
-  uppercase?: boolean; // ✅ for GST-like fields
+  uppercase?: boolean;
+
+  hideValues?: boolean; // ✅ ADD THIS LINE
 }
+
 
 interface DynamicFormProps {
   fields: FieldConfig[];
@@ -277,7 +280,7 @@ export default function DynamicForm({
                   loading={field.showLoader}
                   disabled={field.disabled}
                   placeholder={`Select ${field.label}`}
-                  hideValues={field.name === "product_ids"} // 👈 ONLY FOR PRODUCTS
+                  hideValues={field.hideValues ?? field.name === "product_ids"}
                 />
 
                 {showError && (

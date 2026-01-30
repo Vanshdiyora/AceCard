@@ -287,6 +287,7 @@ export default function CreateCampaignModal({
       label: "Products",
       type: "search-multiselect",
       required: true,
+      hideValues: false,
       minItems: 1,
       options: productOptionsCache,
       onSearch: setProductSearch,

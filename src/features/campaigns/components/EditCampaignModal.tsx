@@ -211,42 +211,46 @@ export default function EditCampaignModal({
       required: true,
       options: STATUS_OPTIONS,
     },
-    {
-      name: "manager_id",
-      label: "Owner (Manager)",
-      type: "select",
-      required: true,
-      options: managers.map((m) => ({
-        label: m.name,
-        value: m.id,
-      })),
-      onScrollEnd: loadMoreManagers,
-      showLoader: loadingMoreManagers,
-    },
-    {
-      name: "assigned_reps_ids",
-      label: "Assigned Salespersons",
-      type: "multiselect",
-      options: salespeople.map((s) => ({
-        label: s.name,
-        value: s.id,
-      })),
-      onScrollEnd: loadMoreSales,
-      showLoader: loadingMoreSales,
-    },
-    {
-      name: "product_ids",
-      label: "Products",
-      type: "multiselect",
-      required: true,
-      options: products.map((p) => ({
-        label: p.name,
-        value: p.id,
-      })),
-      onScrollEnd: loadMoreProducts,
-      showLoader: loadingMoreProducts || productsLoading,
-      disabled: productsLoading,
-    },
+   {
+  name: "manager_id",
+  label: "Owner (Manager)",
+  type: "search-select",   // 🔥
+  required: true,
+  options: managers.map((m) => ({
+    label: m.name,
+    value: m.id,
+  })),
+  onScrollEnd: loadMoreManagers,
+  showLoader: loadingMoreManagers,
+},
+
+{
+  name: "assigned_reps_ids",
+  label: "Assigned Salespersons",
+  type: "search-multiselect", // 🔥
+  options: salespeople.map((s) => ({
+    label: s.name,
+    value: s.id,
+  })),
+  onScrollEnd: loadMoreSales,
+  showLoader: loadingMoreSales,
+},
+
+{
+  name: "product_ids",
+  label: "Products",
+  type: "search-multiselect", // 🔥
+  required: true,
+  options: products.map((p) => ({
+    label: p.name,
+    value: p.id,
+  })),
+  onScrollEnd: loadMoreProducts,
+  showLoader: loadingMoreProducts || productsLoading,
+  disabled: productsLoading,
+  hideValues: false,
+},
+
     {
       name: "start_date",
       label: "Start Date",

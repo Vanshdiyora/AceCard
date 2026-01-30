@@ -4,15 +4,22 @@ import { useAppDispatch, useAppSelector } from "../../../app/hooks";
 import { loadPublicProfile } from "../slice";
 import MobileWebsite from "../components/MobileWebsite";
 
-export default function PublicProfilePage() {
-  const { handle } = useParams<{ handle: string }>();
+type Props = {
+  handle?: string;
+};
+
+export default function PublicProfilePage({ handle: propHandle }: Props) {
+  const { handle: routeHandle } = useParams<{ handle: string }>();
+  const handle = propHandle || routeHandle;
+
   const dispatch = useAppDispatch();
   const { data, loading } = useAppSelector((s) => s.publicProfile);
 
   useEffect(() => {
     if (handle) dispatch(loadPublicProfile(handle));
-  }, [handle]);
+  }, [handle, dispatch]);
 
+  if (!handle) return <div className="p-6">No profile handle found.</div>;
   if (loading || !data) return <div className="p-6">Loading...</div>;
 
   return <MobileWebsite data={data} />;
