@@ -112,9 +112,11 @@ interface PublicProfileConfig {
 export default function TeamMemberPublicProfileTab({
   onLiveChange,
   useSelfApi = false,   // 👈 default = admin mode
+  showLockable = false,  // 👈 new prop for lockable visibility
 }: {
   onLiveChange?: (cfg: any) => void;
   useSelfApi?: boolean;
+  showLockable?: boolean;
 }) {
 
   const dispatch = useAppDispatch();
@@ -329,6 +331,7 @@ const save = () => {
       </Card>
 
       <Card title="Theme" desc="Colors used across the profile">
+        {showLockable && (
         <LockControl
           value={config.theme}
           onChange={(v) =>
@@ -338,7 +341,7 @@ const save = () => {
             })
           }
         />
-
+        )}
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           {THEME_COLOR_KEYS.map((k) => (
             <ColorPickerField
@@ -368,7 +371,8 @@ const save = () => {
             Select which products appear on your public card
           </p>
         </div>
-        <div className="px-6 mt-3">
+        {showLockable && (
+          <div className="px-6 mt-3">
           <LockControl
             value={config.products}
             onChange={(v) =>
@@ -377,8 +381,9 @@ const save = () => {
                 products: { ...config.products, ...v },
               })
             }
-          />
+            />
         </div>
+          )}
 
         {/* SELECT */}
         <div className="px-1">
@@ -432,7 +437,8 @@ const save = () => {
 
 
       <Card title="Banner" desc="Top banner CTA section">
-        <LockControl
+        {showLockable && (
+          <LockControl
           value={config.banner}
           onChange={(v) =>
             update({
@@ -440,8 +446,9 @@ const save = () => {
               banner: { ...config.banner, ...v },
             })
           }
-        />
-
+          />
+          
+        )}
         <Toggle
           label="Enable banner"
           value={config.banner.enabled}
@@ -511,15 +518,17 @@ const save = () => {
       </Card>
 
       <Card title="Videos" desc="Your YouTube / video links">
+      { showLockable && (
         <LockControl
-          value={config.youtube}
-          onChange={(v) =>
-            update({
-              ...config,
-              youtube: { ...config.youtube, ...v },
-            })
-          }
+        value={config.youtube}
+        onChange={(v) =>
+          update({
+            ...config,
+            youtube: { ...config.youtube, ...v },
+          })
+        }
         />
+      )}
 
         <YoutubeSection
           items={config.youtube.items}
@@ -531,16 +540,18 @@ const save = () => {
 
 
       <Card title="Meeting Button" desc="Book a call / meeting link">
+      { showLockable && (
         <LockControl
-          value={config.meeting}
-          onChange={(v) =>
-            update({
-              ...config,
-              meeting: { ...config.meeting, ...v },
-            })
-          }
+        value={config.meeting}
+        onChange={(v) =>
+          update({
+            ...config,
+            meeting: { ...config.meeting, ...v },
+          })
+        }
         />
-
+        
+      )}
         <MeetingSection
           value={config.meeting}
           onChange={(m: any) => update({ ...config, meeting: m })}
@@ -548,6 +559,8 @@ const save = () => {
       </Card>
 
       <Card title="Links & Files" desc="Add external links or downloadable files">
+        { showLockable && (
+
         <LockControl
           value={config.links_files}
           onChange={(v) =>
@@ -557,7 +570,7 @@ const save = () => {
             })
           }
         />
-
+        )}
         <LinksFilesSection
           value={config.links_files}
           onChange={(v) =>
@@ -764,7 +777,6 @@ function ColorPickerField({
     </>
   );
 }
-
 
 function LockControl({
   value,

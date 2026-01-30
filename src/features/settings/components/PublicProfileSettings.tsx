@@ -16,5 +16,11 @@ export default function PublicProfileSettings() {
     }
   }, [username, dispatch]);
 
-  return <TeamMemberPublicProfileTab key={username} useSelfApi={true} />;
+  return (
+    <TeamMemberPublicProfileTab
+      key={username}
+      useSelfApi={true}
+      showLockable={true}   // 👈 pass to child
+    />
+  );
 }
