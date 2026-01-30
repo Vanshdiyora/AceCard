@@ -182,14 +182,15 @@ function Profile({ profile, theme, user, onConnect }: any) {
       </div>
 
       <div className="grid grid-cols-2 gap-3 mt-4 px-4">
-       <button
+     <button
   type="button"
-  onClick={() => openNativeContact(user)}
+  onClick={() => saveContact(user)}
   className="h-11 rounded-xl border text-sm"
   style={{ color: theme.text_color, borderColor: theme.accent_color }}
 >
   Save Contact
 </button>
+
 
 
 
@@ -334,30 +335,28 @@ function Banner({ image }: any) {
     </div>
   );
 }
+function saveContact(user: any) {
+  const vcard = `
+BEGIN:VCARD
+VERSION:3.0
+N:${user.name};${user.name};;;
+FN:${user.name}
+ORG:${user.vendor_name || ""}
+TITLE:${user.job_title || user.role || ""}
+TEL;TYPE=CELL:${user.phone || ""}
+EMAIL:${user.email || ""}
+URL:https://theacecard.co/${user.username}
+END:VCARD
+`.trim();
 
-function openNativeContact(user: any) {
-  const name = encodeURIComponent(user.name || "");
-  const phone = encodeURIComponent(user.phone || "");
-  const email = encodeURIComponent(user.email || "");
-  // const company = encodeURIComponent(user.vendor_name || "");
-  // const title = encodeURIComponent(user.job_title || user.role || "");
+  const blob = new Blob([vcard], { type: "text/vcard;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
 
-  // 📱 Android intent
-  if (/Android/i.test(navigator.userAgent)) {
-    window.location.href =
-      `intent://contacts/people?name=${name}&phone=${phone}&email=${email}` +
-      `#Intent;scheme=content;action=android.intent.action.INSERT;` +
-      `type=vnd.android.cursor.dir/contact;end`;
-    return;
-  }
-
-  // 🍎 iOS (Safari)
-  if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-    window.location.href =
-      `contacts://new?name=${name}&phone=${phone}&email=${email}`;
-    return;
-  }
-
-  // 💻 Fallback
-  alert("Save contact is supported only on mobile devices.");
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${user.name || "contact"}.vcf`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
