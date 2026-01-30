@@ -7,7 +7,8 @@ import {
   Link2,
   FileText,
 } from "lucide-react";
-
+import { useState, useEffect } from "react";
+import { ConnectModal } from "./ConnectModal";
 /* ================= HELPERS ================= */
 
 const getYouTubeId = (url: string) => {
@@ -21,9 +22,17 @@ const sortByRank = (arr: any[] = []) =>
     .sort((a, b) => (a.rank ?? 0) - (b.rank ?? 0));
 
 /* ================= COMPONENT ================= */
+export default function MobileWebsite({
+  data,
+  scrollRef,
+}: {
+  data: any;
+  scrollRef?: React.RefObject<HTMLDivElement | null>;
+}) {
 
-export default function MobileWebsite({ data }: { data: any }) {
+
   const config = data?.configuration || {};
+  const [open, setOpen] = useState(false);
 
   const {
     profile = {},
@@ -38,11 +47,32 @@ export default function MobileWebsite({ data }: { data: any }) {
   } = config;
 
   const orderedSections = sortByRank(sections);
+useEffect(() => {
+  if (!scrollRef?.current) return;
+
+  const el = scrollRef.current;
+
+  if (open) {
+    el.style.overflow = "hidden";
+    el.style.touchAction = "none";
+  } else {
+    el.style.overflow = "auto";
+    el.style.touchAction = "";
+  }
+}, [open, scrollRef]);
 
   const renderSection = (type: string) => {
     switch (type) {
       case "profile":
-        return <Profile profile={profile} theme={theme} user={data} />;
+        return (
+          <Profile
+            profile={profile}
+            theme={theme}
+            user={data}
+            onConnect={() => setOpen(true)}
+          />
+        );
+
 
       case "about":
         return profile.description ? (
@@ -78,14 +108,22 @@ export default function MobileWebsite({ data }: { data: any }) {
 
   return (
     <div
-      className="min-h-screen"
+      className="relative min-h-screen w-full overflow-hidden"
       style={{ backgroundColor: theme.background_color || "#000" }}
     >
+
       <div className="space-y-6 pb-6">
         {orderedSections.map(s =>
           s.enabled ? <div key={s.id}>{renderSection(s.type)}</div> : null
         )}
+
       </div>
+      <ConnectModal
+        open={open}
+        onClose={() => setOpen(false)}
+        handle={data.username}
+        theme={theme}
+      />
     </div>
   );
 }
@@ -118,7 +156,7 @@ const formatRole = (role?: string) => {
   }
 };
 
-function Profile({ profile, theme, user }: any) {
+function Profile({ profile, theme, user, onConnect }: any) {
   return (
     <div>
       <div className="relative h-[220px]">
@@ -152,11 +190,18 @@ function Profile({ profile, theme, user }: any) {
         </button>
 
         <button
+          type="button"   // 👈 IMPORTANT
+          onClick={onConnect}
           className="h-11 rounded-xl text-sm font-medium"
-          style={{ backgroundColor: theme.card_color, color: theme.primary_color }}
+          style={{
+            backgroundColor: theme.card_color,
+            color: theme.primary_color,
+          }}
         >
           Connect
         </button>
+
+
       </div>
     </div>
   );

@@ -1,5 +1,5 @@
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { ArrowLeft, Edit, Shield, UserX, CheckCircle2 } from "lucide-react";
 // import { useEffect as usePublicEffect } from "react";
 import PublicMobileWebsite from "../../publicProfile/components/MobileWebsite";
@@ -28,6 +28,7 @@ export default function TeamMemberDetailsPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useAppDispatch();
+const phoneScrollRef = useRef<HTMLDivElement>(null);
 
   const auth = useAppSelector((s) => s.auth);
   const { members, loading } = useAppSelector((s) => s.team);
@@ -276,9 +277,16 @@ export default function TeamMemberDetailsPage() {
       <div className="hidden lg:flex justify-center items-center h-full overflow-hidden">
         <div className="w-[340px] max-h-full aspect-[9/19.5] bg-black rounded-[2.5rem] p-2">
           <div className="h-full bg-white rounded-[2rem] overflow-hidden flex flex-col">
-            <div className="flex-1 overflow-y-auto overscroll-contain">
-              {publicProfile ? (
-                <PublicMobileWebsite data={publicProfile} />
+           <div
+  ref={phoneScrollRef}
+  className="flex-1 overflow-y-auto overscroll-contain"
+>
+         {publicProfile ? (
+               <PublicMobileWebsite
+  data={publicProfile}
+  scrollRef={phoneScrollRef}
+/>
+
               ) : (
                 <div className="h-full flex items-center justify-center text-sm text-gray-400">
                   No public profile yet
