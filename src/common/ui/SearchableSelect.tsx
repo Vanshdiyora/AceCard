@@ -10,7 +10,7 @@ interface Option {
 }
 
 interface Props {
-  value: any;
+  value: any; // single: value, multi: value[]
   onChange: (v: any) => void;
   options: Option[];
   placeholder?: string;
@@ -19,9 +19,8 @@ interface Props {
   onScrollEnd?: () => void;
   loading?: boolean;
   onSearch?: (value: string) => void;
-  hideValues?: boolean; // 👈 ADD
+  hideValues?: boolean;
 }
-
 
 /* ================= COMPONENT ================= */
 
@@ -80,11 +79,11 @@ export default function SearchableSelect({
   };
 
   const isSelected = (val: any) =>
-    multiple ? value?.includes(val) : value === val;
+    multiple ? Array.isArray(value) && value.includes(val) : value === val;
 
   return (
     <>
-      {/* TRIGGER */}
+      {/* ================= TRIGGER ================= */}
       <div
         ref={triggerRef}
         onClick={() => {
@@ -103,28 +102,37 @@ export default function SearchableSelect({
           ${disabled ? "opacity-50" : ""}
         `}
       >
-      {multiple && Array.isArray(value) && value.length > 0 && !hideValues ? (
-  <div className="flex flex-wrap gap-1">
-    {options
-      .filter((o) => value.includes(o.value))
-      .map((o) => (
-        <span
-          key={o.value}
-          className="bg-purple-100 text-purple-700 px-2 py-0.5 rounded text-xs"
-        >
-          {o.label}
-        </span>
-      ))}
-  </div>
-) : (
-  <span className="text-gray-600">
-    {placeholder}
-  </span>
-)}
+        {/* MULTI SELECT VALUES */}
+        {multiple && Array.isArray(value) && value.length > 0 && !hideValues && (
+          <div className="flex flex-wrap gap-1">
+            {options
+              .filter((o) => value.includes(o.value))
+              .map((o) => (
+                <span
+                  key={o.value}
+                  className="bg-purple-100 text-purple-700 px-2 py-0.5 rounded text-xs"
+                >
+                  {o.label}
+                </span>
+              ))}
+          </div>
+        )}
 
+        {/* SINGLE SELECT VALUE */}
+        {!multiple && value != null && !hideValues && (
+          <span className="text-gray-800">
+            {options.find((o) => o.value === value)?.label || placeholder}
+          </span>
+        )}
+
+        {/* PLACEHOLDER */}
+        {((multiple && (!Array.isArray(value) || value.length === 0)) ||
+          (!multiple && (value == null || hideValues))) && (
+          <span className="text-gray-600">{placeholder}</span>
+        )}
       </div>
 
-      {/* DROPDOWN (PORTAL) */}
+      {/* ================= DROPDOWN ================= */}
       {open &&
         createPortal(
           <div
@@ -154,10 +162,7 @@ export default function SearchableSelect({
               className="max-h-64 overflow-y-auto custom-scrollbar"
               onScroll={(e) => {
                 const el = e.currentTarget;
-                if (
-                  el.scrollTop + el.clientHeight >=
-                  el.scrollHeight - 5
-                ) {
+                if (el.scrollTop + el.clientHeight >= el.scrollHeight - 5) {
                   onScrollEnd?.();
                 }
               }}
@@ -181,9 +186,7 @@ export default function SearchableSelect({
               )}
 
               {!loading && filtered.length === 0 && (
-                <p className="text-sm text-gray-400 p-3">
-                  No results
-                </p>
+                <p className="text-sm text-gray-400 p-3">No results</p>
               )}
             </div>
           </div>,

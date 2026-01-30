@@ -21,7 +21,7 @@ export default function LeadOverviewTab({ lead }: Props) {
           <Info label="Company" value={lead.company} />
           <Info label="Stage" value={lead.stage} />
           <Info label="Source" value={lead.source} />
-          <Info label="Deal Amount" value={`$${lead.deal_amount}`} />
+          <Info label="Deal Amount" value={`₹${lead.deal_amount}`} />
           <Info
             label="Created"
             value={new Date(lead.created_at).toLocaleDateString()}

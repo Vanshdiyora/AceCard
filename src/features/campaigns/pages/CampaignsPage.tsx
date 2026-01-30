@@ -120,9 +120,9 @@ export default function CampaignsPage() {
   const columns: Column<Campaign>[] = [
     { header: "Campaign", render: (c) => c.name },
     { header: "Status", render: (c) => c.status },
-    { header: "Budget", render: (c) => `$${c.budget}K` },
+    { header: "Budget", render: (c) => `₹${c.budget}` },
     { header: "Leads", render: (c) => c.leads_generated },
-    { header: "Pipeline", render: (c) => `$${c.pipeline_value}K` },
+    { header: "Pipeline", render: (c) => `₹${c.pipeline_value}` },
     { header: "Conversion", render: (c) => `${c.conversion_rate}%` },
     { header: "Created", render: (c) => c.created_at.split("T")[0] },
     { header: "Updated", render: (c) => c.updated_at.split("T")[0] },

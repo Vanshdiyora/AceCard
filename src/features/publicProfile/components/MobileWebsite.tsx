@@ -33,7 +33,7 @@ export default function MobileWebsite({
 
   const config = data?.configuration || {};
   const [open, setOpen] = useState(false);
-
+console.log("Configuration:", config);
   const {
     profile = {},
     theme = {},
@@ -168,7 +168,7 @@ function Profile({ profile, theme, user, onConnect }: any) {
         </div>
 
         <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex flex-col items-center">
-          <div className="w-24 h-24 rounded-full bg-white shadow-lg flex items-center justify-center">
+          <div className="w-24 h-24 rounded-full bg-black shadow-lg flex items-center justify-center">
             <img src={profile.avatar_url} className="w-20 h-20 rounded-full object-cover" />
           </div>
 
@@ -211,9 +211,11 @@ function Profile({ profile, theme, user, onConnect }: any) {
 
 function MeetingCTA({ meeting, theme }: any) {
   return (
-    <div className="px-4">
+    <div className="px-16">
       <a
         href={meeting.meeting_url}
+        target="_blank"              // 👈 open in new tab
+        rel="noopener noreferrer"    // 👈 security best practice
         className="block text-center py-4 rounded-xl text-sm font-semibold shadow-md"
         style={{ backgroundColor: theme.primary_color, color: "#fff" }}
       >

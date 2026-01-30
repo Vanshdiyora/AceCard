@@ -267,6 +267,7 @@ export default function CreateCampaignModal({
       name: "owner_id",
       label: "Owner (Manager)",
       type: "search-select",
+      hideValues: false,
       required: true,
       options: managerOptionsCache,
       onSearch: setManagerSearch,

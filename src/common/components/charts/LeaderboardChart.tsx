@@ -1,9 +1,9 @@
 export default function LeaderboardChart() {
   const ranking = [
-    { name: "Sarah J.", leads: 89, pipeline: "$245k" },
-    { name: "Michael C.", leads: 76, pipeline: "$198k" },
-    { name: "David R.", leads: 94, pipeline: "$215k" },
-    { name: "Emily W.", leads: 83, pipeline: "$190k" },
+    { name: "Sarah J.", leads: 89, pipeline: "₹245k" },
+    { name: "Michael C.", leads: 76, pipeline: "₹198k" },
+    { name: "David R.", leads: 94, pipeline: "₹215k" },
+    { name: "Emily W.", leads: 83, pipeline: "₹190k" },
   ];
 
   return (

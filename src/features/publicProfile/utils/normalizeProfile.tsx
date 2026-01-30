@@ -1,11 +1,11 @@
 export function normalizeProfile(api: any) {
   const cfg = api.configuration ?? {};
-
+  console.log("API Configuration:", api);
   return {
     profile: {
-      avatar_url: cfg.profile?.avatar_url ?? "",
-      cover_url: cfg.profile?.cover_url ?? "",
-      description: cfg.profile?.description ?? "",
+      avatar_url: api.avatar_url ?? "",
+      cover_url: api.cover_url ?? "",
+      description: api.description ?? "",
     },
 
     theme: {
