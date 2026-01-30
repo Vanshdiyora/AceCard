@@ -99,13 +99,17 @@ export default function SearchableSelect({
           setOpen((s) => !s);
         }}
         className={`border rounded-lg px-3 py-2 text-sm cursor-pointer bg-white
+          min-h-[42px] flex flex-col justify-center
           ${disabled ? "opacity-50" : ""}
         `}
       >
-        {/* MULTI SELECT VALUES */}
-        {multiple && Array.isArray(value) && value.length > 0 && !hideValues && (
-          <div className="flex flex-wrap gap-1">
-            {options
+        {/* CHIP ROW (RESERVED HEIGHT) */}
+        <div className="flex flex-wrap gap-1 min-h-[20px] items-center">
+          {multiple &&
+            Array.isArray(value) &&
+            value.length > 0 &&
+            !hideValues &&
+            options
               .filter((o) => value.includes(o.value))
               .map((o) => (
                 <span
@@ -115,8 +119,7 @@ export default function SearchableSelect({
                   {o.label}
                 </span>
               ))}
-          </div>
-        )}
+        </div>
 
         {/* SINGLE SELECT VALUE */}
         {!multiple && value != null && !hideValues && (
@@ -125,11 +128,12 @@ export default function SearchableSelect({
           </span>
         )}
 
-        {/* PLACEHOLDER */}
-        {((multiple && (!Array.isArray(value) || value.length === 0)) ||
-          (!multiple && (value == null || hideValues))) && (
-          <span className="text-gray-600">{placeholder}</span>
-        )}
+        {/* PLACEHOLDER (ALWAYS when hideValues=true) */}
+        {(
+          hideValues ||
+          (multiple && (!Array.isArray(value) || value.length === 0)) ||
+          (!multiple && value == null)
+        ) && <span className="text-gray-600">{placeholder}</span>}
       </div>
 
       {/* ================= DROPDOWN ================= */}

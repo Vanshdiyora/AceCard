@@ -353,15 +353,17 @@ export default function TeamMemberPublicProfileTab({
             Select which products appear on your public card
           </p>
         </div>
-        <LockControl
-          value={config.products}
-          onChange={(v) =>
-            update({
-              ...config,
-              products: { ...config.products, ...v },
-            })
-          }
-        />
+        <div className="px-6 mt-3">
+          <LockControl
+            value={config.products}
+            onChange={(v) =>
+              update({
+                ...config,
+                products: { ...config.products, ...v },
+              })
+            }
+          />
+        </div>
 
         {/* SELECT */}
         <div className="px-1">
