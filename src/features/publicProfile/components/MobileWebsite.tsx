@@ -6,7 +6,11 @@ import {
   Facebook,
   Link2,
   FileText,
+  Phone,
+  Globe,
+  MessageCircle,
 } from "lucide-react";
+
 import { useState, useEffect } from "react";
 import { ConnectModal } from "./ConnectModal";
 
@@ -128,7 +132,7 @@ export default function MobileWebsite({
 
   return (
     <div
-      className="relative min-h-screen w-full overflow-hidden"
+      className="relative min-h-screen w-full overflow-hidden p-4"
       style={{ backgroundColor: theme.background_color || "#000" }}
     >
       <div className="space-y-6 pb-6">
@@ -153,7 +157,7 @@ export default function MobileWebsite({
 
 function Section({ title, children, theme }: any) {
   return (
-    <div className="px-4">
+    <div className="">
       <h3
         className="text-sm font-semibold mb-2"
         style={{ color: theme.text_color }}
@@ -179,15 +183,17 @@ const formatRole = (role?: string) => {
       return role || "";
   }
 };
-
 function Profile({ profile, theme, user, onConnect }: any) {
   return (
     <div>
-      <div className="relative h-[220px]">
+      {/* COVER */}
+      <div className="relative h-[220px] rounded-2xl overflow-hidden">
         <img
           src={profile.cover_url || ""}
           className="w-full h-full object-cover"
         />
+
+        {/* OVERLAY (also rounded via parent overflow) */}
         <div className="absolute inset-0 bg-black/50" />
 
         <div
@@ -220,6 +226,7 @@ function Profile({ profile, theme, user, onConnect }: any) {
         </div>
       </div>
 
+      {/* ACTIONS */}
       <div className="grid grid-cols-2 gap-3 mt-4 px-4">
         <button
           type="button"
@@ -253,7 +260,7 @@ function Profile({ profile, theme, user, onConnect }: any) {
 
 function MeetingCTA({ meeting, theme }: any) {
   return (
-    <div className="px-16">
+    <div className="px-12">
       <a
         href={meeting.meeting_url}
         target="_blank"
@@ -329,24 +336,45 @@ function YouTube({ items, theme }: any) {
 
 function Social({ items, theme }: any) {
   if (!items?.length) return null;
+
+  // break into rows of 3
+  const rows: any[][] = [];
+  for (let i = 0; i < items.length; i += 3) {
+    rows.push(items.slice(i, i + 3));
+  }
+
   return (
-    <div className="flex justify-center gap-3">
-      {items.map((s: any) => (
-        <a
-          key={s.id}
-          href={s.url}
-          className="h-12 w-12 rounded-xl flex items-center justify-center"
-          style={{
-            backgroundColor: theme.card_color,
-            color: theme.primary_color,
-          }}
+    <div className="flex flex-col items-center gap-4">
+      {rows.map((row, rIdx) => (
+        <div
+          key={rIdx}
+          className={`flex gap-4 ${
+            row.length < 3 ? "justify-center" : "justify-between"
+          } w-full max-w-[220px]`}
         >
-          {s.label === "Instagram" && <Instagram />}
-          {s.label === "LinkedIn" && <Linkedin />}
-          {s.label === "YouTube" && <Youtube />}
-          {s.label === "Twitter" && <Twitter />}
-          {s.label === "Facebook" && <Facebook />}
-        </a>
+          {row.map((s: any) => (
+            <a
+              key={s.id}
+              href={s.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="h-14 w-14 rounded-2xl flex items-center justify-center shadow-md transition hover:scale-105"
+              style={{
+                backgroundColor: theme.card_color,
+                color: theme.primary_color,
+              }}
+            >
+              {s.label === "Instagram" && <Instagram size={22} />}
+              {s.label === "LinkedIn" && <Linkedin size={22} />}
+              {s.label === "YouTube" && <Youtube size={22} />}
+              {s.label === "Twitter" && <Twitter size={22} />}
+              {s.label === "Facebook" && <Facebook size={22} />}
+              {s.label === "Whatsapp" && <MessageCircle size={22} />}
+              {s.label === "Call Me" && <Phone size={22} />}
+              {s.label === "Personal Website" && <Globe size={22} />}
+            </a>
+          ))}
+        </div>
       ))}
     </div>
   );
@@ -395,7 +423,7 @@ function Links({ items, theme }: any) {
 
 function Banner({ image }: any) {
   return (
-    <div className="px-4">
+    <div className="">
       <img
         src={image}
         className="w-full h-28 rounded-2xl object-cover"

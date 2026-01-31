@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import BrandLoader from "../../ui/BrandLoader";
-
+import type { TeamMember } from "../../../features/teams/types";
 export type Column<T> = {
   header: string;
   accessor?: keyof T;
@@ -22,26 +22,34 @@ type Props<T> = {
 };
 
 const MAX_VISIBLE = 3;
-export const AvatarCell = (row: any) => {
-  const name = row.name || "";
-  const first = name.charAt(0).toUpperCase();
+export const AvatarCell = (m: TeamMember) => {
+  const initials = m.name
+    .split(" ")
+    .map(n => n[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
 
   return (
-    <div className="flex items-center gap-2">
-      <div className="w-9 h-9 rounded-full bg-purple-600 text-white flex items-center justify-center text-sm font-semibold overflow-hidden">
-        {row.avatar_url ? (
-          <img
-            src={row.avatar_url}
-            alt={name}
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          first
-        )}
-      </div>
+    <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
+      {m.avatar ? (
+        <img
+          src={m.avatar}
+          alt={m.name}
+          className="w-full h-full object-cover"
+          onError={(e) => {
+            (e.currentTarget as HTMLImageElement).style.display = "none";
+          }}
+        />
+      ) : (
+        <span className="text-sm font-semibold text-gray-600">
+          {initials}
+        </span>
+      )}
     </div>
   );
 };
+
 
 function getVisiblePages(page: number, totalPages: number) {
   if (totalPages <= MAX_VISIBLE) {

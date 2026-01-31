@@ -85,7 +85,7 @@ export default function AddMemberModal({
   /* ---------- FIELD CONFIG ---------- */
   const fields: FieldConfig[] = [
     {
-      name: "avatar_url",
+      name: "avatar",
       label: "Avatar",
       type: "image",
       upload: async (file: File) => {
@@ -178,7 +178,8 @@ export default function AddMemberModal({
   /* ---------- UI ---------- */
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-      <div className="bg-white w-[420px] rounded-xl shadow-lg">
+      <div className="bg-white w-[420px] max-h-[90vh] overflow-y-auto rounded-xl shadow-lg">
+
         <div className="p-5 border-b">
           <h2 className="text-xl font-semibold">
             Add Team Member
@@ -193,7 +194,7 @@ export default function AddMemberModal({
           setErrors={setErrors}
         />
 
-        <div className="p-4 border-t flex justify-end gap-2">
+        <div className="p-4 border-t flex justify-end gap-2 sticky bottom-0 bg-white">
           <button
             onClick={onClose}
             className="px-4 py-2 border rounded"

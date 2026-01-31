@@ -22,8 +22,8 @@ export default function TeamMemberOverviewTab({
   const profileUrl = member?.username
     ? `${window.location.origin}/profile/${member.username}`
     : "";
-  const directUrl = `${profileUrl}?type=nfc`;
-  const qrUrl = `${profileUrl}?type=nfc`;
+  const directUrl = `${profileUrl}?type=direct`;
+  const qrUrl = `${profileUrl}?type=qr`;
   const nfcUrl = `${profileUrl}?type=nfc`;
 
   /* ---------------- QR Render ---------------- */

@@ -640,6 +640,19 @@ export default function TeamMemberPublicProfileTab({
       </Card>
 
       <Card title="Sections" desc="Reorder your public sections">
+
+        {showLockable && (
+          <LockControl
+            value={config.sections}
+            onChange={(v) =>
+              update({
+                ...config,
+                sections: { ...config.sections, ...v },
+              })
+            }
+          />
+        )}
+
         <SectionsReorder
           sections={config.sections.items}
           groupLocked={config.sections.locked}
@@ -650,8 +663,9 @@ export default function TeamMemberPublicProfileTab({
             })
           }
         />
-
       </Card>
+
+
 
       <button
         onClick={save}

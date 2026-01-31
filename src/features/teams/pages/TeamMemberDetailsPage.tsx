@@ -1,4 +1,4 @@
-import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect, useMemo, useRef } from "react";
 import { ArrowLeft, Edit, Shield, UserX, CheckCircle2 } from "lucide-react";
 // import { useEffect as usePublicEffect } from "react";
@@ -21,20 +21,17 @@ import TeamMemberTotalLeadsTab from "../components/details/TeamMemberTotalLeadsT
 // import MemberMobileWebsite from "../components/MemberMobileWebsite";
 import { fetchLeads } from "../../leads/slice"; // adjust path
 
-import type { TeamMember } from "../types";
-
 const TABS = ["overview", "leads", "total-leads", "public-profile"] as const;
 
 export default function TeamMemberDetailsPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const location = useLocation();
   const dispatch = useAppDispatch();
   const phoneScrollRef = useRef<HTMLDivElement>(null);
   const [livePreviewConfig, setLivePreviewConfig] = useState<any | null>(null);
 
   const auth = useAppSelector((s) => s.auth);
-  const { members, loading } = useAppSelector((s) => s.team);
+  const { members } = useAppSelector((s) => s.team);
   const [leadIds, setLeadIds] = useState<number[]>([]);
 
   const ROLES = ["vendor_admin", "manager", "sales_rep"] as const;
@@ -48,14 +45,11 @@ export default function TeamMemberDetailsPage() {
     [members]
   );
 
-  const preloaded = (location.state as { member?: TeamMember })?.member;
 
-  const member = useMemo(() => {
-    return (
-      members.find((m) => m.id === Number(id)) ||
-      (preloaded && preloaded.id === Number(id) ? preloaded : null)
-    );
-  }, [members, id, preloaded]);
+const member = useAppSelector(
+  (s) => s.team.members.find((m) => m.id === Number(id)) || null
+);
+
 
   const [activeTab, setActiveTab] = useState<typeof TABS[number]>("overview");
   const [editOpen, setEditOpen] = useState(false);
@@ -109,13 +103,14 @@ export default function TeamMemberDetailsPage() {
       );
     }
   }, [member?.username, dispatch]);
+
   useEffect(() => {
-    if (id && !member) {
-      dispatch(fetchMemberById(Number(id))).finally(() => setHasFetched(true));
-    } else {
-      setHasFetched(true);
-    }
-  }, [id, member, dispatch]);
+    if (!id) return;
+
+    setHasFetched(false);
+    dispatch(fetchMemberById(Number(id)))
+      .finally(() => setHasFetched(true));
+  }, [id, dispatch]);
 
   /* ---------------- SCROLL LOCK ---------------- */
 
@@ -155,7 +150,7 @@ export default function TeamMemberDetailsPage() {
 
   /* ---------------- LOADING STATES ---------------- */
 
-  if (!hasFetched || (loading && !member)) {
+  if (!hasFetched && !member) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <BrandLoader message="Loading member..." />
@@ -238,6 +233,30 @@ export default function TeamMemberDetailsPage() {
     }
   };
 
+const avatarUrl = member.avatar || null;
+
+
+  const Avatar = ({
+    src,
+    name,
+  }: {
+    src?: string | null;
+    name: string;
+  }) => {
+    return (
+      <div className="h-14 w-14 rounded-full overflow-hidden flex items-center justify-center bg-purple-600 text-white font-semibold text-lg border">
+        {src ? (
+          <img
+            src={src}
+            alt={name}
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          name.charAt(0).toUpperCase()
+        )}
+      </div>
+    );
+  };
 
   /* ---------------- UI ---------------- */
   return (
@@ -259,7 +278,13 @@ export default function TeamMemberDetailsPage() {
               ? `${displayRole} • Manager - ${displayManager}`
               : displayRole
           }
-          avatar={(member.name?.charAt(0) || "S").toUpperCase()}
+          avatar={
+            <Avatar
+              src={avatarUrl}
+              name={member.name}
+            />
+          }
+
           status={{
             label: member.status,
             variant: member.status === "active" ? "active" : "suspended",
@@ -397,18 +422,21 @@ export default function TeamMemberDetailsPage() {
         managers={managers}
         onClose={() => setEditOpen(false)}
         onSubmit={async (data) => {
-          try {
-            setProcessing(true);
-            await dispatch(updateMember({ id: member.id, data })).unwrap();
-            showResult(true, "Member updated successfully.");
-          } catch {
-            showResult(false, "Failed to update member.");
-          } finally {
-            setProcessing(false);
-            setEditOpen(false);
-          }
+          const updated = await dispatch(
+            updateMember({ id: member.id, data })
+          ).unwrap();
+
+          return updated; // 👈 return to modal
         }}
+      onSuccess={() => {
+  dispatch(fetchMemberById(member.id));
+  if (member.username) {
+    dispatch(loadPublicProfile({ handle: member.username }));
+  }
+}}
+
       />
+
 
       <PermissionsModal
         open={permOpen}

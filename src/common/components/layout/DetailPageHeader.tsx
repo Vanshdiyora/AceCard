@@ -33,10 +33,11 @@ export default function DetailPageHeader({
       <div className="flex items-center gap-4 min-w-0">
         {/* Avatar */}
         {avatar && (
-          <div className="h-12 w-12 rounded-full bg-purple-100 flex items-center justify-center text-purple-700 font-semibold text-lg shrink-0">
+          <div className="shrink-0">
             {avatar}
           </div>
         )}
+
 
         {/* Title block */}
         <div className="min-w-0">

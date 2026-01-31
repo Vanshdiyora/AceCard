@@ -10,16 +10,19 @@ export default function EditMemberModal({
   member,
   onClose,
   onSubmit,
+  onSuccess, // 👈 NEW
   currentRole,
   managers,
 }: {
   open: boolean;
   member: any;
   onClose: () => void;
-  onSubmit: (data: any) => void;
+  onSubmit: (data: any) => Promise<any>; // 👈 make async
+  onSuccess?: (updated: any) => void; // 👈 callback
   currentRole: "vendor_admin" | "manager" | "sales_rep";
   managers: { id: number; name: string }[];
 }) {
+
   const [form, setForm] = useState<any>(null);
   const [errors, setErrors] = useState<
     Record<string, string | null>
@@ -35,7 +38,7 @@ export default function EditMemberModal({
       phone: member.phone ?? "",
       role: member.role,
       manager_id: member.manager_id ?? undefined,
-      avatar_url: member.avatar_url ?? "",
+      avatar: member.avatar_url ?? "",
     });
 
     setErrors({});
@@ -58,7 +61,7 @@ export default function EditMemberModal({
   /* ---------- FIELD CONFIG ---------- */
   const fields: FieldConfig[] = [
     {
-      name: "avatar_url",
+      name: "avatar",
       label: "Avatar",
       type: "image",
       upload: async (file: File) => {
@@ -119,37 +122,33 @@ export default function EditMemberModal({
 
 
   /* ---------- SUBMIT ---------- */
-  const submit = () => {
-    // 🔒 VALIDATE FIELDS
-    const hasErrors = fields.some((field) => {
-      const error = validateField(
-        field,
-        form[field.name],
-        form
-      );
+  const submit = async () => {
+  const hasErrors = fields.some((field) => {
+    const error = validateField(field, form[field.name], form);
+    setErrors((prev) => ({ ...prev, [field.name]: error }));
+    return error;
+  });
 
-      setErrors((prev) => ({
-        ...prev,
-        [field.name]: error,
-      }));
+  if (hasErrors) return;
 
-      return error;
-    });
+  if (
+    member.role === "sales_rep" &&
+    form.manager_id !== member.manager_id &&
+    currentRole !== "vendor_admin"
+  ) {
+    alert("Only vendor admin can change sales rep manager.");
+    return;
+  }
 
-    if (hasErrors) return;
+  try {
+    const updated = await onSubmit(form); // 👈 wait
+    onSuccess?.(updated);                 // 👈 notify parent
+    onClose();
+  } catch (e) {
+    console.error("Update failed", e);
+  }
+};
 
-    // 🔐 PERMISSION CHECK (existing logic)
-    if (
-      member.role === "sales_rep" &&
-      form.manager_id !== member.manager_id &&
-      currentRole !== "vendor_admin"
-    ) {
-      alert("Only vendor admin can change sales rep manager.");
-      return;
-    }
-
-    onSubmit(form);
-  };
 
   /* ---------- UI ---------- */
   return (

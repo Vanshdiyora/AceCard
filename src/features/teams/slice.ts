@@ -15,8 +15,13 @@ import type {
 const normalizeMember = (m: any): TeamMember => ({
   ...m,
 
-  // 👇 ADD THIS
   website: m.website || m.profile_website || undefined,
+
+  // 👇 ADD THIS BLOCK
+  avatar:
+    m.avatar ||
+    m.profile?.avatar ||
+    m.image,
 
   permissions: m.permissions ?? {},
   manager_id: m.assigned_manager?.id ?? m.manager_id ?? null,
@@ -27,7 +32,6 @@ const normalizeMember = (m: any): TeamMember => ({
   conversion: m.conversion ?? "0%",
   lastActive: m.lastActive ?? "Recently",
 });
-
 
 /* ======================================================
    STATE
@@ -129,24 +133,18 @@ export const updateMember = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      const res = await teamService.updateMember(id, data);
+      await teamService.updateMember(id, data);
 
-      // 👇 Safely detect { status: "updated" } response
-      if (
-        res &&
-        typeof res === "object" &&
-        "status" in res &&
-        (res as any).status === "updated"
-      ) {
-        return { id, ...data };
-      }
-
-      return normalizeMember(res);
+      // 👇 ALWAYS re-fetch full member
+      const fresh = await teamService.getMemberById(id);
+      return normalizeMember(fresh);
     } catch (err: any) {
       return rejectWithValue(extractApiError(err, "Failed to update member"));
     }
   }
 );
+
+
 export const updatePermissions = createAsyncThunk(
   "team/permissions",
   async (
@@ -263,17 +261,15 @@ const teamSlice = createSlice({
         state.members.unshift(action.payload);
       })
 
-      /* 🔴 FIXED MERGE */
-      .addCase(updateMember.fulfilled, (state, action) => {
-        const idx = state.members.findIndex((m) => m.id === action.payload.id);
-        if (idx !== -1) {
-          state.members[idx] = {
-            ...state.members[idx],
-            ...action.payload,
-          };
-        }
-      })
-
+     .addCase(updateMember.fulfilled, (state, action) => {
+  const idx = state.members.findIndex((m) => m.id === action.payload.id);
+  if (idx !== -1) {
+    state.members[idx] = normalizeMember({
+      ...state.members[idx],
+      ...action.payload,
+    });
+  }
+})
       .addCase(updatePermissions.fulfilled, (state, action) => {
         const idx = state.members.findIndex((m) => m.id === action.payload.id);
         if (idx !== -1) {

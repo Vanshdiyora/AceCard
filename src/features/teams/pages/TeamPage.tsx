@@ -25,23 +25,14 @@ import { AvatarCell } from "../../../common/components/table/DataTable";
 import type { TeamMember } from "../types";
 
 /* ======================================================
-   CONSTANTS
+   TYPES
 ====================================================== */
-
-// const EDITABLE_PERMISSIONS: Record<keyof TeamPermissions, string> = {
-//   manage_team: "Manage Team",
-//   manage_products: "Manage Products",
-//   manage_campaigns: "Manage Campaigns",
-//   view_leads: "View Leads",
-//   edit_leads: "Edit Leads",
-//   archive_leads: "Archive Leads",
-//   send_notifications: "Send Notifications",
-//   view_analytics: "View Analytics",
-// };
 
 type UserRole = "vendor_admin" | "manager" | "sales_rep";
 type RoleFilter = "all" | "manager" | "sales_rep";
 type StatusFilter = "all" | "active" | "suspended";
+type SortBy = "total_leads" | "total_deal_amount" | "meeting_booked" | null;
+type SortOrder = "asc" | "desc" | null;
 
 /* ======================================================
    COMPONENT
@@ -52,20 +43,13 @@ export default function TeamPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const {
-    members = [],
-    loading,
-    meta,
-    error: fetchError,
-  } = useAppSelector((s) => s.team);
+  const { members = [], loading, meta, error: fetchError } =
+    useAppSelector((s) => s.team);
 
   const subscription = useAppSelector((s) => s.subscription.data);
-
-
-  const membersMeta = meta.members; // ✅ FIX
+  const membersMeta = meta.members;
 
   const authState = useAppSelector((s) => s.auth);
-
   const ROLES: readonly UserRole[] = ["vendor_admin", "manager", "sales_rep"];
   const rawRole = authState?.role ?? "";
   const currentRole: UserRole = ROLES.includes(rawRole as UserRole)
@@ -73,16 +57,14 @@ export default function TeamPage() {
     : "sales_rep";
 
   const currentUserId = authState?.user?.user_id;
-  const [sortBy, setSortBy] =
-    useState<"total_leads" | "total_deal_amount" | "meeting_booked">("total_leads");
 
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [sortBy, setSortBy] = useState<SortBy>(null);
+  const [sortOrder, setSortOrder] = useState<SortOrder>(null);
 
   const [roleFilter, setRoleFilter] = useState<RoleFilter>("all");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [page, setPage] = useState(1);
   const pageSize = 10;
-
   const [search, setSearch] = useState("");
 
   const [selectedId, setSelectedId] = useState<number | null>(null);
@@ -106,10 +88,6 @@ export default function TeamPage() {
     setResultOpen(true);
   };
 
-  /* ======================================================
-     DERIVED DATA
-  ====================================================== */
-
   const managers = useMemo(
     () => members.filter((m) => m.role === "manager"),
     [members]
@@ -118,6 +96,7 @@ export default function TeamPage() {
   /* ======================================================
      FETCH TEAM
   ====================================================== */
+
   useEffect(() => {
     dispatch(fetchSubscription());
   }, [dispatch]);
@@ -126,42 +105,42 @@ export default function TeamPage() {
     const params: any = {
       page,
       page_size: pageSize,
-      sort_by: sortBy,       // 👈
-      sort_order: sortOrder // 👈
     };
 
+    if (sortBy) params.sort_by = sortBy;
+    if (sortOrder) params.sort_order = sortOrder;
     if (search) params.search = search;
+
+    // 🔥 DO NOT SEND "all"
     if (roleFilter !== "all") params.role = roleFilter;
     if (statusFilter !== "all") params.status = statusFilter;
 
     dispatch(fetchTeam(params));
-  }, [dispatch, page, pageSize, search, roleFilter, statusFilter, sortBy, sortOrder]);
-
+  }, [
+    dispatch,
+    page,
+    pageSize,
+    search,
+    roleFilter,
+    statusFilter,
+    sortBy,
+    sortOrder,
+  ]);
 
   useEffect(() => {
-    const open = searchParams.get("open");
-
-    if (open === "create") {
-      setAddOpen(true);
-    }
+    if (searchParams.get("open") === "create") setAddOpen(true);
   }, [searchParams]);
 
-  /* 🔥 CRITICAL FIX — reset page */
   useEffect(() => {
     setPage(1);
   }, [search, roleFilter, statusFilter, sortBy, sortOrder]);
 
-
   /* ======================================================
-     TABLE COLUMNS
+     TABLE
   ====================================================== */
 
   const columns: Column<TeamMember>[] = [
-    {
-      header: "",
-      width: "56px",
-      render: AvatarCell, // 👈 FIRST COLUMN
-    },
+    { header: "", width: "56px", render: AvatarCell },
     { header: "Name", accessor: "name" },
     { header: "Email", width: "2fr", accessor: "email" },
     {
@@ -170,8 +149,8 @@ export default function TeamPage() {
       render: (m) => (
         <span
           className={`px-2 py-1 rounded text-xs ${m.status === "active"
-            ? "bg-green-100 text-green-700"
-            : "bg-red-100 text-red-700"
+              ? "bg-green-100 text-green-700"
+              : "bg-red-100 text-red-700"
             }`}
         >
           {m.status}
@@ -238,9 +217,7 @@ export default function TeamPage() {
               ? "Manager"
               : m.role.replace("_", " "),
         Manager:
-          m.role === "sales_rep"
-            ? m.assigned_manager?.name ?? "NA"
-            : "NA",
+          m.role === "sales_rep" ? m.assigned_manager?.name ?? "NA" : "NA",
         Leads: m.total_leads ?? m.leads ?? 0,
       }));
 
@@ -306,11 +283,10 @@ export default function TeamPage() {
         filters={[
           {
             key: "sort_by",
-            title: "Sort By", // 👈
+            title: "Sort By",
             placeholder: "Sort By",
-            value: sortBy,
-            onChange: (v) =>
-              setSortBy(v as "total_leads" | "total_deal_amount" | "meeting_booked"),
+            value: sortBy ?? "",
+            onChange: (v) => setSortBy(v ? (v as SortBy) : null),
             options: [
               { label: "Leads", value: "total_leads" },
               { label: "Deal Amount", value: "total_deal_amount" },
@@ -319,17 +295,16 @@ export default function TeamPage() {
           },
           {
             key: "sort_order",
-            title: "Order", // 👈
+            title: "Order",
             placeholder: "Order",
-            value: sortOrder,
-            onChange: (v) => setSortOrder(v as "asc" | "desc"),
+            value: sortOrder ?? "",
+            onChange: (v) => setSortOrder(v ? (v as SortOrder) : null),
             options: [
               { label: "High → Low", value: "desc" },
               { label: "Low → High", value: "asc" },
             ],
           },
         ]}
-
       />
 
       <div className="mt-6">
@@ -362,10 +337,6 @@ export default function TeamPage() {
             setBlocking(true);
             await dispatch(createMember(data)).unwrap();
             setAddOpen(false);
-
-            searchParams.delete("open");
-            setSearchParams(searchParams, { replace: true });
-
             showResult(true, "Team member added successfully.");
           } catch (err: any) {
             showResult(false, err || "Failed to add member.");
@@ -374,7 +345,6 @@ export default function TeamPage() {
           }
         }}
       />
-
 
       <EditMemberModal
         open={editOpen}

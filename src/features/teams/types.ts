@@ -52,6 +52,7 @@ export interface TeamMember {
   pipeline?: string;
   conversion?: string;
   lastActive?: string;
+  avatar?: string;
 }
 
 /* ======================================================
