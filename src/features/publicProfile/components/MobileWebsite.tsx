@@ -45,7 +45,7 @@ export default function MobileWebsite({
 }) {
   const config = data?.configuration ?? {};
   const [open, setOpen] = useState(false);
-
+  console.log(data)
   const {
     profile = {},
     cover = {},

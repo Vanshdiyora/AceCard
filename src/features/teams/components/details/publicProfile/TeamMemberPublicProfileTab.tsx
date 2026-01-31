@@ -377,8 +377,10 @@ export default function TeamMemberPublicProfileTab({
             username: publicProfile!.username!,
             config: payload,
           })
+          
         ).unwrap();
       }
+      // dispatch(loadPublicProfile({ handle: publicProfile!.username! }));
       // window.location.reload();
       setResultSuccess(true);
       setResultMessage("Public profile saved successfully.");

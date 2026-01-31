@@ -196,6 +196,10 @@ export function denormalizeProfile(
 
     configuration: {
       ...baseApi.configuration,
+      profile: {
+        ...baseApi.configuration?.profile,
+        ...cfg.profile, // 🔥 live value always wins
+      },
 
       layout: {
         locked: cfg.layout.locked,
@@ -254,7 +258,7 @@ export function denormalizeProfile(
       products: {
         locked: cfg.products.locked,
         lock_mode: cfg.products.lock_mode,
-        items: cfg.products.items.map((p:any) => ({
+        items: cfg.products.items.map((p: any) => ({
           id: p.id,
           name: p.name,
           price: p.price,
@@ -267,7 +271,7 @@ export function denormalizeProfile(
       youtube: {
         locked: cfg.youtube.locked,
         lock_mode: cfg.youtube.lock_mode,
-        items: cfg.youtube.items.map((v:any) => ({
+        items: cfg.youtube.items.map((v: any) => ({
           id: v.id,
           url: v.url,
           rank: v.rank,
@@ -278,7 +282,7 @@ export function denormalizeProfile(
       links_files: {
         locked: cfg.links_files.locked,
         lock_mode: cfg.links_files.lock_mode,
-        items: cfg.links_files.items.map((l:any) => ({
+        items: cfg.links_files.items.map((l: any) => ({
           id: l.id,
           type: l.type,
           title: l.title,
@@ -293,7 +297,7 @@ export function denormalizeProfile(
       sections: {
         locked: cfg.sections.locked,
         lock_mode: cfg.sections.lock_mode,
-        items: cfg.sections.items.map((s:any) => ({
+        items: cfg.sections.items.map((s: any) => ({
           id: s.id,
           type: s.type,
           rank: s.rank,
