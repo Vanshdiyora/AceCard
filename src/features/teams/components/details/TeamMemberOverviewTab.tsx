@@ -26,6 +26,21 @@ export default function TeamMemberOverviewTab({
   const qrUrl = `${profileUrl}?type=qr`;
   const nfcUrl = `${profileUrl}?type=nfc`;
 
+  const displayRole = useMemo(() => {
+    switch (member.role) {
+      case "sales_rep":
+        return "Sales Person";
+      case "manager":
+        return "Manager";
+      case "vendor_admin":
+        return "Vendor Admin";
+      default:
+        return member.role
+          .replace(/_/g, " ")
+          .replace(/\b\w/g, (c) => c.toUpperCase());
+    }
+  }, [member.role]);
+
   /* ---------------- QR Render ---------------- */
   useEffect(() => {
     if (!profileUrl || !qrRef.current) return;
@@ -82,7 +97,8 @@ export default function TeamMemberOverviewTab({
         <div className="space-y-4">
           <Detail label="Email" value={member.email} />
           <Detail label="Phone" value={member.phone} />
-          <Detail label="Role" value={member.role.replace("_", " ")} />
+          <Detail label="Role" value={displayRole} />
+
           <Detail label="Status" value={member.status} />
           <Detail label="Joined On" value={member.created_at} />
         </div>

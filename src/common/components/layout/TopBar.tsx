@@ -21,6 +21,30 @@ export default function Topbar({ type }: TopbarProps) {
   const profileLoading = useAppSelector((s) => s.settings.account.loading); // 🔴 added
   const jwtUser = useAppSelector((s) => s.auth.user);
   const token = useAppSelector((s) => s.auth.token);
+const Avatar = ({ size = 40 }: { size?: number }) => {
+  const [imgError, setImgError] = useState(false);
+
+  if (profile?.avatar_url && !imgError) {
+    return (
+      <img
+        src={profile.avatar_url}
+        alt={name}
+        className="rounded-full object-cover"
+        style={{ width: size, height: size }}
+        onError={() => setImgError(true)}
+      />
+    );
+  }
+
+  return (
+    <div
+      className="rounded-full bg-purple-600 text-white flex items-center justify-center font-medium"
+      style={{ width: size, height: size }}
+    >
+      {initials}
+    </div>
+  );
+};
 
   useEffect(() => {
     if (token) {
@@ -58,17 +82,39 @@ export default function Topbar({ type }: TopbarProps) {
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
-
-  const handleLogout = () => {
-    dispatch(logout());
-    dispatch(resetSettings());
-    navigate("/login", { replace: true });
+  const handleMyProfile = () => {
+    setOpen(false);
+    requestAnimationFrame(() => {
+      navigate("/admin/settings");
+    });
   };
 
+  const handleLogout = () => {
+    setOpen(false);
+    requestAnimationFrame(() => {
+      dispatch(logout());
+      dispatch(resetSettings());
+      navigate("/login", { replace: true });
+    });
+  };
+
+
   const Dropdown = (
-    <div className="absolute right-0 top-full mt-2 bg-white border shadow-xl rounded-lg w-40 z-50 origin-top-right">
+    <div
+      className="absolute right-0 top-full mt-2 bg-white border shadow-xl rounded-lg w-44 z-50 origin-top-right"
+      onClick={(e) => e.stopPropagation()}
+    >
+      {type === "admin" && (
+        <button
+          className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+          onClick={handleMyProfile}
+        >
+          My Profile
+        </button>
+      )}
+
       <button
-        className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+        className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 text-red-600"
         onClick={handleLogout}
       >
         Sign Out
@@ -137,19 +183,19 @@ export default function Topbar({ type }: TopbarProps) {
       <div className="flex items-center gap-4 shrink-0">
         <NotificationBell />
 
-        <div
-          className="relative cursor-pointer"
-          onClick={() => !isLoadingUser && setOpen((p) => !p)}
-          ref={menuRef}
-        >
-          {isLoadingUser ? SkeletonAvatar : (
-            <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center font-medium">
-              {initials}
-            </div>
-          )}
+        <div className="relative" ref={menuRef}>
+          <div
+            className="cursor-pointer"
+            onClick={() => !isLoadingUser && setOpen((p) => !p)}
+          >
+            {isLoadingUser ? SkeletonAvatar : (
+             <Avatar size={40} />
+            )}
+          </div>
 
           {!isLoadingUser && open && Dropdown}
         </div>
+
       </div>
     </header>
   );

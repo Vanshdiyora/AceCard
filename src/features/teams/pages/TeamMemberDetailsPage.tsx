@@ -86,13 +86,23 @@ const member = useAppSelector(
 
   /* ---------------- SAFE MEMOS (NO CONDITIONAL HOOKS) ---------------- */
 
-  const displayRole = useMemo(() => {
-    if (!member) return "";
-    if (member.role === "sales_rep") return "Sales Person";
-    if (member.role === "vendor_admin") return "Vendor Admin";
-    if (member.role === "manager") return "Manager";
-    return member.role.replace("_", " ");
-  }, [member]);
+const displayRole = useMemo(() => {
+  if (!member) return "";
+
+  switch (member.role) {
+    case "sales_rep":
+      return "Sales Person";   // 👈 changed
+    case "manager":
+      return "Manager";         // 👈 explicit
+    case "vendor_admin":
+      return "Vendor Admin";
+    default:
+      return member.role
+        .replace(/_/g, " ")
+        .replace(/\b\w/g, (c) => c.toUpperCase());
+  }
+}, [member]);
+
 
   const displayManager = useMemo(() => {
     if (!member) return null;
@@ -268,9 +278,9 @@ const avatarUrl = member.avatar || null;
 
   /* ---------------- UI ---------------- */
   return (
-    <div className="p-6 grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-6 h-[calc(100vh-80px)]">
+    <div className="p-6 grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-6 h-[calc(100vh-70px)]">
       {/* LEFT */}
-      <div className="overflow-y-auto">
+      <div className="overflow-y-auto pr-2">
         <button
           onClick={() => navigate(-1)}
           className="flex items-center gap-2 text-sm text-gray-500 hover:text-black mb-6"
