@@ -27,18 +27,47 @@ export default function AccountSettings() {
     dispatch(fetchAccountProfile());
   }, [dispatch]);
 
+  const isVendor = data?.role === "vendor_admin";
+
+  /* ---------- load from localStorage ---------- */
+  useEffect(() => {
+    if (!data?.email) return;
+
+    const saved = localStorage.getItem(
+      `tracking_pixels:${data.email}`
+    );
+
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      setMeta(parsed.meta || "");
+      setGa(parsed.ga || "");
+      setLi(parsed.li || "");
+    }
+  }, [data?.email]);
+
+  const persist = (payload: any) => {
+    if (!data?.email) return;
+    localStorage.setItem(
+      `tracking_pixels:${data.email}`,
+      JSON.stringify(payload)
+    );
+  };
+
   const saveMeta = () => {
     if (!isMetaPixel(meta)) return;
+    persist({ meta, ga, li });
     setTimeout(() => setShowSuccess("meta"), 500);
   };
 
   const saveGA = () => {
     if (!isGA(ga)) return;
+    persist({ meta, ga, li });
     setTimeout(() => setShowSuccess("ga"), 500);
   };
 
   const saveLI = () => {
     if (!isLinkedIn(li)) return;
+    persist({ meta, ga, li });
     setTimeout(() => setShowSuccess("li"), 500);
   };
 
@@ -72,112 +101,114 @@ export default function AccountSettings() {
       </div>
 
       {/* ================= TRACKING INPUTS ================= */}
-      <div className="border-t rounded-xl py-6 mb-8">
-        <h3 className="font-semibold mb-4">Tracking Pixels</h3>
+      {isVendor && (
+        <div className="border-t rounded-xl py-6 mb-8">
+          <h3 className="font-semibold mb-4">Tracking Pixels</h3>
 
-        {/* META */}
-        <div className="grid grid-cols-[1fr_auto] gap-3 mb-4">
-          <div>
-            <label className="text-sm font-medium">Meta Pixel ID</label>
-            <input
-              value={meta}
-              onChange={(e) => setMeta(e.target.value.trim())}
-              placeholder="1234567890123"
-              className={`w-full mt-1 px-3 py-2 border rounded-lg outline-none ${
-                meta === "" || isMetaPixel(meta)
-                  ? "border-gray-300"
-                  : "border-red-500"
-              }`}
-            />
-            {meta !== "" && !isMetaPixel(meta) && (
-              <p className="text-xs text-red-500 mt-1">
-                Enter a valid Meta Pixel ID
-              </p>
-            )}
+          {/* META */}
+          <div className="grid grid-cols-[1fr_auto] gap-3 mb-4">
+            <div>
+              <label className="text-sm font-medium">Meta Pixel ID</label>
+              <input
+                value={meta}
+                onChange={(e) => setMeta(e.target.value.trim())}
+                placeholder="1234567890123"
+                className={`w-full mt-1 px-3 py-2 border rounded-lg outline-none ${
+                  meta === "" || isMetaPixel(meta)
+                    ? "border-gray-300"
+                    : "border-red-500"
+                }`}
+              />
+              {meta !== "" && !isMetaPixel(meta) && (
+                <p className="text-xs text-red-500 mt-1">
+                  Enter a valid Meta Pixel ID
+                </p>
+              )}
+            </div>
+            <div className="flex items-center mt-[26px]">
+              <button
+                disabled={!isMetaPixel(meta)}
+                onClick={saveMeta}
+                className={`h-10 px-5 rounded-lg text-white ${
+                  isMetaPixel(meta) ? "bg-purple-600" : "bg-gray-300"
+                }`}
+              >
+                Save
+              </button>
+            </div>
           </div>
-          <div className="flex items-center mt-[26px]">
-            <button
-              disabled={!isMetaPixel(meta)}
-              onClick={saveMeta}
-              className={`h-10 px-5 rounded-lg text-white ${
-                isMetaPixel(meta) ? "bg-purple-600" : "bg-gray-300"
-              }`}
-            >
-              Save
-            </button>
+
+          {/* GA */}
+          <div className="grid grid-cols-[1fr_auto] gap-3 mb-4">
+            <div>
+              <label className="text-sm font-medium">
+                Google Analytics Measurement ID
+              </label>
+              <input
+                value={ga}
+                onChange={(e) => setGa(e.target.value.trim())}
+                placeholder="G-XXXXXXXXXX"
+                className={`w-full mt-1 px-3 py-2 border rounded-lg outline-none ${
+                  ga === "" || isGA(ga)
+                    ? "border-gray-300"
+                    : "border-red-500"
+                }`}
+              />
+              {ga !== "" && !isGA(ga) && (
+                <p className="text-xs text-red-500 mt-1">
+                  Format: G-XXXXXXXXXX
+                </p>
+              )}
+            </div>
+            <div className="flex items-center mt-[26px]">
+              <button
+                disabled={!isGA(ga)}
+                onClick={saveGA}
+                className={`h-10 px-5 rounded-lg text-white ${
+                  isGA(ga) ? "bg-purple-600" : "bg-gray-300"
+                }`}
+              >
+                Save
+              </button>
+            </div>
+          </div>
+
+          {/* LINKEDIN */}
+          <div className="grid grid-cols-[1fr_auto] gap-3">
+            <div>
+              <label className="text-sm font-medium">
+                LinkedIn Insight Tag ID
+              </label>
+              <input
+                value={li}
+                onChange={(e) => setLi(e.target.value.trim())}
+                placeholder="123456"
+                className={`w-full mt-1 px-3 py-2 border rounded-lg outline-none ${
+                  li === "" || isLinkedIn(li)
+                    ? "border-gray-300"
+                    : "border-red-500"
+                }`}
+              />
+              {li !== "" && !isLinkedIn(li) && (
+                <p className="text-xs text-red-500 mt-1">
+                  Enter valid LinkedIn Tag ID
+                </p>
+              )}
+            </div>
+            <div className="flex items-center mt-[26px]">
+              <button
+                disabled={!isLinkedIn(li)}
+                onClick={saveLI}
+                className={`h-10 px-5 rounded-lg text-white ${
+                  isLinkedIn(li) ? "bg-purple-600" : "bg-gray-300"
+                }`}
+              >
+                Save
+              </button>
+            </div>
           </div>
         </div>
-
-        {/* GA */}
-        <div className="grid grid-cols-[1fr_auto] gap-3 mb-4">
-          <div>
-            <label className="text-sm font-medium">
-              Google Analytics Measurement ID
-            </label>
-            <input
-              value={ga}
-              onChange={(e) => setGa(e.target.value.trim())}
-              placeholder="G-XXXXXXXXXX"
-              className={`w-full mt-1 px-3 py-2 border rounded-lg outline-none ${
-                ga === "" || isGA(ga)
-                  ? "border-gray-300"
-                  : "border-red-500"
-              }`}
-            />
-            {ga !== "" && !isGA(ga) && (
-              <p className="text-xs text-red-500 mt-1">
-                Format: G-XXXXXXXXXX
-              </p>
-            )}
-          </div>
-          <div className="flex items-center mt-[26px]">
-            <button
-              disabled={!isGA(ga)}
-              onClick={saveGA}
-              className={`h-10 px-5 rounded-lg text-white ${
-                isGA(ga) ? "bg-purple-600" : "bg-gray-300"
-              }`}
-            >
-              Save
-            </button>
-          </div>
-        </div>
-
-        {/* LINKEDIN */}
-        <div className="grid grid-cols-[1fr_auto] gap-3">
-          <div>
-            <label className="text-sm font-medium">
-              LinkedIn Insight Tag ID
-            </label>
-            <input
-              value={li}
-              onChange={(e) => setLi(e.target.value.trim())}
-              placeholder="123456"
-              className={`w-full mt-1 px-3 py-2 border rounded-lg outline-none ${
-                li === "" || isLinkedIn(li)
-                  ? "border-gray-300"
-                  : "border-red-500"
-              }`}
-            />
-            {li !== "" && !isLinkedIn(li) && (
-              <p className="text-xs text-red-500 mt-1">
-                Enter valid LinkedIn Tag ID
-              </p>
-            )}
-          </div>
-          <div className="flex items-center mt-[26px]">
-            <button
-              disabled={!isLinkedIn(li)}
-              onClick={saveLI}
-              className={`h-10 px-5 rounded-lg text-white ${
-                isLinkedIn(li) ? "bg-purple-600" : "bg-gray-300"
-              }`}
-            >
-              Save
-            </button>
-          </div>
-        </div>
-      </div>
+      )}
 
       <ResetPasswordSection />
       <EditAccountModal open={editOpen} onClose={() => setEditOpen(false)} />
