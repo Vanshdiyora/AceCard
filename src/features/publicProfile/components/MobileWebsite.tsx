@@ -18,10 +18,10 @@ const getYouTubeId = (url?: string) => {
   return match?.[1];
 };
 
-const sortByRank = (arr: any) => {
+const sortByRank = (arr: any[]) => {
   if (!Array.isArray(arr)) return [];
   return arr
-    .filter(i => i?.enabled !== false)
+    .filter((i) => i?.enabled !== false)
     .sort((a, b) => (a.rank ?? 0) - (b.rank ?? 0));
 };
 
@@ -46,10 +46,10 @@ export default function MobileWebsite({
     youtube = { items: [] },
     links_files = { items: [] },
     products = { items: [] },
-    sections = [],
+    sections = { items: [] },
   } = config;
 
-  const orderedSections = sortByRank(sections);
+  const orderedSections = sortByRank(sections.items);
 
   useEffect(() => {
     if (!scrollRef?.current) return;
@@ -73,21 +73,43 @@ export default function MobileWebsite({
       case "about":
         return profile.description ? (
           <Section title="About" theme={theme}>
-            <p style={{ color: theme.text_color }}>{profile.description}</p>
+            <p style={{ color: theme.text_color }}>
+              {profile.description}
+            </p>
           </Section>
         ) : null;
 
       case "social_links":
-        return <Social items={sortByRank(social_links.items)} theme={theme} />;
+        return (
+          <Social
+            items={sortByRank(social_links.items)}
+            theme={theme}
+          />
+        );
 
       case "products":
-        return <Products items={sortByRank(products.items)} theme={theme} />;
+        return (
+          <Products
+            items={sortByRank(products.items)}
+            theme={theme}
+          />
+        );
 
       case "youtube":
-        return <YouTube items={sortByRank(youtube.items)} theme={theme} />;
+        return (
+          <YouTube
+            items={sortByRank(youtube.items)}
+            theme={theme}
+          />
+        );
 
       case "links_files":
-        return <Links items={sortByRank(links_files.items)} theme={theme} />;
+        return (
+          <Links
+            items={sortByRank(links_files.items)}
+            theme={theme}
+          />
+        );
 
       case "meeting":
         return meeting?.enabled ? (
@@ -132,7 +154,10 @@ export default function MobileWebsite({
 function Section({ title, children, theme }: any) {
   return (
     <div className="px-4">
-      <h3 className="text-sm font-semibold mb-2" style={{ color: theme.text_color }}>
+      <h3
+        className="text-sm font-semibold mb-2"
+        style={{ color: theme.text_color }}
+      >
         {title}
       </h3>
       {children}
@@ -159,22 +184,37 @@ function Profile({ profile, theme, user, onConnect }: any) {
   return (
     <div>
       <div className="relative h-[220px]">
-        <img src={profile.cover_url || ""} className="w-full h-full object-cover" />
+        <img
+          src={profile.cover_url || ""}
+          className="w-full h-full object-cover"
+        />
         <div className="absolute inset-0 bg-black/50" />
 
-        <div className="absolute top-4 left-4 text-sm font-semibold" style={{ color: theme.accent_color }}>
+        <div
+          className="absolute top-4 left-4 text-sm font-semibold"
+          style={{ color: theme.accent_color }}
+        >
           {user?.vendor_name}
         </div>
 
         <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex flex-col items-center">
           <div className="w-24 h-24 rounded-full bg-black shadow-lg flex items-center justify-center">
-            <img src={profile.avatar_url || ""} className="w-20 h-20 rounded-full object-cover" />
+            <img
+              src={profile.avatar_url || ""}
+              className="w-20 h-20 rounded-full object-cover"
+            />
           </div>
 
-          <h2 className="mt-2 font-semibold" style={{ color: theme.text_color }}>
+          <h2
+            className="mt-2 font-semibold"
+            style={{ color: theme.text_color }}
+          >
             {user?.name}
           </h2>
-          <p className="text-xs" style={{ color: theme.accent_color }}>
+          <p
+            className="text-xs"
+            style={{ color: theme.accent_color }}
+          >
             {formatRole(user?.job_title || user?.role)}
           </p>
         </div>
@@ -185,7 +225,10 @@ function Profile({ profile, theme, user, onConnect }: any) {
           type="button"
           onClick={() => saveContact(user)}
           className="h-11 rounded-xl border text-sm"
-          style={{ color: theme.text_color, borderColor: theme.accent_color }}
+          style={{
+            color: theme.text_color,
+            borderColor: theme.accent_color,
+          }}
         >
           Save Contact
         </button>
@@ -216,7 +259,10 @@ function MeetingCTA({ meeting, theme }: any) {
         target="_blank"
         rel="noopener noreferrer"
         className="block text-center py-4 rounded-xl text-sm font-semibold shadow-md"
-        style={{ backgroundColor: theme.primary_color, color: "#fff" }}
+        style={{
+          backgroundColor: theme.primary_color,
+          color: "#fff",
+        }}
       >
         {meeting.button_text || "BOOK A MEETING NOW!"}
       </a>
@@ -237,7 +283,10 @@ function Products({ items, theme }: any) {
             className="min-w-[220px] h-52 rounded-2xl relative overflow-hidden shadow-md"
             style={{ backgroundColor: theme.card_color }}
           >
-            <img src={p.image_url || ""} className="w-full h-full object-cover" />
+            <img
+              src={p.image_url || ""}
+              className="w-full h-full object-cover"
+            />
             <div className="absolute inset-0 bg-black/50" />
             <div className="absolute bottom-3 left-3 text-white">
               <p className="text-sm font-semibold">{p.name}</p>
@@ -260,7 +309,11 @@ function YouTube({ items, theme }: any) {
         const id = getYouTubeId(v.url);
         if (!id) return null;
         return (
-          <a key={v.id} href={v.url} className="block rounded-2xl overflow-hidden">
+          <a
+            key={v.id}
+            href={v.url}
+            className="block rounded-2xl overflow-hidden"
+          >
             <img
               src={`https://img.youtube.com/vi/${id}/hqdefault.jpg`}
               className="w-full h-40 object-cover"
@@ -283,7 +336,10 @@ function Social({ items, theme }: any) {
           key={s.id}
           href={s.url}
           className="h-12 w-12 rounded-xl flex items-center justify-center"
-          style={{ backgroundColor: theme.card_color, color: theme.primary_color }}
+          style={{
+            backgroundColor: theme.card_color,
+            color: theme.primary_color,
+          }}
         >
           {s.label === "Instagram" && <Instagram />}
           {s.label === "LinkedIn" && <Linkedin />}
@@ -304,14 +360,28 @@ function Links({ items, theme }: any) {
     <Section title="Links & Files" theme={theme}>
       <div className="flex flex-col gap-4">
         {items.map((l: any) => (
-          <a key={l.id} href={l.url || l.file_url} className="flex items-center gap-3">
+          <a
+            key={l.id}
+            href={l.url || l.file_url}
+            className="flex items-center gap-3"
+          >
             <div
               className="h-9 w-9 rounded-full flex items-center justify-center"
-              style={{ backgroundColor: theme.card_color, color: theme.primary_color }}
+              style={{
+                backgroundColor: theme.card_color,
+                color: theme.primary_color,
+              }}
             >
-              {l.type === "file" ? <FileText size={16} /> : <Link2 size={16} />}
+              {l.type === "file" ? (
+                <FileText size={16} />
+              ) : (
+                <Link2 size={16} />
+              )}
             </div>
-            <p className="text-sm font-semibold" style={{ color: theme.text_color }}>
+            <p
+              className="text-sm font-semibold"
+              style={{ color: theme.text_color }}
+            >
               {l.title}
             </p>
           </a>
@@ -326,7 +396,10 @@ function Links({ items, theme }: any) {
 function Banner({ image }: any) {
   return (
     <div className="px-4">
-      <img src={image} className="w-full h-28 rounded-2xl object-cover" />
+      <img
+        src={image}
+        className="w-full h-28 rounded-2xl object-cover"
+      />
     </div>
   );
 }
@@ -349,7 +422,9 @@ URL:https://theacecard.co/${user.username}
 END:VCARD
 `.trim();
 
-  const blob = new Blob([vcard], { type: "text/vcard;charset=utf-8" });
+  const blob = new Blob([vcard], {
+    type: "text/vcard;charset=utf-8",
+  });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
