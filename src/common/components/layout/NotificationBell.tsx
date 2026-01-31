@@ -2,16 +2,13 @@ import { Bell } from "lucide-react";
 import { useAppSelector } from "../../../app/hooks";
 import { useState } from "react";
 import NotificationSidebar from "../../../features/notification/components/NotificationSidebar";
-import type { Notification } from "../../../features/notification/types";
 
 export default function NotificationBell() {
   const [open, setOpen] = useState(false);
 
   const notifications =
-    useAppSelector((s: any) => s.notifications?.list || s.notfication?.list || []) as Notification[];
-
-  const unread = notifications.filter((n) => !n.is_read).length;
-
+    useAppSelector((s: any) => s.notifications || s.notfication || []);
+  const unread = notifications.meta?.total_unread_count;
   return (
     <>
       <button

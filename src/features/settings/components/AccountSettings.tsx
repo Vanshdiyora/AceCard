@@ -113,11 +113,10 @@ export default function AccountSettings() {
                 value={meta}
                 onChange={(e) => setMeta(e.target.value.trim())}
                 placeholder="1234567890123"
-                className={`w-full mt-1 px-3 py-2 border rounded-lg outline-none ${
-                  meta === "" || isMetaPixel(meta)
+                className={`w-full mt-1 px-3 py-2 border rounded-lg outline-none ${meta === "" || isMetaPixel(meta)
                     ? "border-gray-300"
                     : "border-red-500"
-                }`}
+                  }`}
               />
               {meta !== "" && !isMetaPixel(meta) && (
                 <p className="text-xs text-red-500 mt-1">
@@ -129,9 +128,8 @@ export default function AccountSettings() {
               <button
                 disabled={!isMetaPixel(meta)}
                 onClick={saveMeta}
-                className={`h-10 px-5 rounded-lg text-white ${
-                  isMetaPixel(meta) ? "bg-purple-600" : "bg-gray-300"
-                }`}
+                className={`h-10 px-5 rounded-lg text-white ${isMetaPixel(meta) ? "bg-purple-600" : "bg-gray-300"
+                  }`}
               >
                 Save
               </button>
@@ -148,11 +146,10 @@ export default function AccountSettings() {
                 value={ga}
                 onChange={(e) => setGa(e.target.value.trim())}
                 placeholder="G-XXXXXXXXXX"
-                className={`w-full mt-1 px-3 py-2 border rounded-lg outline-none ${
-                  ga === "" || isGA(ga)
+                className={`w-full mt-1 px-3 py-2 border rounded-lg outline-none ${ga === "" || isGA(ga)
                     ? "border-gray-300"
                     : "border-red-500"
-                }`}
+                  }`}
               />
               {ga !== "" && !isGA(ga) && (
                 <p className="text-xs text-red-500 mt-1">
@@ -164,9 +161,8 @@ export default function AccountSettings() {
               <button
                 disabled={!isGA(ga)}
                 onClick={saveGA}
-                className={`h-10 px-5 rounded-lg text-white ${
-                  isGA(ga) ? "bg-purple-600" : "bg-gray-300"
-                }`}
+                className={`h-10 px-5 rounded-lg text-white ${isGA(ga) ? "bg-purple-600" : "bg-gray-300"
+                  }`}
               >
                 Save
               </button>
@@ -183,11 +179,10 @@ export default function AccountSettings() {
                 value={li}
                 onChange={(e) => setLi(e.target.value.trim())}
                 placeholder="123456"
-                className={`w-full mt-1 px-3 py-2 border rounded-lg outline-none ${
-                  li === "" || isLinkedIn(li)
+                className={`w-full mt-1 px-3 py-2 border rounded-lg outline-none ${li === "" || isLinkedIn(li)
                     ? "border-gray-300"
                     : "border-red-500"
-                }`}
+                  }`}
               />
               {li !== "" && !isLinkedIn(li) && (
                 <p className="text-xs text-red-500 mt-1">
@@ -199,9 +194,8 @@ export default function AccountSettings() {
               <button
                 disabled={!isLinkedIn(li)}
                 onClick={saveLI}
-                className={`h-10 px-5 rounded-lg text-white ${
-                  isLinkedIn(li) ? "bg-purple-600" : "bg-gray-300"
-                }`}
+                className={`h-10 px-5 rounded-lg text-white ${isLinkedIn(li) ? "bg-purple-600" : "bg-gray-300"
+                  }`}
               >
                 Save
               </button>
