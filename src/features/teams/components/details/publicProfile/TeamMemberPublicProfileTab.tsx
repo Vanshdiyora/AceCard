@@ -379,10 +379,10 @@ export default function TeamMemberPublicProfileTab({
           })
         ).unwrap();
       }
-      window.location.reload();
-      // setResultSuccess(true);
-      // setResultMessage("Public profile saved successfully.");
-      // setResultOpen(true);
+      // window.location.reload();
+      setResultSuccess(true);
+      setResultMessage("Public profile saved successfully.");
+      setResultOpen(true);
     } catch (err) {
       setResultSuccess(false);
       setResultMessage("Something went wrong while saving.");

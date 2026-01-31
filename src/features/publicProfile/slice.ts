@@ -96,11 +96,10 @@ const publicProfileSlice = createSlice({
       })
       .addCase(savePublicProfile.fulfilled, (s, a) => {
         s.saving = false;
-
-        if (s.data) {
-          // merge instead of replace
+        if (s.data && a.payload?.configuration) {
           s.data.configuration = a.payload.configuration;
         }
+
       })
       .addCase(savePublicProfile.rejected, (s) => {
         s.saving = false;
@@ -130,10 +129,12 @@ const publicProfileSlice = createSlice({
       .addCase(savePublicProfileByUsername.fulfilled, (s, a) => {
         s.saving = false;
 
-        if (s.data) {
+        // Only update if backend actually returns configuration
+        if (s.data && a.payload?.configuration) {
           s.data.configuration = a.payload.configuration;
         }
       })
+
       .addCase(savePublicProfileByUsername.rejected, (s) => {
         s.saving = false;
       });
