@@ -46,6 +46,9 @@ interface TeamState {
     managers?: TeamMeta;
     salesReps?: TeamMeta;
   };
+  analytics: any | null;   // 👈 ADD
+  analyticsLoading: boolean; // 👈 ADD
+
   loading: boolean;
   error?: string;
 }
@@ -55,6 +58,8 @@ const initialState: TeamState = {
   managers: [],
   salesReps: [],
   meta: {},
+  analytics: null,
+  analyticsLoading: false,
   loading: false,
   error: undefined,
 };
@@ -84,6 +89,28 @@ export type FetchTeamParams = {
   append?: boolean;
 };
 
+export const fetchMemberAnalytics = createAsyncThunk(
+  "team/fetchMemberAnalytics",
+  async (
+    {
+      id,
+      pipeline_period,
+    }: { id: number; pipeline_period: "week" | "month" | "year" },
+    { rejectWithValue }
+  ) => {
+    try {
+      const res = await teamService.getMemberAnalytics(
+        id,
+        pipeline_period
+      );
+      return res;
+    } catch (err: any) {
+      return rejectWithValue(
+        extractApiError(err, "Failed to load analytics")
+      );
+    }
+  }
+);
 
 export const fetchTeam = createAsyncThunk(
   "team/fetch",
@@ -280,7 +307,18 @@ const teamSlice = createSlice({
 
       .addCase(deleteMember.fulfilled, (state, action) => {
         state.members = state.members.filter((m) => m.id !== action.payload);
-      });
+      })
+      .addCase(fetchMemberAnalytics.pending, (state) => {
+  state.analyticsLoading = true;
+})
+.addCase(fetchMemberAnalytics.fulfilled, (state, action) => {
+  state.analyticsLoading = false;
+  state.analytics = action.payload;
+})
+.addCase(fetchMemberAnalytics.rejected, (state) => {
+  state.analyticsLoading = false;
+});
+
   },
 });
 

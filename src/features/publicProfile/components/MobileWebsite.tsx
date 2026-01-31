@@ -9,7 +9,10 @@ import {
   Phone,
   Globe,
   MessageCircle,
+  Ghost,     // Snapchat
+  Music2,    // TikTok
 } from "lucide-react";
+
 
 import { useState, useEffect } from "react";
 import { ConnectModal } from "./ConnectModal";
@@ -372,6 +375,9 @@ function Social({ items, theme }: any) {
               {s.label === "Whatsapp" && <MessageCircle size={22} />}
               {s.label === "Call Me" && <Phone size={22} />}
               {s.label === "Personal Website" && <Globe size={22} />}
+
+              {s.label === "Snapchat" && <Ghost size={22} />}
+              {s.label === "TikTok" && <Music2 size={22} />}
             </a>
           ))}
         </div>

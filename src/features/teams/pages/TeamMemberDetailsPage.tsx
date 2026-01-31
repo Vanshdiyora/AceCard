@@ -18,10 +18,18 @@ import ConfirmationModal from "../../../common/ui/ConfirmationModal";
 import BlockingLoader from "../../../common/ui/BlockingLoader";
 import ResultModal from "../../../common/ui/ResultModal";
 import TeamMemberTotalLeadsTab from "../components/details/TeamMemberTotalLeadsTab";
+import TeamMemberAnalyticsTab from "../components/details/TeamMemberAnalyticsTab";
 // import MemberMobileWebsite from "../components/MemberMobileWebsite";
 import { fetchLeads } from "../../leads/slice"; // adjust path
 
-const TABS = ["overview", "leads", "total-leads", "public-profile"] as const;
+const TABS = [
+  "overview",
+  "leads",
+  "total-leads",
+  "analytics",      // 👈 NEW
+  "public-profile",
+] as const;
+
 
 export default function TeamMemberDetailsPage() {
   const { id } = useParams<{ id: string }>();
@@ -378,6 +386,10 @@ const avatarUrl = member.avatar || null;
         {activeTab === "total-leads" && member.role === "manager" && (
           <TeamMemberTotalLeadsTab managerId={member.id} />
         )}
+        {activeTab === "analytics" && (
+  <TeamMemberAnalyticsTab memberId={member.id} />
+)}
+
         {activeTab === "public-profile" && (
           <div className="mt-6">
             <TeamMemberPublicProfileTab

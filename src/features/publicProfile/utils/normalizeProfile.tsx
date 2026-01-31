@@ -10,6 +10,18 @@ export function normalizeProfile(api: any) {
       cover_url: api.cover_url ?? "",
       description: api.description ?? "",
     },
+    
+layout: {
+  profile_type: cfg.layout?.profile_type ?? 3,
+  is_fade: cfg.layout?.is_fade ?? true,
+  font: cfg.layout?.font ?? "Inter",
+  card_alignment: cfg.layout?.card_alignment ?? "center",
+},
+    cover: {
+      locked: cfg.cover?.locked ?? false,
+      lock_mode: cfg.cover?.lock_mode,
+      cover_url: cfg.cover?.cover_url ?? "",
+    },
 
     /* ================= THEME ================= */
     theme: {
@@ -51,13 +63,13 @@ export function normalizeProfile(api: any) {
 
       items: Array.isArray(cfg.products?.items)
         ? cfg.products.items.map((p: any) => ({
-            id: p.id,
-            name: p.name,
-            price: p.price,
-            image_url: p.image_url,
-            rank: p.rank,
-            enabled: p.enabled,
-          }))
+          id: p.id,
+          name: p.name,
+          price: p.price,
+          image_url: p.image_url,
+          rank: p.rank,
+          enabled: p.enabled,
+        }))
         : [],
     },
 
@@ -74,11 +86,11 @@ export function normalizeProfile(api: any) {
 
       items: Array.isArray(cfg.sections?.items)
         ? cfg.sections.items.map((s: any, i: number) => ({
-            id: s.id,
-            type: s.type,
-            rank: s.rank ?? i + 1,
-            enabled: s.enabled ?? true,
-          }))
+          id: s.id,
+          type: s.type,
+          rank: s.rank ?? i + 1,
+          enabled: s.enabled ?? true,
+        }))
         : [],
     },
   };
@@ -107,11 +119,11 @@ const normalizeYoutube = (api: any) => {
 
     items: Array.isArray(y.items)
       ? y.items.map((v: any, i: number) => ({
-          id: v.id ?? crypto.randomUUID(),
-          url: v.url ?? "",
-          rank: v.rank ?? i + 1,
-          enabled: v.enabled ?? true,
-        }))
+        id: v.id ?? crypto.randomUUID(),
+        url: v.url ?? "",
+        rank: v.rank ?? i + 1,
+        enabled: v.enabled ?? true,
+      }))
       : [],
   };
 };
@@ -124,15 +136,15 @@ const normalizeLinksFiles = (api: any) => {
 
     items: Array.isArray(lf.items)
       ? lf.items.map((l: any, i: number) => ({
-          id: l.id || crypto.randomUUID(),
-          type: l.type || "link",
-          title: l.title || "",
-          url: l.url || "",
-          file_url: l.file_url || "",
-          file_type: l.file_type || "",
-          rank: l.rank ?? i + 1,
-          enabled: l.enabled ?? true,
-        }))
+        id: l.id || crypto.randomUUID(),
+        type: l.type || "link",
+        title: l.title || "",
+        url: l.url || "",
+        file_url: l.file_url || "",
+        file_type: l.file_type || "",
+        rank: l.rank ?? i + 1,
+        enabled: l.enabled ?? true,
+      }))
       : [],
   };
 };

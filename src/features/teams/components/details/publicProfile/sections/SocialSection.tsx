@@ -9,7 +9,10 @@ import {
   MessageCircle,
   Phone,
   Globe,
+  Ghost,     // 👻 Snapchat
+  Music2,    // 🎵 TikTok
 } from "lucide-react";
+
 
 /* ================= DEFAULTS (MATCH API) ================= */
 
@@ -19,8 +22,13 @@ const DEFAULT_SOCIAL = [
   { id: "twitter", label: "Twitter", url: "", enabled: true },
   { id: "youtube", label: "YouTube", url: "", enabled: true },
   { id: "facebook", label: "Facebook", url: "", enabled: true },
+
+  // 🔥 NEW
+  { id: "snapchat", label: "Snapchat", url: "", enabled: false },
+  { id: "tiktok", label: "Tiktok", url: "", enabled: false },
+
   { id: "whatsapp", label: "Whatsapp", url: "", enabled: false },
-  { id: "phone", label: "Call Me", url: "", enabled: false },   // 🔥 API uses phone
+  { id: "phone", label: "Call Me", url: "", enabled: false },
   { id: "website", label: "Personal Website", url: "", enabled: false },
 ];
 
@@ -32,10 +40,16 @@ const ICONS: Record<string, ReactNode> = {
   twitter: <Twitter size={18} />,
   youtube: <Youtube size={18} />,
   facebook: <Facebook size={18} />,
+
+  // 🔥 NEW
+  snapchat: <Ghost size={18} />,
+  tiktok: <Music2 size={18} />,
+
   whatsapp: <MessageCircle size={18} />,
-  phone: <Phone size={18} />,     // 🔥 matches API
+  phone: <Phone size={18} />,
   website: <Globe size={18} />,
 };
+
 
 /* ================= HELPERS ================= */
 

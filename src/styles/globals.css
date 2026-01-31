@@ -54,3 +54,10 @@ body {
   position: fixed !important;
   z-index: 99999 !important;
 }
+
+.font-inter { font-family: "Inter", sans-serif; }
+.font-roboto { font-family: "Roboto", sans-serif; }
+.font-montserrat { font-family: "Montserrat", sans-serif; }
+.font-merriweather { font-family: "Merriweather", serif; }
+.font-caveat { font-family: "Caveat", cursive; }
+.font-gloria { font-family: "Gloria Hallelujah", cursive; }

@@ -9,16 +9,6 @@ export default function ProfileSection({ profile, onChange }: any) {
   return (
     <div className="space-y-8">
 
-      {/* COVER */}
-      <div className="space-y-2">
-        <Label>Cover Image</Label>
-        <ImageBox
-          url={profile.cover_url}
-          wide
-          onUpload={(f: any) => upload(f, "cover_url")}
-        />
-      </div>
-
       {/* AVATAR + BIO */}
       <div className="flex flex-col md:flex-row gap-8 items-start">
         <div className="space-y-2">

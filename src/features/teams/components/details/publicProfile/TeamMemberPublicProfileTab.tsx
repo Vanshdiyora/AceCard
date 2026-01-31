@@ -18,6 +18,7 @@ import ProfileSection from "./sections/ProfileSection";
 import SocialSection from "./sections/SocialSection";
 import { fetchProducts } from "../../../../products/slice";
 import ResultModal from "../../../../../common/ui/ResultModal";
+import { AlignLeft, AlignCenter, AlignRight } from "lucide-react";
 
 const THEME_COLOR_KEYS = [
   "primary_color",
@@ -33,6 +34,15 @@ export type LockMode = "global" | "individual" | "locked";
 export interface LockMeta {
   locked: boolean;          // is this section locked?
   lock_mode?: LockMode;    // who controls it
+}
+
+export type ProfileLayoutType = 1 | 2 | 3;
+
+export interface LayoutConfig {
+  profile_type: ProfileLayoutType; // 1,2,3
+  is_fade: boolean;
+  font: string;
+  card_alignment: "left" | "center" | "right";
 }
 
 interface ProfileConfig {
@@ -83,10 +93,15 @@ export interface MeetingConfig extends LockMeta {
   meeting_url: string;
   button_text: string;
 }
+export interface CoverConfig extends LockMeta {
+  cover_url?: string;
+}
+
 
 interface PublicProfileConfig {
+  layout: LayoutConfig;
   profile: ProfileConfig;
-
+  cover: CoverConfig;
   theme: ThemeConfig;
 
   banner: BannerConfig;
@@ -253,6 +268,16 @@ export default function TeamMemberPublicProfileTab({
   // }, [config?.products?.items, dispatch]);
 
   /* ================= HELPERS ================= */
+  const uploadCoverImage = async (file: File) => {
+    const res = await uploadImage(file);
+    update({
+      ...config!,
+      cover: {
+        ...config!.cover,
+        cover_url: res.data.url,
+      },
+    });
+  };
 
   const update = (next: PublicProfileConfig) => {
     setConfig(next);
@@ -269,7 +294,8 @@ export default function TeamMemberPublicProfileTab({
 
     const payload = {
       profile: config.profile,
-
+      layout: config.layout,
+      cover: withLock(config.cover),
       theme: withLock(config.theme),
 
       banner: withLock(config.banner),
@@ -356,6 +382,175 @@ export default function TeamMemberPublicProfileTab({
         onClose={() => setResultOpen(false)}
       />
 
+      <Card title="Card Layout" desc="Choose how your card looks">
+
+        {/* LAYOUT TYPE */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {[1, 2, 3].map((t) => (
+            <button
+              key={t}
+              onClick={() =>
+                update({
+                  ...config,
+                  layout: { ...config.layout, profile_type: t as any },
+                })
+              }
+              className={`border rounded-xl p-2 transition ${config.layout.profile_type === t
+                  ? "border-black ring-2 ring-gray-300"
+                  : "border-gray-200"
+                }`}
+            >
+              <img
+                src={
+                  t === 1
+                    ? "/layouts/layout1.png"
+                    : t === 2
+                      ? "/layouts/layout2.png"
+                      : "/layouts/layout3.png"
+                }
+                className="w-full rounded"
+              />
+              <p className="text-xs text-center mt-2">
+                {t === 1 && "Profile Picture"}
+                {t === 2 && "Small Profile"}
+                {t === 3 && "Cover + Profile"}
+              </p>
+            </button>
+          ))}
+        </div>
+
+
+
+        {/* FADE TOGGLE */}
+    {config.layout.profile_type !== 2 && (
+  <div className="mt-5">
+    <Switch
+      label="Fade cover"
+      value={config.layout.is_fade}
+      onChange={(v) =>
+        update({
+          ...config,
+          layout: { ...config.layout, is_fade: v },
+        })
+      }
+    />
+  </div>
+)}
+
+
+{/* COVER UPLOAD (only when layout = 3) */}
+{config.layout.profile_type === 3 && (
+  <div className="mt-4 space-y-2">
+    <p className="text-sm font-medium text-gray-700">
+      Cover Image
+    </p>
+
+    <div
+      className={`relative h-32 w-full rounded-xl border overflow-hidden bg-gray-50 ${
+        isReadOnly(config.cover)
+          ? "opacity-60 pointer-events-none"
+          : ""
+      }`}
+    >
+      {config.cover.cover_url ? (
+        <img
+          src={config.cover.cover_url}
+          className="w-full h-full object-cover"
+        />
+      ) : (
+        <div className="h-full flex items-center justify-center text-xs text-gray-400">
+          No cover image
+        </div>
+      )}
+
+      <label className="absolute inset-0 bg-black/40 text-white flex items-center justify-center opacity-0 hover:opacity-100 cursor-pointer transition">
+        Change
+        <input
+          type="file"
+          hidden
+          disabled={isReadOnly(config.cover)}
+          accept="image/*"
+          onChange={(e) =>
+            e.target.files &&
+            uploadCoverImage(e.target.files[0])
+          }
+        />
+      </label>
+    </div>
+  </div>
+)}
+
+
+        {/* FONT PICKER */}
+        <div className="mt-6">
+          <h4 className="text-sm font-medium mb-3">Choose a Font</h4>
+
+          <div className="grid grid-cols-2 gap-3">
+            {[
+              "Inter",
+              "Roboto",
+              "Montserrat",
+              "Merriweather",
+              "Caveat",
+              "Gloria Hallelujah",
+            ].map((font) => (
+              <button
+                key={font}
+                onClick={() =>
+                  update({
+                    ...config,
+                    layout: { ...config.layout, font },
+                  })
+                }
+                className={`border rounded-xl py-3 text-sm transition ${config.layout.font === font
+                    ? "border-black"
+                    : "border-gray-200"
+                  }`}
+                style={{ fontFamily: font }}
+              >
+                {font}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* ALIGNMENT */}
+        <div className="mt-8 border-t pt-6">
+          <h4 className="text-sm font-medium mb-3">
+            Card Layout Alignment
+          </h4>
+
+          <div className="grid grid-cols-3 gap-3">
+            {([
+              { id: "left", Icon: AlignLeft },
+              { id: "center", Icon: AlignCenter },
+              { id: "right", Icon: AlignRight },
+            ] as const).map(({ id, Icon }) => (
+              <button
+                key={id}
+                onClick={() =>
+                  update({
+                    ...config,
+                    layout: {
+                      ...config.layout,
+                      card_alignment: id,
+                    },
+                  })
+                }
+                className={`border rounded-xl py-3 flex items-center justify-center transition ${config.layout.card_alignment === id
+                    ? "border-black bg-gray-50"
+                    : "border-gray-200 hover:bg-gray-50"
+                  }`}
+              >
+                <Icon className="w-5 h-5" />
+              </button>
+            ))}
+          </div>
+
+        </div>
+      </Card>
+
+
       <Card title="Profile" desc="Basic information shown on the card">
         <ProfileSection
           profile={config.profile}
@@ -365,6 +560,8 @@ export default function TeamMemberPublicProfileTab({
         />
       </Card>
 
+      
+
       <Card title="Social Links" desc="Your public social profiles">
         <SocialSection
           items={config.social_links.items}
@@ -373,6 +570,8 @@ export default function TeamMemberPublicProfileTab({
           }
         />
       </Card>
+
+
 
       <Card title="Theme" desc="Colors used across the profile">
         {showLockable && (
@@ -917,6 +1116,38 @@ function LockControl({
         <option value="global">Global</option>
         <option value="locked">System Locked</option>
       </select>
+    </div>
+  );
+}
+
+function Switch({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: boolean;
+  onChange: (v: boolean) => void;
+}) {
+  return (
+    <div className="flex items-center gap-10">
+      <span className="text-sm font-medium text-gray-700">
+        {label}
+      </span>
+
+      <button
+        type="button"
+        onClick={() => onChange(!value)}
+        className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
+          value ? "bg-purple-600" : "bg-gray-300"
+        }`}
+      >
+        <span
+          className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
+            value ? "translate-x-6" : "translate-x-1"
+          }`}
+        />
+      </button>
     </div>
   );
 }
