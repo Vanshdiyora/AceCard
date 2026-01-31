@@ -204,7 +204,7 @@ const resolveBackgroundStyle = () => {
       style={resolveBackgroundStyle()}
     >
 
-      <div className="space-y-6 pb-6">
+      <div className="space-y-6">
         {orderedSections.map((s: any) =>
           s?.enabled ? (
             <div key={s.id}>{renderSection(s.type)}</div>

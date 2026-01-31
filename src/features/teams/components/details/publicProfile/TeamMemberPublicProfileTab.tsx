@@ -409,6 +409,7 @@ export default function TeamMemberPublicProfileTab({
       showLoader: loadingMoreProducts || productsLoading,
     },
   ];
+
   function GradientDirectionDropdown({
     value,
     onChange,
@@ -423,9 +424,12 @@ export default function TeamMemberPublicProfileTab({
 
     const options = [
       { id: "to-r", label: "Left → Right" },
+      { id: "to-l", label: "Right → Left" },   // 👈 NEW
       { id: "to-b", label: "Top → Bottom" },
-      { id: "to-t", label: "Bottom → Top" }, // 👈 FIXED
+      { id: "to-t", label: "Bottom → Top" },
     ];
+
+    const [pos, setPos] = useState({ top: 0, left: 0 });
 
 
     const active =
@@ -463,38 +467,73 @@ export default function TeamMemberPublicProfileTab({
         <button
           ref={btnRef}
           type="button"
-          onClick={() => setOpen((v) => !v)}
+          onClick={() => {
+            if (!btnRef.current) return;
+
+            const r = btnRef.current.getBoundingClientRect();
+
+            const MENU_H = 120; // height of dropdown
+            const GAP = 6;
+
+            let top = r.bottom + GAP;
+
+            // 🔁 flip to top if not enough space below
+            if (top + MENU_H > window.innerHeight) {
+              top = r.top - MENU_H - GAP;
+            }
+
+            let left = r.left;
+
+            // keep inside viewport horizontally
+            if (left + menuW > window.innerWidth) {
+              left = window.innerWidth - menuW - GAP;
+            }
+            if (left < GAP) left = GAP;
+
+            setPos({ top, left });
+            setOpen(true);
+          }}
+
+
           className="flex items-center justify-between gap-2 border rounded-md px-3 py-2 text-sm bg-white w-full"
         >
           {active.label}
           <ChevronDown className="w-4 h-4 text-gray-500" />
         </button>
 
-        {open && (
-          <div
-            ref={menuRef}
-            style={{ width: menuW }}
-            className="absolute right-0 mb-1 rounded-md border bg-white shadow-xl z-[9999]"
+        {open &&
+          createPortal(
+            <div
+              ref={menuRef}
+              style={{
+                position: "fixed",
+                top: pos.top,
+                left: pos.left,
+                width: menuW,
+                zIndex: 10000,
+              }}
+              className="rounded-md border bg-white shadow-xl"
+            >
+              {options.map((o) => (
+                <button
+                  key={o.id}
+                  type="button"
+                  onClick={() => {
+                    onChange(o.id);
+                    setOpen(false);
+                  }}
+                  className={`block w-full text-left px-3 py-2 text-sm hover:bg-purple-50 ${active.id === o.id
+                    ? "bg-purple-100 text-purple-700"
+                    : ""
+                    }`}
+                >
+                  {o.label}
+                </button>
+              ))}
+            </div>,
+            document.body
+          )}
 
-          >
-            {options.map((o) => (
-              <button
-                key={o.id}
-                type="button"
-                onClick={() => {
-                  onChange(o.id);
-                  setOpen(false);
-                }}
-                className={`block w-full text-left px-3 py-2 text-sm hover:bg-purple-50 ${active.id === o.id
-                  ? "bg-purple-100 text-purple-700"
-                  : ""
-                  }`}
-              >
-                {o.label}
-              </button>
-            ))}
-          </div>
-        )}
       </div>
     );
   }
