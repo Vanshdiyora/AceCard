@@ -283,7 +283,7 @@ export default function DynamicForm({
                   onChange={(v) => handleChange(field, v)}
                   onSearch={field.onSearch}
                   loading={field.showLoader}
-                  disabled={field.disabled}
+                  disabled={disabled || field.disabled}
                   placeholder={`Select ${field.label}`}
                   hideValues={field.hideValues ?? field.name === "product_ids"}
                 />

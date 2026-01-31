@@ -7,8 +7,8 @@ const tabs = [
   { id: "account", label: "Account" },
   { id: "crm", label: "CRM" },
   { id: "lead", label: "Leads" },
-  { id: "profile", label: "Public Profile" },
   { id: "questions", label: "Suggested Questions" },
+  { id: "profile", label: "Public Profile" },
 ];
 
 export default function SettingsHeaderTabs({ active, onChange }: Props) {
