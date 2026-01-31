@@ -15,7 +15,7 @@ import ResultModal from "../../../common/ui/ResultModal";
 import { downloadCSV } from "../../../common/components/helper/DownloadCsv";
 import { ProductsAPI } from "../services/products.service";
 import { parseCSV } from "../../../common/utils/parseCsv";
-
+import { AvatarCell } from "../../../common/components/table/DataTable";
 type SortBy = "recent" | "name" | "price";
 type StatusFilter = "all" | "active" | "archived";
 
@@ -204,6 +204,11 @@ export default function ProductsPage() {
 
   /* -------- Columns -------- */
   const columns: Column<Product>[] = [
+    {
+      header: "",
+      width: "56px",
+      render: AvatarCell, // 👈 FIRST COLUMN
+    },
     { header: "Name", accessor: "name" },
     { header: "Category", accessor: "category" },
     { header: "Price", render: (p) => `₹${p.price}` },

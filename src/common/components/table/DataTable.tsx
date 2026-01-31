@@ -22,6 +22,26 @@ type Props<T> = {
 };
 
 const MAX_VISIBLE = 3;
+export const AvatarCell = (row: any) => {
+  const name = row.name || "";
+  const first = name.charAt(0).toUpperCase();
+
+  return (
+    <div className="flex items-center gap-2">
+      <div className="w-9 h-9 rounded-full bg-purple-600 text-white flex items-center justify-center text-sm font-semibold overflow-hidden">
+        {row.avatar_url ? (
+          <img
+            src={row.avatar_url}
+            alt={name}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          first
+        )}
+      </div>
+    </div>
+  );
+};
 
 function getVisiblePages(page: number, totalPages: number) {
   if (totalPages <= MAX_VISIBLE) {
@@ -65,7 +85,7 @@ export default function DataTable<T>({
     <div className="w-full space-y-4 overflow-x-hidden">
       {/* Header */}
       <div
-        className="grid text-xs font-semibold uppercase tracking-wide text-gray-500 px-4"
+        className="grid text-xs font-semibold uppercase tracking-wide text-gray-500 px-4 items-center"
         style={{ gridTemplateColumns: gridTemplate, columnGap: "5px" }}
       >
         {columns.map((c, i) => (
@@ -92,7 +112,7 @@ export default function DataTable<T>({
           <div
             key={i}
             onClick={() => onRowClick?.(row)}
-            className="grid bg-white border rounded-2xl px-4 py-3 cursor-pointer hover:bg-gray-50"
+            className="grid bg-white border rounded-2xl px-4 py-3 cursor-pointer hover:bg-gray-50 items-center"
             style={{ gridTemplateColumns: gridTemplate, columnGap: "5px" }}
           >
             {columns.map((c, j) => (

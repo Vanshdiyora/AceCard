@@ -10,18 +10,19 @@ export interface FieldConfig {
   name: string;
   label: string;
   type:
-    | "text"
-    | "number"
-    | "email"
-    | "select"
-    | "textarea"
-    | "date"
-    | "checkbox"
-    | "multiselect"
-    | "radio"
-    | "datetime"
-    | "search-select"
-    | "search-multiselect";
+  | "text"
+  | "number"
+  | "email"
+  | "select"
+  | "textarea"
+  | "date"
+  | "checkbox"
+  | "multiselect"
+  | "radio"
+  | "datetime"
+  | "search-select"
+  | "search-multiselect"
+  | "image";   // 👈 ADD
 
   placeholder?: string;
   options?: { label: string; value: any }[];
@@ -45,6 +46,7 @@ export interface FieldConfig {
   uppercase?: boolean;
 
   hideValues?: boolean; // ✅ ADD THIS LINE
+  upload?: (file: File) => Promise<string>;
 }
 
 
@@ -57,7 +59,7 @@ interface DynamicFormProps {
     React.SetStateAction<Record<string, string | null>>
   >;
   noValidate?: boolean;
-   disabled?: boolean; 
+  disabled?: boolean;
 }
 
 /* ---------- STYLES ---------- */
@@ -82,7 +84,7 @@ export default function DynamicForm({
 
   /* ---------- CHANGE HANDLER ---------- */
   const handleChange = (field: FieldConfig, value: any) => {
-      if (disabled || field.disabled) return;
+    // if (disabled || field.disabled) return;
     const finalValue =
       field.uppercase && typeof value === "string"
         ? value.toUpperCase()
@@ -262,7 +264,7 @@ export default function DynamicForm({
                   onChange={(v) => handleChange(field, v)}
                   onSearch={field.onSearch}
                   loading={field.showLoader}
-                   disabled={disabled || field.disabled}
+                  disabled={disabled || field.disabled}
                   placeholder={`Select ${field.label}`}
                 />
                 {showError && (
@@ -311,6 +313,59 @@ export default function DynamicForm({
                 )}
               </>
             )}
+
+            {/* ---------- IMAGE ---------- */}
+            {field.type === "image" && (
+              <>
+                <div className="flex items-center gap-4">
+                  {/* AVATAR PREVIEW */}
+                  <div
+                    className={`relative w-28 h-28 rounded-full border overflow-hidden bg-gray-100 flex items-center justify-center ${disabled || field.disabled
+                        ? "opacity-60 pointer-events-none"
+                        : ""
+                      }`}
+                  >
+                    {form[field.name] ? (
+                      <img
+                        src={form[field.name]}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-xs text-gray-400 text-center px-2">
+                        No avatar
+                      </span>
+                    )}
+
+                    {/* OVERLAY */}
+                    <label className="absolute inset-0 bg-black/50 text-white flex items-center justify-center opacity-0 hover:opacity-100 cursor-pointer transition">
+                      Change
+                      <input
+                        type="file"
+                        hidden
+                        accept="image/*"
+                        disabled={disabled || field.disabled}
+                        onChange={async (e) => {
+                          if (!e.target.files?.[0] || !field.upload) return;
+                          const url = await field.upload(e.target.files[0]);
+                          handleChange(field, url);
+                        }}
+                      />
+                    </label>
+                  </div>
+
+                  {/* TEXT */}
+                  <div className="text-sm text-gray-500">
+                    Click to upload a profile image
+                  </div>
+                </div>
+
+                {showError && (
+                  <p className="text-xs text-red-500 mt-1">{error}</p>
+                )}
+              </>
+            )}
+
+
           </div>
         );
       })}

@@ -3,6 +3,7 @@ import DynamicForm, {
   type FieldConfig,
 } from "../../../common/ui/DynamicForm";
 import { validateField } from "../../../common/utils/formValidator";
+import { uploadImage } from "../../publicProfile/services/publicProfile.api";
 
 type UserRole = "vendor_admin" | "manager" | "sales_rep";
 
@@ -22,6 +23,7 @@ interface FormState {
   password: string;
   role: "manager" | "sales_rep";
   manager_id?: number;
+  avatar_url?: string;
 }
 
 export default function AddMemberModal({
@@ -49,6 +51,7 @@ export default function AddMemberModal({
       role: currentRole === "vendor_admin" ? "manager" : "sales_rep",
       manager_id:
         currentRole === "manager" ? currentUserId : undefined,
+      avatar_url: "",
     });
 
     setErrors({});
@@ -72,52 +75,61 @@ export default function AddMemberModal({
   const roleOptions =
     currentRole === "vendor_admin"
       ? [
-          { label: "Manager", value: "manager" },
-          { label: "Sales Rep", value: "sales_rep" },
-        ]
+        { label: "Manager", value: "manager" },
+        { label: "Sales Rep", value: "sales_rep" },
+      ]
       : currentRole === "manager"
-      ? [{ label: "Sales Rep", value: "sales_rep" }]
-      : [];
+        ? [{ label: "Sales Rep", value: "sales_rep" }]
+        : [];
 
   /* ---------- FIELD CONFIG ---------- */
-const fields: FieldConfig[] = [
-  {
-    name: "name",
-    label: "Full Name",
-    type: "text" as const,
-    placeholder: "Enter full name",
-    required: true,
-  },
-  {
-    name: "email",
-    label: "Email",
-    type: "email" as const,
-    placeholder: "Enter email address",
-    required: true,
-  },
-  {
-    name: "phone",
-    label: "Phone",
-    type: "text" as const,
-    placeholder: "Enter phone number",
-    required: true,
-  },
-  {
-    name: "password",
-    label: "Password",
-    type: "text" as const,
-    placeholder: "Set a temporary password",
-    required: true,
-  },
-  {
-    name: "role",
-    label: "Role",
-    type: "select" as const,
-    required: true,
-    options: roleOptions,
-  },
-  ...(form.role === "sales_rep" && currentRole === "vendor_admin"
-    ? [
+  const fields: FieldConfig[] = [
+    {
+      name: "avatar_url",
+      label: "Avatar",
+      type: "image",
+      upload: async (file: File) => {
+        const res = await uploadImage(file);
+        return res.data.url;
+      },
+    },
+    {
+      name: "name",
+      label: "Full Name",
+      type: "text" as const,
+      placeholder: "Enter full name",
+      required: true,
+    },
+    {
+      name: "email",
+      label: "Email",
+      type: "email" as const,
+      placeholder: "Enter email address",
+      required: true,
+    },
+    {
+      name: "phone",
+      label: "Phone",
+      type: "text" as const,
+      placeholder: "Enter phone number",
+      required: true,
+    },
+    {
+      name: "password",
+      label: "Password",
+      type: "text" as const,
+      placeholder: "Set a temporary password",
+      required: true,
+    },
+    {
+      name: "role",
+      label: "Role",
+      type: "select" as const,
+      required: true,
+      options: roleOptions,
+    },
+    ...(form.role === "sales_rep" && currentRole === "vendor_admin"
+      ? [
         {
           name: "manager_id",
           label: "Manager",
@@ -129,8 +141,8 @@ const fields: FieldConfig[] = [
           })),
         } satisfies FieldConfig,
       ]
-    : []),
-];
+      : []),
+  ];
 
 
   /* ---------- SUBMIT ---------- */

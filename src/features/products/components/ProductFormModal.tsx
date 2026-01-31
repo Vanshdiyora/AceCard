@@ -3,6 +3,7 @@ import DynamicForm, {
   type FieldConfig,
 } from "../../../common/ui/DynamicForm";
 import { validateField } from "../../../common/utils/formValidator";
+import { uploadImage } from "../../publicProfile/services/publicProfile.api";
 
 interface ProductFormModalProps {
   open: boolean;
@@ -24,6 +25,7 @@ export default function ProductFormModal({
     price: "",
     category: "",
     description: "",
+    image_url: "",
   });
 
   const [errors, setErrors] = useState<
@@ -47,6 +49,7 @@ export default function ProductFormModal({
         price: product.price ?? "",
         category: product.category ?? "",
         description: product.description ?? "",
+        image_url: product.image_url ?? "",   // 👈
       });
 
       const list = Object.entries(
@@ -73,6 +76,7 @@ export default function ProductFormModal({
         price: "",
         category: "",
         description: "",
+        image_url: "",
       });
       setExtraProps([{ key: "", value: "" }]);
       setMeta({});
@@ -105,6 +109,15 @@ export default function ProductFormModal({
 
   const fields: FieldConfig[] = [
     {
+      name: "image_url",
+      label: "Product Image",
+      type: "image",
+      upload: async (file: File) => {
+        const res = await uploadImage(file);
+        return res.data.url; // must return URL
+      },
+    },
+    {
       name: "name",
       label: "Product Name",
       type: "text",
@@ -134,6 +147,7 @@ export default function ProductFormModal({
       placeholder: "Write product description",
       maxLength: 500,
     },
+
   ];
 
   /* ---------------- HANDLE FIELD UPDATE ---------------- */

@@ -21,7 +21,7 @@ import ErrorAlert from "../../../common/ui/ErrorAlert";
 import BlockingLoader from "../../../common/ui/BlockingLoader";
 import ResultModal from "../../../common/ui/ResultModal";
 import { teamService } from "../services/teams.service";
-
+import { AvatarCell } from "../../../common/components/table/DataTable";
 import type { TeamMember } from "../types";
 
 /* ======================================================
@@ -150,6 +150,11 @@ export default function TeamPage() {
   ====================================================== */
 
   const columns: Column<TeamMember>[] = [
+     {
+    header: "",
+    width: "56px",
+    render: AvatarCell, // 👈 FIRST COLUMN
+  },
     { header: "Name", accessor: "name" },
     { header: "Email", width: "2fr", accessor: "email" },
     {

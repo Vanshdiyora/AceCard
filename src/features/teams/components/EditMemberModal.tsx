@@ -3,6 +3,7 @@ import DynamicForm, {
   type FieldConfig,
 } from "../../../common/ui/DynamicForm";
 import { validateField } from "../../../common/utils/formValidator";
+import { uploadImage } from "../../publicProfile/services/publicProfile.api";
 
 export default function EditMemberModal({
   open,
@@ -34,6 +35,7 @@ export default function EditMemberModal({
       phone: member.phone ?? "",
       role: member.role,
       manager_id: member.manager_id ?? undefined,
+      avatar_url: member.avatar_url ?? "",
     });
 
     setErrors({});
@@ -55,6 +57,16 @@ export default function EditMemberModal({
 
   /* ---------- FIELD CONFIG ---------- */
   const fields: FieldConfig[] = [
+    {
+      name: "avatar_url",
+      label: "Avatar",
+      type: "image",
+      upload: async (file: File) => {
+        const res = await uploadImage(file);
+        return res.data.url;
+      },
+    },
+
     {
       name: "name",
       label: "Full Name",
