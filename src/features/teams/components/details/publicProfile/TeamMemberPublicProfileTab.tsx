@@ -260,70 +260,72 @@ export default function TeamMemberPublicProfileTab({
     onLiveChange?.(next); // 👈 push to preview
   };
 
-const save = async () => {
-  if (!config) return;
+  const save = async () => {
+    if (!config) return;
 
-  const withLock = <T extends { locked: boolean; lock_mode?: LockMode }>(v: T) =>
-    showLockable
-      ? { ...v, locked: v.locked, lock_mode: v.lock_mode }
-      : { ...v, locked: v.locked };
-
-  const payload = {
-    profile: config.profile,
-
-    theme: withLock(config.theme),
-
-    banner: withLock(config.banner),
-
-    meeting: withLock(config.meeting),
-
-    social_links: { items: config.social_links.items },
-
-    products: {
-      ...withLock(config.products),
-      items: config.products.items,
-    },
-
-    youtube: showLockable
-      ? { items: config.youtube.items, locked: config.youtube.locked, lock_mode: config.youtube.lock_mode }
-      : { items: config.youtube.items },
-
-    links_files: showLockable
-      ? { items: config.links_files.items, locked: config.links_files.locked, lock_mode: config.links_files.lock_mode }
-      : { items: config.links_files.items },
-
-    sections: config.sections.map((s) =>
+    const withLock = <T extends { locked: boolean; lock_mode?: LockMode }>(v: T) =>
       showLockable
-        ? { ...s, locked: s.locked, lock_mode: s.lock_mode }
-        : { ...s, locked: s.locked }
-    ),
-  };
+        ? { ...v, locked: v.locked, lock_mode: v.lock_mode }
+        : { ...v, locked: v.locked };
 
-  try {
-    if (useSelfApi) {
-      await dispatch(savePublicProfile({ config: payload })).unwrap();
-    } else {
-      await dispatch(
-        savePublicProfileByUsername({
-          username: publicProfile!.username!,
-          config: payload,
-        })
-      ).unwrap();
+    const payload = {
+      profile: config.profile,
+
+      theme: withLock(config.theme),
+
+      banner: withLock(config.banner),
+
+      meeting: withLock(config.meeting),
+
+      social_links: { items: config.social_links.items },
+
+      products: {
+        ...withLock(config.products),
+        items: config.products.items,
+      },
+
+      youtube: showLockable
+        ? { items: config.youtube.items, locked: config.youtube.locked, lock_mode: config.youtube.lock_mode }
+        : { items: config.youtube.items },
+
+      links_files: showLockable
+        ? { items: config.links_files.items, locked: config.links_files.locked, lock_mode: config.links_files.lock_mode }
+        : { items: config.links_files.items },
+
+      sections: config.sections.map((s) =>
+        showLockable
+          ? { ...s, locked: s.locked, lock_mode: s.lock_mode }
+          : { ...s, locked: s.locked }
+      ),
+    };
+
+    try {
+      if (useSelfApi) {
+        await dispatch(savePublicProfile({ config: payload })).unwrap();
+      } else {
+        await dispatch(
+          savePublicProfileByUsername({
+            username: publicProfile!.username!,
+            config: payload,
+          })
+        ).unwrap();
+      }
+
+      setResultSuccess(true);
+      setResultMessage("Public profile saved successfully.");
+      setResultOpen(true);
+    } catch (err) {
+      setResultSuccess(false);
+      setResultMessage("Something went wrong while saving.");
+      setResultOpen(true);
     }
-
-    setResultSuccess(true);
-    setResultMessage("Public profile saved successfully.");
-    setResultOpen(true);
-  } catch (err) {
-    setResultSuccess(false);
-    setResultMessage("Something went wrong while saving.");
-    setResultOpen(true);
-  }
-};
-
+  };
+const role = useAppSelector((s) => s.auth.role);
 
   if (loading || !config)
     return <p className="text-gray-400">Loading profile config...</p>;
+  const isReadOnly = (meta?: { locked?: boolean }) =>
+    meta?.locked === true && role !== "vendor_admin";
 
   /* ================= FIELDS ================= */
 
@@ -386,6 +388,7 @@ const save = async () => {
               key={k}
               label={k.replace("_", " ")}
               value={config.theme[k]}
+              disabled={isReadOnly(config.theme)}
               onChange={(val: string) =>
                 update({
                   ...config,
@@ -428,6 +431,7 @@ const save = async () => {
 
           <DynamicForm
             fields={productField}
+            disabled={isReadOnly(config.products)}
             form={{
               product_ids: config.products.items.map((p) => p.id),
             }}
@@ -456,6 +460,7 @@ const save = async () => {
             <div className="space-y-3">
               <ProductsReorder
                 items={config.products.items}
+                disabled={isReadOnly(config.products)}
                 onChange={(items) =>
                   update({
                     ...config,
@@ -485,11 +490,13 @@ const save = async () => {
               })
             }
           />
-
         )}
+
+        {/* ENABLE TOGGLE */}
         <Toggle
           label="Enable banner"
           value={config.banner.enabled}
+          disabled={isReadOnly(config.banner)}
           onChange={(v: boolean) =>
             update({
               ...config,
@@ -498,11 +505,14 @@ const save = async () => {
           }
         />
 
-        {/* BANNER IMAGE UPLOAD */}
+        {/* IMAGE */}
         <div className="space-y-2">
           <p className="text-xs text-gray-500">Banner Image</p>
 
-          <div className="relative h-40 w-full rounded-xl border overflow-hidden bg-gray-50">
+          <div
+            className={`relative h-40 w-full rounded-xl border overflow-hidden bg-gray-50 ${isReadOnly(config.banner) ? "opacity-60 pointer-events-none" : ""
+              }`}
+          >
             {config.banner.image_url ? (
               <img
                 src={config.banner.image_url}
@@ -519,6 +529,7 @@ const save = async () => {
               <input
                 type="file"
                 hidden
+                disabled={isReadOnly(config.banner)}
                 accept="image/*"
                 onChange={(e) =>
                   e.target.files && uploadBannerImage(e.target.files[0])
@@ -528,10 +539,14 @@ const save = async () => {
           </div>
         </div>
 
-        {/* CTA FIELDS */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+        {/* CTA */}
+        <div
+          className={`grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 ${isReadOnly(config.banner) ? "opacity-60 pointer-events-none" : ""
+            }`}
+        >
           <Input
             value={config.banner.cta_text || ""}
+            disabled={isReadOnly(config.banner)}
             onChange={(v) =>
               update({
                 ...config,
@@ -543,6 +558,7 @@ const save = async () => {
 
           <Input
             value={config.banner.cta_url || ""}
+            disabled={isReadOnly(config.banner)}
             onChange={(v) =>
               update({
                 ...config,
@@ -552,7 +568,6 @@ const save = async () => {
             placeholder="CTA URL"
           />
         </div>
-
       </Card>
 
       <Card title="Videos" desc="Your YouTube / video links">
@@ -569,6 +584,7 @@ const save = async () => {
         )}
 
         <YoutubeSection
+          disabled={isReadOnly(config.youtube)}
           items={config.youtube.items}
           onChange={(items) =>
             update({ ...config, youtube: { ...config.youtube, items } })
@@ -591,6 +607,7 @@ const save = async () => {
 
         )}
         <MeetingSection
+          disabled={isReadOnly(config.meeting)}
           value={config.meeting}
           onChange={(m: any) => update({ ...config, meeting: m })}
         />
@@ -610,6 +627,7 @@ const save = async () => {
           />
         )}
         <LinksFilesSection
+          disabled={isReadOnly(config.links_files)}
           value={config.links_files}
           onChange={(v) =>
             update({ ...config, links_files: { ...config.links_files, ...v } })
@@ -667,16 +685,25 @@ function Input({
   onChange,
   textarea,
   placeholder,
+  disabled = false,
 }: {
   value: string;
   onChange: (v: string) => void;
   textarea?: boolean;
   placeholder?: string;
+  disabled?: boolean;
 }) {
+  const base =
+    "w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500";
+
+  const disabledCls = disabled
+    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+    : "";
 
   return textarea ? (
     <textarea
-      className="w-full rounded-lg border px-3 py-2"
+      disabled={disabled}
+      className={`${base} ${disabledCls}`}
       rows={3}
       placeholder={placeholder}
       value={value}
@@ -684,7 +711,8 @@ function Input({
     />
   ) : (
     <input
-      className="w-full rounded-lg border px-3 py-2"
+      disabled={disabled}
+      className={`${base} ${disabledCls}`}
       value={value}
       placeholder={placeholder}
       onChange={(e) => onChange(e.target.value)}
@@ -692,26 +720,35 @@ function Input({
   );
 }
 
+
 function Toggle({
   label,
   value,
   onChange,
+  disabled = false,
 }: {
   label: string;
   value: boolean;
   onChange: (v: boolean) => void;
+  disabled?: boolean;
 }) {
   return (
-    <label className="flex items-center gap-3">
+    <label
+      className={`flex items-center gap-3 ${disabled ? "text-gray-400 cursor-not-allowed" : ""
+        }`}
+    >
       <span>{label}</span>
       <input
         type="checkbox"
         checked={value}
+        disabled={disabled}
         onChange={(e) => onChange(e.target.checked)}
+        className={disabled ? "cursor-not-allowed" : ""}
       />
     </label>
   );
 }
+
 
 function ColorPickerField({
   label,

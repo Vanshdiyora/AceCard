@@ -57,6 +57,7 @@ interface DynamicFormProps {
     React.SetStateAction<Record<string, string | null>>
   >;
   noValidate?: boolean;
+   disabled?: boolean; 
 }
 
 /* ---------- STYLES ---------- */
@@ -75,11 +76,13 @@ export default function DynamicForm({
   errors,
   setErrors,
   noValidate = false,
+  disabled = false,
 }: DynamicFormProps) {
   const [touched, setTouched] = useState<Record<string, boolean>>({});
 
   /* ---------- CHANGE HANDLER ---------- */
   const handleChange = (field: FieldConfig, value: any) => {
+      if (disabled || field.disabled) return;
     const finalValue =
       field.uppercase && typeof value === "string"
         ? value.toUpperCase()
@@ -259,7 +262,7 @@ export default function DynamicForm({
                   onChange={(v) => handleChange(field, v)}
                   onSearch={field.onSearch}
                   loading={field.showLoader}
-                  disabled={field.disabled}
+                   disabled={disabled || field.disabled}
                   placeholder={`Select ${field.label}`}
                 />
                 {showError && (

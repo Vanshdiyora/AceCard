@@ -14,9 +14,11 @@ import type { ProductRef } from "../TeamMemberPublicProfileTab";
 export default function ProductsReorder({
   items,
   onChange,
+  disabled = false,
 }: {
   items: ProductRef[];
   onChange: (items: ProductRef[]) => void;
+  disabled?: boolean;
 }) {
   const sorted = [...items].sort((a, b) => a.rank - b.rank);
 
@@ -24,6 +26,7 @@ export default function ProductsReorder({
     <DndContext
       collisionDetection={closestCenter}
       onDragEnd={(e) => {
+        if (disabled) return;
         const { active, over } = e;
         if (!over || active.id === over.id) return;
 
@@ -45,9 +48,9 @@ export default function ProductsReorder({
         items={sorted.map((p) => p.id)}
         strategy={verticalListSortingStrategy}
       >
-        <div className="space-y-2 mt-4">
+        <div className={`space-y-2 mt-4 ${disabled ? "opacity-60" : ""}`}>
           {sorted.map((p) => (
-            <Row key={p.id} p={p} />
+            <Row key={p.id} p={p} disabled={disabled} />
           ))}
         </div>
       </SortableContext>
@@ -55,9 +58,17 @@ export default function ProductsReorder({
   );
 }
 
-function Row({ p }: { p: ProductRef }) {
+/* ================= ROW ================= */
+
+function Row({
+  p,
+  disabled,
+}: {
+  p: ProductRef;
+  disabled?: boolean;
+}) {
   const { attributes, listeners, setNodeRef, transform, transition } =
-    useSortable({ id: p.id });
+    useSortable({ id: p.id, disabled });
 
   return (
     <div
@@ -66,19 +77,27 @@ function Row({ p }: { p: ProductRef }) {
         transform: CSS.Transform.toString(transform),
         transition,
       }}
-      className="flex items-center justify-between border rounded-lg p-3 bg-white shadow-sm"
+      className={`flex items-center justify-between border rounded-lg p-3 bg-white shadow-sm ${
+        disabled ? "opacity-60" : ""
+      }`}
     >
       <div className="flex items-center gap-3">
         <span
-          className="cursor-grab text-gray-400"
-          {...attributes}
-          {...listeners}
+          className={`${
+            disabled
+              ? "text-gray-300"
+              : "cursor-grab text-gray-400"
+          }`}
+          {...(!disabled ? attributes : {})}
+          {...(!disabled ? listeners : {})}
         >
           ☰
         </span>
         <div>
           <p className="font-medium">{p.name}</p>
-          <p className="text-xs text-gray-500">Rank: {p.rank}</p>
+          <p className="text-xs text-gray-500">
+            Rank: {p.rank}
+          </p>
         </div>
       </div>
 

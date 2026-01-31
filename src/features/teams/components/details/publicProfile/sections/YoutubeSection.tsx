@@ -20,13 +20,16 @@ type Item = {
 export default function YoutubeSection({
   items,
   onChange,
+  disabled = false,
 }: {
   items: Item[];
   onChange: (items: Item[]) => void;
+  disabled?: boolean;
 }) {
   const sorted = [...items].sort((a, b) => a.rank - b.rank);
 
   const add = () => {
+    if (disabled) return;
     onChange([
       ...sorted,
       {
@@ -38,26 +41,33 @@ export default function YoutubeSection({
     ]);
   };
 
-  const remove = (id: string) =>
+  const remove = (id: string) => {
+    if (disabled) return;
     onChange(sorted.filter((i) => i.id !== id));
+  };
 
-  const update = (id: string, patch: Partial<Item>) =>
+  const update = (id: string, patch: Partial<Item>) => {
+    if (disabled) return;
     onChange(
       sorted.map((i) => (i.id === id ? { ...i, ...patch } : i))
     );
+  };
 
   return (
-    <div className="space-y-3">
+    <div className={`space-y-3 ${disabled ? "opacity-60" : ""}`}>
       <DndContext
         collisionDetection={closestCenter}
         onDragEnd={({ active, over }) => {
+          if (disabled) return;
           if (!over || active.id === over.id) return;
+
           const oldIndex = sorted.findIndex(
             (i) => i.id === active.id
           );
           const newIndex = sorted.findIndex(
             (i) => i.id === over.id
           );
+
           const next = arrayMove(sorted, oldIndex, newIndex).map(
             (i, idx) => ({ ...i, rank: idx + 1 })
           );
@@ -74,6 +84,7 @@ export default function YoutubeSection({
               item={i}
               onUpdate={update}
               onRemove={remove}
+              disabled={disabled}
             />
           ))}
         </SortableContext>
@@ -81,7 +92,10 @@ export default function YoutubeSection({
 
       <button
         onClick={add}
-        className="px-3 py-2 bg-purple-600 text-white rounded"
+        disabled={disabled}
+        className={`px-3 py-2 rounded text-white ${
+          disabled ? "bg-gray-400 cursor-not-allowed" : "bg-purple-600"
+        }`}
       >
         + Add Video
       </button>
@@ -89,17 +103,21 @@ export default function YoutubeSection({
   );
 }
 
+/* ================= ROW ================= */
+
 function Row({
   item,
   onUpdate,
   onRemove,
+  disabled,
 }: {
   item: Item;
   onUpdate: (id: string, p: Partial<Item>) => void;
   onRemove: (id: string) => void;
+  disabled?: boolean;
 }) {
   const { setNodeRef, attributes, listeners, transform, transition } =
-    useSortable({ id: item.id });
+    useSortable({ id: item.id, disabled });
 
   return (
     <div
@@ -108,18 +126,23 @@ function Row({
         transform: CSS.Transform.toString(transform),
         transition,
       }}
-      className="flex items-center gap-2 bg-white border rounded-lg p-2"
+      className={`flex items-center gap-2 bg-white border rounded-lg p-2 ${
+        disabled ? "opacity-60" : ""
+      }`}
     >
       <span
-        {...attributes}
-        {...listeners}
-        className="cursor-grab"
+        {...(!disabled ? attributes : {})}
+        {...(!disabled ? listeners : {})}
+        className={`${
+          disabled ? "text-gray-300" : "cursor-grab"
+        }`}
       >
         ☰
       </span>
 
       <input
         value={item.url}
+        disabled={disabled}
         onChange={(e) =>
           onUpdate(item.id, { url: e.target.value })
         }
@@ -130,6 +153,7 @@ function Row({
       <input
         type="checkbox"
         checked={item.enabled}
+        disabled={disabled}
         onChange={(e) =>
           onUpdate(item.id, { enabled: e.target.checked })
         }
@@ -137,7 +161,12 @@ function Row({
 
       <button
         onClick={() => onRemove(item.id)}
-        className="text-red-500"
+        disabled={disabled}
+        className={`${
+          disabled
+            ? "text-gray-300 cursor-not-allowed"
+            : "text-red-500"
+        }`}
       >
         ✕
       </button>
