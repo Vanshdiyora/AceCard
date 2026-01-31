@@ -1472,8 +1472,10 @@ function LockControl({
     <div className="flex items-center justify-between mb-3">
       <div className="flex items-center gap-3">
         {/* Toggle */}
+        Locked
         <button
           type="button"
+          title={value.locked ? "Lock on" : "Lock off"}   // 👈 tooltip
           onClick={() =>
             onChange({
               ...value,

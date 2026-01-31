@@ -162,40 +162,40 @@ export default function MobileWebsite({
     }
   };
 
-const resolveBackgroundStyle = () => {
-  if (layout?.use_background === "image" && layout?.background_image) {
+  const resolveBackgroundStyle = () => {
+    if (layout?.use_background === "image" && layout?.background_image) {
+      return {
+        backgroundImage: `url(${layout.background_image})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+      };
+    }
+
+    if (layout?.use_background === "gradient") {
+      const from = layout?.color1 || "#7c3aed";
+      const to = layout?.color2 || "#6366f1";
+
+      const validDirections = {
+        "to-r": "to right",
+        "to-l": "to left",
+        "to-b": "to bottom",
+        "to-t": "to top",
+      };
+
+      const dir =
+        validDirections[layout?.direction as keyof typeof validDirections] ||
+        "to right";
+
+      return {
+        backgroundImage: `linear-gradient(${dir}, ${from}, ${to})`,
+      };
+    }
+
     return {
-      backgroundImage: `url(${layout.background_image})`,
-      backgroundSize: "cover",
-      backgroundPosition: "center",
-      backgroundRepeat: "no-repeat",
+      backgroundColor: theme?.background_color || "#000",
     };
-  }
-
-  if (layout?.use_background === "gradient") {
-    const from = layout?.color1 || "#7c3aed";
-    const to = layout?.color2 || "#6366f1";
-
-    const validDirections = {
-      "to-r": "to right",
-      "to-l": "to left",
-      "to-b": "to bottom",
-      "to-t": "to top",
-    };
-
-    const dir =
-      validDirections[layout?.direction as keyof typeof validDirections] ||
-      "to right";
-
-    return {
-      backgroundImage: `linear-gradient(${dir}, ${from}, ${to})`,
-    };
-  }
-
-  return {
-    backgroundColor: theme?.background_color || "#000",
   };
-};
 
 
   return (
@@ -290,7 +290,7 @@ function Products({ items, theme }: any) {
           >
             {/* Background image */}
             <img
-             src={p.image_url || p.product_img_url}
+              src={p.image_url || p.product_img_url}
               alt={p.name}
               className="absolute inset-0 w-full h-full object-cover"
             />
@@ -356,7 +356,7 @@ function Social({ items, theme }: any) {
         <div
           key={rIdx}
           className={`flex gap-4 ${row.length < 3 ? "justify-center" : "justify-between"
-            } w-full max-w-[220px]`}
+            } w-full`}
         >
           {row.map((s: any) => (
             <a
@@ -364,23 +364,23 @@ function Social({ items, theme }: any) {
               href={s.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="h-14 w-14 rounded-2xl flex items-center justify-center shadow-md transition hover:scale-105"
+              className="h-20 w-20 rounded-3xl flex items-center justify-center shadow-md transition hover:scale-105 overflow-hidden"
               style={{
                 backgroundColor: theme.card_color,
                 color: theme.primary_color,
               }}
             >
-              {s.label === "Instagram" && <Instagram size={22} />}
-              {s.label === "LinkedIn" && <Linkedin size={22} />}
-              {s.label === "YouTube" && <Youtube size={22} />}
-              {s.label === "Twitter" && <Twitter size={22} />}
-              {s.label === "Facebook" && <Facebook size={22} />}
-              {s.label === "Whatsapp" && <MessageCircle size={22} />}
-              {s.label === "Call Me" && <Phone size={22} />}
-              {s.label === "Personal Website" && <Globe size={22} />}
+              {s.label === "Instagram" && <Instagram size={32} />}
+              {s.label === "LinkedIn" && <Linkedin size={32} />}
+              {s.label === "YouTube" && <Youtube size={32} />}
+              {s.label === "Twitter" && <Twitter size={32} />}
+              {s.label === "Facebook" && <Facebook size={32} />}
+              {s.label === "Whatsapp" && <MessageCircle size={32} />}
+              {s.label === "Call Me" && <Phone size={32} />}
+              {s.label === "Personal Website" && <Globe size={32} />}
+              {s.label === "Snapchat" && <Ghost size={32} />}
+              {s.label === "TikTok" && <Music2 size={32} />}
 
-              {s.label === "Snapchat" && <Ghost size={22} />}
-              {s.label === "TikTok" && <Music2 size={22} />}
             </a>
           ))}
         </div>

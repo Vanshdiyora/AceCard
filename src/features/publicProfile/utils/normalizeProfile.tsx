@@ -13,8 +13,8 @@ export function normalizeProfile(api: any) {
 
     layout: {
       // LOCK
-      locked: cfg.layout?.locked ?? false,
-      lock_mode: cfg.layout?.lock_mode || undefined,
+      locked: Boolean(cfg.layout?.locked),
+      lock_mode: cfg.layout?.lock_mode ?? undefined,
 
       // CORE
       profile_type: cfg.layout?.profile_type ?? 3,
@@ -22,18 +22,33 @@ export function normalizeProfile(api: any) {
       font: cfg.layout?.font || "Inter",
       card_alignment: cfg.layout?.card_alignment || "center",
 
-      // BACKGROUND / STYLE
-      background_image: cfg.layout?.background_image || undefined,
-      custom_font: cfg.layout?.custom_font || undefined,
+      // BACKGROUND TYPE
+      use_background:
+        cfg.layout?.use_background === "solid" ||
+          cfg.layout?.use_background === "gradient" ||
+          cfg.layout?.use_background === "image"
+          ? cfg.layout.use_background
+          : "gradient",
 
-      // GRADIENT (safe defaults)
+      // GRADIENT SAFE
       color1: cfg.layout?.color1 || "#7c3aed",
       color2: cfg.layout?.color2 || "#6366f1",
-      direction: cfg.layout?.direction || "to-r",
-      use_background: cfg.layout?.use_background || "gradient",
-      use_custom_font: cfg.layout?.use_custom_font ?? false,
+      direction:
+        cfg.layout?.direction === "to-r" ||
+          cfg.layout?.direction === "to-l" ||
+          cfg.layout?.direction === "to-b" ||
+          cfg.layout?.direction === "to-t"
+          ? cfg.layout.direction
+          : "to-r",
 
+      // MEDIA
+      background_image: cfg.layout?.background_image || "",
+      custom_font: cfg.layout?.custom_font || "",
+
+      use_custom_font: Boolean(cfg.layout?.use_custom_font),
     },
+
+
 
     cover: {
       locked: cfg.cover?.locked ?? false,
