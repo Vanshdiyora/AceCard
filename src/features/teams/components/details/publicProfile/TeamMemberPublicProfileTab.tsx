@@ -7,6 +7,7 @@ import {
   savePublicProfile,
   savePublicProfileByUsername,
 } from "../../../../publicProfile/slice";
+import { ChevronDown } from "lucide-react";
 import ProductsReorder from "./sections/ProductsReorder";
 import LinksFilesSection from "./sections/LinksFilesSection";
 import SectionsReorder from "./sections/SectionsReorder";
@@ -38,11 +39,20 @@ export interface LockMeta {
 
 export type ProfileLayoutType = 1 | 2 | 3;
 
-export interface LayoutConfig {
-  profile_type: ProfileLayoutType; // 1,2,3
+export interface LayoutConfig extends LockMeta {
+  profile_type: ProfileLayoutType;
   is_fade: boolean;
   font: string;
   card_alignment: "left" | "center" | "right";
+
+  // NEW
+  background_image?: string;
+  color1?: string;      // gradient start
+  color2?: string;      // gradient end
+  direction?: string;  // "to-r", "to-b", etc
+  custom_font?: string; // font URL
+  use_background?: "solid" | "gradient" | "image";
+  use_custom_font?: boolean;
 }
 
 interface ProfileConfig {
@@ -161,6 +171,31 @@ export default function TeamMemberPublicProfileTab({
     { label: string; value: number }[]
   >([]);
 
+  const uploadLayoutBackground = async (file: File) => {
+    const res = await uploadImage(file);
+    update({
+      ...config!,
+      layout: {
+        ...config!.layout,
+        background_image: res.data.url,
+      },
+    });
+  };
+
+  const uploadCustomFont = async (file: File) => {
+    const res = await uploadImage(file);
+    update({
+      ...config!,
+      layout: {
+        ...config!.layout,
+        custom_font: res.data.url,
+        font: "custom",
+      },
+    });
+  };
+
+
+
   /* ================= INIT ================= */
 
   useEffect(() => {
@@ -174,7 +209,7 @@ export default function TeamMemberPublicProfileTab({
   useEffect(() => {
     if (publicProfile) {
       const normalized = normalizeProfile(publicProfile) as PublicProfileConfig;
-      setConfig(normalized);
+      setConfig(normalized,);
     }
   }, [publicProfile]);
 
@@ -289,12 +324,16 @@ export default function TeamMemberPublicProfileTab({
 
     const withLock = <T extends { locked: boolean; lock_mode?: LockMode }>(v: T) =>
       showLockable
-        ? { ...v, locked: v.locked, lock_mode: v.lock_mode }
+        ? {
+          ...v,
+          locked: v.locked,
+          lock_mode: v.locked ? v.lock_mode ?? "individual" : undefined,
+        }
         : { ...v, locked: v.locked };
 
     const payload = {
       profile: config.profile,
-      layout: config.layout,
+      layout: withLock(config.layout),
       cover: withLock(config.cover),
       theme: withLock(config.theme),
 
@@ -370,8 +409,98 @@ export default function TeamMemberPublicProfileTab({
       showLoader: loadingMoreProducts || productsLoading,
     },
   ];
+  function GradientDirectionDropdown({
+    value,
+    onChange,
+  }: {
+    value?: string;
+    onChange: (v: string) => void;
+  }) {
+    const [open, setOpen] = useState(false);
+    const btnRef = useRef<HTMLButtonElement | null>(null);
+    const menuRef = useRef<HTMLDivElement | null>(null);
+    const [menuW, setMenuW] = useState(0);
+
+    const options = [
+      { id: "to-r", label: "Left → Right" },
+      { id: "to-b", label: "Top → Bottom" },
+      { id: "to-t", label: "Bottom → Top" }, // 👈 FIXED
+    ];
+
+
+    const active =
+      options.find((o) => o.id === value) || options[0];
+
+    // sync width
+    useEffect(() => {
+      if (btnRef.current) setMenuW(btnRef.current.offsetWidth);
+    }, [active.label]);
+
+    // close on outside click / scroll
+    useEffect(() => {
+      if (!open) return;
+
+      const close = (e: any) => {
+        if (
+          btnRef.current?.contains(e.target) ||
+          menuRef.current?.contains(e.target)
+        )
+          return;
+        setOpen(false);
+      };
+
+      document.addEventListener("mousedown", close);
+      window.addEventListener("scroll", close, true);
+
+      return () => {
+        document.removeEventListener("mousedown", close);
+        window.removeEventListener("scroll", close, true);
+      };
+    }, [open]);
+
+    return (
+      <div className="relative">
+        <button
+          ref={btnRef}
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          className="flex items-center justify-between gap-2 border rounded-md px-3 py-2 text-sm bg-white w-full"
+        >
+          {active.label}
+          <ChevronDown className="w-4 h-4 text-gray-500" />
+        </button>
+
+        {open && (
+          <div
+            ref={menuRef}
+            style={{ width: menuW }}
+            className="absolute right-0 mb-1 rounded-md border bg-white shadow-xl z-[9999]"
+
+          >
+            {options.map((o) => (
+              <button
+                key={o.id}
+                type="button"
+                onClick={() => {
+                  onChange(o.id);
+                  setOpen(false);
+                }}
+                className={`block w-full text-left px-3 py-2 text-sm hover:bg-purple-50 ${active.id === o.id
+                  ? "bg-purple-100 text-purple-700"
+                  : ""
+                  }`}
+              >
+                {o.label}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
 
   /* ================= UI ================= */
+  const isLayoutLocked = isReadOnly(config.layout);
 
   return (
     <div className=" space-y-10 pb-10">
@@ -383,171 +512,343 @@ export default function TeamMemberPublicProfileTab({
       />
 
       <Card title="Card Layout" desc="Choose how your card looks">
+        {showLockable && (
+          <LockControl
+            value={config.layout}
+            onChange={(v) =>
+              update({
+                ...config,
+                layout: { ...config.layout, ...v },
+              })
+            }
+          />
+        )}
 
-        {/* LAYOUT TYPE */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {[1, 2, 3].map((t) => (
-            <button
-              key={t}
-              onClick={() =>
-                update({
-                  ...config,
-                  layout: { ...config.layout, profile_type: t as any },
-                })
-              }
-              className={`border rounded-xl p-2 transition ${config.layout.profile_type === t
+        <div className={isLayoutLocked ? "opacity-60 pointer-events-none" : ""}>
+
+          {/* LAYOUT TYPE */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {[1, 2, 3].map((t) => (
+              <button
+                key={t}
+                onClick={() =>
+                  update({
+                    ...config,
+                    layout: { ...config.layout, profile_type: t as any },
+                  })
+                }
+                className={`border rounded-xl p-2 transition ${config.layout.profile_type === t
                   ? "border-black ring-2 ring-gray-300"
                   : "border-gray-200"
-                }`}
-            >
-              <img
-                src={
-                  t === 1
-                    ? "/layouts/layout1.png"
-                    : t === 2
-                      ? "/layouts/layout2.png"
-                      : "/layouts/layout3.png"
-                }
-                className="w-full rounded"
-              />
-              <p className="text-xs text-center mt-2">
-                {t === 1 && "Profile Picture"}
-                {t === 2 && "Small Profile"}
-                {t === 3 && "Cover + Profile"}
-              </p>
-            </button>
-          ))}
-        </div>
+                  }`}
+              >
+                <img
+                  src={
+                    t === 1
+                      ? "/profileLayout/profile-1.jpg"
+                      : t === 2
+                        ? "/profileLayout/profile-2.jpg"
+                        : "/profileLayout/profile-3.jpg"
+                  }
+                  className="w-full rounded"
+                />
+                <p className="text-xs text-center mt-2">
+                  {t === 1 && "Profile Picture"}
+                  {t === 2 && "Small Profile"}
+                  {t === 3 && "Cover + Profile"}
+                </p>
+              </button>
+            ))}
+          </div>
 
-
-
-        {/* FADE TOGGLE */}
-    {config.layout.profile_type !== 2 && (
-  <div className="mt-5">
-    <Switch
-      label="Fade cover"
-      value={config.layout.is_fade}
-      onChange={(v) =>
-        update({
-          ...config,
-          layout: { ...config.layout, is_fade: v },
-        })
-      }
-    />
-  </div>
-)}
-
-
-{/* COVER UPLOAD (only when layout = 3) */}
-{config.layout.profile_type === 3 && (
-  <div className="mt-4 space-y-2">
-    <p className="text-sm font-medium text-gray-700">
-      Cover Image
-    </p>
-
-    <div
-      className={`relative h-32 w-full rounded-xl border overflow-hidden bg-gray-50 ${
-        isReadOnly(config.cover)
-          ? "opacity-60 pointer-events-none"
-          : ""
-      }`}
-    >
-      {config.cover.cover_url ? (
-        <img
-          src={config.cover.cover_url}
-          className="w-full h-full object-cover"
-        />
-      ) : (
-        <div className="h-full flex items-center justify-center text-xs text-gray-400">
-          No cover image
-        </div>
-      )}
-
-      <label className="absolute inset-0 bg-black/40 text-white flex items-center justify-center opacity-0 hover:opacity-100 cursor-pointer transition">
-        Change
-        <input
-          type="file"
-          hidden
-          disabled={isReadOnly(config.cover)}
-          accept="image/*"
-          onChange={(e) =>
-            e.target.files &&
-            uploadCoverImage(e.target.files[0])
-          }
-        />
-      </label>
-    </div>
-  </div>
-)}
-
-
-        {/* FONT PICKER */}
-        <div className="mt-6">
-          <h4 className="text-sm font-medium mb-3">Choose a Font</h4>
-
-          <div className="grid grid-cols-2 gap-3">
-            {[
-              "Inter",
-              "Roboto",
-              "Montserrat",
-              "Merriweather",
-              "Caveat",
-              "Gloria Hallelujah",
-            ].map((font) => (
-              <button
-                key={font}
-                onClick={() =>
+          {/* FADE TOGGLE */}
+          {config.layout.profile_type !== 2 && (
+            <div className="mt-5">
+              <Switch
+                label="Fade cover"
+                value={config.layout.is_fade}
+                onChange={(v) =>
                   update({
                     ...config,
-                    layout: { ...config.layout, font },
+                    layout: { ...config.layout, is_fade: v },
                   })
                 }
-                className={`border rounded-xl py-3 text-sm transition ${config.layout.font === font
+              />
+            </div>
+          )}
+
+          {/* COVER UPLOAD (only when layout = 3) */}
+          {config.layout.profile_type === 3 && (
+            <div className="mt-6 space-y-3">
+
+              {/* LOCK CONTROL */}
+              {showLockable && (
+                <LockControl
+                  value={config.cover}
+                  onChange={(v) =>
+                    update({
+                      ...config,
+                      cover: { ...config.cover, ...v },
+                    })
+                  }
+                />
+              )}
+
+              <p className="text-sm font-medium text-gray-700">
+                Cover Image
+              </p>
+
+              <div
+                className={`relative h-40 w-full rounded-xl border overflow-hidden bg-gray-50 transition ${isReadOnly(config.cover)
+                  ? "opacity-60 pointer-events-none"
+                  : "hover:shadow-md"
+                  }`}
+              >
+                {config.cover.cover_url ? (
+                  <img
+                    src={config.cover.cover_url}
+                    alt="Cover"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="h-full flex items-center justify-center text-xs text-gray-400">
+                    No cover image
+                  </div>
+                )}
+
+                {/* HOVER OVERLAY */}
+                {!isReadOnly(config.cover) && (
+                  <label className="absolute inset-0 bg-black/40 text-white flex items-center justify-center opacity-0 hover:opacity-100 cursor-pointer transition">
+                    Change
+                    <input
+                      type="file"
+                      hidden
+                      accept="image/*"
+                      onChange={(e) =>
+                        e.target.files &&
+                        uploadCoverImage(e.target.files[0])
+                      }
+                    />
+                  </label>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* FONT PICKER */}
+          <div className="mt-6">
+            <h4 className="text-sm font-medium mb-3">Choose a Font</h4>
+
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                "Inter",
+                "Roboto",
+                "Montserrat",
+                "Merriweather",
+                "Caveat",
+                "Gloria Hallelujah",
+              ].map((font) => (
+                <button
+                  key={font}
+                  onClick={() =>
+                    update({
+                      ...config,
+                      layout: { ...config.layout, font },
+                    })
+                  }
+                  className={`border rounded-xl py-3 text-sm transition ${config.layout.font === font
                     ? "border-black"
                     : "border-gray-200"
-                  }`}
-                style={{ fontFamily: font }}
-              >
-                {font}
-              </button>
-            ))}
+                    }`}
+                  style={{ fontFamily: font }}
+                >
+                  {font}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
 
-        {/* ALIGNMENT */}
-        <div className="mt-8 border-t pt-6">
-          <h4 className="text-sm font-medium mb-3">
-            Card Layout Alignment
-          </h4>
+          {/* Use Custom Font */}
+          <div className="mt-6">
+            <Switch
+              label="Use custom font"
+              value={config.layout.use_custom_font ?? false}
+              onChange={(v) =>
+                update({
+                  ...config,
+                  layout: {
+                    ...config.layout,
+                    use_custom_font: v,
+                    font: v ? "custom" : "Inter", // fallback
+                  },
+                })
+              }
+            />
+          </div>
 
-          <div className="grid grid-cols-3 gap-3">
-            {([
-              { id: "left", Icon: AlignLeft },
-              { id: "center", Icon: AlignCenter },
-              { id: "right", Icon: AlignRight },
-            ] as const).map(({ id, Icon }) => (
-              <button
-                key={id}
-                onClick={() =>
-                  update({
-                    ...config,
-                    layout: {
-                      ...config.layout,
-                      card_alignment: id,
-                    },
-                  })
-                }
-                className={`border rounded-xl py-3 flex items-center justify-center transition ${config.layout.card_alignment === id
+
+          {/* Custom font */}
+          {config.layout.use_custom_font && (
+            <div className="mt-6">
+              <p className="text-sm font-medium">Custom Font</p>
+
+              <label className="inline-block border px-3 py-2 rounded cursor-pointer text-sm">
+                Upload Font
+                <input
+                  type="file"
+                  hidden
+                  accept=".ttf,.otf,.woff"
+                  onChange={(e) =>
+                    e.target.files &&
+                    uploadCustomFont(e.target.files[0])
+                  }
+                />
+              </label>
+
+              {config.layout.custom_font && (
+                <p className="text-xs mt-1 text-purple-600">
+                  Uploaded ✔
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* ALIGNMENT */}
+          <div className="mt-8 border-t pt-6">
+            <h4 className="text-sm font-medium mb-3">
+              Card Layout Alignment
+            </h4>
+
+            <div className="grid grid-cols-3 gap-3">
+              {([
+                { id: "left", Icon: AlignLeft },
+                { id: "center", Icon: AlignCenter },
+                { id: "right", Icon: AlignRight },
+              ] as const).map(({ id, Icon }) => (
+                <button
+                  key={id}
+                  onClick={() =>
+                    update({
+                      ...config,
+                      layout: {
+                        ...config.layout,
+                        card_alignment: id,
+                      },
+                    })
+                  }
+                  className={`border rounded-xl py-3 flex items-center justify-center transition ${config.layout.card_alignment === id
                     ? "border-black bg-gray-50"
                     : "border-gray-200 hover:bg-gray-50"
-                  }`}
-              >
-                <Icon className="w-5 h-5" />
-              </button>
-            ))}
+                    }`}
+                >
+                  <Icon className="w-5 h-5" />
+                </button>
+              ))}
+            </div>
+
           </div>
 
+          {/* BACKGROUND TYPE */}
+          <div className="mt-6">
+            <p className="text-sm font-medium mb-2">Background Type</p>
+
+            <div className="grid grid-cols-3 gap-3">
+              {["solid", "gradient", "image"].map((t) => (
+                <button
+                  key={t}
+                  onClick={() =>
+                    update({
+                      ...config,
+                      layout: { ...config.layout, use_background: t as any },
+                    })
+                  }
+                  className={`border rounded-xl py-2 text-sm capitalize transition ${config.layout.use_background === t
+                    ? "border-black bg-gray-50"
+                    : "border-gray-200"
+                    }`}
+                >
+                  {t}
+                </button>
+              ))}
+            </div>
+          </div>
+
+
+          {/* Gradient */}
+          {config.layout.use_background === "gradient" && (
+            <div className="mt-6">
+              <p className="text-sm font-medium">Gradient Background</p>
+
+              <div className="grid grid-cols-3 gap-3">
+                <ColorPickerField
+                  label="From"
+                  value={config.layout.color1 || "#7c3aed"}
+                  onChange={(v) =>
+                    update({
+                      ...config,
+                      layout: { ...config.layout, color1: v },
+                    })
+                  }
+                />
+                <ColorPickerField
+                  label="To"
+                  value={config.layout.color2 || "#6366f1"}
+                  onChange={(v) =>
+                    update({
+                      ...config,
+                      layout: { ...config.layout, color2: v },
+                    })
+                  }
+                />
+
+                <GradientDirectionDropdown
+                  value={config.layout.direction}
+                  onChange={(dir) =>
+                    update({
+                      ...config,
+                      layout: { ...config.layout, direction: dir },
+                    })
+                  }
+                />
+              </div>
+            </div>
+          )}
+
+          {/* BG Image */}
+          {config.layout.use_background === "image" && (
+            <div className="mt-6">
+              <p className="text-sm font-medium">Background Image</p>
+
+              <div className="relative h-32 w-full rounded-xl border overflow-hidden bg-gray-50">
+                {config.layout.background_image ? (
+                  <img
+                    src={config.layout.background_image}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="h-full flex items-center justify-center text-xs text-gray-400">
+                    No background image
+                  </div>
+                )}
+
+                <label className="absolute inset-0 bg-black/40 text-white flex items-center justify-center opacity-0 hover:opacity-100 cursor-pointer transition">
+                  Upload
+                  <input
+                    type="file"
+                    hidden
+                    accept="image/*"
+                    onChange={(e) =>
+                      e.target.files &&
+                      uploadLayoutBackground(e.target.files[0])
+                    }
+                  />
+                </label>
+              </div>
+            </div>
+          )}
+
         </div>
+
       </Card>
 
 
@@ -560,7 +861,7 @@ export default function TeamMemberPublicProfileTab({
         />
       </Card>
 
-      
+
 
       <Card title="Social Links" desc="Your public social profiles">
         <SocialSection
@@ -890,7 +1191,7 @@ function Card({
   scroll?: boolean;
 }) {
   return (
-    <div className="relative z-0 rounded-2xl bg-white/70 p-6 space-y-4">
+    <div className="relative z-0 overflow-visible rounded-2xl bg-white/70 p-6 space-y-4">
       <h3 className="font-semibold text-lg">{title}</h3>
       <p className="text-sm text-gray-500">{desc}</p>
 
@@ -970,7 +1271,6 @@ function Toggle({
     </label>
   );
 }
-
 
 function ColorPickerField({
   label,
@@ -1079,43 +1379,123 @@ function LockControl({
   value,
   onChange,
 }: {
-  value: LockMeta;
+  value?: LockMeta;
   onChange: (v: LockMeta) => void;
 }) {
+  if (!value) return null; // ⛑ prevent crash
+
+  const [open, setOpen] = useState(false);
+  const btnRef = useRef<HTMLButtonElement | null>(null);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+  const [menuW, setMenuW] = useState(0);
+
+  const modes: { id: LockMode; label: string }[] = [
+    { id: "individual", label: "Individual" },
+    { id: "global", label: "Global" },
+    { id: "locked", label: "System Locked" },
+  ];
+
+  const currentMode: LockMode = value.lock_mode ?? "individual";
+  const active = modes.find((m) => m.id === currentMode) || modes[0];
+
+  // sync dropdown width with button
+  useEffect(() => {
+    if (btnRef.current) {
+      setMenuW(btnRef.current.offsetWidth);
+    }
+  }, [active.label]);
+
+  // close on outside click or scroll
+  useEffect(() => {
+    if (!open) return;
+
+    const close = (e?: Event) => {
+      if (
+        e instanceof MouseEvent &&
+        (btnRef.current?.contains(e.target as Node) ||
+          menuRef.current?.contains(e.target as Node))
+      ) {
+        return;
+      }
+      setOpen(false);
+    };
+
+    document.addEventListener("mousedown", close);
+    window.addEventListener("scroll", close, true);
+
+    return () => {
+      document.removeEventListener("mousedown", close);
+      window.removeEventListener("scroll", close, true);
+    };
+  }, [open]);
+
   return (
-    <div className="flex items-center gap-4 p-3 bg-gray-50 border rounded-lg mb-4">
-      <label className="flex items-center gap-2">
-        <input
-          type="checkbox"
-          checked={value.locked}
-          onChange={(e) =>
+    <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center gap-3">
+        {/* Toggle */}
+        <button
+          type="button"
+          onClick={() =>
             onChange({
               ...value,
-              locked: e.target.checked,
-              lock_mode: e.target.checked
+              locked: !value.locked,
+              lock_mode: !value.locked
                 ? value.lock_mode ?? "individual"
                 : undefined,
             })
           }
-        />
-        <span className="text-sm">Locked</span>
-      </label>
+          className={`relative inline-flex h-5 w-9 items-center rounded-full transition ${value.locked ? "bg-purple-600" : "bg-gray-300"
+            }`}
+        >
+          <span
+            className={`inline-block h-3 w-3 transform rounded-full bg-white transition ${value.locked ? "translate-x-5" : "translate-x-1"
+              }`}
+          />
+        </button>
 
+        {/* Dropdown */}
+        <div className="relative">
+          <button
+            ref={btnRef}
+            type="button"
+            onClick={() => {
+              if (!value.lock_mode) {
+                onChange({ ...value, lock_mode: "individual" });
+              }
+              setOpen((v) => !v);
+            }}
+            className="flex items-center justify-between gap-2 border rounded-md px-3 py-1 text-xs bg-white min-w-[120px]"
+          >
+            {active.label}
+            <ChevronDown className="w-3 h-3 text-gray-500" />
+          </button>
 
-      <select
-        value={value.lock_mode ?? "individual"}
-        onChange={(e) =>
-          onChange({
-            ...value,
-            lock_mode: e.target.value as LockMode,
-          })
-        }
-        className="border rounded px-2 py-1 text-sm"
-      >
-        <option value="individual">Individual</option>
-        <option value="global">Global</option>
-        <option value="locked">System Locked</option>
-      </select>
+          {open && (
+            <div
+              ref={menuRef}
+              style={{ width: menuW }}
+              className="absolute right-0 mt-1 rounded-md border bg-white shadow-lg z-50"
+            >
+              {modes.map((m) => (
+                <button
+                  key={m.id}
+                  type="button"
+                  onClick={() => {
+                    onChange({ ...value, lock_mode: m.id });
+                    setOpen(false);
+                  }}
+                  className={`block w-full text-left px-3 py-2 text-xs hover:bg-purple-50 ${active.id === m.id
+                    ? "bg-purple-100 text-purple-700"
+                    : ""
+                    }`}
+                >
+                  {m.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
@@ -1138,14 +1518,12 @@ function Switch({
       <button
         type="button"
         onClick={() => onChange(!value)}
-        className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
-          value ? "bg-purple-600" : "bg-gray-300"
-        }`}
+        className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${value ? "bg-purple-600" : "bg-gray-300"
+          }`}
       >
         <span
-          className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
-            value ? "translate-x-6" : "translate-x-1"
-          }`}
+          className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${value ? "translate-x-6" : "translate-x-1"
+            }`}
         />
       </button>
     </div>

@@ -10,13 +10,31 @@ export function normalizeProfile(api: any) {
       cover_url: api.cover_url ?? "",
       description: api.description ?? "",
     },
-    
-layout: {
-  profile_type: cfg.layout?.profile_type ?? 3,
-  is_fade: cfg.layout?.is_fade ?? true,
-  font: cfg.layout?.font ?? "Inter",
-  card_alignment: cfg.layout?.card_alignment ?? "center",
-},
+
+    layout: {
+      // LOCK
+      locked: cfg.layout?.locked ?? false,
+      lock_mode: cfg.layout?.lock_mode || undefined,
+
+      // CORE
+      profile_type: cfg.layout?.profile_type ?? 3,
+      is_fade: cfg.layout?.is_fade ?? true,
+      font: cfg.layout?.font || "Inter",
+      card_alignment: cfg.layout?.card_alignment || "center",
+
+      // BACKGROUND / STYLE
+      background_image: cfg.layout?.background_image || undefined,
+      custom_font: cfg.layout?.custom_font || undefined,
+
+      // GRADIENT (safe defaults)
+      color1: cfg.layout?.color1 || "#7c3aed",
+      color2: cfg.layout?.color2 || "#6366f1",
+      direction: cfg.layout?.direction || "to-r",
+      use_background: cfg.layout?.use_background || "gradient",
+      use_custom_font: cfg.layout?.use_custom_font ?? false,
+
+    },
+
     cover: {
       locked: cfg.cover?.locked ?? false,
       lock_mode: cfg.cover?.lock_mode,
@@ -66,7 +84,7 @@ layout: {
           id: p.id,
           name: p.name,
           price: p.price,
-          image_url: p.image_url,
+          image_url: p.image_url || p.product_img_url,
           rank: p.rank,
           enabled: p.enabled,
         }))

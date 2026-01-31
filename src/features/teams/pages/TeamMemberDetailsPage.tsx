@@ -54,9 +54,9 @@ export default function TeamMemberDetailsPage() {
   );
 
 
-const member = useAppSelector(
-  (s) => s.team.members.find((m) => m.id === Number(id)) || null
-);
+  const member = useAppSelector(
+    (s) => s.team.members.find((m) => m.id === Number(id)) || null
+  );
 
 
   const [activeTab, setActiveTab] = useState<typeof TABS[number]>("overview");
@@ -86,22 +86,22 @@ const member = useAppSelector(
 
   /* ---------------- SAFE MEMOS (NO CONDITIONAL HOOKS) ---------------- */
 
-const displayRole = useMemo(() => {
-  if (!member) return "";
+  const displayRole = useMemo(() => {
+    if (!member) return "";
 
-  switch (member.role) {
-    case "sales_rep":
-      return "Sales Person";   // 👈 changed
-    case "manager":
-      return "Manager";         // 👈 explicit
-    case "vendor_admin":
-      return "Vendor Admin";
-    default:
-      return member.role
-        .replace(/_/g, " ")
-        .replace(/\b\w/g, (c) => c.toUpperCase());
-  }
-}, [member]);
+    switch (member.role) {
+      case "sales_rep":
+        return "Sales Person";   // 👈 changed
+      case "manager":
+        return "Manager";         // 👈 explicit
+      case "vendor_admin":
+        return "Vendor Admin";
+      default:
+        return member.role
+          .replace(/_/g, " ")
+          .replace(/\b\w/g, (c) => c.toUpperCase());
+    }
+  }, [member]);
 
 
   const displayManager = useMemo(() => {
@@ -251,7 +251,7 @@ const displayRole = useMemo(() => {
     }
   };
 
-const avatarUrl = member.avatar || null;
+  const avatarUrl = member.avatar || null;
 
 
   const Avatar = ({
@@ -397,8 +397,8 @@ const avatarUrl = member.avatar || null;
           <TeamMemberTotalLeadsTab managerId={member.id} />
         )}
         {activeTab === "analytics" && (
-  <TeamMemberAnalyticsTab memberId={member.id} />
-)}
+          <TeamMemberAnalyticsTab memberId={member.id} />
+        )}
 
         {activeTab === "public-profile" && (
           <div className="mt-6">
@@ -450,12 +450,12 @@ const avatarUrl = member.avatar || null;
 
           return updated; // 👈 return to modal
         }}
-      onSuccess={() => {
-  dispatch(fetchMemberById(member.id));
-  if (member.username) {
-    dispatch(loadPublicProfile({ handle: member.username }));
-  }
-}}
+        onSuccess={() => {
+          dispatch(fetchMemberById(member.id));
+          if (member.username) {
+            dispatch(loadPublicProfile({ handle: member.username }));
+          }
+        }}
 
       />
 

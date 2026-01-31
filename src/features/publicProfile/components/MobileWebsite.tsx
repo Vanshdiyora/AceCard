@@ -13,11 +13,13 @@ import {
   Music2,    // TikTok
 } from "lucide-react";
 
-
+import { ProfileWrapper } from "./WebsiteLayout/ProfileWrapper";
 import { useState, useEffect } from "react";
 import { ConnectModal } from "./ConnectModal";
 
 /* ================= HELPERS ================= */
+
+
 
 const getYouTubeId = (url?: string) => {
   if (!url) return null;
@@ -46,6 +48,8 @@ export default function MobileWebsite({
 
   const {
     profile = {},
+    cover = {},
+    layout = {},
     theme = {},
     banner = {},
     meeting = {},
@@ -56,6 +60,7 @@ export default function MobileWebsite({
     sections = { items: [] },
   } = config;
 
+
   const orderedSections = sortByRank(sections.items);
 
   useEffect(() => {
@@ -65,16 +70,40 @@ export default function MobileWebsite({
     el.style.touchAction = open ? "none" : "";
   }, [open, scrollRef]);
 
+  const resolveFontClass = (font?: string) => {
+    switch ((font || "").toLowerCase()) {
+      case "inter":
+        return "font-inter";
+      case "roboto":
+        return "font-roboto";
+      case "montserrat":
+        return "font-montserrat";
+      case "merriweather":
+        return "font-merriweather";
+      case "caveat":
+        return "font-caveat";
+      case "gloria hallelujah":
+      case "gloria":
+        return "font-gloria";
+      default:
+        return "font-inter"; // fallback
+    }
+  };
+  const fontClass = resolveFontClass(layout?.font);
+
   const renderSection = (type: string) => {
     switch (type) {
       case "profile":
         return (
-          <Profile
+          <ProfileWrapper
             profile={profile}
+            cover={cover}
             theme={theme}
             user={data}
+            layout={layout}
             onConnect={() => setOpen(true)}
           />
+
         );
 
       case "about":
@@ -133,11 +162,48 @@ export default function MobileWebsite({
     }
   };
 
+const resolveBackgroundStyle = () => {
+  if (layout?.use_background === "image" && layout?.background_image) {
+    return {
+      backgroundImage: `url(${layout.background_image})`,
+      backgroundSize: "cover",
+      backgroundPosition: "center",
+      backgroundRepeat: "no-repeat",
+    };
+  }
+
+  if (layout?.use_background === "gradient") {
+    const from = layout?.color1 || "#7c3aed";
+    const to = layout?.color2 || "#6366f1";
+
+    const validDirections = {
+      "to-r": "to right",
+      "to-l": "to left",
+      "to-b": "to bottom",
+      "to-t": "to top",
+    };
+
+    const dir =
+      validDirections[layout?.direction as keyof typeof validDirections] ||
+      "to right";
+
+    return {
+      backgroundImage: `linear-gradient(${dir}, ${from}, ${to})`,
+    };
+  }
+
+  return {
+    backgroundColor: theme?.background_color || "#000",
+  };
+};
+
+
   return (
     <div
-      className="relative min-h-screen w-full overflow-hidden p-4"
-      style={{ backgroundColor: theme.background_color || "#000" }}
+      className={`relative min-h-screen w-full overflow-hidden p-4 ${fontClass}`}
+      style={resolveBackgroundStyle()}
     >
+
       <div className="space-y-6 pb-6">
         {orderedSections.map((s: any) =>
           s?.enabled ? (
@@ -174,7 +240,7 @@ function Section({ title, children, theme }: any) {
 
 /* ================= PROFILE ================= */
 
-const formatRole = (role?: string) => {
+export const formatRole = (role?: string) => {
   switch (role) {
     case "vendor_admin":
       return "Vendor Admin";
@@ -186,78 +252,6 @@ const formatRole = (role?: string) => {
       return role || "";
   }
 };
-function Profile({ profile, theme, user, onConnect }: any) {
-  return (
-    <div>
-      {/* COVER */}
-      <div className="relative h-[220px] rounded-2xl overflow-hidden">
-        <img
-          src={profile.cover_url || ""}
-          className="w-full h-full object-cover"
-        />
-
-        {/* OVERLAY (also rounded via parent overflow) */}
-        <div className="absolute inset-0 bg-black/50" />
-
-        <div
-          className="absolute top-4 left-4 text-sm font-semibold"
-          style={{ color: theme.accent_color }}
-        >
-          {user?.vendor_name}
-        </div>
-
-        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex flex-col items-center">
-          <div className="w-24 h-24 rounded-full bg-black shadow-lg flex items-center justify-center">
-            <img
-              src={profile.avatar_url || ""}
-              className="w-20 h-20 rounded-full object-cover"
-            />
-          </div>
-
-          <h2
-            className="mt-2 font-semibold"
-            style={{ color: theme.text_color }}
-          >
-            {user?.name}
-          </h2>
-          <p
-            className="text-xs"
-            style={{ color: theme.accent_color }}
-          >
-            {formatRole(user?.job_title || user?.role)}
-          </p>
-        </div>
-      </div>
-
-      {/* ACTIONS */}
-      <div className="grid grid-cols-2 gap-3 mt-4 px-4">
-        <button
-          type="button"
-          onClick={() => saveContact(user)}
-          className="h-11 rounded-xl border text-sm"
-          style={{
-            color: theme.text_color,
-            borderColor: theme.accent_color,
-          }}
-        >
-          Save Contact
-        </button>
-
-        <button
-          type="button"
-          onClick={onConnect}
-          className="h-11 rounded-xl text-sm font-medium"
-          style={{
-            backgroundColor: theme.card_color,
-            color: theme.primary_color,
-          }}
-        >
-          Connect
-        </button>
-      </div>
-    </div>
-  );
-}
 
 /* ================= MEETING ================= */
 
@@ -283,24 +277,34 @@ function MeetingCTA({ meeting, theme }: any) {
 /* ================= PRODUCTS ================= */
 
 function Products({ items, theme }: any) {
+  console.log(items)
   if (!items?.length) return null;
+
   return (
     <Section title="Products" theme={theme}>
-      <div className="flex gap-4 overflow-x-auto">
+      <div className="flex gap-4 overflow-x-auto pb-2 snap-x snap-mandatory">
         {items.map((p: any) => (
           <div
             key={p.id}
-            className="min-w-[220px] h-52 rounded-2xl relative overflow-hidden shadow-md"
-            style={{ backgroundColor: theme.card_color }}
+            className="relative min-w-[220px] h-44 rounded-2xl overflow-hidden snap-start shadow-lg"
           >
+            {/* Background image */}
             <img
-              src={p.image_url || ""}
-              className="w-full h-full object-cover"
+             src={p.image_url || p.product_img_url}
+              alt={p.name}
+              className="absolute inset-0 w-full h-full object-cover"
             />
-            <div className="absolute inset-0 bg-black/50" />
-            <div className="absolute bottom-3 left-3 text-white">
-              <p className="text-sm font-semibold">{p.name}</p>
-              <p className="text-xs">₹{p.price}</p>
+
+            {/* Gradient overlay */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+
+            {/* Content */}
+            <div className="absolute bottom-4 left-4 right-4 text-white">
+              <p className="text-sm opacity-80">Featured</p>
+              <h3 className="text-lg font-semibold leading-tight line-clamp-2">
+                {p.name}
+              </h3>
+              <p className="text-xs mt-1">₹{p.price}</p>
             </div>
           </div>
         ))}
@@ -351,9 +355,8 @@ function Social({ items, theme }: any) {
       {rows.map((row, rIdx) => (
         <div
           key={rIdx}
-          className={`flex gap-4 ${
-            row.length < 3 ? "justify-center" : "justify-between"
-          } w-full max-w-[220px]`}
+          className={`flex gap-4 ${row.length < 3 ? "justify-center" : "justify-between"
+            } w-full max-w-[220px]`}
         >
           {row.map((s: any) => (
             <a
@@ -440,7 +443,7 @@ function Banner({ image }: any) {
 
 /* ================= VCARD ================= */
 
-function saveContact(user: any) {
+export function saveContact(user: any) {
   if (!user) return;
 
   const vcard = `
