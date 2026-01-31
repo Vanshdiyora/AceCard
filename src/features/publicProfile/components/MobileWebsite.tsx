@@ -277,7 +277,6 @@ function MeetingCTA({ meeting, theme }: any) {
 /* ================= PRODUCTS ================= */
 
 function Products({ items, theme }: any) {
-  console.log(items)
   if (!items?.length) return null;
 
   return (
