@@ -72,4 +72,14 @@ export const teamService = {
     const res = await axios.get("/vendor/subscription");
     return res.data;
   },
+
+  async transferLeads(payload: {
+    from_rep_id: number;
+    to_rep_id: number;
+    lead_ids: number[];
+  }) {
+    const res = await axios.post("/vendor/leads/transfer", payload);
+    return res.data;
+  }
+
 };

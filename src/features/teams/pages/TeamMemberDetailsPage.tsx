@@ -5,11 +5,11 @@ import { ArrowLeft, Edit, Shield, UserX, CheckCircle2 } from "lucide-react";
 import PublicMobileWebsite from "../../publicProfile/components/MobileWebsite";
 import TeamMemberPublicProfileTab from "../components/details/publicProfile/TeamMemberPublicProfileTab";
 import { useAppDispatch, useAppSelector } from "../../../app/hooks";
-import { updateMember, fetchMemberById, updatePermissions } from "../slice";
+import { updateMember, fetchMemberById, updatePermissions, transferLeads } from "../slice";
 import EditMemberModal from "../components/EditMemberModal";
 import PermissionsModal from "../components/PermissionsModal";
 import { loadPublicProfile } from "../../publicProfile/slice";
-
+import { TransferLeadsModal } from "../components/TransferLeadsModal";
 import TeamMemberOverviewTab from "../components/details/TeamMemberOverviewTab";
 import TeamMemberLeadsTab from "../components/details/TeamMemberLeadsTab";
 import BrandLoader from "../../../common/ui/BrandLoader";
@@ -19,6 +19,7 @@ import BlockingLoader from "../../../common/ui/BlockingLoader";
 import ResultModal from "../../../common/ui/ResultModal";
 import TeamMemberTotalLeadsTab from "../components/details/TeamMemberTotalLeadsTab";
 // import MemberMobileWebsite from "../components/MemberMobileWebsite";
+import { fetchLeads } from "../../leads/slice"; // adjust path
 
 import type { TeamMember } from "../types";
 
@@ -34,6 +35,7 @@ export default function TeamMemberDetailsPage() {
 
   const auth = useAppSelector((s) => s.auth);
   const { members, loading } = useAppSelector((s) => s.team);
+  const [leadIds, setLeadIds] = useState<number[]>([]);
 
   const ROLES = ["vendor_admin", "manager", "sales_rep"] as const;
   const rawRole = auth?.role ?? "";
@@ -69,6 +71,10 @@ export default function TeamMemberDetailsPage() {
   const { data: publicProfile } = useAppSelector(
     (s) => s.publicProfile
   );
+
+  const [transferOpen, setTransferOpen] = useState(false);
+  // const [pendingSuspend, setPendingSuspend] = useState(false);
+
 
   const showResult = (success: boolean, message: string) => {
     setResultSuccess(success);
@@ -203,8 +209,37 @@ export default function TeamMemberDetailsPage() {
     }
   };
 
-  /* ---------------- UI ---------------- */
+  const handleTransferAndSuspend = async (toId: number) => {
+    try {
+      setProcessing(true);
 
+      await dispatch(
+        transferLeads({
+          from_rep_id: member.id,
+          to_rep_id: toId,
+          lead_ids: leadIds,
+        })
+      ).unwrap();
+
+      await dispatch(
+        updateMember({
+          id: member.id,
+          data: { status: "suspended" },
+        })
+      ).unwrap();
+
+      showResult(true, "Leads transferred & member suspended.");
+    } catch {
+      showResult(false, "Transfer failed.");
+    } finally {
+      setProcessing(false);
+      setTransferOpen(false);
+      setLeadIds([]);
+    }
+  };
+
+
+  /* ---------------- UI ---------------- */
   return (
     <div className="p-6 grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-6 h-[calc(100vh-80px)]">
       {/* LEFT */}
@@ -240,12 +275,40 @@ export default function TeamMemberDetailsPage() {
               </button>
 
               <button
-                onClick={() => {
-                  setSuspendMode(
-                    member.status === "active" ? "suspend" : "activate"
-                  );
-                  setConfirmOpen(true);
+                onClick={async () => {
+                  if (member.status === "active") {
+                    try {
+                      setProcessing(true);
+
+                      // 👇 get leads directly from API response
+                      const res = await dispatch(
+                        fetchLeads({
+                          page: 1,
+                          pageSize: 1000000,
+                          memberId: member.id,
+                        })
+                      ).unwrap();
+                      console.log(res)
+                      const ids = res.data.map((l: any) => l.id); // 🔴 FIX
+
+                      if (ids.length > 0) {
+                        setLeadIds(ids);
+                        setTransferOpen(true); // 👈 modal opens now
+                      } else {
+                        setSuspendMode("suspend");
+                        setConfirmOpen(true);
+                      }
+                    } catch {
+                      showResult(false, "Failed to load leads");
+                    } finally {
+                      setProcessing(false);
+                    }
+                  } else {
+                    setSuspendMode("activate");
+                    setConfirmOpen(true);
+                  }
                 }}
+
                 className={
                   member.status === "active" ? "btn-danger" : "btn-success"
                 }
@@ -384,6 +447,16 @@ export default function TeamMemberDetailsPage() {
       />
 
       <BlockingLoader show={processing} />
+
+      <TransferLeadsModal
+        open={transferOpen}
+        leads={leadIds}
+        currentId={member.id}
+        // managers={members.filter(m => m.id !== member.id)} // keep this
+        loading={processing}
+        onClose={() => setTransferOpen(false)}
+        onConfirm={handleTransferAndSuspend}
+      />
 
       <ResultModal
         open={resultOpen}

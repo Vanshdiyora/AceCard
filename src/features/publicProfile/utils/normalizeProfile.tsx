@@ -1,3 +1,5 @@
+export type LockMode = "global" | "individual" | "locked";
+
 export function normalizeProfile(api: any) {
   const cfg = api.configuration ?? {};
 
@@ -9,7 +11,7 @@ export function normalizeProfile(api: any) {
       description: api.description ?? "",
     },
 
-    /* ================= THEME (GLOBAL LOCK SUPPORT) ================= */
+    /* ================= THEME ================= */
     theme: {
       locked: cfg.theme?.locked ?? false,
       lock_mode: cfg.theme?.lock_mode ?? undefined,
@@ -21,7 +23,7 @@ export function normalizeProfile(api: any) {
       accent_color: cfg.theme?.accent_color ?? "#000000",
     },
 
-    /* ================= BANNER (INDIVIDUAL LOCK SUPPORT) ================= */
+    /* ================= BANNER ================= */
     banner: {
       locked: cfg.banner?.locked ?? false,
       lock_mode: cfg.banner?.lock_mode ?? undefined,
@@ -42,15 +44,13 @@ export function normalizeProfile(api: any) {
         : [],
     },
 
-
-    /* ================= PRODUCTS (CRITICAL LOCK SUPPORT) ================= */
+    /* ================= PRODUCTS ================= */
     products: {
       locked: cfg.products?.locked ?? false,
       lock_mode: cfg.products?.lock_mode ?? undefined,
 
-      items:
-        Array.isArray(cfg.products?.items)
-          ? cfg.products.items.map((p: any) => ({
+      items: Array.isArray(cfg.products?.items)
+        ? cfg.products.items.map((p: any) => ({
             id: p.id,
             name: p.name,
             price: p.price,
@@ -58,8 +58,7 @@ export function normalizeProfile(api: any) {
             rank: p.rank,
             enabled: p.enabled,
           }))
-          : [],
-
+        : [],
     },
 
     /* ================= YOUTUBE ================= */
@@ -68,18 +67,20 @@ export function normalizeProfile(api: any) {
     /* ================= LINKS & FILES ================= */
     links_files: normalizeLinksFiles(api),
 
-    /* ================= SECTIONS ================= */
-    sections:
-      cfg.sections?.map((s: any, i: number) => ({
-        id: s.id,
-        type: s.type,
-        rank: s.rank ?? i + 1,
+    /* ================= SECTIONS (GROUP LOCK) ================= */
+    sections: {
+      locked: cfg.sections?.locked ?? false,
+      lock_mode: cfg.sections?.lock_mode ?? undefined,
 
-        locked: s.locked ?? false,
-        lock_mode: s.lock_mode ?? undefined,
-
-        enabled: s.enabled ?? true,
-      })) ?? [],
+      items: Array.isArray(cfg.sections?.items)
+        ? cfg.sections.items.map((s: any, i: number) => ({
+            id: s.id,
+            type: s.type,
+            rank: s.rank ?? i + 1,
+            enabled: s.enabled ?? true,
+          }))
+        : [],
+    },
   };
 }
 
@@ -104,16 +105,14 @@ const normalizeYoutube = (api: any) => {
     locked: y.locked ?? false,
     lock_mode: y.lock_mode ?? undefined,
 
-    items:
-      Array.isArray(y.items)
-        ? y.items.map((v: any, i: number) => ({
+    items: Array.isArray(y.items)
+      ? y.items.map((v: any, i: number) => ({
           id: v.id ?? crypto.randomUUID(),
           url: v.url ?? "",
           rank: v.rank ?? i + 1,
           enabled: v.enabled ?? true,
         }))
-        : [],
-
+      : [],
   };
 };
 
@@ -123,9 +122,8 @@ const normalizeLinksFiles = (api: any) => {
     locked: lf.locked ?? false,
     lock_mode: lf.lock_mode ?? undefined,
 
-    items:
-      Array.isArray(lf.items)
-        ? lf.items.map((l: any, i: number) => ({
+    items: Array.isArray(lf.items)
+      ? lf.items.map((l: any, i: number) => ({
           id: l.id || crypto.randomUUID(),
           type: l.type || "link",
           title: l.title || "",
@@ -135,6 +133,6 @@ const normalizeLinksFiles = (api: any) => {
           rank: l.rank ?? i + 1,
           enabled: l.enabled ?? true,
         }))
-        : [],
+      : [],
   };
 };

@@ -13,17 +13,17 @@ import type { SectionItem } from "../../../../../publicProfile/types";
 
 export default function SectionsReorder({
   sections,
+  groupLocked,
   onChange,
 }: {
   sections: SectionItem[];
+  groupLocked?: boolean;
   onChange: (s: SectionItem[]) => void;
 }) {
-  const fixed = sections.filter(
-    (s) => s.type === "profile" || s.locked
-  );
+  const fixed = sections.filter((s) => s.type === "profile");
 
   const movable = sections
-    .filter((s) => s.type !== "profile" && !s.locked)
+    .filter((s) => s.type !== "profile")
     .sort((a, b) => a.rank - b.rank);
 
   const ordered = [...fixed, ...movable].sort(
@@ -36,6 +36,8 @@ export default function SectionsReorder({
     <DndContext
       collisionDetection={closestCenter}
       onDragEnd={(e) => {
+        if (groupLocked) return;
+
         const { active, over } = e;
         if (!over || active.id === over.id) return;
 
@@ -68,12 +70,13 @@ export default function SectionsReorder({
       >
         <div className="space-y-2">
           {ordered.map((s) =>
-            s.type === "profile" || s.locked ? (
+            s.type === "profile" ? (
               <FixedRow key={s.id} s={s} />
             ) : (
               <SortableRow
                 key={s.id}
                 s={s}
+                disabled={groupLocked}
                 onToggle={(v) =>
                   onChange(
                     sections.map((x) =>
@@ -94,15 +97,17 @@ export default function SectionsReorder({
 
 /* ================= ROWS ================= */
 
-export function SortableRow({
+function SortableRow({
   s,
   onToggle,
+  disabled,
 }: {
   s: SectionItem;
   onToggle: (v: boolean) => void;
+  disabled?: boolean;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition } =
-    useSortable({ id: s.id });
+    useSortable({ id: s.id, disabled });
 
   return (
     <div
@@ -111,18 +116,30 @@ export function SortableRow({
         transform: CSS.Transform.toString(transform),
         transition,
       }}
-      className="flex items-center justify-between bg-white border rounded-lg p-3 shadow-sm"
+      className={`flex items-center justify-between border rounded-lg p-3 shadow-sm ${
+        disabled ? "bg-gray-100 opacity-60" : "bg-white"
+      }`}
     >
       <div className="flex items-center gap-3">
-        <span className="cursor-grab" {...attributes} {...listeners}>
-          ☰
-        </span>
+        {!disabled && (
+          <span
+            className="cursor-grab"
+            {...attributes}
+            {...listeners}
+          >
+            ☰
+          </span>
+        )}
         <span className="font-medium capitalize">
           {s.type.replace("_", " ")}
         </span>
       </div>
 
-      <Toggle value={s.enabled} onChange={onToggle} />
+      <Toggle
+        value={s.enabled}
+        onChange={onToggle}
+        disabled={disabled}
+      />
     </div>
   );
 }
@@ -142,18 +159,23 @@ function FixedRow({ s }: { s: SectionItem }) {
 function Toggle({
   value,
   onChange,
+  disabled,
 }: {
   value: boolean;
   onChange: (v: boolean) => void;
+  disabled?: boolean;
 }) {
   return (
-    <label className="flex items-center gap-2 cursor-pointer">
-      <span className="text-sm text-gray-600">
+    <label className={`flex items-center gap-2 ${
+      disabled ? "cursor-not-allowed text-gray-400" : "cursor-pointer"
+    }`}>
+      <span className="text-sm">
         {value ? "On" : "Off"}
       </span>
       <input
         type="checkbox"
         checked={value}
+        disabled={disabled}
         onChange={(e) => onChange(e.target.checked)}
       />
     </label>

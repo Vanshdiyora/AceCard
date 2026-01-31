@@ -1,9 +1,11 @@
 import type { TeamMember } from "../../types";
 import { useAppDispatch, useAppSelector } from "../../../../app/hooks";
 import { useNavigate } from "react-router-dom";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { fetchCampaignsByTeamMember } from "../../../campaigns/slice";
 import BrandLoader from "../../../../common/ui/BrandLoader";
+import QRCode from "qrcode";
+import { Copy, Download } from "lucide-react";
 
 export default function TeamMemberOverviewTab({
   member,
@@ -12,10 +14,51 @@ export default function TeamMemberOverviewTab({
 }) {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
+  const qrRef = useRef<HTMLCanvasElement | null>(null);
 
   const { items, loading } = useAppSelector((s) => s.campaigns);
   const allCampaigns = items ?? [];
 
+  const profileUrl = member?.username
+    ? `${window.location.origin}/${member.username}`
+    : "";
+
+  const nfcUrl = profileUrl;
+
+  /* ---------------- QR Render ---------------- */
+  useEffect(() => {
+    if (!profileUrl || !qrRef.current) return;
+
+    QRCode.toCanvas(qrRef.current, profileUrl, {
+      width: 140,
+      margin: 2,
+    });
+  }, [profileUrl]);
+
+  /* ---------------- Copy ---------------- */
+  const copy = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {}
+  };
+
+  /* ---------------- Download QR ---------------- */
+  const downloadQR = async () => {
+    if (!profileUrl) return;
+
+    const canvas = document.createElement("canvas");
+    await QRCode.toCanvas(canvas, profileUrl, {
+      width: 512,
+      margin: 2,
+    });
+
+    const link = document.createElement("a");
+    link.download = `${member.username}-qr.png`;
+    link.href = canvas.toDataURL("image/png");
+    link.click();
+  };
+
+  /* ---------------- Campaigns ---------------- */
   useEffect(() => {
     if (member?.id && member.role !== "manager") {
       dispatch(fetchCampaignsByTeamMember({ memberId: member.id }));
@@ -42,15 +85,70 @@ export default function TeamMemberOverviewTab({
           <Detail label="Status" value={member.status} />
           <Detail label="Joined On" value={member.created_at} />
         </div>
+
+        {/* ================= SHARE ================= */}
+        {profileUrl && (
+          <div className="pt-5 border-t space-y-4">
+            <h4 className="text-sm font-medium">Share Profile</h4>
+
+            {/* Direct Link */}
+            <div className="space-y-1">
+              <span className="text-xs text-gray-400">Direct Link</span>
+              <div className="flex items-center gap-2">
+                <input
+                  readOnly
+                  value={profileUrl}
+                  className="flex-1 text-xs px-3 py-2 rounded-lg border bg-gray-50 truncate"
+                />
+                <button
+                  onClick={() => copy(profileUrl)}
+                  className="p-2 rounded-lg border hover:bg-gray-50"
+                >
+                  <Copy size={16} />
+                </button>
+              </div>
+            </div>
+
+            {/* NFC Link */}
+            <div className="space-y-1">
+              <span className="text-xs text-gray-400">NFC Link</span>
+              <div className="flex items-center gap-2">
+                <input
+                  readOnly
+                  value={nfcUrl}
+                  className="flex-1 text-xs px-3 py-2 rounded-lg border bg-gray-50 truncate"
+                />
+                <button
+                  onClick={() => copy(nfcUrl)}
+                  className="p-2 rounded-lg border hover:bg-gray-50"
+                >
+                  <Copy size={16} />
+                </button>
+              </div>
+            </div>
+
+            {/* QR */}
+            <div className="space-y-2">
+              <span className="text-xs text-gray-400">QR Code</span>
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={downloadQR}
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg border hover:bg-gray-50 text-sm"
+                >
+                  <Download size={16} />
+                  Download QR
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ================= CAMPAIGNS ================= */}
       <div className="xl:col-span-2 bg-white rounded-2xl border p-6 flex flex-col">
         <div className="flex justify-between items-center mb-5">
           <div>
-            <h3 className="text-base font-semibold">
-              Campaigns Assigned
-            </h3>
+            <h3 className="text-base font-semibold">Campaigns Assigned</h3>
             <p className="text-sm text-gray-500">
               Campaigns this member is involved in
             </p>
@@ -66,21 +164,18 @@ export default function TeamMemberOverviewTab({
           </button>
         </div>
 
-        {/* Loader */}
         {loading && (
           <div className="flex-1 flex items-center justify-center">
             <BrandLoader message="Loading campaigns..." />
           </div>
         )}
 
-        {/* Empty state */}
         {!loading && campaigns.length === 0 && (
           <div className="flex-1 flex items-center justify-center text-sm text-gray-500">
             No campaigns assigned
           </div>
         )}
 
-        {/* List */}
         {!loading && campaigns.length > 0 && (
           <div className="space-y-3">
             {campaigns.map((c) => (
@@ -89,17 +184,12 @@ export default function TeamMemberOverviewTab({
                 onClick={() => navigate(`/admin/campaigns/${c.id}`)}
                 className="p-4 rounded-xl border hover:border-purple-300 hover:bg-purple-50/40 cursor-pointer transition"
               >
-                <div className="flex justify-between items-start">
-                  <div>
-                    <div className="font-medium text-sm">{c.name}</div>
-
-                    <div className="flex gap-3 mt-1 text-xs text-gray-500">
-                      <span className="capitalize">{c.status}</span>
-                      <span>
-                        Budget: ₹{c.budget?.toLocaleString() ?? "-"}
-                      </span>
-                    </div>
-                  </div>
+                <div className="font-medium text-sm">{c.name}</div>
+                <div className="flex gap-3 mt-1 text-xs text-gray-500">
+                  <span className="capitalize">{c.status}</span>
+                  <span>
+                    Budget: ₹{c.budget?.toLocaleString() ?? "-"}
+                  </span>
                 </div>
               </div>
             ))}
@@ -109,6 +199,8 @@ export default function TeamMemberOverviewTab({
     </div>
   );
 }
+
+/* ---------------- DETAIL ROW ---------------- */
 
 function Detail({ label, value }: { label: string; value?: string }) {
   return (

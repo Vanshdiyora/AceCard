@@ -73,6 +73,10 @@ export default function TeamPage() {
     : "sales_rep";
 
   const currentUserId = authState?.user?.user_id;
+  const [sortBy, setSortBy] =
+    useState<"total_leads" | "total_deal_amount" | "meeting_booked">("total_leads");
+
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
   const [roleFilter, setRoleFilter] = useState<RoleFilter>("all");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
@@ -118,11 +122,12 @@ export default function TeamPage() {
     dispatch(fetchSubscription());
   }, [dispatch]);
 
-
   useEffect(() => {
     const params: any = {
       page,
       page_size: pageSize,
+      sort_by: sortBy,       // 👈
+      sort_order: sortOrder // 👈
     };
 
     if (search) params.search = search;
@@ -130,7 +135,8 @@ export default function TeamPage() {
     if (statusFilter !== "all") params.status = statusFilter;
 
     dispatch(fetchTeam(params));
-  }, [dispatch, page, pageSize, search, roleFilter, statusFilter]);
+  }, [dispatch, page, pageSize, search, roleFilter, statusFilter, sortBy, sortOrder]);
+
 
   useEffect(() => {
     const open = searchParams.get("open");
@@ -143,18 +149,19 @@ export default function TeamPage() {
   /* 🔥 CRITICAL FIX — reset page */
   useEffect(() => {
     setPage(1);
-  }, [search, roleFilter, statusFilter]);
+  }, [search, roleFilter, statusFilter, sortBy, sortOrder]);
+
 
   /* ======================================================
      TABLE COLUMNS
   ====================================================== */
 
   const columns: Column<TeamMember>[] = [
-     {
-    header: "",
-    width: "56px",
-    render: AvatarCell, // 👈 FIRST COLUMN
-  },
+    {
+      header: "",
+      width: "56px",
+      render: AvatarCell, // 👈 FIRST COLUMN
+    },
     { header: "Name", accessor: "name" },
     { header: "Email", width: "2fr", accessor: "email" },
     {
@@ -296,6 +303,32 @@ export default function TeamPage() {
             )}
           </div>
         }
+        filters={[
+          {
+            key: "sort_by",
+            title: "Sort By", // 👈
+            placeholder: "Sort By",
+            value: sortBy,
+            onChange: (v) =>
+              setSortBy(v as "total_leads" | "total_deal_amount" | "meeting_booked"),
+            options: [
+              { label: "Leads", value: "total_leads" },
+              { label: "Deal Amount", value: "total_deal_amount" },
+              { label: "Meetings", value: "meeting_booked" },
+            ],
+          },
+          {
+            key: "sort_order",
+            title: "Order", // 👈
+            placeholder: "Order",
+            value: sortOrder,
+            onChange: (v) => setSortOrder(v as "asc" | "desc"),
+            options: [
+              { label: "High → Low", value: "desc" },
+              { label: "Low → High", value: "asc" },
+            ],
+          },
+        ]}
 
       />
 

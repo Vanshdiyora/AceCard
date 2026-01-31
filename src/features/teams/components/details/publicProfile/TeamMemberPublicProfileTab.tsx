@@ -55,10 +55,8 @@ export interface SectionItem {
   type: string;
   rank: number;
   enabled: boolean;
-
-  locked: boolean;
-  lock_mode?: LockMode; // 👈 who locked it
 }
+
 
 export interface ThemeConfig extends LockMeta {
   primary_color: string;
@@ -103,9 +101,10 @@ interface PublicProfileConfig {
 
   youtube: LockMeta & { items: any[] };
   links_files: LockMeta & { items: any[] };
+  sections: LockMeta & {
+    items: SectionItem[];
+  };
 
-
-  sections: SectionItem[];
 }
 
 /* ================= COMPONENT ================= */
@@ -292,11 +291,16 @@ export default function TeamMemberPublicProfileTab({
         ? { items: config.links_files.items, locked: config.links_files.locked, lock_mode: config.links_files.lock_mode }
         : { items: config.links_files.items },
 
-      sections: config.sections.map((s) =>
-        showLockable
-          ? { ...s, locked: s.locked, lock_mode: s.lock_mode }
-          : { ...s, locked: s.locked }
-      ),
+      sections: showLockable
+        ? {
+          items: config.sections.items,
+          locked: config.sections.locked,
+          lock_mode: config.sections.lock_mode,
+        }
+        : {
+          items: config.sections.items,
+        },
+
     };
 
     try {
@@ -320,7 +324,7 @@ export default function TeamMemberPublicProfileTab({
       setResultOpen(true);
     }
   };
-const role = useAppSelector((s) => s.auth.role);
+  const role = useAppSelector((s) => s.auth.role);
 
   if (loading || !config)
     return <p className="text-gray-400">Loading profile config...</p>;
@@ -637,11 +641,16 @@ const role = useAppSelector((s) => s.auth.role);
 
       <Card title="Sections" desc="Reorder your public sections">
         <SectionsReorder
-          sections={config.sections}
-          onChange={(next: any) =>
-            update({ ...config, sections: next })
+          sections={config.sections.items}
+          groupLocked={config.sections.locked}
+          onChange={(items) =>
+            update({
+              ...config,
+              sections: { ...config.sections, items },
+            })
           }
         />
+
       </Card>
 
       <button

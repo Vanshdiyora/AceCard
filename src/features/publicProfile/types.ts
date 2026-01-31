@@ -1,3 +1,21 @@
+export type LockMode = "global" | "individual" | "locked";
+
+export interface LockMeta {
+  locked: boolean;
+  lock_mode?: LockMode;
+}
+
+/* ================= SECTION ITEM ================= */
+
+export interface SectionItem {
+  id: string;
+  type: string;
+  rank: number;
+  enabled: boolean;
+}
+
+/* ================= API ROOT ================= */
+
 export interface PublicProfileApi {
   username?: string;
   name?: string;
@@ -7,13 +25,15 @@ export interface PublicProfileApi {
   vendor_name?: string;
 
   configuration?: {
+    /* ---------- PROFILE ---------- */
     profile?: {
       avatar_url?: string;
       cover_url?: string;
       description?: string;
     };
 
-    theme?: {
+    /* ---------- THEME ---------- */
+    theme?: LockMeta & {
       primary_color?: string | null;
       background_color?: string | null;
       card_color?: string | null;
@@ -21,7 +41,8 @@ export interface PublicProfileApi {
       accent_color?: string | null;
     } | null;
 
-    banner?: {
+    /* ---------- BANNER ---------- */
+    banner?: LockMeta & {
       enabled?: boolean;
       image_url?: string | null;
       cta_text?: string | null;
@@ -29,19 +50,19 @@ export interface PublicProfileApi {
       rank?: number | null;
     } | null;
 
-  meeting: {
-  locked: boolean;
-  enabled: boolean;
-  type: string;
-  meeting_url: string;
-  button_text: string;
-};
+    /* ---------- MEETING ---------- */
+    meeting: LockMeta & {
+      enabled: boolean;
+      type: string;
+      meeting_url: string;
+      button_text: string;
+    };
 
-
+    /* ---------- SOCIAL ---------- */
     social_links?: { items?: any[] | null } | null;
 
-    products?: {
-      locked: boolean;
+    /* ---------- PRODUCTS ---------- */
+    products?: LockMeta & {
       items: {
         id: string | number;
         name: string;
@@ -52,8 +73,8 @@ export interface PublicProfileApi {
       }[];
     };
 
-    youtube: {
-      locked: boolean;
+    /* ---------- YOUTUBE ---------- */
+    youtube: LockMeta & {
       items: {
         id: string;
         url: string;
@@ -62,17 +83,14 @@ export interface PublicProfileApi {
       }[];
     };
 
-    links_files?: { items?: any[] | null } | null;
-    sections: SectionItem[];
+    /* ---------- LINKS & FILES ---------- */
+    links_files?: LockMeta & {
+      items?: any[] | null;
+    } | null;
+
+    /* ---------- SECTIONS (GROUP LOCK) ---------- */
+    sections?: LockMeta & {
+      items: SectionItem[];
+    };
   } | null;
-}
-
-
-
-export interface SectionItem {
-  id: string;
-  type: string;
-  rank: number;
-  locked: boolean;
-  enabled: boolean;
 }

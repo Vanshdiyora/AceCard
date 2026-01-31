@@ -10,11 +10,13 @@ export interface TabItem {
 
 export interface FilterConfig {
   key: string;
+  title?: string; // 👈 ADD
   placeholder: string;
   value?: string;
   onChange?: (v: string) => void;
   options: { label: string; value: string }[];
 }
+
 
 export interface PageFiltersProps {
   tabs?: TabItem[];
@@ -95,8 +97,8 @@ export default function PageFilters({
                   key={t.value}
                   onClick={() => onTabChange?.(t.value)}
                   className={`px-3 py-1.5 lg:px-4 lg:py-2 rounded-full text-xs lg:text-sm font-medium transition shadow-sm ${active
-                      ? "bg-[#D8B4FE] text-[#5e1b98]"
-                      : "bg-white text-gray-600 hover:bg-gray-100"
+                    ? "bg-[#D8B4FE] text-[#5e1b98]"
+                    : "bg-white text-gray-600 hover:bg-gray-100"
                     }`}
                 >
                   {t.label}
@@ -143,8 +145,8 @@ export default function PageFilters({
               <button
                 onClick={() => setPanelOpen((v) => !v)}
                 className={`flex items-center gap-2 px-3 py-2 lg:px-4 lg:py-2.5 rounded-xl border text-xs lg:text-sm transition shadow-sm ${panelOpen
-                    ? "bg-purple-600 text-white"
-                    : "bg-white hover:bg-gray-50"
+                  ? "bg-purple-600 text-white"
+                  : "bg-white hover:bg-gray-50"
                   }`}
               >
                 <Filter size={16} />
@@ -155,6 +157,11 @@ export default function PageFilters({
                 <div className="absolute z-50 mt-2 right-0 bg-white border rounded-2xl shadow-xl p-2 min-w-[220px]">
                   {filters.map((f) => (
                     <div key={f.key} className="flex flex-col">
+                      {f.title && (
+                        <p className="px-4 pt-2 pb-1 text-xs font-semibold text-gray-400 uppercase">
+                          {f.title}
+                        </p>
+                      )}
                       {f.options.map((opt) => {
                         const active = opt.value === f.value;
                         return (
@@ -165,8 +172,8 @@ export default function PageFilters({
                               setPanelOpen(false);
                             }}
                             className={`text-left px-4 py-2.5 rounded-xl text-sm transition ${active
-                                ? "bg-purple-50 text-purple-700 font-medium"
-                                : "hover:bg-gray-50 text-gray-700"
+                              ? "bg-purple-50 text-purple-700 font-medium"
+                              : "hover:bg-gray-50 text-gray-700"
                               }`}
                           >
                             {opt.label}
@@ -197,8 +204,8 @@ export default function PageFilters({
                 onClick={onExport}
                 disabled={disableExport}
                 className={`flex items-center gap-2 px-3 py-2 lg:px-4 lg:py-2.5 rounded-xl border text-xs lg:text-sm shadow-sm ${disableExport
-                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                    : "bg-white hover:bg-gray-50"
+                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                  : "bg-white hover:bg-gray-50"
                   }`}
               >
                 <Download size={16} />

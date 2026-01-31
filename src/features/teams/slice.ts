@@ -75,6 +75,8 @@ export type FetchTeamParams = {
   search?: string;
   role?: "manager" | "sales_rep";
   status?: "active" | "suspended";
+  sort_by?: "total_leads" | "total_deal_amount" | "meeting_booked"; // 👈
+  sort_order?: "asc" | "desc"; // 👈
   append?: boolean;
 };
 
@@ -162,6 +164,26 @@ export const updatePermissions = createAsyncThunk(
   }
 );
 
+export const transferLeads = createAsyncThunk(
+  "team/transferLeads",
+  async (
+    payload: {
+      from_rep_id: number;
+      to_rep_id: number;
+      lead_ids: number[];
+    },
+    { rejectWithValue }
+  ) => {
+    try {
+      await teamService.transferLeads(payload);
+      return payload;
+    } catch (err: any) {
+      return rejectWithValue(
+        err?.response?.data?.message || "Lead transfer failed"
+      );
+    }
+  }
+);
 
 export const deleteMember = createAsyncThunk(
   "team/delete",
