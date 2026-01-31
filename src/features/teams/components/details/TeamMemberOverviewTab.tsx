@@ -20,10 +20,11 @@ export default function TeamMemberOverviewTab({
   const allCampaigns = items ?? [];
 
   const profileUrl = member?.username
-    ? `${window.location.origin}/${member.username}`
+    ? `${window.location.origin}/profile/${member.username}`
     : "";
-
-  const nfcUrl = profileUrl;
+  const directUrl = `${profileUrl}?type=nfc`;
+  const qrUrl = `${profileUrl}?type=nfc`;
+  const nfcUrl = `${profileUrl}?type=nfc`;
 
   /* ---------------- QR Render ---------------- */
   useEffect(() => {
@@ -39,7 +40,7 @@ export default function TeamMemberOverviewTab({
   const copy = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);
-    } catch {}
+    } catch { }
   };
 
   /* ---------------- Download QR ---------------- */
@@ -47,7 +48,7 @@ export default function TeamMemberOverviewTab({
     if (!profileUrl) return;
 
     const canvas = document.createElement("canvas");
-    await QRCode.toCanvas(canvas, profileUrl, {
+    await QRCode.toCanvas(canvas, qrUrl, {
       width: 512,
       margin: 2,
     });
@@ -94,15 +95,15 @@ export default function TeamMemberOverviewTab({
             {/* Direct Link */}
             <div className="space-y-1">
               <span className="text-xs text-gray-400">Direct Link</span>
-              <div className="flex items-center gap-2">
+              <div className="grid grid-cols-[1fr_auto] items-center gap-2">
                 <input
                   readOnly
-                  value={profileUrl}
-                  className="flex-1 text-xs px-3 py-2 rounded-lg border bg-gray-50 truncate"
+                  value={directUrl}
+                  className="w-full text-xs px-3 py-2 rounded-lg border bg-gray-50 truncate"
                 />
                 <button
-                  onClick={() => copy(profileUrl)}
-                  className="p-2 rounded-lg border hover:bg-gray-50"
+                  onClick={() => copy(directUrl)}
+                  className="p-2 rounded-lg border hover:bg-gray-50 shrink-0"
                 >
                   <Copy size={16} />
                 </button>
@@ -112,28 +113,29 @@ export default function TeamMemberOverviewTab({
             {/* NFC Link */}
             <div className="space-y-1">
               <span className="text-xs text-gray-400">NFC Link</span>
-              <div className="flex items-center gap-2">
+              <div className="grid grid-cols-[1fr_auto] items-center gap-2">
                 <input
                   readOnly
                   value={nfcUrl}
-                  className="flex-1 text-xs px-3 py-2 rounded-lg border bg-gray-50 truncate"
+                  className="w-full text-xs px-3 py-2 rounded-lg border bg-gray-50 truncate"
                 />
                 <button
                   onClick={() => copy(nfcUrl)}
-                  className="p-2 rounded-lg border hover:bg-gray-50"
+                  className="p-2 rounded-lg border hover:bg-gray-50 shrink-0"
                 >
                   <Copy size={16} />
                 </button>
               </div>
             </div>
 
-            {/* QR */}
+            {/* QR Code */}
             <div className="space-y-2">
               <span className="text-xs text-gray-400">QR Code</span>
-              <div className="flex items-center gap-4">
+
+              <div className="grid grid-cols-[auto_1fr] items-center gap-3">
                 <button
                   onClick={downloadQR}
-                  className="flex items-center gap-2 px-3 py-2 rounded-lg border hover:bg-gray-50 text-sm"
+                  className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg border hover:bg-gray-50 text-sm"
                 >
                   <Download size={16} />
                   Download QR
@@ -142,6 +144,7 @@ export default function TeamMemberOverviewTab({
             </div>
           </div>
         )}
+
       </div>
 
       {/* ================= CAMPAIGNS ================= */}
