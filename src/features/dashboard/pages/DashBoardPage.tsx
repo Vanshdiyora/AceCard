@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useAppDispatch, useAppSelector } from "../../../app/hooks";
-import { fetchDashboard } from "../slice";
+import { fetchDashboard, setPeriod } from "../slice";
 
 import { Users, MousePointerClick, Percent, TrendingUp } from "lucide-react";
 
@@ -13,17 +13,25 @@ import ActivitySkeleton from "../../../common/components/skeleton/ActivitySkelet
 import ErrorAlert from "../../../common/ui/ErrorAlert";
 import StatCard from "../../../common/components/cards/StatCard";
 
+import PipelineAreaChart from "../../../common/components/cards/PipelineAreaChart";
+
+/* -----------------------------------------------------
+   PERIOD OPTIONS
+----------------------------------------------------- */
+const periods = ["day", "week", "month", "year"] as const;
+
 export default function DashboardPage() {
   const dispatch = useAppDispatch();
-  const { data, loading, error } = useAppSelector((s) => s.dashboard);
+  const { data, loading, error, period } = useAppSelector(
+    (s) => s.dashboard
+  );
 
   useEffect(() => {
-    dispatch(fetchDashboard());
-  }, [dispatch]);
+    dispatch(fetchDashboard(period));
+  }, [dispatch, period]);
 
   return (
     <div className="p-6 space-y-6 max-w-full overflow-x-hidden">
-      {/* ERROR */}
       {error && <ErrorAlert message={error} />}
 
       {/* KPI CARDS */}
@@ -39,7 +47,6 @@ export default function DashboardPage() {
             icon={<TrendingUp size={18} />}
             color="green"
           />
-
           <StatCard
             title="Total Visits"
             value={data.card_taps.value}
@@ -48,7 +55,6 @@ export default function DashboardPage() {
             icon={<MousePointerClick size={18} />}
             color="blue"
           />
-
           <StatCard
             title="Total Leads Generated"
             value={data.leads_captured.value}
@@ -57,7 +63,6 @@ export default function DashboardPage() {
             icon={<Users size={18} />}
             color="purple"
           />
-
           <StatCard
             title="Tap-to-lead-Ratio"
             value={`${data.tap_lead_ratio.value}%`}
@@ -66,40 +71,65 @@ export default function DashboardPage() {
             icon={<Percent size={18} />}
             color="orange"
           />
-
         </div>
       ) : null}
 
+      {/* PIPELINE CHART */}
+      <div className="bg-white rounded-2xl shadow-sm p-5">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-lg font-semibold text-gray-900">
+            Pipeline Over Time
+          </h3>
 
-      {/* MAIN DASHBOARD GRID */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
-        <div className="lg:col-span-2 flex">
-          <div className="flex-1">
-            {error ? null : loading ? (
-              <ActivitySkeleton />
-            ) : data ? (
-              <RecentActivity items={data.recent_activity ?? []} />
-            ) : null}
+          {/* PURPLE FILTER */}
+          <div className="flex items-center gap-1 bg-gray-100 rounded-full p-1">
+            {periods.map((p) => (
+              <button
+                key={p}
+                onClick={() => dispatch(setPeriod(p))}
+                className={`px-4 py-1.5 text-sm font-semibold rounded-full transition-all
+                  ${
+                    period === p
+                      ? "bg-purple-500 text-white shadow"
+                      : "text-gray-500 hover:text-gray-800"
+                  }`}
+              >
+                {p.toUpperCase()}
+              </button>
+            ))}
           </div>
         </div>
 
-        <div className="flex flex-col h-full">
-          <div className="h-full flex flex-col justify-between">
-            {/* Top Performers */}
-            <div className="shrink-0 mb-6">
-              {error ? null : loading ? (
-                <ChartSkeleton />
-              ) : data ? (
-                <QuickStatsCard
-                  topPerformers={data.top_performers}
-                />
-
-              ) : null}
-            </div>
-          </div>
-        </div>
+        {error ? null : loading ? (
+          <ChartSkeleton />
+        ) : data ? (
+          <PipelineAreaChart
+            data={data.pipeline_graph}
+            color="#a855f7"
+          />
+        ) : null}
       </div>
 
+      {/* MAIN GRID */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+          {error ? null : loading ? (
+            <ActivitySkeleton />
+          ) : data ? (
+            <RecentActivity items={data.recent_activity ?? []} />
+          ) : null}
+        </div>
+
+        <div>
+          {error ? null : loading ? (
+            <ChartSkeleton />
+          ) : data ? (
+            <QuickStatsCard
+              topPerformers={data.top_performers}
+            />
+          ) : null}
+        </div>
+      </div>
     </div>
   );
 }

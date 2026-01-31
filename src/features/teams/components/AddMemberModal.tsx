@@ -23,7 +23,7 @@ interface FormState {
   password: string;
   role: "manager" | "sales_rep";
   manager_id?: number;
-  avatar_url?: string;
+  avatar?: string;
 }
 
 export default function AddMemberModal({
@@ -51,7 +51,7 @@ export default function AddMemberModal({
       role: currentRole === "vendor_admin" ? "manager" : "sales_rep",
       manager_id:
         currentRole === "manager" ? currentUserId : undefined,
-      avatar_url: "",
+      avatar: "",
     });
 
     setErrors({});

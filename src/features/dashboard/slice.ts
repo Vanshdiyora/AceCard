@@ -1,6 +1,6 @@
-import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import { createSlice, createAsyncThunk, type PayloadAction } from "@reduxjs/toolkit";
 import { getVendorMetrics } from "./services/dashboard.service";
-import type { DashboardState } from "./types";
+import type { DashboardState, DashboardMetrics } from "./types";
 
 /* -----------------------------------------------------
    ERROR HANDLER
@@ -18,15 +18,19 @@ const extractApiError = (err: unknown, fallback: string): string =>
    THUNK
 ----------------------------------------------------- */
 
+export type Period = "day" | "week" | "month" | "year";
+
 export const fetchDashboard = createAsyncThunk<
-  any,
-  void,
+  DashboardMetrics,
+  Period,
   { rejectValue: string }
->("dashboard/fetch", async (_, { rejectWithValue }) => {
+>("dashboard/fetch", async (period, { rejectWithValue }) => {
   try {
-    return await getVendorMetrics();
+    return await getVendorMetrics(period);
   } catch (err) {
-    return rejectWithValue(extractApiError(err, "Failed to load dashboard"));
+    return rejectWithValue(
+      extractApiError(err, "Failed to load dashboard")
+    );
   }
 });
 
@@ -34,10 +38,16 @@ export const fetchDashboard = createAsyncThunk<
    INITIAL STATE
 ----------------------------------------------------- */
 
-const initialState: DashboardState & { error: string | null } = {
+interface DashboardSliceState extends DashboardState {
+  error: string | null;
+  period: Period;
+}
+
+const initialState: DashboardSliceState = {
   data: null,
   loading: true,
   error: null,
+  period: "month",
 };
 
 /* -----------------------------------------------------
@@ -47,7 +57,17 @@ const initialState: DashboardState & { error: string | null } = {
 export const dashboardSlice = createSlice({
   name: "dashboard",
   initialState,
-  reducers: {},
+  reducers: {
+    setPeriod(state, action: PayloadAction<Period>) {
+      state.period = action.payload;
+    },
+    resetDashboard(state) {
+      state.data = null;
+      state.loading = true;
+      state.error = null;
+      state.period = "month";
+    },
+  },
   extraReducers: (builder) => {
     builder
       .addCase(fetchDashboard.pending, (state) => {
@@ -64,5 +84,11 @@ export const dashboardSlice = createSlice({
       });
   },
 });
+
+/* -----------------------------------------------------
+   EXPORTS
+----------------------------------------------------- */
+
+export const { setPeriod, resetDashboard } = dashboardSlice.actions;
 
 export default dashboardSlice.reducer;

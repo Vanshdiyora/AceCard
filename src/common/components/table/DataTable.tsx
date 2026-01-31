@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import BrandLoader from "../../ui/BrandLoader";
-import type { TeamMember } from "../../../features/teams/types";
 export type Column<T> = {
   header: string;
   accessor?: keyof T;
@@ -20,22 +19,30 @@ type Props<T> = {
   totalPages?: number;
   onPageChange?: (p: number) => void;
 };
-
 const MAX_VISIBLE = 3;
-export const AvatarCell = (m: TeamMember) => {
-  const initials = m.name
-    .split(" ")
-    .map(n => n[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
+type AvatarLike = {
+  name?: string;
+  product_img_url?: string;
+  avatar?: string;
+};
+
+export const AvatarCell = (m: AvatarLike) => {
+  const img = m.product_img_url || m.avatar || "";
+
+  const initials =
+    m.name
+      ?.split(" ")
+      .map((n) => n[0])
+      .join("")
+      .slice(0, 2)
+      .toUpperCase() || "??";
 
   return (
     <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
-      {m.avatar ? (
+      {img ? (
         <img
-          src={m.avatar}
-          alt={m.name}
+          src={img}
+          alt={m.name || "item"}
           className="w-full h-full object-cover"
           onError={(e) => {
             (e.currentTarget as HTMLImageElement).style.display = "none";

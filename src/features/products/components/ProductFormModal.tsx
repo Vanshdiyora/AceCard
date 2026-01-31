@@ -25,7 +25,7 @@ export default function ProductFormModal({
     price: "",
     category: "",
     description: "",
-    image_url: "",
+    product_img_url: "",
   });
 
   const [errors, setErrors] = useState<
@@ -49,7 +49,7 @@ export default function ProductFormModal({
         price: product.price ?? "",
         category: product.category ?? "",
         description: product.description ?? "",
-        image_url: product.image_url ?? "",   // 👈
+        product_img_url: product.product_img_url ?? "",   // 👈
       });
 
       const list = Object.entries(
@@ -76,7 +76,7 @@ export default function ProductFormModal({
         price: "",
         category: "",
         description: "",
-        image_url: "",
+        product_img_url: "",
       });
       setExtraProps([{ key: "", value: "" }]);
       setMeta({});
@@ -109,7 +109,7 @@ export default function ProductFormModal({
 
   const fields: FieldConfig[] = [
     {
-      name: "image_url",
+      name: "product_img_url",
       label: "Product Image",
       type: "image",
       upload: async (file: File) => {

@@ -8,7 +8,7 @@ import {
   clearSelectedProduct,
   updateProduct,
   archiveProduct,
-  unarchiveProduct
+  unarchiveProduct,
 } from "../slice";
 
 import ProductOverviewTab from "../components/details/ProductOverviewTab";
@@ -25,7 +25,9 @@ export default function ProductDetailsPage() {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
 
-  const { selectedProduct: product, loading } = useAppSelector((s) => s.products);
+  const { selectedProduct: product, loading } = useAppSelector(
+    (s) => s.products
+  );
 
   const [processing, setProcessing] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -37,18 +39,20 @@ export default function ProductDetailsPage() {
     message: "",
   });
 
+  /* ---------- FETCH PRODUCT ---------- */
   useEffect(() => {
     if (id) {
-      dispatch(fetchProductById(Number(id))).finally(() => {
-        setHasFetched(true);
-      });
+      dispatch(fetchProductById(Number(id))).finally(() =>
+        setHasFetched(true)
+      );
     }
+
     return () => {
       dispatch(clearSelectedProduct());
     };
   }, [id, dispatch]);
 
-  /* ---------- Initial load ---------- */
+  /* ---------- LOADING ---------- */
   if ((!hasFetched || loading) && !product) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -57,7 +61,7 @@ export default function ProductDetailsPage() {
     );
   }
 
-  /* ---------- Not found ---------- */
+  /* ---------- NOT FOUND ---------- */
   if (!loading && !product) {
     return (
       <>
@@ -76,7 +80,41 @@ export default function ProductDetailsPage() {
   }
 
   const isArchived = product!.status === "archived";
+function ProductAvatar({
+  name,
+  image,
+}: {
+  name: string;
+  image?: string;
+}) {
+  const initials = name
+    .split(" ")
+    .map(n => n[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
 
+  return (
+    <div className="w-14 h-14 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
+      {image ? (
+        <img
+          src={image}
+          alt={name}
+          className="w-full h-full object-cover"
+          onError={(e) => {
+            (e.currentTarget as HTMLImageElement).style.display = "none";
+          }}
+        />
+      ) : (
+        <span className="text-lg font-semibold text-gray-700">
+          {initials}
+        </span>
+      )}
+    </div>
+  );
+}
+
+  /* ---------- ARCHIVE / ACTIVATE ---------- */
   const handleConfirm = async () => {
     try {
       setProcessing(true);
@@ -106,7 +144,6 @@ export default function ProductDetailsPage() {
     }
   };
 
-
   return (
     <div className="p-6">
       <BlockingLoader show={processing} />
@@ -118,6 +155,7 @@ export default function ProductDetailsPage() {
         onClose={() => setResult({ ...result, open: false })}
       />
 
+      {/* BACK */}
       <button
         onClick={() => navigate(-1)}
         className="flex items-center gap-2 text-sm text-gray-500 hover:text-black mb-6"
@@ -126,10 +164,16 @@ export default function ProductDetailsPage() {
         Back to Products
       </button>
 
+      {/* HEADER */}
       <DetailPageHeader
         title={product!.name}
         subtitle="Product"
-        avatar={product!.name[0]}
+        avatar={
+          <ProductAvatar
+            name={product!.name}
+            image={product!.product_img_url}
+          />
+        }
         status={{
           label: product!.status,
           variant: isArchived ? "archived" : "active",
@@ -147,8 +191,8 @@ export default function ProductDetailsPage() {
               onClick={() => setConfirmOpen(true)}
               disabled={processing}
               className={`flex items-center gap-2 px-4 py-2 text-sm border rounded-lg disabled:opacity-50 ${isArchived
-                ? "text-green-600 border-green-200 hover:bg-green-50"
-                : "text-red-600 border-red-200 hover:bg-red-50"
+                  ? "text-green-600 border-green-200 hover:bg-green-50"
+                  : "text-red-600 border-red-200 hover:bg-red-50"
                 }`}
             >
               {isArchived ? (
@@ -167,9 +211,11 @@ export default function ProductDetailsPage() {
 
       <div className="mb-6" />
 
+      {/* TABS */}
       <ProductOverviewTab product={product!} />
       <ProductLeadsTable productId={product!.id} />
 
+      {/* EDIT MODAL */}
       <ProductFormModal
         open={editOpen}
         product={product!}
@@ -177,7 +223,10 @@ export default function ProductDetailsPage() {
         onSubmit={async (data) => {
           try {
             setProcessing(true);
-            await dispatch(updateProduct({ id: product!.id, data })).unwrap();
+            await dispatch(
+              updateProduct({ id: product!.id, data })
+            ).unwrap();
+
             setResult({
               open: true,
               success: true,
@@ -196,6 +245,7 @@ export default function ProductDetailsPage() {
         }}
       />
 
+      {/* CONFIRM MODAL */}
       <ConfirmationModal
         open={confirmOpen}
         title={isArchived ? "Activate Product" : "Archive Product"}

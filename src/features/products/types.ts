@@ -9,6 +9,7 @@ export interface Product {
   status: "active" | "archived";
   created_at: string;
   updated_at: string;
+  product_img_url?: string; 
 }
 
 /* ---------- PAGINATION ---------- */
