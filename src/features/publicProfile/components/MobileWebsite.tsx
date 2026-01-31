@@ -154,7 +154,12 @@ export default function MobileWebsite({
 
       case "banner":
         return banner?.enabled && banner?.image_url ? (
-          <Banner image={banner.image_url} />
+          <Banner
+            image={banner.image_url}
+            ctaText={banner.cta_text}
+            ctaUrl={banner.cta_url}
+            theme={theme}
+          />
         ) : null;
 
       default:
@@ -315,24 +320,30 @@ function Products({ items, theme }: any) {
 /* ================= YOUTUBE ================= */
 function YouTube({ items, theme }: any) {
   if (!items?.length) return null;
+
   return (
     <Section title="Videos" theme={theme}>
-      {items.map((v: any) => {
-        const id = getYouTubeId(v.url);
-        if (!id) return null;
-        return (
-          <a
-            key={v.id}
-            href={v.url}
-            className="block rounded-2xl overflow-hidden"
-          >
-            <img
-              src={`https://img.youtube.com/vi/${id}/hqdefault.jpg`}
-              className="w-full h-40 object-cover"
-            />
-          </a>
-        );
-      })}
+      <div className="space-y-4">
+        {items.map((v: any) => {
+          const id = getYouTubeId(v.url);
+          if (!id) return null;
+
+          return (
+            <div
+              key={v.id}
+              className="w-full h-40 rounded-2xl overflow-hidden shadow-md"
+            >
+              <iframe
+                src={`https://www.youtube.com/embed/${id}`}
+                className="w-full h-full"
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            </div>
+          );
+        })}
+      </div>
     </Section>
   );
 }
@@ -428,16 +439,44 @@ function Links({ items, theme }: any) {
 
 /* ================= BANNER ================= */
 
-function Banner({ image }: any) {
+function Banner({
+  image,
+  ctaText,
+  ctaUrl,
+  theme,
+}: {
+  image: string;
+  ctaText?: string;
+  ctaUrl?: string;
+  theme?: any;
+}) {
   return (
-    <div className="">
-      <img
-        src={image}
-        className="w-full h-28 rounded-2xl object-cover"
-      />
+    <div className="space-y-2">
+      {ctaText && (
+        <p
+          className="text-sm font-semibold text-left pb-2"
+          style={{ color: theme?.text_color }}
+        >
+          {ctaText}
+        </p>
+      )}
+
+      <div
+        className="cursor-pointer"
+        onClick={() => {
+          if (ctaUrl) window.open(ctaUrl, "_blank");
+        }}
+      >
+        <img
+          src={image}
+          className="w-full h-28 rounded-2xl object-cover"
+          alt="Banner"
+        />
+      </div>
     </div>
   );
 }
+
 
 /* ================= VCARD ================= */
 
