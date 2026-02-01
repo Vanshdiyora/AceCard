@@ -82,6 +82,13 @@ export interface SettingsState {
   };
   suggestedQuestions: SuggestedQuestionsState;
   integrations: CRMIntegrationState;
+  
+  trackingPixels: {
+    data: TrackingPixels | null;
+    loading: boolean;
+    saving: boolean;
+    error: string | null;
+  };
 }
 
 // ---------- Suggested Questions ----------
@@ -117,4 +124,11 @@ export interface CRMIntegration {
   disconnecting?: boolean;
 
   created_at?: string;
+}
+
+// ---------- Tracking Pixels ----------
+export interface TrackingPixels {
+  meta_pixel_id: string;
+  google_analytics_id: string;
+  linkedin_insight_tag_id: string;
 }

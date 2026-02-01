@@ -1,6 +1,10 @@
 import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../../app/hooks";
-import { fetchAccountProfile } from "../slice";
+import {
+  fetchAccountProfile,
+  fetchTrackingPixels,
+  saveTrackingPixels,
+} from "../slice";
 import BrandLoader from "../../../common/ui/BrandLoader";
 import ResetPasswordSection from "./ResetPasswordSection";
 import EditAccountModal from "./EditAccountModal";
@@ -12,7 +16,9 @@ const isLinkedIn = (v: string) => /^[0-9]{5,10}$/.test(v);
 
 export default function AccountSettings() {
   const dispatch = useAppDispatch();
+
   const { data, loading } = useAppSelector((s) => s.settings.account);
+  const tracking = useAppSelector((s) => s.settings.trackingPixels);
 
   const [editOpen, setEditOpen] = useState(false);
 
@@ -29,46 +35,66 @@ export default function AccountSettings() {
 
   const isVendor = data?.role === "vendor_admin";
 
-  /* ---------- load from localStorage ---------- */
   useEffect(() => {
-    if (!data?.email) return;
-
-    const saved = localStorage.getItem(
-      `tracking_pixels:${data.email}`
-    );
-
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      setMeta(parsed.meta || "");
-      setGa(parsed.ga || "");
-      setLi(parsed.li || "");
+    if (data?.role === "vendor_admin") {
+      dispatch(fetchTrackingPixels());
     }
-  }, [data?.email]);
+  }, [dispatch, data?.role]);
 
-  const persist = (payload: any) => {
-    if (!data?.email) return;
-    localStorage.setItem(
-      `tracking_pixels:${data.email}`,
-      JSON.stringify(payload)
-    );
-  };
 
-  const saveMeta = () => {
+  useEffect(() => {
+    if (tracking.data) {
+      setMeta(tracking.data.meta_pixel_id || "");
+      setGa(tracking.data.google_analytics_id || "");
+      setLi(tracking.data.linkedin_insight_tag_id || "");
+    }
+  }, [tracking.data]);
+
+  const saveMeta = async () => {
     if (!isMetaPixel(meta)) return;
-    persist({ meta, ga, li });
-    setTimeout(() => setShowSuccess("meta"), 500);
+
+    await dispatch(
+      saveTrackingPixels({
+        meta_pixel_id: meta,
+        google_analytics_id: ga,
+        linkedin_insight_tag_id: li,
+      })
+    ).unwrap();
+
+    dispatch(fetchTrackingPixels()); // 👈 refresh from API
+    setShowSuccess("meta");
   };
 
-  const saveGA = () => {
+
+  const saveGA = async () => {
     if (!isGA(ga)) return;
-    persist({ meta, ga, li });
-    setTimeout(() => setShowSuccess("ga"), 500);
+
+    await dispatch(
+      saveTrackingPixels({
+        meta_pixel_id: meta,
+        google_analytics_id: ga,
+        linkedin_insight_tag_id: li,
+      })
+    ).unwrap();
+
+    dispatch(fetchTrackingPixels());
+    setShowSuccess("ga");
   };
 
-  const saveLI = () => {
+
+  const saveLI = async () => {
     if (!isLinkedIn(li)) return;
-    persist({ meta, ga, li });
-    setTimeout(() => setShowSuccess("li"), 500);
+
+    await dispatch(
+      saveTrackingPixels({
+        meta_pixel_id: meta,
+        google_analytics_id: ga,
+        linkedin_insight_tag_id: li,
+      })
+    ).unwrap();
+
+    dispatch(fetchTrackingPixels());
+    setShowSuccess("li");
   };
 
   if (loading)
@@ -100,10 +126,15 @@ export default function AccountSettings() {
         </button>
       </div>
 
-      {/* ================= TRACKING INPUTS ================= */}
       {isVendor && (
         <div className="border-t rounded-xl py-6 mb-8">
           <h3 className="font-semibold mb-4">Tracking Pixels</h3>
+
+          {tracking.loading && (
+            <p className="text-sm text-gray-500 mb-3">
+              Loading tracking pixels…
+            </p>
+          )}
 
           {/* META */}
           <div className="grid grid-cols-[1fr_auto] gap-3 mb-4">
@@ -126,9 +157,11 @@ export default function AccountSettings() {
             </div>
             <div className="flex items-center mt-[26px]">
               <button
-                disabled={!isMetaPixel(meta)}
+                disabled={!isMetaPixel(meta) || tracking.saving}
                 onClick={saveMeta}
-                className={`h-10 px-5 rounded-lg text-white ${isMetaPixel(meta) ? "bg-purple-600" : "bg-gray-300"
+                className={`h-10 px-5 rounded-lg text-white ${isMetaPixel(meta) && !tracking.saving
+                    ? "bg-purple-600"
+                    : "bg-gray-300"
                   }`}
               >
                 Save
@@ -159,9 +192,11 @@ export default function AccountSettings() {
             </div>
             <div className="flex items-center mt-[26px]">
               <button
-                disabled={!isGA(ga)}
+                disabled={!isGA(ga) || tracking.saving}
                 onClick={saveGA}
-                className={`h-10 px-5 rounded-lg text-white ${isGA(ga) ? "bg-purple-600" : "bg-gray-300"
+                className={`h-10 px-5 rounded-lg text-white ${isGA(ga) && !tracking.saving
+                    ? "bg-purple-600"
+                    : "bg-gray-300"
                   }`}
               >
                 Save
@@ -192,9 +227,11 @@ export default function AccountSettings() {
             </div>
             <div className="flex items-center mt-[26px]">
               <button
-                disabled={!isLinkedIn(li)}
+                disabled={!isLinkedIn(li) || tracking.saving}
                 onClick={saveLI}
-                className={`h-10 px-5 rounded-lg text-white ${isLinkedIn(li) ? "bg-purple-600" : "bg-gray-300"
+                className={`h-10 px-5 rounded-lg text-white ${isLinkedIn(li) && !tracking.saving
+                    ? "bg-purple-600"
+                    : "bg-gray-300"
                   }`}
               >
                 Save
@@ -207,17 +244,14 @@ export default function AccountSettings() {
       <ResetPasswordSection />
       <EditAccountModal open={editOpen} onClose={() => setEditOpen(false)} />
 
-      {/* ================= SUCCESS MODAL ================= */}
       {showSuccess && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl p-6 w-[320px] text-center shadow-xl">
             <h3 className="text-lg font-semibold mb-2">Saved!</h3>
             <p className="text-gray-600 mb-4">
               {showSuccess === "meta" && "Meta Pixel saved successfully."}
-              {showSuccess === "ga" &&
-                "Google Analytics saved successfully."}
-              {showSuccess === "li" &&
-                "LinkedIn Insight Tag saved successfully."}
+              {showSuccess === "ga" && "Google Analytics saved successfully."}
+              {showSuccess === "li" && "LinkedIn Insight Tag saved successfully."}
             </p>
             <button
               onClick={() => setShowSuccess(null)}

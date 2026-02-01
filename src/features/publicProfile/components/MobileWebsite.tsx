@@ -19,6 +19,19 @@ import { ConnectModal } from "./ConnectModal";
 import { ProfileActions } from "./WebsiteLayout/ProfileActions";
 /* ================= HELPERS ================= */
 
+function injectScript(id: string, src?: string, inner?: string) {
+  if (document.getElementById(id)) return;
+
+  const s = document.createElement("script");
+  s.id = id;
+  s.async = true;
+
+  if (src) s.src = src;
+  if (inner) s.innerHTML = inner;
+
+  document.head.appendChild(s);
+}
+
 const resolveTheme = (theme: any) => ({
   cardBg: theme.card_background || "#6B6E93",
   buttonBg: theme.button_color || "#A5A6AB",
@@ -60,8 +73,72 @@ export default function MobileWebsite({
   scrollRef?: React.RefObject<HTMLDivElement | null>;
 }) {
   const config = data?.configuration ?? {};
+
+  useEffect(() => {
+    if (!data) return;
+
+    /* ---------- META ---------- */
+    if (data.meta_pixel_id) {
+      injectScript(
+        "fb-pixel",
+        "https://connect.facebook.net/en_US/fbevents.js",
+        `
+        !function(f,b,e,v,n,t,s){
+        if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+        n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+        if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+        n.queue=[];t=b.createElement(e);t.async=!0;
+        t.src=v;s=b.getElementsByTagName(e)[0];
+        s.parentNode.insertBefore(t,s)
+        }(window, document,'script','https://connect.facebook.net/en_US/fbevents.js');
+
+        fbq('init', '${data.meta_pixel_id}');
+        fbq('track', 'PageView');
+      `
+      );
+    }
+
+    /* ---------- GOOGLE / YOUTUBE ---------- */
+    if (data.google_analytics_id) {
+      injectScript(
+        "gtag-js",
+        `https://www.googletagmanager.com/gtag/js?id=${data.google_analytics_id}`
+      );
+
+      injectScript(
+        "gtag-init",
+        "",
+        `
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', '${data.google_analytics_id}');
+      `
+      );
+    }
+
+    /* ---------- LINKEDIN ---------- */
+    if (data.linkedin_insight_tag_id) {
+      injectScript(
+        "linkedin-pixel",
+        "https://snap.licdn.com/li.lms-analytics/insight.min.js",
+        `
+        _linkedin_partner_id = "${data.linkedin_insight_tag_id}";
+        window._linkedin_data_partner_ids = window._linkedin_data_partner_ids || [];
+        window._linkedin_data_partner_ids.push(_linkedin_partner_id);
+      `
+      );
+    }
+  }, [
+    data?.meta_pixel_id,
+    data?.google_analytics_id,
+    data?.linkedin_insight_tag_id,
+  ]);
+
+
+
   const [open, setOpen] = useState(false);
-  console.log(data)
+
   const {
     profile = {},
     cover = {},
@@ -349,6 +426,8 @@ export default function MobileWebsite({
       }}
     >
 
+      <span className="wave-3 absolute inset-0" />
+      <span className="wave-fade" />
       {layout?.use_background === "video" && (
         <BackgroundVideo src={layout?.background_video} />
       )}

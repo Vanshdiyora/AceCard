@@ -118,6 +118,20 @@ export const settingsService = {
     const res = await axios.post(`/vendor/integrations/${provider}/sync`);
     return res.data;
   },
+// ---------- Tracking Pixels ----------
+async getTrackingPixels() {
+  const res = await axios.get("/vendor/tracking-pixels");
+  return res.data;
+},
+
+async saveTrackingPixels(payload: {
+  meta_pixel_id: string;
+  google_analytics_id: string;
+  linkedin_insight_tag_id: string;
+}) {
+  const res = await axios.post("/vendor/tracking-pixels", payload);
+  return res.data;
+},
 
 
 };
