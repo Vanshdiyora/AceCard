@@ -37,6 +37,7 @@ export default function TeamMemberDetailsPage() {
   const dispatch = useAppDispatch();
   const phoneScrollRef = useRef<HTMLDivElement>(null);
   const [livePreviewConfig, setLivePreviewConfig] = useState<any | null>(null);
+  const [isCropping, setIsCropping] = useState(false); // 👈 ADD
 
   const auth = useAppSelector((s) => s.auth);
   const { members } = useAppSelector((s) => s.team);
@@ -402,20 +403,25 @@ export default function TeamMemberDetailsPage() {
         {activeTab === "analytics" && (
           <TeamMemberAnalyticsTab memberId={member.id} />
         )}
-
         {activeTab === "public-profile" && (
           <div className="mt-6">
             <TeamMemberPublicProfileTab
               key={member.username}
               onLiveChange={(cfg) => setLivePreviewConfig(cfg)}
+              onCropToggle={setIsCropping}   // 👈 ADD
             />
           </div>
         )}
 
+
       </div>
 
       {/* RIGHT */}
-      <div className="hidden lg:flex justify-center items-start h-full overflow-hidden">
+      <div
+        className={`hidden lg:flex justify-center items-start h-full overflow-hidden transition-opacity duration-200 ${isCropping ? "opacity-0 pointer-events-none" : "opacity-100"
+          }`}
+      >
+
         <div className="h-full flex items-start">
 
 

@@ -69,15 +69,14 @@ export default function SocialSection({
 }) {
   const [local, setLocal] = useState<any[]>([]);
 
-  useEffect(() => {
-    if (items && items.length > 0) {
-      setLocal(items);
-    } else {
-      setLocal(DEFAULT_SOCIAL);
-      onChange(DEFAULT_SOCIAL);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+useEffect(() => {
+  if (!items || items.length === 0) {
+    setLocal(DEFAULT_SOCIAL);
+  } else {
+    setLocal(items);
+  }
+}, [items]);
+
 
   const update = (i: number, key: string, val: any) => {
     const copy = [...local];

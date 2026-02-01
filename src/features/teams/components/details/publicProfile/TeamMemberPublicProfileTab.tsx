@@ -20,6 +20,7 @@ import SocialSection from "./sections/SocialSection";
 import { fetchProducts } from "../../../../products/slice";
 import ResultModal from "../../../../../common/ui/ResultModal";
 import { AlignLeft, AlignCenter, AlignRight } from "lucide-react";
+import CoverCropModal from "../../../../../common/ui/CoverCropModal";
 
 const THEME_COLOR_KEYS = [
   "primary_color",
@@ -138,16 +139,20 @@ export default function TeamMemberPublicProfileTab({
   onLiveChange,
   useSelfApi = false,   // 👈 default = admin mode
   showLockable = false,  // 👈 new prop for lockable visibility
+  onCropToggle,
 }: {
   onLiveChange?: (cfg: any) => void;
   useSelfApi?: boolean;
   showLockable?: boolean;
+  onCropToggle?: (open: boolean) => void;
 }) {
 
   const dispatch = useAppDispatch();
   const [resultOpen, setResultOpen] = useState(false);
   const [resultSuccess, setResultSuccess] = useState(true);
   const [resultMessage, setResultMessage] = useState("");
+  const [isCropping, setIsCropping] = useState(false);
+  const coverFileRef = useRef<File | null>(null);
 
   const { data: publicProfile, loading } = useAppSelector(
     (s) => s.publicProfile
@@ -303,16 +308,16 @@ export default function TeamMemberPublicProfileTab({
   // }, [config?.products?.items, dispatch]);
 
   /* ================= HELPERS ================= */
-  const uploadCoverImage = async (file: File) => {
-    const res = await uploadImage(file);
-    update({
-      ...config!,
-      cover: {
-        ...config!.cover,
-        cover_url: res.data.url,
-      },
-    });
-  };
+  // const uploadCoverImage = async (file: File) => {
+  //   const res = await uploadImage(file);
+  //   update({
+  //     ...config!,
+  //     cover: {
+  //       ...config!.cover,
+  //       cover_url: res.data.url,
+  //     },
+  //   });
+  // };
 
   const update = (next: PublicProfileConfig) => {
     setConfig(next);
@@ -377,7 +382,7 @@ export default function TeamMemberPublicProfileTab({
             username: publicProfile!.username!,
             config: payload,
           })
-          
+
         ).unwrap();
       }
       // dispatch(loadPublicProfile({ handle: publicProfile!.username! }));
@@ -665,10 +670,12 @@ export default function TeamMemberPublicProfileTab({
                       type="file"
                       hidden
                       accept="image/*"
-                      onChange={(e) =>
-                        e.target.files &&
-                        uploadCoverImage(e.target.files[0])
-                      }
+                      onChange={(e) => {
+                        if (!e.target.files) return;
+                        coverFileRef.current = e.target.files[0];
+                        setIsCropping(true);
+                      }}
+
                     />
                   </label>
                 )}
@@ -899,8 +906,10 @@ export default function TeamMemberPublicProfileTab({
           onChange={(p: ProfileConfig) =>
             update({ ...config, profile: p })
           }
+          onCropToggle={onCropToggle}   // 👈 ADD
         />
       </Card>
+
 
 
 
@@ -1214,6 +1223,28 @@ export default function TeamMemberPublicProfileTab({
       >
         Save Public Profile
       </button>
+      {isCropping && coverFileRef.current && (
+  <CoverCropModal
+    file={coverFileRef.current}
+    onCancel={() => {
+      coverFileRef.current = null;
+      setIsCropping(false);
+    }}
+    onSave={async (blob) => {
+      const file = new File([blob], "cover.jpg", { type: "image/jpeg" });
+      const res = await uploadImage(file);
+
+      update({
+        ...config!,
+        cover: { ...config!.cover, cover_url: res.data.url },
+      });
+
+      coverFileRef.current = null;
+      setIsCropping(false);
+    }}
+  />
+)}
+
     </div>
   );
 }
@@ -1394,7 +1425,7 @@ function ColorPickerField({
       {open &&
         createPortal(
           <div
-            className="fixed inset-0 z-[99999]"
+            className="fixed inset-0 z-[500]"
             onClick={() => setOpen(false)}
           >
             <div
@@ -1402,7 +1433,7 @@ function ColorPickerField({
                 position: "fixed",
                 top: pos.top,
                 left: pos.left,
-                zIndex: 100000,
+                zIndex: 600,
               }}
               onClick={(e) => e.stopPropagation()}
               className="bg-white rounded-lg shadow-xl p-3"

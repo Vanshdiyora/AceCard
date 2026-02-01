@@ -2,7 +2,11 @@ import { useState } from "react";
 import { uploadImage } from "../../../../../publicProfile/services/publicProfile.api";
 import AvatarCropModal from "../../../../../../common/ui/AvatarCropModal";
 
-export default function ProfileSection({ profile, onChange }: any) {
+export default function ProfileSection({
+  profile,
+  onChange,
+  onCropToggle,
+}: any) {
   const [cropFile, setCropFile] = useState<File | null>(null);
 
   const uploadCropped = async (blob: Blob) => {
@@ -10,16 +14,20 @@ export default function ProfileSection({ profile, onChange }: any) {
     const res = await uploadImage(file);
     onChange({ ...profile, avatar_url: res.data.url });
     setCropFile(null);
+    onCropToggle?.(false); // 👈 close
   };
 
   return (
-    <div className="space-y-8">
+    <div>
       <div className="flex flex-col md:flex-row gap-8 items-start">
         <div className="space-y-2">
           <Label>Profile Photo</Label>
           <ImageBox
             url={profile.avatar_url}
-            onSelect={(f: File) => setCropFile(f)}
+            onSelect={(file: File) => {
+              setCropFile(file);
+              onCropToggle?.(true); // 👈 notify parent
+            }}
           />
         </div>
 
@@ -39,7 +47,10 @@ export default function ProfileSection({ profile, onChange }: any) {
       {cropFile && (
         <AvatarCropModal
           file={cropFile}
-          onCancel={() => setCropFile(null)}
+          onCancel={() => {
+            setCropFile(null);
+            onCropToggle?.(false);
+          }}
           onSave={uploadCropped}
         />
       )}
@@ -55,13 +66,10 @@ function Label({ children }: { children: React.ReactNode }) {
   );
 }
 
-
-function ImageBox({ label, url, wide, onUpload }: any) {
+function ImageBox({ label, url, wide, onSelect }: any) {
   return (
     <div className="space-y-1">
-      <p className="text-xs uppercase tracking-wide text-gray-500">
-        {label}
-      </p>
+      <p className="text-xs uppercase tracking-wide text-gray-500">{label}</p>
 
       <div
         className={`group relative rounded-2xl overflow-hidden border border-white/40 shadow-md bg-gradient-to-br from-gray-50 to-gray-100 ${
@@ -82,7 +90,6 @@ function ImageBox({ label, url, wide, onUpload }: any) {
           </div>
         )}
 
-        {/* Overlay */}
         <label className="absolute inset-0 bg-black/40 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 cursor-pointer transition">
           <span className="px-4 py-1.5 rounded-full bg-white/20 backdrop-blur border border-white/30 text-sm">
             Change
@@ -92,7 +99,7 @@ function ImageBox({ label, url, wide, onUpload }: any) {
             hidden
             accept="image/*"
             onChange={(e) =>
-              e.target.files && onUpload(e.target.files[0])
+              e.target.files && onSelect(e.target.files[0])
             }
           />
         </label>
