@@ -46,13 +46,13 @@ export function ProfileCenter({
           >
             {/* INNER COLOR RING */}
             <div
-              className="rounded-full p-[2px]"
+              className="rounded-full"
               style={{ backgroundColor: t.buttonBg }}
             >
               {/* AVATAR */}
               <img
                 src={profile.avatar_url || ""}
-                className="w-20 h-20 rounded-full object-cover shadow-md bg-white"
+                className="w-20 h-20 rounded-full object-cover"
               />
             </div>
           </div>
@@ -72,7 +72,7 @@ export function ProfileCenter({
         {/* Role */}
         <p
           className="text-xs mt-1"
-          style={{ color: t.buttonText }}
+          style={{ color: t.text }}
         >
           {formatRole(user?.job_title || user?.role)}
         </p>

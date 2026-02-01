@@ -61,7 +61,7 @@ export function ProfileSplit({
 
         <p
           className="text-xs mt-1 opacity-90"
-          style={{ color: t.buttonText }}
+          style={{ color: t.text }}
         >
           {formatRole(user?.job_title || user?.role)}
         </p>

@@ -233,30 +233,30 @@ export default function TeamMemberPublicProfileTab({
     });
   };
 
- function uploadCustomFont(file: File) {
-  if (!file) return;
+  function uploadCustomFont(file: File) {
+    if (!file) return;
 
-  if (!/\.(ttf|otf|woff)$/i.test(file.name)) {
-    alert("Only .ttf, .otf, .woff fonts are allowed");
-    return;
+    if (!/\.(ttf|otf|woff)$/i.test(file.name)) {
+      alert("Only .ttf, .otf, .woff fonts are allowed");
+      return;
+    }
+
+    uploadImage(file)
+      .then((res: any) => {
+        const fontUrl = res.data.url;
+
+        update({
+          ...config!,                 // keep all required fields
+          layout: {
+            ...config!.layout,
+            custom_font: fontUrl,
+            use_custom_font: true,
+            font: "custom",
+          },
+        });
+      })
+      .catch(() => alert("Font upload failed"));
   }
-
-  uploadImage(file)
-    .then((res: any) => {
-      const fontUrl = res.data.url;
-
-      update({
-        ...config!,                 // keep all required fields
-        layout: {
-          ...config!.layout,
-          custom_font: fontUrl,
-          use_custom_font: true,
-          font: "custom",
-        },
-      });
-    })
-    .catch(() => alert("Font upload failed"));
-}
 
 
 
@@ -995,49 +995,49 @@ export default function TeamMemberPublicProfileTab({
               </div>
             </div>
           )}
-         {config.layout.use_background === "video" && (
-  <div className="mt-6 space-y-3">
-    <p className="text-sm font-medium">Background Video</p>
+          {config.layout.use_background === "video" && (
+            <div className="mt-6 space-y-3">
+              <p className="text-sm font-medium">Background Video</p>
 
-    {/* PREVIEW */}
-    {config.layout.background_video && (
-      <video
-        src={config.layout.background_video}
-        className="w-full h-40 rounded-lg object-cover"
-        autoPlay
-        muted
-        loop
-        playsInline
-      />
-    )}
+              {/* PREVIEW */}
+              {config.layout.background_video && (
+                <video
+                  src={config.layout.background_video}
+                  className="w-full h-40 rounded-lg object-cover"
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                />
+              )}
 
-    {/* UPLOAD */}
-    <label className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-dashed cursor-pointer text-sm hover:bg-gray-50">
-      Upload video
-      <input
-        type="file"
-        accept="video/mp4,video/webm"
-        hidden
-        onChange={async (e) => {
-          const file = e.target.files?.[0];
-          if (!file) return;
+              {/* UPLOAD */}
+              <label className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-dashed cursor-pointer text-sm hover:bg-gray-50">
+                Upload video
+                <input
+                  type="file"
+                  accept="video/mp4,video/webm"
+                  hidden
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
 
-          const res = await uploadImage(file); // reuse existing
-          const url = res.data.url;
+                    const res = await uploadImage(file); // reuse existing
+                    const url = res.data.url;
 
-          update({
-            ...config,
-            layout: { ...config.layout, background_video: url },
-          });
-        }}
-      />
-    </label>
+                    update({
+                      ...config,
+                      layout: { ...config.layout, background_video: url },
+                    });
+                  }}
+                />
+              </label>
 
-    <p className="text-xs text-gray-500">
-      MP4 / WebM • Autoplays silently in background
-    </p>
-  </div>
-)}
+              <p className="text-xs text-gray-500">
+                MP4 / WebM • Autoplays silently in background
+              </p>
+            </div>
+          )}
 
           {["waves", "polka", "stripes", "zigzag"].includes(
             config.layout.use_background || ""

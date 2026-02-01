@@ -34,7 +34,7 @@ export function ProfileClassic({
   return (
     <div>
       <div
-        className="relative h-[220px] rounded-2xl overflow-hidden shadow-lg"
+        className="relative h-[220px] rounded-2xl overflow-hidden"
         style={{ backgroundColor: t.cardBg }}
       >
         {/* Cover */}
@@ -59,7 +59,7 @@ export function ProfileClassic({
         {/* Vendor name */}
         <div
           className="absolute top-4 px-4 text-xs font-semibold tracking-wide"
-          style={{ color: t.buttonText }}
+          style={{ color: t.text }}
         >
           {user?.vendor_name}
         </div>
@@ -68,7 +68,7 @@ export function ProfileClassic({
         <div className={`absolute bottom-3 flex flex-col ${align}`}>
           {/* OUTER GREY FRAME */}
           <div
-            className="rounded-full shadow-lg flex items-center justify-center transition-all duration-300"
+            className="rounded-full flex items-center justify-center transition-all duration-300"
             style={{
               backgroundColor: "#9ca3af", // grey frame
               padding: `${ring}px`,
@@ -76,13 +76,13 @@ export function ProfileClassic({
           >
             {/* INNER THEME RING */}
             <div
-              className="rounded-full p-[2px]"
+              className="rounded-full"
               style={{ backgroundColor: t.buttonBg }}
             >
               {/* AVATAR */}
               <img
                 src={profile.avatar_url || ""}
-                className="w-20 h-20 rounded-full object-cover bg-white"
+                className="w-20 h-20 rounded-full object-cover"
               />
             </div>
           </div>

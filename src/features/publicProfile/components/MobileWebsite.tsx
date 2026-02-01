@@ -147,6 +147,7 @@ export default function MobileWebsite({
           <Social
             items={sortByRank(social_links.items)}
             theme={theme}
+            shapeClass={shapeClass}
           />
         );
 
@@ -290,6 +291,7 @@ export default function MobileWebsite({
         layout?.color1 || theme?.background_color || "#000",
     };
   };
+
   useEffect(() => {
     if (!layout?.use_custom_font || !layout?.custom_font) return;
 
@@ -459,7 +461,7 @@ function Products({
             <div className="absolute bottom-3 left-3 right-3">
               <h3
                 className="text-sm font-semibold leading-tight line-clamp-2"
-                style={{ color: theme.button_text }}
+                style={{ color: theme.card_text }}
               >
                 {p.name}
               </h3>
@@ -512,7 +514,7 @@ function YouTube({ items, theme }: any) {
 }
 
 /* ================= SOCIAL ================= */
-function Social({ items, theme }: any) {
+function Social({ items, theme, shapeClass }: any) {
   if (!items?.length) return null;
 
   const t = resolveTheme(theme);
@@ -536,9 +538,9 @@ function Social({ items, theme }: any) {
               href={s.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="h-20 w-20 rounded-3xl flex items-center justify-center shadow-md transition hover:scale-105 overflow-hidden"
+              className={`h-20 w-20 flex items-center justify-center shadow-md transition hover:scale-105 overflow-hidden ${shapeClass}`}
               style={{
-                backgroundColor: t.cardBg,
+                backgroundColor: t.buttonBg,
                 color: t.buttonText,
               }}
             >
@@ -548,7 +550,7 @@ function Social({ items, theme }: any) {
               {s.label === "Twitter" && <Twitter size={32} />}
               {s.label === "Facebook" && <Facebook size={32} />}
               {s.label === "Whatsapp" && <MessageCircle size={32} />}
-              {s.label === "Call Me" && <Phone size={32} />}
+              {(s.label === "Call Me" || s.id === "phone") && <Phone size={32} />}
               {s.label === "Personal Website" && <Globe size={32} />}
               {s.label === "Snapchat" && <Ghost size={32} />}
               {s.label === "TikTok" && <Music2 size={32} />}
@@ -565,11 +567,7 @@ function Social({ items, theme }: any) {
 function Links({ items, theme }: any) {
   if (!items?.length) return null;
 
-  const t = {
-    card: theme.card_background || "#fff",
-    text: theme.card_text || "#111",
-    button: theme.button_color || "#000",
-  };
+  const t = resolveTheme(theme)
 
   return (
     <Section title="Links & Files" theme={theme}>
@@ -587,8 +585,8 @@ function Links({ items, theme }: any) {
             <div
               className="h-9 w-9 rounded-full flex items-center justify-center shadow"
               style={{
-                backgroundColor: t.card,
-                color: t.button,
+                backgroundColor: t.buttonBg,
+                color: t.buttonText,
               }}
             >
               {l.type === "file" ? (
@@ -625,12 +623,13 @@ function Banner({
   ctaUrl?: string;
   theme?: any;
 }) {
+  const t = resolveTheme(theme)
   return (
     <div className="space-y-2">
       {ctaText && (
         <p
           className="text-sm font-semibold text-left pb-2"
-          style={{ color: theme?.text_color }}
+          style={{ color: t?.text }}
         >
           {ctaText}
         </p>
