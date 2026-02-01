@@ -8,6 +8,7 @@ const ALIGN_MAP = {
   right: "items-end text-right right-4",
 };
 
+/* helper */
 const resolveTheme = (theme: any) => ({
   cardBg: theme.card_background || "#6B6E93",
   buttonBg: theme.button_color || "#A5A6AB",
@@ -27,6 +28,9 @@ export function ProfileClassic({
   const align =
     ALIGN_MAP[(layout?.card_alignment as CardAlign) || "center"];
 
+  // 👇 THIS controls the ring thickness (in px)
+  const ring = Number(layout?.profile_width);
+
   return (
     <div>
       <div
@@ -42,7 +46,7 @@ export function ProfileClassic({
         {/* Dark overlay */}
         <div className="absolute inset-0 bg-black/40" />
 
-        {/* 🔥 Fade bottom */}
+        {/* Fade bottom */}
         {layout?.is_fade && (
           <div
             className="absolute bottom-0 left-0 right-0 h-20"
@@ -62,17 +66,28 @@ export function ProfileClassic({
 
         {/* Avatar + text */}
         <div className={`absolute bottom-3 flex flex-col ${align}`}>
+          {/* OUTER GREY FRAME */}
           <div
-            className="w-24 h-24 rounded-full shadow-lg flex items-center justify-center"
-            style={{ backgroundColor: t.cardBg }}
+            className="rounded-full shadow-lg flex items-center justify-center transition-all duration-300"
+            style={{
+              backgroundColor: "#9ca3af", // grey frame
+              padding: `${ring}px`,
+            }}
           >
-            <img
-              src={profile.avatar_url || ""}
-              className="w-20 h-20 rounded-full object-cover border-2"
-              style={{ borderColor: t.buttonBg }}
-            />
+            {/* INNER THEME RING */}
+            <div
+              className="rounded-full p-[2px]"
+              style={{ backgroundColor: t.buttonBg }}
+            >
+              {/* AVATAR */}
+              <img
+                src={profile.avatar_url || ""}
+                className="w-20 h-20 rounded-full object-cover bg-white"
+              />
+            </div>
           </div>
 
+          {/* Name */}
           <h2
             className="mt-2 font-semibold text-sm"
             style={{ color: t.text }}
@@ -80,6 +95,7 @@ export function ProfileClassic({
             {user?.name}
           </h2>
 
+          {/* Role */}
           <p
             className="text-xs opacity-90"
             style={{ color: t.buttonText }}

@@ -59,8 +59,19 @@ export interface LayoutConfig extends LockMeta {
   color2?: string;      // gradient end
   direction?: string;  // "to-r", "to-b", etc
   custom_font?: string; // font URL
-  use_background?: "solid" | "gradient" | "image";
+  use_background?:
+  | "solid"
+  | "gradient"
+  | "image"
+  | "video"
+  | "waves"
+  | "polka"
+  | "stripes"
+  | "zigzag";
   use_custom_font?: boolean;
+  background_video?: string;
+  profile_width?: number;
+  button_style?: number;
 }
 
 interface ProfileConfig {
@@ -222,17 +233,31 @@ export default function TeamMemberPublicProfileTab({
     });
   };
 
-  const uploadCustomFont = async (file: File) => {
-    const res = await uploadImage(file);
-    update({
-      ...config!,
-      layout: {
-        ...config!.layout,
-        custom_font: res.data.url,
-        font: "custom",
-      },
-    });
-  };
+ function uploadCustomFont(file: File) {
+  if (!file) return;
+
+  if (!/\.(ttf|otf|woff)$/i.test(file.name)) {
+    alert("Only .ttf, .otf, .woff fonts are allowed");
+    return;
+  }
+
+  uploadImage(file)
+    .then((res: any) => {
+      const fontUrl = res.data.url;
+
+      update({
+        ...config!,                 // keep all required fields
+        layout: {
+          ...config!.layout,
+          custom_font: fontUrl,
+          use_custom_font: true,
+          font: "custom",
+        },
+      });
+    })
+    .catch(() => alert("Font upload failed"));
+}
+
 
 
 
@@ -823,12 +848,114 @@ export default function TeamMemberPublicProfileTab({
 
           </div>
 
+          {/* BUTTON STYLE */}
+          <div className="mt-8 border-t pt-6">
+            <h4 className="text-sm font-medium mb-3 flex items-center gap-1">
+              Button Style
+              <span className="text-gray-400 cursor-pointer">ⓘ</span>
+            </h4>
+
+            <div className="grid grid-cols-3 gap-4">
+              {[1, 2, 3].map((s) => {
+                const isActive = config.layout.button_style === s;
+
+                const shape =
+                  s === 1
+                    ? ""
+                    : s === 2
+                      ? "rounded-md"
+                      : "rounded-full";
+
+                return (
+                  <button
+                    key={s}
+                    onClick={() =>
+                      update({
+                        ...config,
+                        layout: { ...config.layout, button_style: s },
+                      })
+                    }
+                    className={`relative h-12 w-full border transition ${isActive
+                      ? "border-black ring-2 ring-gray-300"
+                      : "border-gray-300 hover:border-gray-400"
+                      }`}
+                  >
+                    {/* preview button */}
+                    <div
+                      className={`absolute inset-2 ${shape} border border-gray-400 bg-white`}
+                    />
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+
+          {/* PROFILE WIDTH */}
+          <div className="mt-6">
+            <h4 className="text-sm font-medium mb-3">Profile Width</h4>
+
+            <div className="flex items-center gap-3 w-1/2">
+              <input
+                type="number"
+                min={0}
+                max={600}
+                step={1}
+                value={
+                  config.layout.profile_width === 0
+                    ? ""
+                    : config.layout.profile_width
+                }
+                onChange={(e) => {
+                  const val = e.target.value;
+
+                  // allow empty
+                  if (val === "") {
+                    update({
+                      ...config,
+                      layout: { ...config.layout, profile_width: 0 },
+                    });
+                    return;
+                  }
+
+                  update({
+                    ...config,
+                    layout: {
+                      ...config.layout,
+                      profile_width: Number(val),
+                    },
+                  });
+                }}
+                className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                placeholder="e.g. 360"
+              />
+
+              <span className="text-xs text-gray-500">px</span>
+            </div>
+
+            <p className="text-xs text-gray-400 mt-1">
+              Recommended: 6 – 8 px
+            </p>
+          </div>
+
+
+
+
           {/* BACKGROUND TYPE */}
           <div className="mt-6">
             <p className="text-sm font-medium mb-2">Background Type</p>
 
             <div className="grid grid-cols-3 gap-3">
-              {["solid", "gradient", "image"].map((t) => (
+              {[
+                "solid",
+                "gradient",
+                "image",
+                "video",
+                "waves",
+                "polka",
+                "stripes",
+                "zigzag",
+              ].map((t) => (
                 <button
                   key={t}
                   onClick={() =>
@@ -845,8 +972,93 @@ export default function TeamMemberPublicProfileTab({
                   {t}
                 </button>
               ))}
+
             </div>
           </div>
+
+          {/* SOLID BACKGROUND */}
+          {config.layout.use_background === "solid" && (
+            <div className="mt-6">
+              <p className="text-sm font-medium">Solid Background Color</p>
+
+              <div className="mt-2 w-1/2">
+                <ColorPickerField
+                  label="Color"
+                  value={config.layout.color1 || "#000000"}
+                  onChange={(v) =>
+                    update({
+                      ...config,
+                      layout: { ...config.layout, color1: v },
+                    })
+                  }
+                />
+              </div>
+            </div>
+          )}
+         {config.layout.use_background === "video" && (
+  <div className="mt-6 space-y-3">
+    <p className="text-sm font-medium">Background Video</p>
+
+    {/* PREVIEW */}
+    {config.layout.background_video && (
+      <video
+        src={config.layout.background_video}
+        className="w-full h-40 rounded-lg object-cover"
+        autoPlay
+        muted
+        loop
+        playsInline
+      />
+    )}
+
+    {/* UPLOAD */}
+    <label className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-dashed cursor-pointer text-sm hover:bg-gray-50">
+      Upload video
+      <input
+        type="file"
+        accept="video/mp4,video/webm"
+        hidden
+        onChange={async (e) => {
+          const file = e.target.files?.[0];
+          if (!file) return;
+
+          const res = await uploadImage(file); // reuse existing
+          const url = res.data.url;
+
+          update({
+            ...config,
+            layout: { ...config.layout, background_video: url },
+          });
+        }}
+      />
+    </label>
+
+    <p className="text-xs text-gray-500">
+      MP4 / WebM • Autoplays silently in background
+    </p>
+  </div>
+)}
+
+          {["waves", "polka", "stripes", "zigzag"].includes(
+            config.layout.use_background || ""
+          ) && (
+              <div className="mt-6">
+                <p className="text-sm font-medium">Pattern Background Color</p>
+
+                <div className="mt-2 w-1/2">
+                  <ColorPickerField
+                    label="Background"
+                    value={config.layout.color1 || "#2f343a"}
+                    onChange={(v) =>
+                      update({
+                        ...config,
+                        layout: { ...config.layout, color1: v },
+                      })
+                    }
+                  />
+                </div>
+              </div>
+            )}
 
 
           {/* Gradient */}

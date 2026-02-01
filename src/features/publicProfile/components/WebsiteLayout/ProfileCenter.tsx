@@ -20,29 +20,46 @@ export function ProfileCenter({
     layout?.card_alignment === "left"
       ? "items-start text-left"
       : layout?.card_alignment === "right"
-      ? "items-end text-right"
-      : "items-center text-center";
+        ? "items-end text-right"
+        : "items-center text-center";
 
   const avatarAlign =
     layout?.card_alignment === "left"
       ? "justify-start"
       : layout?.card_alignment === "right"
-      ? "justify-end"
-      : "justify-center";
-
+        ? "justify-end"
+        : "justify-center";
   return (
     <div className="flex justify-center mt-6">
       <div
-        className={`w-full max-w-[300px] rounded-3xl px-6 pt-10 pb-6 flex flex-col shadow-md ${align}`}
+        className={`w-full max-w-[300px] rounded-3xl px-6 pt-10 pb-6 flex flex-col ${align}`}
       >
         {/* Avatar */}
         <div className={`w-full flex ${avatarAlign}`}>
-          <img
-            src={profile.avatar_url || ""}
-            className="w-20 h-20 rounded-full object-cover shadow-md border"
-            style={{ borderColor: t.buttonBg }}
-          />
+          {/* OUTER FRAME (thickness controlled by profile_width) */}
+          <div
+            className="rounded-full flex items-center justify-center transition-all duration-300"
+            style={{
+              backgroundColor: "#9ca3af", // grey frame (change if needed)
+              padding: `${layout?.profile_width || 6}px`,
+            }}
+          >
+            {/* INNER COLOR RING */}
+            <div
+              className="rounded-full p-[2px]"
+              style={{ backgroundColor: t.buttonBg }}
+            >
+              {/* AVATAR */}
+              <img
+                src={profile.avatar_url || ""}
+                className="w-20 h-20 rounded-full object-cover shadow-md bg-white"
+              />
+            </div>
+          </div>
         </div>
+
+
+
 
         {/* Name */}
         <h2

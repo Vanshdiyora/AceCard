@@ -8,18 +8,22 @@
   box-sizing: border-box;
 }
 
-html, body, #root {
+html,
+body,
+#root {
   width: 100%;
   background-color: #E6E4F2;
   max-width: 100%;
 }
 
 html {
-  scrollbar-gutter: auto; /* or remove it */
+  scrollbar-gutter: auto;
+  /* or remove it */
 }
 
 html {
-  overflow-y: overlay; /* Chrome / Edge */
+  overflow-y: overlay;
+  /* Chrome / Edge */
 }
 
 ::-webkit-scrollbar {
@@ -32,21 +36,30 @@ html {
 }
 
 ::-webkit-scrollbar-thumb {
-  background-color: rgba(0,0,0,0.25);
+  background-color: rgba(0, 0, 0, 0.25);
   border-radius: 999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(0,0,0,0.4);
+  background-color: rgba(0, 0, 0, 0.4);
 }
 
 body {
   @apply text-gray-900;
 }
 
-.scrollbar-hide::-webkit-scrollbar { display: none; }
-.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
-* { -webkit-overflow-scrolling: touch; }
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+* {
+  -webkit-overflow-scrolling: touch;
+}
 
 
 
@@ -55,18 +68,217 @@ body {
   z-index: 99999 !important;
 }
 
-.font-inter { font-family: "Inter", sans-serif; }
-.font-roboto { font-family: "Roboto", sans-serif; }
-.font-montserrat { font-family: "Montserrat", sans-serif; }
-.font-merriweather { font-family: "Merriweather", serif; }
-.font-caveat { font-family: "Caveat", cursive; }
-.font-gloria { font-family: "Gloria Hallelujah", cursive; }
+.font-inter {
+  font-family: "Inter", sans-serif;
+}
+
+.font-roboto {
+  font-family: "Roboto", sans-serif;
+}
+
+.font-montserrat {
+  font-family: "Montserrat", sans-serif;
+}
+
+.font-merriweather {
+  font-family: "Merriweather", serif;
+}
+
+.font-caveat {
+  font-family: "Caveat", cursive;
+}
+
+.font-gloria {
+  font-family: "Gloria Hallelujah", cursive;
+}
 
 /* hide scrollbar but keep scroll */
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
 .no-scrollbar::-webkit-scrollbar {
   display: none;
+}
+
+
+
+/* ========== BASE PATTERN ========== */
+.bg-pattern {
+  position: relative;
+  overflow: hidden;
+  background-color: var(--pattern-bg, #2f343a);
+  isolation: isolate;          /* 🔥 creates stacking context */
+}
+
+.bg-pattern::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;                 /* 🔥 lock pattern behind */
+}
+
+
+
+/* ========== POLKA (REAL GROWING DOTS) ========== */
+.bg-polka::before {
+  --dot: 6px;
+
+  background-image:
+    radial-gradient(circle,
+      rgba(255,255,255,0.35) var(--dot),
+      transparent calc(var(--dot) + 1px));
+  background-size: 48px 48px;
+
+  animation: polkaLocked 7s linear infinite;
+  will-change: opacity;
+}
+
+/* let browser interpolate instead of jumping */
+@keyframes polkaLocked {
+  from { --dot: 6px;  opacity: 0.22; }
+  to   { --dot: 7px; opacity: 0.3; }
+}
+
+
+
+
+/* ========== WAVES ========== */
+/* ========== WAVES (TOP SOFT HEADER STYLE) ========== */
+.bg-waves::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+
+  background:
+    radial-gradient(120% 60% at 0% -10%, rgba(255,255,255,0.25) 50%, transparent 60%),
+    radial-gradient(120% 60% at 100% -10%, rgba(255,255,255,0.20) 50%, transparent 60%),
+    radial-gradient(120% 60% at 50% -5%, rgba(255,255,255,0.15) 50%, transparent 60%);
+
+  background-repeat: no-repeat;
+  background-size: 120% 50%, 120% 50%, 120% 50%;
+  background-position: 0% 0%, 0% 5%, 0% 10%;
+
+  animation: waveDrift 16s ease-in-out infinite;
+}
+@keyframes waveDrift {
+  0% {
+    background-position: 0% 0%, 0% 5%, 0% 10%;
+  }
+  50% {
+    background-position: 10% 0%, -10% 5%, 10% 10%;
+  }
+  100% {
+    background-position: 0% 0%, 0% 5%, 0% 10%;
+  }
+}
+
+/* ========== STRIPES (DIAGONAL DRIFT) ========== */
+.bg-stripes::before {
+  background-image: repeating-linear-gradient(135deg,
+      rgba(0, 0, 0, 0.1) 0px,
+      rgba(0, 0, 0, 0.1) 24px,
+      transparent 24px,
+      transparent 48px);
+  background-size: 200% 200%;
+  animation: stripesDrift 50s linear infinite;
+}
+
+@keyframes stripesDrift {
+  from {
+    background-position: 0% 0%;
+  }
+
+  to {
+    background-position: 100% 100%;
+  }
+}
+
+/* ========== ZIGZAG (CHEVRON) ========== */
+.bg-zigzag::before {
+  background:
+    linear-gradient(135deg, rgba(0, 0, 0, 0.08) 25%, transparent 25%) -30px 0/60px 60px,
+    linear-gradient(225deg, rgba(0, 0, 0, 0.08) 25%, transparent 25%) -30px 0/60px 60px,
+    linear-gradient(315deg, rgba(0, 0, 0, 0.08) 25%, transparent 25%) 0px 0/60px 60px,
+    linear-gradient(45deg, rgba(0, 0, 0, 0.08) 25%, transparent 25%) 0px 0/60px 60px;
+  animation: zigzagScroll 16s linear infinite;
+}
+
+@keyframes zigzagScroll {
+  from {
+    background-position:
+      -30px 0,
+      -30px 0,
+      0px 0,
+      0px 0;
+  }
+
+  to {
+    background-position:
+      -30px 120px,
+      -30px 120px,
+      0px 120px,
+      0px 120px;
+  }
+}
+
+
+/* ========== VIDEO GRID ========== */
+.bg-video::before {
+  background-image: repeating-linear-gradient(0deg,
+      #ffffff22 0,
+      #ffffff22 2px,
+      transparent 4px,
+      transparent 24px),
+    repeating-linear-gradient(90deg,
+      #ffffff22 0,
+      #ffffff22 2px,
+      transparent 4px,
+      transparent 24px);
+}
+
+/* ========== ANIMATION ========== */
+@keyframes patternMove {
+  from {
+    transform: translate(0, 0) rotate(15deg);
+  }
+
+  to {
+    transform: translate(200px, 200px) rotate(15deg);
+  }
+}
+
+
+@keyframes patternPulse {
+  0% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.08);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes polkaPulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.25;
+  }
+
+  50% {
+    transform: scale(2);
+    opacity: 0.45;
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 0.25;
+  }
 }

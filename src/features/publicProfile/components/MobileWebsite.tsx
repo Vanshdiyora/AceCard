@@ -40,6 +40,16 @@ const sortByRank = (arr: any[]) => {
     .sort((a, b) => (a.rank ?? 0) - (b.rank ?? 0));
 };
 
+export const resolveShape = (style?: number) => {
+  switch (style) {
+    case 2:
+      return "rounded-md";
+    case 3:
+      return "rounded-full";
+    default:
+      return ""; // style 1 (default)
+  }
+};
 /* ================= COMPONENT ================= */
 
 export default function MobileWebsite({
@@ -71,6 +81,7 @@ export default function MobileWebsite({
 
 
   const orderedSections = sortByRank(sections.items);
+  const shapeClass = resolveShape(layout?.button_style);
 
   useEffect(() => {
     if (!scrollRef?.current) return;
@@ -80,6 +91,8 @@ export default function MobileWebsite({
   }, [open, scrollRef]);
 
   const resolveFontClass = (font?: string) => {
+    if (font === "custom") return "font-[var(--custom-font)]";
+
     switch ((font || "").toLowerCase()) {
       case "inter":
         return "font-inter";
@@ -95,11 +108,12 @@ export default function MobileWebsite({
       case "gloria":
         return "font-gloria";
       default:
-        return "font-inter"; // fallback
+        return "font-inter";
     }
   };
-  const fontClass = resolveFontClass(layout?.font);
 
+
+  const fontClass = resolveFontClass(layout?.font);
   const renderSection = (type: string) => {
     switch (type) {
       case "profile":
@@ -169,6 +183,7 @@ export default function MobileWebsite({
             user={data}
             theme={theme}
             contact={contact}
+            layout={layout}
             onConnect={() => setOpen(true)}
           />
         );
@@ -183,7 +198,7 @@ export default function MobileWebsite({
 
       case "meeting":
         return meeting?.enabled ? (
-          <MeetingCTA meeting={meeting} theme={theme} />
+          <MeetingCTA meeting={meeting} theme={theme} shapeClass={shapeClass} />
         ) : null;
 
       case "banner":
@@ -209,10 +224,27 @@ export default function MobileWebsite({
         return null;
     }
   };
+  const bgClass = (() => {
+    switch (layout?.use_background) {
+      case "polka":
+        return "bg-pattern bg-polka";
+      case "waves":
+        return "bg-pattern bg-waves";
+      case "stripes":
+        return "bg-pattern bg-stripes";
+      case "zigzag":
+        return "bg-pattern bg-zigzag";
+      case "video":
+        return "";
+      default:
+        return "";
+    }
+  })();
 
-  // const t = resolveTheme(theme);
+
 
   const resolveBackgroundStyle = () => {
+    // IMAGE
     if (layout?.use_background === "image" && layout?.background_image) {
       return {
         backgroundImage: `url(${layout.background_image})`,
@@ -222,6 +254,16 @@ export default function MobileWebsite({
       };
     }
 
+    // PATTERN BACKGROUNDS → handled by CSS
+    if (
+      ["waves", "polka", "stripes", "zigzag"].includes(
+        layout?.use_background || ""
+      )
+    ) {
+      return {};
+    }
+
+    // GRADIENT
     if (layout?.use_background === "gradient") {
       const from = layout?.color1 || "#7c3aed";
       const to = layout?.color2 || "#6366f1";
@@ -242,18 +284,74 @@ export default function MobileWebsite({
       };
     }
 
+    // SOLID
     return {
-      backgroundColor: theme?.background_color || "#000",
+      backgroundColor:
+        layout?.color1 || theme?.background_color || "#000",
     };
   };
+  useEffect(() => {
+    if (!layout?.use_custom_font || !layout?.custom_font) return;
 
+    const fontUrl = layout.custom_font;
+
+    const font = new FontFace("UserCustomFont", `url(${fontUrl})`);
+
+    font
+      .load()
+      .then((loaded) => {
+        document.fonts.add(loaded);
+
+        // expose to Tailwind + inline styles
+        document.documentElement.style.setProperty(
+          "--custom-font",
+          "'UserCustomFont', system-ui, sans-serif"
+        );
+
+        console.log("✅ Custom font loaded:", fontUrl);
+      })
+      .catch((err) => {
+        console.error("❌ Custom font failed", err);
+      });
+  }, [layout?.custom_font, layout?.use_custom_font]);
+
+  // useEffect(() => {
+  //   // always test with this local URL
+  //   const fontUrl = "http://localhost:5173/fonts/BitcountSingle_Cursive-Regular.ttf";
+
+  //   const font = new FontFace("CustomFont", `url(${fontUrl})`);
+
+  //   font
+  //     .load()
+  //     .then((loaded) => {
+  //       document.fonts.add(loaded);
+  //       document.documentElement.style.setProperty(
+  //         "--custom-font",
+  //         "CustomFont"
+  //       );
+
+  //       console.log("✅ Local test font loaded");
+  //     })
+  //     .catch((err) => {
+  //       console.error("❌ Local font failed", err);
+  //     });
+  // }, []);  // empty dependency for local test only
 
   return (
     <div
-      className={`relative min-h-screen w-full no-scrollbar overflow-hidden p-4 ${fontClass}`}
-      style={resolveBackgroundStyle()}
+      className={`relative min-h-screen w-full no-scrollbar overflow-hidden p-4 ${bgClass} ${fontClass}`}
+      style={{
+        ...(bgClass
+          ? { ["--pattern-bg" as any]: theme?.background_color || layout?.color1 || "#2f343a" }
+          : resolveBackgroundStyle()),
+      }}
     >
-      <div className="space-y-6">
+
+      {layout?.use_background === "video" && (
+        <BackgroundVideo src={layout?.background_video} />
+      )}
+      <div className="relative z-10 space-y-6">
+
         {orderedSections.map((s: any) =>
           s?.enabled ? (
             <div key={s.id}>{renderSection(s.type)}</div>
@@ -307,19 +405,17 @@ export const formatRole = (role?: string) => {
 
 /* ================= MEETING ================= */
 
-function MeetingCTA({ meeting, theme }: any) {
+function MeetingCTA({ meeting, theme, shapeClass }: any) {
   const t = resolveTheme(theme);
 
   return (
     <div className="px-12">
       <a
         href={meeting.meeting_url}
-        className="block text-center py-4 rounded-xl text-sm font-semibold shadow-md"
-        style={{
-          backgroundColor: t.buttonBg,
-          color: t.buttonText,
-        }}
+        className={`block text-center py-4 text-sm font-semibold shadow-md ${shapeClass}`}
+        style={{ backgroundColor: t.buttonBg, color: t.buttonText }}
       >
+
         {meeting.button_text || "BOOK A MEETING NOW!"}
       </a>
     </div>
@@ -715,6 +811,11 @@ function PhotoModal({
 
 function VideoGallery({ title, items, theme }: any) {
   const t = resolveTheme(theme);
+  const isYouTube = (url?: string) =>
+    !!url && /youtube\.com|youtu\.be/.test(url);
+
+  const isDirectVideo = (url?: string) =>
+    !!url && /\.(mp4|webm|ogg)$/i.test(url);
 
   return (
     <Section title={title || "Video Gallery"} theme={theme}>
@@ -732,14 +833,27 @@ function VideoGallery({ title, items, theme }: any) {
 
               {/* VIDEO */}
               <div className="w-full h-40 bg-black">
-                <iframe
-                  src={`https://www.youtube.com/embed/${id}`}
-                  className="w-full h-full"
-                  frameBorder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                />
+                {isYouTube(v.video_url) ? (
+                  <iframe
+                    src={`https://www.youtube.com/embed/${getYouTubeId(v.video_url)}`}
+                    className="w-full h-full"
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  />
+                ) : isDirectVideo(v.video_url) ? (
+                  <video
+                    src={v.video_url}
+                    controls
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-white text-sm">
+                    Video preview not available
+                  </div>
+                )}
               </div>
+
 
               {/* INFO */}
               <div className="p-3 space-y-1">
@@ -774,5 +888,22 @@ function VideoGallery({ title, items, theme }: any) {
         })}
       </div>
     </Section>
+  );
+}
+
+function BackgroundVideo({ src }: { src?: string }) {
+  if (!src) return null;
+
+  return (
+    <div className="absolute inset-0 z-0 overflow-hidden">
+      <video
+        src={src}
+        autoPlay
+        muted
+        loop
+        playsInline
+        className="w-full h-full object-cover"
+      />
+    </div>
   );
 }

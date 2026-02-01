@@ -38,24 +38,27 @@ export function normalizeProfile(api: any) {
       card_alignment: cfg.layout?.card_alignment || "center",
 
       use_background:
-        ["solid", "gradient", "image"].includes(cfg.layout?.use_background)
+        ["solid", "gradient", "image", "video", "waves", "polka", "stripes", "zigzag"]
+          .includes(cfg.layout?.use_background)
           ? cfg.layout.use_background
           : "gradient",
 
-      color1: cfg.layout?.color1 || "#000000",
-      color2: cfg.layout?.color2 || "#000000",
+      color1: cfg.layout?.color1 || "#2f343a",   // 👈 base / pattern bg
+      color2: cfg.layout?.color2 || "#6366f1",
       direction: ["to-r", "to-l", "to-b", "to-t"].includes(cfg.layout?.direction)
         ? cfg.layout.direction
         : "to-r",
 
       background_image: cfg.layout?.background_image || "",
+      background_video: cfg.layout?.background_video || "",   // 👈 NEW
+
       custom_font: cfg.layout?.custom_font || "",
       use_custom_font: Boolean(cfg.layout?.use_custom_font),
+      profile_width: Number(cfg.layout?.profile_width) || 2,
+button_style: Number(cfg.layout?.button_style) || 1,
 
-      profile_width: cfg.layout?.profile_width ?? 0,
-      pattern_color: cfg.layout?.pattern_color ?? "",
-      button_style: cfg.layout?.button_style ?? 0,
     },
+
 
     /* ================= THEME (NEW) ================= */
     theme: {
@@ -253,15 +256,22 @@ export function denormalizeProfile(
       layout: {
         locked: cfg.layout.locked,
         lock_mode: cfg.layout.lock_mode,
+
         profile_type: cfg.layout.profile_type,
         is_fade: cfg.layout.is_fade,
         font: cfg.layout.font,
         card_alignment: cfg.layout.card_alignment,
+
         use_background: cfg.layout.use_background,
         color1: cfg.layout.color1,
         color2: cfg.layout.color2,
         direction: cfg.layout.direction,
+
         background_image: cfg.layout.background_image,
+        background_video: cfg.layout.background_video, // 👈 NEW
+profile_width: cfg.layout.profile_width,
+button_style: cfg.layout.button_style,
+
         custom_font: cfg.layout.custom_font,
         use_custom_font: cfg.layout.use_custom_font,
       },
