@@ -23,12 +23,12 @@ import { AlignLeft, AlignCenter, AlignRight } from "lucide-react";
 import CoverCropModal from "../../../../../common/ui/CoverCropModal";
 
 const THEME_COLOR_KEYS = [
-  "primary_color",
-  "background_color",
-  "card_color",
-  "text_color",
-  "accent_color",
+  "card_background",
+  "button_color",
+  "card_text",
+  "button_text",
 ] as const;
+
 
 /* ================= TYPES ================= */
 export type LockMode = "global" | "individual" | "locked";
@@ -39,6 +39,11 @@ export interface LockMeta {
 }
 
 export type ProfileLayoutType = 1 | 2 | 3;
+
+export interface ContactConfig extends LockMeta {
+  connect_title: string;
+  contact_title: string;
+}
 
 export interface LayoutConfig extends LockMeta {
   profile_type: ProfileLayoutType;
@@ -58,8 +63,9 @@ export interface LayoutConfig extends LockMeta {
 
 interface ProfileConfig {
   avatar_url: string;
-  cover_url: string;
   description: string;
+  custom_profile: boolean;
+  custom_profile_url: string;
 }
 
 export interface ProductRef {
@@ -80,11 +86,10 @@ export interface SectionItem {
 
 
 export interface ThemeConfig extends LockMeta {
-  primary_color: string;
-  background_color: string;
-  card_color: string;
-  text_color: string;
-  accent_color: string;
+  card_background: string;
+  button_color: string;
+  card_text: string;
+  button_text: string;
 }
 
 export interface BannerConfig extends LockMeta {
@@ -114,7 +119,7 @@ interface PublicProfileConfig {
   profile: ProfileConfig;
   cover: CoverConfig;
   theme: ThemeConfig;
-
+  contact: ContactConfig;
   banner: BannerConfig;
 
   meeting: MeetingConfig;
@@ -299,26 +304,6 @@ export default function TeamMemberPublicProfileTab({
     setLoadingMoreProducts(false);
   };
 
-
-  /* ================= LOOKUP FOR PREVIEW ================= */
-
-  // useEffect(() => {
-  //   const ids = config?.products?.items.map((p) => p.id) ?? [];
-  //   if (ids.length) dispatch(lookupProducts(ids));
-  // }, [config?.products?.items, dispatch]);
-
-  /* ================= HELPERS ================= */
-  // const uploadCoverImage = async (file: File) => {
-  //   const res = await uploadImage(file);
-  //   update({
-  //     ...config!,
-  //     cover: {
-  //       ...config!.cover,
-  //       cover_url: res.data.url,
-  //     },
-  //   });
-  // };
-
   const update = (next: PublicProfileConfig) => {
     setConfig(next);
     onLiveChange?.(next); // 👈 push to preview
@@ -343,7 +328,7 @@ export default function TeamMemberPublicProfileTab({
       theme: withLock(config.theme),
 
       banner: withLock(config.banner),
-
+      contact: withLock(config.contact),
       meeting: withLock(config.meeting),
 
       social_links: { items: config.social_links.items },
@@ -910,6 +895,54 @@ export default function TeamMemberPublicProfileTab({
         />
       </Card>
 
+      <Card title="Contact" desc="Customize contact buttons">
+        {showLockable && (
+          <LockControl
+            value={config.contact}
+            onChange={(v) =>
+              update({ ...config, contact: { ...config.contact, ...v } })
+            }
+          />
+        )}
+
+        <div className="space-y-6">
+
+          {/* CONNECT BUTTON TITLE */}
+          <div className="space-y-1">
+            <p className="text-sm font-medium text-gray-700">
+              Connect Button Text
+            </p>
+            <Input
+              value={config.contact.connect_title}
+              onChange={(v) =>
+                update({
+                  ...config,
+                  contact: { ...config.contact, connect_title: v },
+                })
+              }
+              placeholder="e.g. Connect"
+            />
+          </div>
+
+          {/* SAVE CONTACT BUTTON TITLE */}
+          <div className="space-y-1">
+            <p className="text-sm font-medium text-gray-700">
+              Save Contact Button Text
+            </p>
+            <Input
+              value={config.contact.contact_title}
+              onChange={(v) =>
+                update({
+                  ...config,
+                  contact: { ...config.contact, contact_title: v },
+                })
+              }
+              placeholder="e.g. Save Contact"
+            />
+          </div>
+
+        </div>
+      </Card>
 
 
 
@@ -1224,26 +1257,26 @@ export default function TeamMemberPublicProfileTab({
         Save Public Profile
       </button>
       {isCropping && coverFileRef.current && (
-  <CoverCropModal
-    file={coverFileRef.current}
-    onCancel={() => {
-      coverFileRef.current = null;
-      setIsCropping(false);
-    }}
-    onSave={async (blob) => {
-      const file = new File([blob], "cover.jpg", { type: "image/jpeg" });
-      const res = await uploadImage(file);
+        <CoverCropModal
+          file={coverFileRef.current}
+          onCancel={() => {
+            coverFileRef.current = null;
+            setIsCropping(false);
+          }}
+          onSave={async (blob) => {
+            const file = new File([blob], "cover.jpg", { type: "image/jpeg" });
+            const res = await uploadImage(file);
 
-      update({
-        ...config!,
-        cover: { ...config!.cover, cover_url: res.data.url },
-      });
+            update({
+              ...config!,
+              cover: { ...config!.cover, cover_url: res.data.url },
+            });
 
-      coverFileRef.current = null;
-      setIsCropping(false);
-    }}
-  />
-)}
+            coverFileRef.current = null;
+            setIsCropping(false);
+          }}
+        />
+      )}
 
     </div>
   );
@@ -1251,7 +1284,7 @@ export default function TeamMemberPublicProfileTab({
 
 /* ================= UI ================= */
 
-function Card({
+export function Card({
   title,
   desc,
   children,
@@ -1275,7 +1308,7 @@ function Card({
 }
 
 
-function Input({
+export function Input({
   value,
   onChange,
   textarea,
@@ -1316,7 +1349,7 @@ function Input({
 }
 
 
-function Toggle({
+export function Toggle({
   label,
   value,
   onChange,

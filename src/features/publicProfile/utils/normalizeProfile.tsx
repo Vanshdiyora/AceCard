@@ -6,74 +6,74 @@ export function normalizeProfile(api: any) {
   return {
     /* ================= PROFILE ================= */
     profile: {
-      avatar_url: api.avatar_url ?? "",
-      cover_url: api.cover_url ?? "",
-      description: api.description ?? "",
+      avatar_url: cfg.profile.avatar_url,
+      description: cfg.profile.description,
+      custom_profile: cfg.profile.custom_profile,
+      custom_profile_url: cfg.profile.custom_profile_url,
     },
 
-    layout: {
-      // LOCK
-      locked: Boolean(cfg.layout?.locked),
-      lock_mode: cfg.layout?.lock_mode ?? undefined,
-
-      // CORE
-      profile_type: cfg.layout?.profile_type ?? 3,
-      is_fade: cfg.layout?.is_fade ?? true,
-      font: cfg.layout?.font || "Inter",
-      card_alignment: cfg.layout?.card_alignment || "center",
-
-      // BACKGROUND TYPE
-      use_background:
-        cfg.layout?.use_background === "solid" ||
-          cfg.layout?.use_background === "gradient" ||
-          cfg.layout?.use_background === "image"
-          ? cfg.layout.use_background
-          : "gradient",
-
-      // GRADIENT SAFE
-      color1: cfg.layout?.color1 || "#7c3aed",
-      color2: cfg.layout?.color2 || "#6366f1",
-      direction:
-        cfg.layout?.direction === "to-r" ||
-          cfg.layout?.direction === "to-l" ||
-          cfg.layout?.direction === "to-b" ||
-          cfg.layout?.direction === "to-t"
-          ? cfg.layout.direction
-          : "to-r",
-
-      // MEDIA
-      background_image: cfg.layout?.background_image || "",
-      custom_font: cfg.layout?.custom_font || "",
-
-      use_custom_font: Boolean(cfg.layout?.use_custom_font),
-    },
-
-
-
+    /* ================= COVER ================= */
     cover: {
-      locked: cfg.cover?.locked ?? false,
-      lock_mode: cfg.cover?.lock_mode,
+      locked: Boolean(cfg.cover?.locked),
+      lock_mode: cfg.cover?.lock_mode ?? undefined,
       cover_url: cfg.cover?.cover_url ?? "",
     },
 
-    /* ================= THEME ================= */
+    contact: {
+      locked: Boolean(cfg.contact?.locked),
+      lock_mode: cfg.contact?.lock_mode ?? undefined,
+
+      connect_title: cfg.contact?.connect_title || "Connect",
+      contact_title: cfg.contact?.contact_title || "Save Contact",
+    },
+
+    /* ================= LAYOUT ================= */
+    layout: {
+      locked: Boolean(cfg.layout?.locked),
+      lock_mode: cfg.layout?.lock_mode ?? undefined,
+
+      profile_type: cfg.layout?.profile_type ?? 3,
+      is_fade: Boolean(cfg.layout?.is_fade),
+      font: cfg.layout?.font || "Inter",
+      card_alignment: cfg.layout?.card_alignment || "center",
+
+      use_background:
+        ["solid", "gradient", "image"].includes(cfg.layout?.use_background)
+          ? cfg.layout.use_background
+          : "gradient",
+
+      color1: cfg.layout?.color1 || "#000000",
+      color2: cfg.layout?.color2 || "#000000",
+      direction: ["to-r", "to-l", "to-b", "to-t"].includes(cfg.layout?.direction)
+        ? cfg.layout.direction
+        : "to-r",
+
+      background_image: cfg.layout?.background_image || "",
+      custom_font: cfg.layout?.custom_font || "",
+      use_custom_font: Boolean(cfg.layout?.use_custom_font),
+
+      profile_width: cfg.layout?.profile_width ?? 0,
+      pattern_color: cfg.layout?.pattern_color ?? "",
+      button_style: cfg.layout?.button_style ?? 0,
+    },
+
+    /* ================= THEME (NEW) ================= */
     theme: {
-      locked: cfg.theme?.locked ?? false,
+      locked: Boolean(cfg.theme?.locked),
       lock_mode: cfg.theme?.lock_mode ?? undefined,
 
-      primary_color: cfg.theme?.primary_color ?? "#F97316",
-      background_color: cfg.theme?.background_color ?? "#F3F4F6",
-      card_color: cfg.theme?.card_color ?? "#FFFFFF",
-      text_color: cfg.theme?.text_color ?? "#111827",
-      accent_color: cfg.theme?.accent_color ?? "#000000",
+      card_background: cfg.theme?.card_background ?? "#BB3500",
+      button_color: cfg.theme?.button_color ?? "#251F31",
+      card_text: cfg.theme?.card_text ?? "#9F9F9F",
+      button_text: cfg.theme?.button_text ?? "#B79A8A",
     },
 
     /* ================= BANNER ================= */
     banner: {
-      locked: cfg.banner?.locked ?? false,
+      locked: Boolean(cfg.banner?.locked),
       lock_mode: cfg.banner?.lock_mode ?? undefined,
 
-      enabled: cfg.banner?.enabled ?? false,
+      enabled: Boolean(cfg.banner?.enabled),
       image_url: cfg.banner?.image_url ?? "",
       cta_text: cfg.banner?.cta_text ?? "",
       cta_url: cfg.banner?.cta_url ?? "",
@@ -91,7 +91,7 @@ export function normalizeProfile(api: any) {
 
     /* ================= PRODUCTS ================= */
     products: {
-      locked: cfg.products?.locked ?? false,
+      locked: Boolean(cfg.products?.locked),
       lock_mode: cfg.products?.lock_mode ?? undefined,
 
       items: Array.isArray(cfg.products?.items)
@@ -99,7 +99,7 @@ export function normalizeProfile(api: any) {
           id: p.id,
           name: p.name,
           price: p.price,
-          image_url: p.image_url || p.product_img_url,
+          image_url: p.product_img_url,
           rank: p.rank,
           enabled: p.enabled,
         }))
@@ -112,9 +112,15 @@ export function normalizeProfile(api: any) {
     /* ================= LINKS & FILES ================= */
     links_files: normalizeLinksFiles(api),
 
-    /* ================= SECTIONS (GROUP LOCK) ================= */
+    /* ================= PHOTO GALLERY ================= */
+    photo_gallery: normalizePhotoGallery(api),
+
+    /* ================= VIDEO GALLERY ================= */
+    video_gallery: normalizeVideoGallery(api),
+
+    /* ================= SECTIONS ================= */
     sections: {
-      locked: cfg.sections?.locked ?? false,
+      locked: Boolean(cfg.sections?.locked),
       lock_mode: cfg.sections?.lock_mode ?? undefined,
 
       items: Array.isArray(cfg.sections?.items)
@@ -129,15 +135,15 @@ export function normalizeProfile(api: any) {
   };
 }
 
-/* ================= SUB NORMALIZERS ================= */
 
+/* ================= SUB NORMALIZERS ================= */
 const normalizeMeeting = (api: any) => {
   const m = api.configuration?.meeting ?? {};
   return {
-    locked: m.locked ?? false,
+    locked: Boolean(m.locked),
     lock_mode: m.lock_mode ?? undefined,
 
-    enabled: m.enabled ?? false,
+    enabled: Boolean(m.enabled),
     type: m.type ?? "",
     meeting_url: m.meeting_url ?? "",
     button_text: m.button_text ?? "",
@@ -147,13 +153,13 @@ const normalizeMeeting = (api: any) => {
 const normalizeYoutube = (api: any) => {
   const y = api.configuration?.youtube ?? {};
   return {
-    locked: y.locked ?? false,
+    locked: Boolean(y.locked),
     lock_mode: y.lock_mode ?? undefined,
 
     items: Array.isArray(y.items)
       ? y.items.map((v: any, i: number) => ({
-        id: v.id ?? crypto.randomUUID(),
-        url: v.url ?? "",
+        id: v.id,
+        url: v.url,
         rank: v.rank ?? i + 1,
         enabled: v.enabled ?? true,
       }))
@@ -164,19 +170,55 @@ const normalizeYoutube = (api: any) => {
 const normalizeLinksFiles = (api: any) => {
   const lf = api.configuration?.links_files ?? {};
   return {
-    locked: lf.locked ?? false,
+    locked: Boolean(lf.locked),
     lock_mode: lf.lock_mode ?? undefined,
 
     items: Array.isArray(lf.items)
       ? lf.items.map((l: any, i: number) => ({
-        id: l.id || crypto.randomUUID(),
+        id: l.id,
         type: l.type || "link",
         title: l.title || "",
         url: l.url || "",
-        file_url: l.file_url || "",
-        file_type: l.file_type || "",
         rank: l.rank ?? i + 1,
         enabled: l.enabled ?? true,
+      }))
+      : [],
+  };
+};
+
+const normalizePhotoGallery = (api: any) => {
+  const g = api.configuration?.photo_gallery ?? {};
+  return {
+    locked: Boolean(g.locked),
+    lock_mode: g.lock_mode ?? undefined,
+
+    items: Array.isArray(g.items)
+      ? g.items.map((p: any, i: number) => ({
+        id: p.id,
+        title: p.title,
+        description: p.description,
+        img_url: p.img_url,
+        rank: p.rank ?? i + 1,
+        enabled: p.enabled ?? true,
+      }))
+      : [],
+  };
+};
+
+const normalizeVideoGallery = (api: any) => {
+  const g = api.configuration?.video_gallery ?? {};
+  return {
+    locked: Boolean(g.locked),
+    lock_mode: g.lock_mode ?? undefined,
+
+    items: Array.isArray(g.items)
+      ? g.items.map((v: any, i: number) => ({
+        id: v.id,
+        title: v.title,
+        description: v.description,
+        video_url: v.video_url,
+        rank: v.rank ?? i + 1,
+        enabled: v.enabled ?? true,
       }))
       : [],
   };
@@ -191,7 +233,7 @@ export function denormalizeProfile(
     ...baseApi, // keep username, ids, meta, etc
 
     avatar_url: cfg.profile.avatar_url,
-    cover_url: cfg.profile.cover_url,
+    cover_url: cfg.cover.cover_url,
     description: cfg.profile.description,
 
     configuration: {
@@ -222,15 +264,21 @@ export function denormalizeProfile(
         lock_mode: cfg.cover.lock_mode,
         cover_url: cfg.cover.cover_url,
       },
+      contact: {
+        locked: Boolean(cfg.contact?.locked),
+        lock_mode: cfg.contact?.lock_mode ?? undefined,
+
+        connect_title: cfg.contact?.connect_title || "Connect",
+        contact_title: cfg.contact?.contact_title || "Save Contact",
+      },
 
       theme: {
         locked: cfg.theme.locked,
         lock_mode: cfg.theme.lock_mode,
-        primary_color: cfg.theme.primary_color,
-        background_color: cfg.theme.background_color,
-        card_color: cfg.theme.card_color,
-        text_color: cfg.theme.text_color,
-        accent_color: cfg.theme.accent_color,
+        card_background: cfg.theme.card_background,
+        button_color: cfg.theme.button_color,
+        card_text: cfg.theme.card_text,
+        button_text: cfg.theme.button_text,
       },
 
       banner: {
