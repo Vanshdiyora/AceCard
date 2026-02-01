@@ -38,10 +38,14 @@ export function ProfileClassic({
         style={{ backgroundColor: t.cardBg }}
       >
         {/* Cover */}
-        <img
-          src={cover?.cover_url || ""}
-          className="w-full h-full object-cover"
-        />
+        {cover?.cover_url && (
+          <img
+            src={cover.cover_url}
+            className="w-full h-full object-cover"
+            alt="Cover"
+          />
+        )}
+
 
         {/* Dark overlay */}
         <div className="absolute inset-0 bg-black/40" />
@@ -61,7 +65,7 @@ export function ProfileClassic({
           className="absolute top-4 px-4 text-xs font-semibold tracking-wide"
           style={{ color: t.text }}
         >
-          {user?.vendor_name}
+
         </div>
 
         {/* Avatar + text */}
@@ -80,10 +84,21 @@ export function ProfileClassic({
               style={{ backgroundColor: t.buttonBg }}
             >
               {/* AVATAR */}
-              <img
-                src={profile.avatar_url || ""}
-                className="w-20 h-20 rounded-full object-cover"
-              />
+              {profile?.avatar_url ? (
+                <img
+                  src={profile.avatar_url}
+                  className="w-20 h-20 rounded-full object-cover"
+                  alt="Avatar"
+                />
+              ) : (
+                <div
+                  className="w-20 h-20 rounded-full flex items-center justify-center text-xs font-semibold"
+                  style={{ backgroundColor: t.cardBg, color: t.text }}
+                >
+                  {user?.name?.[0] || "?"}
+                </div>
+              )}
+
             </div>
           </div>
 
@@ -98,9 +113,9 @@ export function ProfileClassic({
           {/* Role */}
           <p
             className="text-xs opacity-90"
-            style={{ color: t.buttonText }}
+            style={{ color: t.text }}
           >
-            {formatRole(user?.job_title || user?.role)}
+            {formatRole(user?.job_title || user?.role)} at {user?.vendor_name}
           </p>
         </div>
       </div>

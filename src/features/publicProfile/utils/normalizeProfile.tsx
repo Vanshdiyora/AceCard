@@ -55,7 +55,7 @@ export function normalizeProfile(api: any) {
       custom_font: cfg.layout?.custom_font || "",
       use_custom_font: Boolean(cfg.layout?.use_custom_font),
       profile_width: Number(cfg.layout?.profile_width) || 2,
-button_style: Number(cfg.layout?.button_style) || 1,
+      button_style: Number(cfg.layout?.button_style) || 1,
 
     },
 
@@ -269,8 +269,8 @@ export function denormalizeProfile(
 
         background_image: cfg.layout.background_image,
         background_video: cfg.layout.background_video, // 👈 NEW
-profile_width: cfg.layout.profile_width,
-button_style: cfg.layout.button_style,
+        profile_width: cfg.layout.profile_width,
+        button_style: cfg.layout.button_style,
 
         custom_font: cfg.layout.custom_font,
         use_custom_font: cfg.layout.use_custom_font,
@@ -329,7 +329,7 @@ button_style: cfg.layout.button_style,
           id: p.id,
           name: p.name,
           price: p.price,
-          image_url: p.image_url,
+          image_url: p.image_url || p.product_img_url,
           rank: p.rank,
           enabled: p.enabled,
         })),

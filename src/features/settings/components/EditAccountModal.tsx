@@ -16,7 +16,6 @@ export default function EditAccountModal({ open, onClose }: Props) {
   const { data, saving } = useAppSelector(
     (s) => s.settings.account
   );
-
   const [form, setForm] = useState<any>({});
   const [errors, setErrors] = useState<
     Record<string, string | null>
@@ -31,8 +30,6 @@ export default function EditAccountModal({ open, onClose }: Props) {
       email: data.email ?? "",
       phone: data.phone ?? "",
       role: data.role ?? "",
-      // avatar_url: data.avatar_url ?? "",
-      // bio: data.bio ?? "",
       company_description: data.company_description ?? "",
       address: data.address ?? "",
     });
@@ -72,8 +69,10 @@ export default function EditAccountModal({ open, onClose }: Props) {
     });
 
     if (hasErrors) return;
-
-    dispatch(updateAccountProfile(form));
+  const payload = {
+    ...form,      // 👈 overwrite only changed ones
+  };
+    dispatch(updateAccountProfile(payload));
     onClose();
   };
 

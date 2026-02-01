@@ -279,7 +279,7 @@ export default function TeamMemberDetailsPage() {
 
   /* ---------------- UI ---------------- */
   return (
-    <div className="p-6 grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-6 h-[calc(100vh-10px)] overflow-hidden">
+    <div className="p-6 grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-6 h-[calc(100vh-70px)] overflow-hidden">
 
       {/* LEFT */}
       <div className="h-full overflow-y-auto overscroll-contain pr-2">

@@ -28,44 +28,46 @@ export function ProfileSplit({
     ALIGN_MAP[(layout?.card_alignment as CardAlign) || "center"];
 
   return (
+    <>
     <div
       className="rounded-2xl overflow-hidden shadow-md"
       style={{ backgroundColor: t.cardBg }}
-    >
+      >
       {/* IMAGE */}
       <div className="relative h-[180px] w-full">
         <img
           src={profile.avatar_url || ""}
           className="w-full h-full object-cover"
-        />
+          />
 
         {/* 🔥 Fade bottom */}
         {layout?.is_fade && (
           <div
-            className="absolute bottom-0 left-0 right-0 h-16"
-            style={{
-              background: `linear-gradient(to top, ${t.cardBg} 0%, rgba(0,0,0,0) 100%)`,
-            }}
+          className="absolute bottom-0 left-0 right-0 h-16"
+          style={{
+            background: `linear-gradient(to top, ${t.cardBg} 0%, rgba(0,0,0,0) 100%)`,
+          }}
           />
         )}
       </div>
 
       {/* CONTENT */}
-      <div className={`p-4 flex flex-col ${align}`}>
+    </div>
+      <div className={`px-4 pt-2 flex flex-col ${align}`}>
         <h2
           className="font-semibold text-sm"
           style={{ color: t.text }}
-        >
+          >
           {user?.name}
         </h2>
 
         <p
-          className="text-xs mt-1 opacity-90"
+          className="text-xs opacity-90"
           style={{ color: t.text }}
-        >
-          {formatRole(user?.job_title || user?.role)}
+          >
+          {formatRole(user?.job_title || user?.role)} at {user?.vendor_name}
         </p>
       </div>
-    </div>
+          </>
   );
 }

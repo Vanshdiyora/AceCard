@@ -209,7 +209,6 @@ export default function TeamMemberPublicProfileTab({
   );
 
   const [config, setConfig] = useState<PublicProfileConfig | null>(null);
-  console.log(config)
 
   /* ---------- Product search state ---------- */
   const [productSearch, setProductSearch] = useState("");
@@ -334,7 +333,7 @@ export default function TeamMemberPublicProfileTab({
         id,
         name: prev?.name || fromApi?.name || "",
         price: prev?.price || fromApi?.price || "",
-        image_url: prev?.image_url || fromApi?.image_url || "",
+        image_url: prev?.image_url || fromApi?.image_url || prev?.product_img_url || fromApi?.product_img_url || "",
         rank: index + 1,
         enabled: prev?.enabled ?? true,
       };

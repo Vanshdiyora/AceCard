@@ -26,9 +26,9 @@ export default function PublicProfileSettings() {
   useEffect(() => {
     if (data) setLiveConfig(data);
   }, [data]);
-
+console.log(liveConfig)
   return (
-    <div className="flex gap-6 h-[calc(100vh-50px)] overflow-hidden">
+    <div className="flex gap-6 h-[calc(100vh-200px)] overflow-hidden">
 
       {/* LEFT — Scrollable Editor */}
       <div className="flex-1 min-w-[480px] h-full overflow-y-auto overscroll-contain pr-2">
