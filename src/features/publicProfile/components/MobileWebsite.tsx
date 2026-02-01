@@ -205,10 +205,9 @@ export default function MobileWebsite({
 
   return (
     <div
-      className={`relative min-h-screen w-full overflow-hidden p-4 ${fontClass}`}
+      className={`relative min-h-screen w-full no-scrollbar overflow-hidden p-4 ${fontClass}`}
       style={resolveBackgroundStyle()}
     >
-
       <div className="space-y-6">
         {orderedSections.map((s: any) =>
           s?.enabled ? (

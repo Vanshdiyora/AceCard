@@ -61,3 +61,12 @@ body {
 .font-merriweather { font-family: "Merriweather", serif; }
 .font-caveat { font-family: "Caveat", cursive; }
 .font-gloria { font-family: "Gloria Hallelujah", cursive; }
+
+/* hide scrollbar but keep scroll */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}

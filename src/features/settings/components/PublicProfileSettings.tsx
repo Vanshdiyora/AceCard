@@ -1,4 +1,4 @@
-import { useEffect,useState } from "react";
+import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../../app/hooks";
 import TeamMemberPublicProfileTab from "../../teams/components/details/publicProfile/TeamMemberPublicProfileTab";
 import { loadPublicProfile } from "../../publicProfile/slice";
@@ -28,34 +28,41 @@ export default function PublicProfileSettings() {
   }, [data]);
 
   return (
-    <div className="flex gap-6 h-[calc(100vh-180px)]">
+    <div className="flex gap-6 h-[calc(100vh-50px)] overflow-hidden">
+
       {/* LEFT — Scrollable Editor */}
-      <div className="flex-1 min-w-[480px] overflow-y-auto pr-2">
+      <div className="flex-1 min-w-[480px] h-full overflow-y-auto overscroll-contain pr-2">
+
         <TeamMemberPublicProfileTab
           key={username}
           useSelfApi={true}
           showLockable={true}
-           onLiveChange={(cfg) => {
-    if (!data) return;
-    setLiveConfig(denormalizeProfile(cfg, data));
-  }}   // 🔥 connect
+          onLiveChange={(cfg) => {
+            if (!data) return;
+            setLiveConfig(denormalizeProfile(cfg, data));
+          }}   // 🔥 connect
         />
       </div>
 
       {/* RIGHT — Fixed Preview */}
-      <div className="w-[360px] shrink-0">
-        <div className="rounded-3xl border shadow-lg bg-white overflow-hidden h-full">
-          {loading || !liveConfig ? (
-            <div className="p-6 text-center text-gray-500">
-              Loading preview…
-            </div>
-          ) : (
-            <div className="h-full overflow-y-auto">
-              <MobileWebsite data={liveConfig} /> {/* 👈 LIVE */}
-            </div>
-          )}
+      <div className="hidden lg:flex justify-center items-start h-full overflow-hidden">
+
+        <div className="w-[330px] max-h-full aspect-[9/19.5] bg-black rounded-[2.5rem] p-2">
+          <div className="h-full bg-white rounded-[2rem] overflow-hidden flex flex-col">
+            {loading || !liveConfig ? (
+              <div className="h-full flex items-center justify-center text-gray-400">
+                Loading preview…
+              </div>
+            ) : (
+              <div className="flex-1 overflow-y-auto overscroll-contain no-scrollbar">
+                <MobileWebsite data={liveConfig} />
+              </div>
+            )}
+          </div>
         </div>
       </div>
+
+
     </div>
   );
 }

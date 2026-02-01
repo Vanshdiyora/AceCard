@@ -1,21 +1,25 @@
+import { useState } from "react";
 import { uploadImage } from "../../../../../publicProfile/services/publicProfile.api";
+import AvatarCropModal from "../../../../../../common/ui/AvatarCropModal";
 
 export default function ProfileSection({ profile, onChange }: any) {
-  const upload = async (file: File, key: string) => {
+  const [cropFile, setCropFile] = useState<File | null>(null);
+
+  const uploadCropped = async (blob: Blob) => {
+    const file = new File([blob], "avatar.jpg", { type: "image/jpeg" });
     const res = await uploadImage(file);
-    onChange({ ...profile, [key]: res.data.url });
+    onChange({ ...profile, avatar_url: res.data.url });
+    setCropFile(null);
   };
 
   return (
     <div className="space-y-8">
-
-      {/* AVATAR + BIO */}
       <div className="flex flex-col md:flex-row gap-8 items-start">
         <div className="space-y-2">
           <Label>Profile Photo</Label>
           <ImageBox
             url={profile.avatar_url}
-            onUpload={(f: any) => upload(f, "avatar_url")}
+            onSelect={(f: File) => setCropFile(f)}
           />
         </div>
 
@@ -23,7 +27,7 @@ export default function ProfileSection({ profile, onChange }: any) {
           <Label>Description</Label>
           <textarea
             placeholder="Write something about yourself..."
-            className="w-full min-h-[120px] rounded-xl border border-gray-200 bg-white/70 backdrop-blur px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 transition"
+            className="w-full min-h-[120px] rounded-xl border border-gray-200 bg-white/70 px-4 py-3"
             value={profile.description || ""}
             onChange={(e) =>
               onChange({ ...profile, description: e.target.value })
@@ -31,6 +35,14 @@ export default function ProfileSection({ profile, onChange }: any) {
           />
         </div>
       </div>
+
+      {cropFile && (
+        <AvatarCropModal
+          file={cropFile}
+          onCancel={() => setCropFile(null)}
+          onSave={uploadCropped}
+        />
+      )}
     </div>
   );
 }

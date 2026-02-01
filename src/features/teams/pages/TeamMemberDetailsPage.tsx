@@ -278,9 +278,12 @@ export default function TeamMemberDetailsPage() {
 
   /* ---------------- UI ---------------- */
   return (
-    <div className="p-6 grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-6 h-[calc(100vh-70px)]">
+    <div className="p-6 grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-6 h-[calc(100vh-10px)] overflow-hidden">
+
       {/* LEFT */}
-      <div className="overflow-y-auto pr-2">
+      <div className="h-full overflow-y-auto overscroll-contain pr-2">
+
+
         <button
           onClick={() => navigate(-1)}
           className="flex items-center gap-2 text-sm text-gray-500 hover:text-black mb-6"
@@ -412,27 +415,31 @@ export default function TeamMemberDetailsPage() {
       </div>
 
       {/* RIGHT */}
-      <div className="hidden lg:flex justify-center items-center h-full overflow-hidden">
-        <div className="w-[340px] max-h-full aspect-[9/19.5] bg-black rounded-[2.5rem] p-2">
-          <div className="h-full bg-white rounded-[2rem] overflow-hidden flex flex-col">
-            <div
-              ref={phoneScrollRef}
-              className="flex-1 overflow-y-auto overscroll-contain"
-            >
-              {mergedProfile ? (
-                <PublicMobileWebsite
-                  data={mergedProfile}
-                  scrollRef={phoneScrollRef}
-                />
-              ) : (
+      <div className="hidden lg:flex justify-center items-start h-full overflow-hidden">
+        <div className="h-full flex items-start">
 
-                <div className="h-full flex items-center justify-center text-sm text-gray-400">
-                  No public profile yet
-                </div>
-              )}
+
+          <div className="w-[330px] max-h-full aspect-[9/19.5] bg-black rounded-[2.5rem] p-2">
+            <div className="h-full bg-white rounded-[2rem] overflow-hidden flex flex-col">
+              <div
+                ref={phoneScrollRef}
+                className="flex-1 overflow-y-auto overscroll-contain no-scrollbar"
+              >
+
+                {mergedProfile ? (
+                  <PublicMobileWebsite
+                    data={mergedProfile}
+                    scrollRef={phoneScrollRef}
+                  />
+                ) : (
+
+                  <div className="h-full flex items-center justify-center text-sm text-gray-400">
+                    No public profile yet
+                  </div>
+                )}
+              </div>
             </div>
           </div>
-
         </div>
       </div>
 
