@@ -765,24 +765,26 @@ function PhotoGallery({ title, items, theme }: any) {
   const t = resolveTheme(theme);
   const [active, setActive] = useState<any | null>(null);
 
+  if (!items?.length) return null;
+
   return (
     <>
       <Section title={title || "Photo Gallery"} theme={theme}>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="flex gap-4 overflow-x-auto pb-3 snap-x snap-mandatory no-scrollbar">
           {items.map((p: any, i: number) => (
             <button
               key={i}
               onClick={() => setActive(p)}
-              className="group block text-left"
+              className="group block text-left snap-start"
             >
-              <div className="relative w-full h-32 rounded-xl overflow-hidden shadow-md">
+              <div className="relative min-w-[220px] h-48 rounded-2xl overflow-hidden shadow-md">
                 <img
                   src={p.img_url}
                   alt={p.title}
                   className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                 />
 
-                {/* permanent gradient */}
+                {/* gradient overlay */}
                 <div
                   className="absolute inset-0"
                   style={{
@@ -791,7 +793,7 @@ function PhotoGallery({ title, items, theme }: any) {
                   }}
                 />
 
-                {/* ALWAYS visible title */}
+                {/* title */}
                 {p.title && (
                   <div className="absolute bottom-2 left-2 right-2">
                     <p
@@ -818,6 +820,7 @@ function PhotoGallery({ title, items, theme }: any) {
     </>
   );
 }
+
 
 function PhotoModal({
   open,
@@ -905,12 +908,11 @@ function VideoGallery({ title, items, theme }: any) {
           return (
             <div
               key={i}
-              className="min-w-[260px] snap-start rounded-2xl overflow-hidden shadow-lg"
+              className="min-w-[220px] h-48 snap-start rounded-2xl overflow-hidden shadow-lg flex flex-col"
               style={{ backgroundColor: t.cardBg }}
             >
-
               {/* VIDEO */}
-              <div className="w-full h-40 bg-black">
+              <div className="w-full h-[140px] bg-black">
                 {isYouTube(v.video_url) ? (
                   <iframe
                     src={`https://www.youtube.com/embed/${getYouTubeId(v.video_url)}`}
@@ -932,9 +934,8 @@ function VideoGallery({ title, items, theme }: any) {
                 )}
               </div>
 
-
               {/* INFO */}
-              <div className="p-3 space-y-1">
+              <div className="px-3 py-1 space-y-1">
                 <h4
                   className="text-sm font-semibold line-clamp-1"
                   style={{ color: t.text }}
@@ -950,16 +951,6 @@ function VideoGallery({ title, items, theme }: any) {
                     {v.description}
                   </p>
                 )}
-
-                <a
-                  href={v.video_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-block mt-2 text-xs font-semibold"
-                  style={{ color: t.buttonText }}
-                >
-                  Open in new tab →
-                </a>
               </div>
             </div>
           );
@@ -968,6 +959,7 @@ function VideoGallery({ title, items, theme }: any) {
     </Section>
   );
 }
+
 
 function BackgroundVideo({ src }: { src?: string }) {
   if (!src) return null;
