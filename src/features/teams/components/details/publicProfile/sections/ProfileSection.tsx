@@ -2,6 +2,7 @@ import { useState } from "react";
 import { uploadImage } from "../../../../../publicProfile/services/publicProfile.api";
 import AvatarCropModal from "../../../../../../common/ui/AvatarCropModal";
 import { Toggle } from "../TeamMemberPublicProfileTab";
+
 export default function ProfileSection({
   profile,
   onChange,
@@ -12,25 +13,17 @@ export default function ProfileSection({
   const uploadCropped = async (blob: Blob) => {
     const file = new File([blob], "avatar.jpg", { type: "image/jpeg" });
     const res = await uploadImage(file);
+    const url = res.data.url;
 
-    if (profile.custom_profile) {
-      // 🔒 custom profile image (DO NOT touch avatar)
-      onChange({
-        ...profile,
-        custom_profile_url: res.data.url,
-      });
-    } else {
-      // 👤 normal avatar
-      onChange({
-        ...profile,
-        avatar_url: res.data.url,
-      });
-    }
+    // 🔒 FINAL GUARD — always obey toggle
+    const next = profile.custom_profile
+      ? { ...profile, custom_profile_url: url }
+      : { ...profile, avatar_url: url };
 
+    onChange(next);
     setCropFile(null);
     onCropToggle?.(false);
   };
-
 
   return (
     <div>
@@ -38,18 +31,29 @@ export default function ProfileSection({
         label="Use Custom Profile"
         value={profile.custom_profile}
         onChange={(v) =>
-          onChange({ ...profile, custom_profile: v })
+          onChange({
+            ...profile,
+            custom_profile: v,
+            ...(v
+              ? { custom_profile_url: profile.custom_profile_url || "" }
+              : {}),
+          })
         }
       />
-      <div className="flex flex-col md:flex-row gap-8 items-start mt-2">
 
+      <div className="flex flex-col md:flex-row gap-8 items-start mt-2">
         <div className="space-y-2">
           <Label>Profile Photo</Label>
+
           <ImageBox
-            url={profile.avatar_url}
+            url={
+              profile.custom_profile
+                ? profile.custom_profile_url || profile.avatar_url
+                : profile.avatar_url
+            }
             onSelect={(file: File) => {
               setCropFile(file);
-              onCropToggle?.(true); // 👈 notify parent
+              onCropToggle?.(true);
             }}
           />
         </div>
@@ -81,6 +85,8 @@ export default function ProfileSection({
   );
 }
 
+/* ================= UI ================= */
+
 function Label({ children }: { children: React.ReactNode }) {
   return (
     <p className="text-xs uppercase tracking-wide text-gray-500">
@@ -89,14 +95,13 @@ function Label({ children }: { children: React.ReactNode }) {
   );
 }
 
-function ImageBox({ label, url, wide, onSelect }: any) {
+function ImageBox({ url, wide, onSelect }: any) {
   return (
     <div className="space-y-1">
-      <p className="text-xs uppercase tracking-wide text-gray-500">{label}</p>
-
       <div
-        className={`group relative rounded-2xl overflow-hidden border border-white/40 shadow-md bg-gradient-to-br from-gray-50 to-gray-100 ${wide ? "h-44 w-full" : "h-28 w-28"
-          }`}
+        className={`group relative rounded-2xl overflow-hidden border border-white/40 shadow-md bg-gradient-to-br from-gray-50 to-gray-100 ${
+          wide ? "h-44 w-full" : "h-28 w-28"
+        }`}
       >
         {url ? (
           <img

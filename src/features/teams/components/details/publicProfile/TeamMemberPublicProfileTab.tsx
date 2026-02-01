@@ -21,6 +21,8 @@ import { fetchProducts } from "../../../../products/slice";
 import ResultModal from "../../../../../common/ui/ResultModal";
 import { AlignLeft, AlignCenter, AlignRight } from "lucide-react";
 import CoverCropModal from "../../../../../common/ui/CoverCropModal";
+import PhotoGallerySection from "./sections/PhotoGallerySection";
+import VideoGallerySection from "./sections/VideoGallerySection";
 
 const THEME_COLOR_KEYS = [
   "card_background",
@@ -100,8 +102,11 @@ export interface BannerConfig extends LockMeta {
 }
 
 export interface ProductsConfig extends LockMeta {
+  toggle_price: boolean;
+  section_title: string;
   items: ProductRef[];
 }
+
 
 export interface MeetingConfig extends LockMeta {
   enabled: boolean;
@@ -113,6 +118,19 @@ export interface CoverConfig extends LockMeta {
   cover_url?: string;
 }
 
+export interface PhotoGalleryItem {
+  title: string;
+  description: string;
+  link: string;
+  img_url: string;
+  rank: number;
+  enabled: boolean;
+}
+
+export interface PhotoGalleryConfig extends LockMeta {
+  section_title: string;
+  items: PhotoGalleryItem[];
+}
 
 interface PublicProfileConfig {
   layout: LayoutConfig;
@@ -135,6 +153,18 @@ interface PublicProfileConfig {
   sections: LockMeta & {
     items: SectionItem[];
   };
+  photo_gallery: PhotoGalleryConfig;
+  video_gallery: LockMeta & {
+    section_title: string;
+    items: {
+      title: string;
+      description: string;
+      link: string;
+      video_url: string;
+      rank: number;
+      enabled: boolean;
+    }[];
+  };
 
 }
 
@@ -151,7 +181,6 @@ export default function TeamMemberPublicProfileTab({
   showLockable?: boolean;
   onCropToggle?: (open: boolean) => void;
 }) {
-
   const dispatch = useAppDispatch();
   const [resultOpen, setResultOpen] = useState(false);
   const [resultSuccess, setResultSuccess] = useState(true);
@@ -169,6 +198,7 @@ export default function TeamMemberPublicProfileTab({
   );
 
   const [config, setConfig] = useState<PublicProfileConfig | null>(null);
+  console.log(config)
 
   /* ---------- Product search state ---------- */
   const [productSearch, setProductSearch] = useState("");
@@ -332,6 +362,18 @@ export default function TeamMemberPublicProfileTab({
       meeting: withLock(config.meeting),
 
       social_links: { items: config.social_links.items },
+      photo_gallery: withLock(config.photo_gallery),
+      video_gallery: showLockable
+        ? {
+          section_title: config.video_gallery.section_title,
+          items: config.video_gallery.items,
+          locked: config.video_gallery.locked,
+          lock_mode: config.video_gallery.lock_mode,
+        }
+        : {
+          section_title: config.video_gallery.section_title,
+          items: config.video_gallery.items,
+        },
 
       products: {
         ...withLock(config.products),
@@ -534,7 +576,7 @@ export default function TeamMemberPublicProfileTab({
   const isLayoutLocked = isReadOnly(config.layout);
 
   return (
-    <div className=" space-y-10 pb-10">
+    <div className=" space-y-10">
       <ResultModal
         open={resultOpen}
         success={resultSuccess}
@@ -1012,6 +1054,62 @@ export default function TeamMemberPublicProfileTab({
             />
           </div>
         )}
+        {/* TOGGLE PRICE VISIBILITY */}
+        <div className="px-6 mt-4">
+          <div
+            className={`flex items-center justify-between rounded-xl border px-4 py-3 bg-white ${isReadOnly(config.products) ? "opacity-60 pointer-events-none" : ""
+              }`}
+          >
+            <div>
+              <p className="text-sm font-medium text-gray-800">
+                Show Product Prices
+              </p>
+              <p className="text-xs text-gray-500">
+                Toggle whether prices appear on the public card
+              </p>
+            </div>
+
+            <Switch
+              label=""   // we already show text on left
+              value={config.products.toggle_price}
+              onChange={(v) =>
+                update({
+                  ...config,
+                  products: {
+                    ...config.products,
+                    toggle_price: v,
+                  },
+                })
+              }
+            />
+          </div>
+        </div>
+
+        {/* SECTION TITLE */}
+        <div className="px-6 mt-4">
+          <div
+            className={`space-y-1 ${isReadOnly(config.products) ? "opacity-60 pointer-events-none" : ""
+              }`}
+          >
+            <p className="text-sm font-medium text-gray-700">
+              Section Title
+            </p>
+            <Input
+              value={config.products.section_title}
+              placeholder="Products"
+              onChange={(v) =>
+                update({
+                  ...config,
+                  products: {
+                    ...config.products,
+                    section_title: v,
+                  },
+                })
+              }
+            />
+          </div>
+        </div>
+
 
         {/* SELECT */}
         <div className="px-1">
@@ -1026,7 +1124,8 @@ export default function TeamMemberPublicProfileTab({
               update({
                 ...config,
                 products: {
-                  locked: config.products.locked,
+                  ...config.products,              // 🔥 keep toggle_price + section_title
+                  locked: config.products.locked,  // keep lock
                   items: mergeSelectedProducts(
                     ids,
                     products,
@@ -1035,6 +1134,7 @@ export default function TeamMemberPublicProfileTab({
                 },
               })
             }
+
             errors={formErrors}
             setErrors={setFormErrors}
           />
@@ -1063,6 +1163,46 @@ export default function TeamMemberPublicProfileTab({
         </div>
 
       </div>
+
+
+      <Card title="Photo Gallery" desc="Manage your gallery images">
+        {showLockable && (
+          <LockControl
+            value={config.photo_gallery}
+            onChange={(v) =>
+              update({
+                ...config,
+                photo_gallery: { ...config.photo_gallery, ...v },
+              })
+            }
+          />
+        )}
+
+        <PhotoGallerySection
+          value={config.photo_gallery}
+          disabled={isReadOnly(config.photo_gallery)}
+          onChange={(v: any) =>
+            update({ ...config, photo_gallery: v })
+          }
+        />
+      </Card>
+
+      <Card title="Video Gallery" desc="Manage your videos">
+        {showLockable && (
+          <LockControl
+            value={config.video_gallery}
+            onChange={(v) =>
+              update({ ...config, video_gallery: { ...config.video_gallery, ...v } })
+            }
+          />
+        )}
+
+        <VideoGallerySection
+          value={config.video_gallery}
+          disabled={isReadOnly(config.video_gallery)}
+          onChange={(v) => update({ ...config, video_gallery: v })}
+        />
+      </Card>
 
 
 

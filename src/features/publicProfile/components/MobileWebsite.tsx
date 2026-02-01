@@ -16,9 +16,15 @@ import {
 import { ProfileWrapper } from "./WebsiteLayout/ProfileWrapper";
 import { useState, useEffect } from "react";
 import { ConnectModal } from "./ConnectModal";
-
+import { ProfileActions } from "./WebsiteLayout/ProfileActions";
 /* ================= HELPERS ================= */
 
+const resolveTheme = (theme: any) => ({
+  cardBg: theme.card_background || "#6B6E93",
+  buttonBg: theme.button_color || "#A5A6AB",
+  text: theme.card_text || "#EA3636",
+  buttonText: theme.button_text || "#5F29F5",
+});
 
 
 const getYouTubeId = (url?: string) => {
@@ -51,6 +57,7 @@ export default function MobileWebsite({
     cover = {},
     layout = {},
     theme = {},
+    contact = {},
     banner = {},
     meeting = {},
     social_links = { items: [] },
@@ -58,6 +65,8 @@ export default function MobileWebsite({
     links_files = { items: [] },
     products = { items: [] },
     sections = { items: [] },
+    photo_gallery = { items: [] },
+    video_gallery = { items: [] },
   } = config;
 
 
@@ -109,11 +118,15 @@ export default function MobileWebsite({
       case "about":
         return profile.description ? (
           <Section title="About" theme={theme}>
-            <p style={{ color: theme.text_color }}>
+            <p
+              className="text-sm leading-relaxed"
+              style={{ color: theme.card_text }}
+            >
               {profile.description}
             </p>
           </Section>
         ) : null;
+
 
       case "social_links":
         return (
@@ -126,16 +139,37 @@ export default function MobileWebsite({
       case "products":
         return (
           <Products
+            title={products.section_title}
             items={sortByRank(products.items)}
             theme={theme}
+            showPrice={products.toggle_price}
           />
+
         );
+      case "video_gallery":
+        return video_gallery?.items?.length ? (
+          <VideoGallery
+            title={video_gallery.section_title}
+            items={sortByRank(video_gallery.items)}
+            theme={theme}
+          />
+        ) : null;
 
       case "youtube":
         return (
           <YouTube
             items={sortByRank(youtube.items)}
             theme={theme}
+          />
+        );
+
+      case "contact":
+        return (
+          <ProfileActions
+            user={data}
+            theme={theme}
+            contact={contact}
+            onConnect={() => setOpen(true)}
           />
         );
 
@@ -162,10 +196,21 @@ export default function MobileWebsite({
           />
         ) : null;
 
+      case "photo_gallery":
+        return photo_gallery?.items?.length ? (
+          <PhotoGallery
+            title={photo_gallery.section_title}
+            items={sortByRank(photo_gallery.items)}
+            theme={theme}
+          />
+        ) : null;
+
       default:
         return null;
     }
   };
+
+  // const t = resolveTheme(theme);
 
   const resolveBackgroundStyle = () => {
     if (layout?.use_background === "image" && layout?.background_image) {
@@ -229,11 +274,13 @@ export default function MobileWebsite({
 /* ================= UI BLOCKS ================= */
 
 function Section({ title, children, theme }: any) {
+  const t = resolveTheme(theme);
+
   return (
-    <div className="">
+    <div>
       <h3
         className="text-sm font-semibold mb-2"
-        style={{ color: theme.text_color }}
+        style={{ color: t.text }}
       >
         {title}
       </h3>
@@ -241,6 +288,7 @@ function Section({ title, children, theme }: any) {
     </div>
   );
 }
+
 
 /* ================= PROFILE ================= */
 
@@ -260,16 +308,16 @@ export const formatRole = (role?: string) => {
 /* ================= MEETING ================= */
 
 function MeetingCTA({ meeting, theme }: any) {
+  const t = resolveTheme(theme);
+
   return (
     <div className="px-12">
       <a
         href={meeting.meeting_url}
-        target="_blank"
-        rel="noopener noreferrer"
         className="block text-center py-4 rounded-xl text-sm font-semibold shadow-md"
         style={{
-          backgroundColor: theme.primary_color,
-          color: "#fff",
+          backgroundColor: t.buttonBg,
+          color: t.buttonText,
         }}
       >
         {meeting.button_text || "BOOK A MEETING NOW!"}
@@ -279,35 +327,55 @@ function MeetingCTA({ meeting, theme }: any) {
 }
 
 /* ================= PRODUCTS ================= */
-
-function Products({ items, theme }: any) {
+function Products({
+  title,
+  items,
+  theme,
+  showPrice,
+}: {
+  title: string;
+  items: any[];
+  theme: any;
+  showPrice: boolean;
+}) {
   if (!items?.length) return null;
 
   return (
-    <Section title="Products" theme={theme}>
-      <div className="flex gap-4 overflow-x-auto pb-2 snap-x snap-mandatory">
+    <Section title={title || "Products"} theme={theme}>
+      <div className="flex gap-4 overflow-x-auto pb-3 snap-x snap-mandatory">
         {items.map((p: any) => (
           <div
             key={p.id}
-            className="relative min-w-[220px] h-44 rounded-2xl overflow-hidden snap-start shadow-lg"
+            className="relative min-w-[220px] h-48 rounded-2xl overflow-hidden snap-start shadow-lg transition hover:scale-[1.02]"
+            style={{ backgroundColor: theme.card_background }}
           >
-            {/* Background image */}
+            {/* IMAGE */}
             <img
               src={p.image_url || p.product_img_url}
               alt={p.name}
               className="absolute inset-0 w-full h-full object-cover"
             />
 
-            {/* Gradient overlay */}
+            {/* OVERLAY */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
 
-            {/* Content */}
-            <div className="absolute bottom-4 left-4 right-4 text-white">
-              <p className="text-sm opacity-80">Featured</p>
-              <h3 className="text-lg font-semibold leading-tight line-clamp-2">
+            {/* CONTENT */}
+            <div className="absolute bottom-3 left-3 right-3">
+              <h3
+                className="text-sm font-semibold leading-tight line-clamp-2"
+                style={{ color: theme.button_text }}
+              >
                 {p.name}
               </h3>
-              <p className="text-xs mt-1">₹{p.price}</p>
+
+              {showPrice && (
+                <p
+                  className="text-xs mt-1 font-medium"
+                  style={{ color: theme.button_text }}
+                >
+                  ₹{p.price}
+                </p>
+              )}
             </div>
           </div>
         ))}
@@ -348,11 +416,11 @@ function YouTube({ items, theme }: any) {
 }
 
 /* ================= SOCIAL ================= */
-
 function Social({ items, theme }: any) {
   if (!items?.length) return null;
 
-  // break into rows of 3
+  const t = resolveTheme(theme);
+
   const rows: any[][] = [];
   for (let i = 0; i < items.length; i += 3) {
     rows.push(items.slice(i, i + 3));
@@ -374,8 +442,8 @@ function Social({ items, theme }: any) {
               rel="noopener noreferrer"
               className="h-20 w-20 rounded-3xl flex items-center justify-center shadow-md transition hover:scale-105 overflow-hidden"
               style={{
-                backgroundColor: theme.card_color,
-                color: theme.primary_color,
+                backgroundColor: t.cardBg,
+                color: t.buttonText,
               }}
             >
               {s.label === "Instagram" && <Instagram size={32} />}
@@ -388,7 +456,6 @@ function Social({ items, theme }: any) {
               {s.label === "Personal Website" && <Globe size={32} />}
               {s.label === "Snapchat" && <Ghost size={32} />}
               {s.label === "TikTok" && <Music2 size={32} />}
-
             </a>
           ))}
         </div>
@@ -401,6 +468,13 @@ function Social({ items, theme }: any) {
 
 function Links({ items, theme }: any) {
   if (!items?.length) return null;
+
+  const t = {
+    card: theme.card_background || "#fff",
+    text: theme.card_text || "#111",
+    button: theme.button_color || "#000",
+  };
+
   return (
     <Section title="Links & Files" theme={theme}>
       <div className="flex flex-col gap-4">
@@ -408,13 +482,17 @@ function Links({ items, theme }: any) {
           <a
             key={l.id}
             href={l.url || l.file_url}
-            className="flex items-center gap-3"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-3 rounded-xl p-2 transition hover:scale-[1.01]"
+            style={{ backgroundColor: "transparent" }}
           >
+            {/* ICON */}
             <div
-              className="h-9 w-9 rounded-full flex items-center justify-center"
+              className="h-9 w-9 rounded-full flex items-center justify-center shadow"
               style={{
-                backgroundColor: theme.card_color,
-                color: theme.primary_color,
+                backgroundColor: t.card,
+                color: t.button,
               }}
             >
               {l.type === "file" ? (
@@ -423,9 +501,11 @@ function Links({ items, theme }: any) {
                 <Link2 size={16} />
               )}
             </div>
+
+            {/* TEXT */}
             <p
-              className="text-sm font-semibold"
-              style={{ color: theme.text_color }}
+              className="text-sm font-semibold truncate"
+              style={{ color: t.text }}
             >
               {l.title}
             </p>
@@ -436,8 +516,8 @@ function Links({ items, theme }: any) {
   );
 }
 
-/* ================= BANNER ================= */
 
+/* ================= BANNER ================= */
 function Banner({
   image,
   ctaText,
@@ -476,9 +556,7 @@ function Banner({
   );
 }
 
-
 /* ================= VCARD ================= */
-
 export function saveContact(user: any) {
   if (!user) return;
 
@@ -506,4 +584,195 @@ END:VCARD
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
+}
+
+// Photo Gallery
+function PhotoGallery({ title, items, theme }: any) {
+  const t = resolveTheme(theme);
+  const [active, setActive] = useState<any | null>(null);
+
+  return (
+    <>
+      <Section title={title || "Photo Gallery"} theme={theme}>
+        <div className="grid grid-cols-2 gap-3">
+          {items.map((p: any, i: number) => (
+            <button
+              key={i}
+              onClick={() => setActive(p)}
+              className="group block text-left"
+            >
+              <div className="relative w-full h-32 rounded-xl overflow-hidden shadow-md">
+                <img
+                  src={p.img_url}
+                  alt={p.title}
+                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                />
+
+                {/* permanent gradient */}
+                <div
+                  className="absolute inset-0"
+                  style={{
+                    background:
+                      "linear-gradient(to top, rgba(0,0,0,.55), transparent)",
+                  }}
+                />
+
+                {/* ALWAYS visible title */}
+                {p.title && (
+                  <div className="absolute bottom-2 left-2 right-2">
+                    <p
+                      className="text-xs font-semibold leading-tight line-clamp-2"
+                      style={{ color: t.text }}
+                    >
+                      {p.title}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </button>
+          ))}
+        </div>
+      </Section>
+
+      {/* MODAL */}
+      <PhotoModal
+        open={!!active}
+        item={active}
+        theme={theme}
+        onClose={() => setActive(null)}
+      />
+    </>
+  );
+}
+
+function PhotoModal({
+  open,
+  onClose,
+  item,
+  theme,
+}: {
+  open: boolean;
+  onClose: () => void;
+  item: any;
+  theme: any;
+}) {
+  if (!open || !item) return null;
+
+  const t = resolveTheme(theme);
+
+  return (
+    <div
+      className="fixed inset-0 z-[999] bg-black/60 flex items-center justify-center p-4"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-2xl max-w-sm w-full overflow-hidden shadow-xl animate-fadeIn"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <img
+          src={item.img_url}
+          alt={item.title}
+          className="w-full h-56 object-cover"
+        />
+
+        <div className="p-4 space-y-3">
+          <h3 className="text-lg font-semibold" style={{ color: t.text }}>
+            {item.title}
+          </h3>
+
+          {item.description && (
+            <p className="text-sm opacity-80" style={{ color: t.text }}>
+              {item.description}
+            </p>
+          )}
+
+          {item.link && (
+            <a
+              href={item.link}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block text-center py-2 rounded-xl text-sm font-semibold shadow-md transition"
+              style={{
+                backgroundColor: t.buttonBg,
+                color: t.buttonText,
+              }}
+            >
+              Open Link
+            </a>
+          )}
+
+          <button
+            onClick={onClose}
+            className="w-full text-xs text-gray-400 mt-1"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function VideoGallery({ title, items, theme }: any) {
+  const t = resolveTheme(theme);
+
+  return (
+    <Section title={title || "Video Gallery"} theme={theme}>
+      <div className="flex gap-4 overflow-x-auto pb-3 snap-x snap-mandatory">
+        {items.map((v: any, i: number) => {
+          const id = getYouTubeId(v.video_url);
+          if (!id) return null;
+
+          return (
+            <div
+              key={i}
+              className="min-w-[260px] snap-start rounded-2xl overflow-hidden shadow-lg"
+              style={{ backgroundColor: t.cardBg }}
+            >
+
+              {/* VIDEO */}
+              <div className="w-full h-40 bg-black">
+                <iframe
+                  src={`https://www.youtube.com/embed/${id}`}
+                  className="w-full h-full"
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              </div>
+
+              {/* INFO */}
+              <div className="p-3 space-y-1">
+                <h4
+                  className="text-sm font-semibold line-clamp-1"
+                  style={{ color: t.text }}
+                >
+                  {v.title}
+                </h4>
+
+                {v.description && (
+                  <p
+                    className="text-xs opacity-80 line-clamp-2"
+                    style={{ color: t.text }}
+                  >
+                    {v.description}
+                  </p>
+                )}
+
+                <a
+                  href={v.video_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block mt-2 text-xs font-semibold"
+                  style={{ color: t.buttonText }}
+                >
+                  Open in new tab →
+                </a>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </Section>
+  );
 }

@@ -94,14 +94,17 @@ export function normalizeProfile(api: any) {
       locked: Boolean(cfg.products?.locked),
       lock_mode: cfg.products?.lock_mode ?? undefined,
 
+      toggle_price: Boolean(cfg.products?.toggle_price),
+      section_title: cfg.products?.section_title || "Products",
+
       items: Array.isArray(cfg.products?.items)
         ? cfg.products.items.map((p: any) => ({
           id: p.id,
           name: p.name,
           price: p.price,
-          image_url: p.product_img_url,
-          rank: p.rank,
-          enabled: p.enabled,
+          image_url: p.product_img_url || p.image_url || "",
+          rank: p.rank ?? 0,
+          enabled: p.enabled ?? true,
         }))
         : [],
     },
@@ -117,6 +120,7 @@ export function normalizeProfile(api: any) {
 
     /* ================= VIDEO GALLERY ================= */
     video_gallery: normalizeVideoGallery(api),
+
 
     /* ================= SECTIONS ================= */
     sections: {
@@ -191,17 +195,20 @@ const normalizePhotoGallery = (api: any) => {
   return {
     locked: Boolean(g.locked),
     lock_mode: g.lock_mode ?? undefined,
+    section_title: g?.section_title || "Photo Gallery",
 
     items: Array.isArray(g.items)
       ? g.items.map((p: any, i: number) => ({
         id: p.id,
         title: p.title,
         description: p.description,
+        link: p.link ?? "",     // 🔥 ADD
         img_url: p.img_url,
         rank: p.rank ?? i + 1,
         enabled: p.enabled ?? true,
       }))
       : [],
+
   };
 };
 
@@ -210,7 +217,7 @@ const normalizeVideoGallery = (api: any) => {
   return {
     locked: Boolean(g.locked),
     lock_mode: g.lock_mode ?? undefined,
-
+    section_title: g.section_title || "Video Gallery",
     items: Array.isArray(g.items)
       ? g.items.map((v: any, i: number) => ({
         id: v.id,
@@ -306,6 +313,8 @@ export function denormalizeProfile(
       products: {
         locked: cfg.products.locked,
         lock_mode: cfg.products.lock_mode,
+        toggle_price: cfg.products.toggle_price,
+        section_title: cfg.products.section_title,
         items: cfg.products.items.map((p: any) => ({
           id: p.id,
           name: p.name,
@@ -315,6 +324,7 @@ export function denormalizeProfile(
           enabled: p.enabled,
         })),
       },
+
 
       youtube: {
         locked: cfg.youtube.locked,
@@ -339,6 +349,34 @@ export function denormalizeProfile(
           file_type: l.file_type,
           rank: l.rank,
           enabled: l.enabled,
+        })),
+      },
+      photo_gallery: {
+        locked: cfg.photo_gallery.locked,
+        lock_mode: cfg.photo_gallery.lock_mode,
+        section_title: cfg.photo_gallery.section_title,
+
+        items: cfg.photo_gallery.items.map((p: any) => ({
+          id: p.id,
+          title: p.title,
+          description: p.description,
+          link: p.link,
+          img_url: p.img_url,
+          rank: p.rank,
+          enabled: p.enabled,
+        })),
+      },
+      video_gallery: {
+        locked: cfg.video_gallery.locked,
+        lock_mode: cfg.video_gallery.lock_mode,
+        section_title: cfg.video_gallery.section_title,
+        items: cfg.video_gallery.items.map((v: any) => ({
+          title: v.title,
+          description: v.description,
+          link: v.link,
+          video_url: v.video_url,
+          rank: v.rank,
+          enabled: v.enabled,
         })),
       },
 

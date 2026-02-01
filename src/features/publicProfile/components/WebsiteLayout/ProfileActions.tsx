@@ -1,25 +1,33 @@
 import { saveContact } from "../MobileWebsite";
 
-export function ProfileActions({ user, theme, onConnect }: any) {
+export function ProfileActions({
+  user,
+  theme,
+  contact,
+  onConnect,
+}: any) {
   return (
     <div className="grid grid-cols-2 gap-3 mt-4">
       <button
         onClick={() => saveContact(user)}
-        className="h-11 rounded-xl border text-sm"
-        style={{ color: theme.text_color, borderColor: theme.accent_color }}
+        className="h-11 rounded-xl border text-sm font-medium"
+        style={{
+          color: theme.card_text,
+          borderColor: theme.button_color,
+        }}
       >
-        Save Contact
+        {contact?.contact_title || "Save Contact"}
       </button>
 
       <button
         onClick={onConnect}
-        className="h-11 rounded-xl text-sm font-medium"
+        className="h-11 rounded-xl text-sm font-semibold shadow-md"
         style={{
-          backgroundColor: theme.card_color,
-          color: theme.primary_color,
+          backgroundColor: theme.button_color,
+          color: theme.button_text,
         }}
       >
-        Connect
+        {contact?.connect_title || "Connect"}
       </button>
     </div>
   );
