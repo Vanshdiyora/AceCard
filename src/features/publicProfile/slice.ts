@@ -24,14 +24,19 @@ export const loadPublicProfile = createAsyncThunk(
   async ({
     handle,
     type,
+    lat,
+    lng,
   }: {
     handle: string;
     type?: string;
+    lat?: number;
+    lng?: number;
   }) => {
-    const res = await fetchPublicCard(handle, type);
+    const res = await fetchPublicCard(handle, type, lat, lng);
     return res.data;
   }
 );
+
 
 export const savePublicProfileByUsername = createAsyncThunk(
   "publicProfile/saveByUsername",

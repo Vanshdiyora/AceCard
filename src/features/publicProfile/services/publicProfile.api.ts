@@ -2,12 +2,21 @@ import axiosClient from "../../../services/axiosClient";
 
 export const fetchPublicCard = (
   handle: string,
-  type?: string
+  type?: string,
+  lat?: number,
+  lng?: number
 ) => {
-  const query = type ? `?type=${type}` : "";
+  const params = new URLSearchParams();
+
+  if (type) params.append("type", type);
+  if (lat && lng) {
+    params.append("lat", lat.toString());
+    params.append("lng", lng.toString());
+  }
+
+  const query = params.toString() ? `?${params}` : "";
   return axiosClient.get(`/card/${handle}${query}`);
 };
-
 
 export const fetchMyProfile = () =>
   axiosClient.get("/profile");
