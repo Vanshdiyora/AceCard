@@ -1,52 +1,54 @@
 import AddSocialModal from "./AddSocialModal";
 import { useState, useEffect } from "react";
-import {
-  Instagram,
-  Linkedin,
-  Twitter,
-  Youtube,
-  Facebook,
-  MessageCircle,
-  Phone,
-  Globe,
-  Ghost,
-  Music2,
-  Trash2,
-} from "lucide-react";
+import { Trash2 } from "lucide-react";
 
+// 🔥 Latest official brand icons
+import {
+  SiInstagram,
+  SiLinkedin,
+  SiYoutube,
+  SiX,
+  SiFacebook,
+  SiWhatsapp,
+  SiSnapchat,
+  SiTiktok,
+} from "react-icons/si";
+
+import { FiPhone, FiGlobe } from "react-icons/fi";
+
+// ---------------- ICON MAP ----------------
 const ICONS: Record<string, any> = {
-  instagram: Instagram,
-  linkedin: Linkedin,
-  twitter: Twitter,
-  youtube: Youtube,
-  facebook: Facebook,
-  snapchat: Ghost,
-  tiktok: Music2,
-  whatsapp: MessageCircle,
-  phone: Phone,
-  website: Globe,
+  instagram: SiInstagram,
+  linkedin: SiLinkedin,
+  twitter: SiX,
+  youtube: SiYoutube,
+  facebook: SiFacebook,
+  snapchat: SiSnapchat,
+  tiktok: SiTiktok,
+  whatsapp: SiWhatsapp,
+  phone: FiPhone,
+  website: FiGlobe,
 };
 
+// ---------------- AVAILABLE SOCIALS ----------------
 const ALL_SOCIALS = [
   { id: "instagram", label: "Instagram" },
   { id: "linkedin", label: "LinkedIn" },
-  { id: "twitter", label: "Twitter" },
+  { id: "twitter", label: "X (Twitter)" },
   { id: "youtube", label: "YouTube" },
   { id: "facebook", label: "Facebook" },
   { id: "snapchat", label: "Snapchat" },
-  { id: "tiktok", label: "Tiktok" },
-  { id: "whatsapp", label: "Whatsapp" },
-  { id: "phone", label: "Call" },
+  { id: "tiktok", label: "TikTok" },
+  { id: "whatsapp", label: "WhatsApp" },
+  { id: "phone", label: "Phone" },
   { id: "website", label: "Website" },
 ];
 
 export default function SocialSection({ items = [], onChange }: any) {
   const [open, setOpen] = useState(false);
 
-  // toggle add/remove
   const toggle = (s: any) => {
     const exists = items.find((i: any) => i.id === s.id);
-
     if (exists) {
       onChange(items.filter((i: any) => i.id !== s.id));
     } else {
@@ -55,9 +57,7 @@ export default function SocialSection({ items = [], onChange }: any) {
   };
 
   const update = (id: string, val: string) => {
-    onChange(
-      items.map((i: any) => (i.id === id ? { ...i, url: val } : i))
-    );
+    onChange(items.map((i: any) => (i.id === id ? { ...i, url: val } : i)));
   };
 
   const remove = (id: string) => {
@@ -67,10 +67,8 @@ export default function SocialSection({ items = [], onChange }: any) {
   // 🔒 lock background scroll
   useEffect(() => {
     if (!open) return;
-
     const original = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-
     return () => {
       document.body.style.overflow = original;
     };
@@ -78,22 +76,13 @@ export default function SocialSection({ items = [], onChange }: any) {
 
   return (
     <>
-      <div className="flex justify-end mb-4">
-        <button
-          onClick={() => setOpen(true)}
-          className="px-4 py-2 rounded-lg bg-purple-600 text-white text-sm font-semibold"
-        >
-          + Add Social
-        </button>
-      </div>
-
       {/* Selected socials */}
       <div className="space-y-3">
         {items
           .filter((s: any) => s.enabled === true)
           .map((s: any) => {
+            const Icon = ICONS[s.id] || FiGlobe;
 
-            const Icon = ICONS[s.id] || Globe;
             return (
               <div
                 key={s.id}
@@ -119,6 +108,16 @@ export default function SocialSection({ items = [], onChange }: any) {
               </div>
             );
           })}
+      </div>
+
+      {/* Add button at bottom */}
+      <div className="flex justify-left mt-5">
+        <button
+          onClick={() => setOpen(true)}
+          className="px-4 py-2 rounded-lg bg-purple-600 text-white text-sm font-semibold"
+        >
+          + Add Social
+        </button>
       </div>
 
       <AddSocialModal

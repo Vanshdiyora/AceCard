@@ -153,9 +153,10 @@ interface PublicProfileConfig {
 
   meeting: MeetingConfig;
 
-  social_links: {
+  social_links: LockMeta & {
     items: any[];
   };
+
 
   products: ProductsConfig;
 
@@ -385,7 +386,16 @@ export default function TeamMemberPublicProfileTab({
       contact: withLock(config.contact),
       meeting: withLock(config.meeting),
 
-      social_links: { items: config.social_links.items },
+      social_links: showLockable
+        ? {
+          items: config.social_links.items,
+          locked: config.social_links.locked,
+          lock_mode: config.social_links.lock_mode,
+        }
+        : {
+          items: config.social_links.items,
+        },
+
       photo_gallery: withLock(config.photo_gallery),
       video_gallery: showLockable
         ? {
@@ -1206,13 +1216,40 @@ export default function TeamMemberPublicProfileTab({
       </Card>
 
       <Card title="Social Links" desc="Your public social profiles">
-        <SocialSection
-          items={config.social_links.items}
-          onChange={(items: any[]) =>
-            update({ ...config, social_links: { items } })
+        {showLockable && (
+          <LockControl
+            value={config.social_links}
+            onChange={(v) =>
+              update({
+                ...config,
+                social_links: { ...config.social_links, ...v },
+              })
+            }
+          />
+        )}
+
+        <div
+          className={
+            isReadOnly(config.social_links)
+              ? "opacity-60 pointer-events-none"
+              : ""
           }
-        />
+        >
+          <SocialSection
+            items={config.social_links.items}
+            onChange={(items: any[]) =>
+              update({
+                ...config,
+                social_links: {
+                  ...config.social_links,
+                  items,
+                },
+              })
+            }
+          />
+        </div>
       </Card>
+
 
       <Card title="Theme" desc="Colors used across the profile">
         {showLockable && (

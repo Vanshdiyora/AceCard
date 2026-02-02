@@ -1,17 +1,20 @@
 import {
-  Instagram,
-  Linkedin,
-  Youtube,
-  Twitter,
-  Facebook,
   Link2,
   FileText,
-  Phone,
-  Globe,
-  MessageCircle,
-  Ghost,     // Snapchat
-  Music2,    // TikTok
 } from "lucide-react";
+
+import {
+  SiInstagram,
+  SiLinkedin,
+  SiYoutube,
+  SiX,
+  SiFacebook,
+  SiWhatsapp,
+  SiSnapchat,
+  SiTiktok,
+} from "react-icons/si";
+
+import { FiPhone, FiGlobe } from "react-icons/fi";
 
 import { ProfileWrapper } from "./WebsiteLayout/ProfileWrapper";
 import { useState, useEffect } from "react";
@@ -161,18 +164,18 @@ export default function MobileWebsite({
   const orderedSections = sortByRank(sections.items);
   const shapeClass = resolveShape(layout?.button_style);
 
-useEffect(() => {
-  if (!scrollRef?.current) return;
-  const el = scrollRef.current;
+  useEffect(() => {
+    if (!scrollRef?.current) return;
+    const el = scrollRef.current;
 
-  if (open || activePhoto) {
-    el.style.overflow = "hidden";
-    el.style.touchAction = "none";
-  } else {
-    el.style.overflow = "auto";
-    el.style.touchAction = "auto";
-  }
-}, [open, activePhoto, scrollRef]);
+    if (open || activePhoto) {
+      el.style.overflow = "hidden";
+      el.style.touchAction = "none";
+    } else {
+      el.style.overflow = "auto";
+      el.style.touchAction = "auto";
+    }
+  }, [open, activePhoto, scrollRef]);
 
   const resolveFontClass = (font?: string) => {
     if (font === "custom") return "font-[var(--custom-font)]";
@@ -643,16 +646,16 @@ function Social({ items, theme, shapeClass }: any) {
                 color: t.buttonText,
               }}
             >
-              {s.id === "instagram" && <Instagram size={32} />}
-              {s.id === "linkedin" && <Linkedin size={32} />}
-              {s.id === "youtube" && <Youtube size={32} />}
-              {s.id === "twitter" && <Twitter size={32} />}
-              {s.id === "facebook" && <Facebook size={32} />}
-              {s.id === "whatsapp" && <MessageCircle size={32} />}
-              {s.id === "phone" && <Phone size={32} />}
-              {s.id === "website" && <Globe size={32} />}
-              {s.id === "snapchat" && <Ghost size={32} />}
-              {s.id === "tiktok" && <Music2 size={32} />}
+              {s.id === "instagram" && <SiInstagram size={32} />}
+              {s.id === "linkedin" && <SiLinkedin size={32} />}
+              {s.id === "youtube" && <SiYoutube size={32} />}
+              {s.id === "twitter" && <SiX size={32} />}
+              {s.id === "facebook" && <SiFacebook size={32} />}
+              {s.id === "whatsapp" && <SiWhatsapp size={32} />}
+              {s.id === "phone" && <FiPhone size={32} />}
+              {s.id === "website" && <FiGlobe size={32} />}
+              {s.id === "snapchat" && <SiSnapchat size={32} />}
+              {s.id === "tiktok" && <SiTiktok size={32} />}
 
             </a>
           ))}
@@ -816,7 +819,7 @@ function PhotoGallery({ title, items, theme, onOpen }: any) {
                   scroller.scrollTo({ top: 0, behavior: "smooth" });
                 }
 
-                setTimeout(() => {  
+                setTimeout(() => {
                   onOpen(p);
                 }, 80);
               }}
