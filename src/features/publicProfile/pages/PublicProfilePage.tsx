@@ -11,7 +11,6 @@ type Props = {
 export default function PublicProfilePage({ handle: propHandle }: Props) {
   const { handle: routeHandle } = useParams<{ handle: string }>();
   const { username } = useParams();
-
   const handle = propHandle || routeHandle || username;
   const dispatch = useAppDispatch();
   const { data, loading } = useAppSelector((s) => s.publicProfile);
@@ -33,20 +32,30 @@ export default function PublicProfilePage({ handle: propHandle }: Props) {
   if (!handle) return <div className="p-6">No profile handle found.</div>;
   if (loading || !data) return <div className="p-6">Loading...</div>;
 
- return (
-  <div className="min-h-screen w-full bg-[#f6f7fb] flex items-center justify-center">
+  return (
+    <div className="min-h-screen w-full bg-[#f6f7fb] flex items-center justify-center">
 
-    {/* Phone shell only on desktop */}
-    <div className="w-full h-full sm:max-w-[380px] sm:h-[720px] bg-black sm:rounded-[2.5rem] sm:p-2 shadow-2xl">
+      {/* Phone shell only on desktop */}
+      <div className="w-full h-full sm:max-w-[380px] sm:h-[720px] bg-black sm:rounded-[2.5rem] sm:p-2 shadow-2xl">
 
-      <div className="w-full h-full bg-white sm:rounded-[2rem] overflow-hidden flex flex-col">
-        <div className="flex-1 overflow-y-auto no-scrollbar">
-          <MobileWebsite data={data} />
+        <div
+          id="phone-frame"
+          className="w-full h-full bg-white sm:rounded-[2rem] overflow-hidden flex flex-col relative"
+        >
+
+          <div className="flex-1 relative overflow-hidden">
+            <div
+              id="phone-scroll"
+              className="absolute inset-0 overflow-y-auto no-scrollbar"
+            >
+              <MobileWebsite data={data} />
+            </div>
+          </div>
+
         </div>
-      </div>
 
+      </div>
     </div>
-  </div>
-);
+  );
 
 }

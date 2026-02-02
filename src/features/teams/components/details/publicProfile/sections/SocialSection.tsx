@@ -89,33 +89,36 @@ export default function SocialSection({ items = [], onChange }: any) {
 
       {/* Selected socials */}
       <div className="space-y-3">
-        {items.map((s: any) => {
-          const Icon = ICONS[s.id] || Globe;
-          return (
-            <div
-              key={s.id}
-              className="flex items-center gap-3 p-3 rounded-xl border bg-white shadow-sm"
-            >
-              <div className="h-10 w-10 rounded-xl bg-gray-900 flex items-center justify-center text-white shadow">
-                <Icon size={18} />
-              </div>
+        {items
+          .filter((s: any) => s.enabled === true)
+          .map((s: any) => {
 
-              <input
-                className="flex-1 rounded-lg border px-3 py-2 text-sm"
-                placeholder={`Enter ${s.label} link`}
-                value={s.url}
-                onChange={(e) => update(s.id, e.target.value)}
-              />
-
-              <button
-                onClick={() => remove(s.id)}
-                className="text-red-500 hover:text-red-700"
+            const Icon = ICONS[s.id] || Globe;
+            return (
+              <div
+                key={s.id}
+                className="flex items-center gap-3 p-3 rounded-xl border bg-white shadow-sm"
               >
-                <Trash2 size={18} />
-              </button>
-            </div>
-          );
-        })}
+                <div className="h-10 w-10 rounded-xl bg-gray-900 flex items-center justify-center text-white shadow">
+                  <Icon size={18} />
+                </div>
+
+                <input
+                  className="flex-1 rounded-lg border px-3 py-2 text-sm"
+                  placeholder={`Enter ${s.label} link`}
+                  value={s.url}
+                  onChange={(e) => update(s.id, e.target.value)}
+                />
+
+                <button
+                  onClick={() => remove(s.id)}
+                  className="text-red-500 hover:text-red-700"
+                >
+                  <Trash2 size={18} />
+                </button>
+              </div>
+            );
+          })}
       </div>
 
       <AddSocialModal

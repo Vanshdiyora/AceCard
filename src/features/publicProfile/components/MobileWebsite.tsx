@@ -136,6 +136,7 @@ export default function MobileWebsite({
   ]);
 
 
+  const [activePhoto, setActivePhoto] = useState<any | null>(null);
 
   const [open, setOpen] = useState(false);
 
@@ -160,12 +161,18 @@ export default function MobileWebsite({
   const orderedSections = sortByRank(sections.items);
   const shapeClass = resolveShape(layout?.button_style);
 
-  useEffect(() => {
-    if (!scrollRef?.current) return;
-    const el = scrollRef.current;
-    el.style.overflow = open ? "hidden" : "auto";
-    el.style.touchAction = open ? "none" : "";
-  }, [open, scrollRef]);
+useEffect(() => {
+  if (!scrollRef?.current) return;
+  const el = scrollRef.current;
+
+  if (open || activePhoto) {
+    el.style.overflow = "hidden";
+    el.style.touchAction = "none";
+  } else {
+    el.style.overflow = "auto";
+    el.style.touchAction = "auto";
+  }
+}, [open, activePhoto, scrollRef]);
 
   const resolveFontClass = (font?: string) => {
     if (font === "custom") return "font-[var(--custom-font)]";
@@ -189,6 +196,7 @@ export default function MobileWebsite({
     }
   };
 
+  const isMobile = useIsMobile();
 
   const fontClass = resolveFontClass(layout?.font);
   const renderSection = (type: string) => {
@@ -201,7 +209,8 @@ export default function MobileWebsite({
             theme={theme}
             user={data}
             layout={layout}
-            onConnect={() => setOpen(true)}
+            onConnect={() => isMobile && setOpen(true)}
+
           />
 
         );
@@ -262,7 +271,8 @@ export default function MobileWebsite({
             theme={theme}
             contact={contact}
             layout={layout}
-            onConnect={() => setOpen(true)}
+            onConnect={() => isMobile && setOpen(true)}
+
           />
         );
 
@@ -295,6 +305,7 @@ export default function MobileWebsite({
             title={photo_gallery.section_title}
             items={sortByRank(photo_gallery.items)}
             theme={theme}
+            onOpen={setActivePhoto}   // 👈 add
           />
         ) : null;
 
@@ -425,6 +436,21 @@ export default function MobileWebsite({
           : resolveBackgroundStyle()),
       }}
     >
+      <ConnectModal
+        open={open}
+        onClose={() => setOpen(false)}
+        handle={data?.username}
+        theme={theme}
+      />
+
+      {/* MODAL */}
+      <PhotoModal
+        open={!!activePhoto}
+        item={activePhoto}
+        theme={theme}
+        onClose={() => setActivePhoto(null)}
+      />
+
 
       <span className="wave-3 absolute inset-0" />
       <span className="wave-fade" />
@@ -440,12 +466,6 @@ export default function MobileWebsite({
         )}
       </div>
 
-      <ConnectModal
-        open={open}
-        onClose={() => setOpen(false)}
-        handle={data?.username}
-        theme={theme}
-      />
     </div>
   );
 }
@@ -623,16 +643,17 @@ function Social({ items, theme, shapeClass }: any) {
                 color: t.buttonText,
               }}
             >
-              {s.label === "Instagram" && <Instagram size={32} />}
-              {s.label === "LinkedIn" && <Linkedin size={32} />}
-              {s.label === "YouTube" && <Youtube size={32} />}
-              {s.label === "Twitter" && <Twitter size={32} />}
-              {s.label === "Facebook" && <Facebook size={32} />}
-              {s.label === "Whatsapp" && <MessageCircle size={32} />}
-              {(s.label === "Call Me" || s.id === "phone") && <Phone size={32} />}
-              {s.label === "Personal Website" && <Globe size={32} />}
-              {s.label === "Snapchat" && <Ghost size={32} />}
-              {s.label === "TikTok" && <Music2 size={32} />}
+              {s.id === "instagram" && <Instagram size={32} />}
+              {s.id === "linkedin" && <Linkedin size={32} />}
+              {s.id === "youtube" && <Youtube size={32} />}
+              {s.id === "twitter" && <Twitter size={32} />}
+              {s.id === "facebook" && <Facebook size={32} />}
+              {s.id === "whatsapp" && <MessageCircle size={32} />}
+              {s.id === "phone" && <Phone size={32} />}
+              {s.id === "website" && <Globe size={32} />}
+              {s.id === "snapchat" && <Ghost size={32} />}
+              {s.id === "tiktok" && <Music2 size={32} />}
+
             </a>
           ))}
         </div>
@@ -689,6 +710,19 @@ function Links({ items, theme }: any) {
   );
 }
 
+function useIsMobile(breakpoint = 768) {
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== "undefined" ? window.innerWidth < breakpoint : false
+  );
+
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth < breakpoint);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, [breakpoint]);
+
+  return isMobile;
+}
 
 /* ================= BANNER ================= */
 function Banner({
@@ -761,9 +795,9 @@ END:VCARD
 }
 
 // Photo Gallery
-function PhotoGallery({ title, items, theme }: any) {
+function PhotoGallery({ title, items, theme, onOpen }: any) {
+
   const t = resolveTheme(theme);
-  const [active, setActive] = useState<any | null>(null);
 
   if (!items?.length) return null;
 
@@ -774,7 +808,18 @@ function PhotoGallery({ title, items, theme }: any) {
           {items.map((p: any, i: number) => (
             <button
               key={i}
-              onClick={() => setActive(p)}
+              onClick={() => {
+                const scroller = document.querySelector(".flex-1.overflow-y-auto");
+
+                console.log(scroller)
+                if (scroller) {
+                  scroller.scrollTo({ top: 0, behavior: "smooth" });
+                }
+
+                setTimeout(() => {  
+                  onOpen(p);
+                }, 80);
+              }}
               className="group block text-left snap-start"
             >
               <div className="relative min-w-[220px] h-48 rounded-2xl overflow-hidden shadow-md">
@@ -810,17 +855,10 @@ function PhotoGallery({ title, items, theme }: any) {
         </div>
       </Section>
 
-      {/* MODAL */}
-      <PhotoModal
-        open={!!active}
-        item={active}
-        theme={theme}
-        onClose={() => setActive(null)}
-      />
+
     </>
   );
 }
-
 
 function PhotoModal({
   open,
@@ -839,17 +877,22 @@ function PhotoModal({
 
   return (
     <div
-      className="fixed inset-0 z-[999] bg-black/60 flex items-center justify-center p-4"
+      className="absolute inset-0 z-[9999] bg-black/70 flex justify-center pt-4 px-4 pointer-events-auto"
       onClick={onClose}
     >
+
+
+      {/* MOBILE FRAME */}
       <div
-        className="bg-white rounded-2xl max-w-sm w-full overflow-hidden shadow-xl animate-fadeIn"
+        className="relative w-full max-w-[390px] bg-white rounded-3xl shadow-2xl animate-fadeIn
+             max-h-[85%] self-start"
         onClick={(e) => e.stopPropagation()}
       >
+
         <img
           src={item.img_url}
           alt={item.title}
-          className="w-full h-56 object-cover"
+          className="w-full h-64 object-cover"
         />
 
         <div className="p-4 space-y-3">
@@ -880,7 +923,7 @@ function PhotoModal({
 
           <button
             onClick={onClose}
-            className="w-full text-xs text-gray-400 mt-1"
+            className="w-full text-xs text-gray-400 mt-2"
           >
             Close
           </button>
@@ -889,6 +932,7 @@ function PhotoModal({
     </div>
   );
 }
+
 
 function VideoGallery({ title, items, theme }: any) {
   const t = resolveTheme(theme);

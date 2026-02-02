@@ -36,7 +36,9 @@ export default function AddSocialModal({
 }: any) {
   if (!open) return null;
 
-  const selectedIds = new Set(selected.map((s: any) => s.id));
+  const selectedIds = new Set(
+    selected.filter((s: any) => s.enabled === true).map((s: any) => s.id)
+  );
 
   return createPortal(
     <div className="fixed inset-0 z-[999] bg-black/40 flex items-center justify-center px-3">
@@ -89,8 +91,8 @@ export default function AddSocialModal({
 
                   <div
                     className={`h-7 w-7 flex items-center justify-center rounded-full border shrink-0 ${added
-                        ? "bg-purple-600 border-purple-600 text-white"
-                        : "border-gray-300"
+                      ? "bg-purple-600 border-purple-600 text-white"
+                      : "border-gray-300"
                       }`}
                   >
                     {added ? <Check size={14} /> : <Plus size={14} />}

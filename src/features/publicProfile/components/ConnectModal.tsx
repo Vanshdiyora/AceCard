@@ -22,7 +22,8 @@ export function ConnectModal({ open, onClose, handle, theme }: any) {
     };
 
     return (
-        <div className="absolute inset-0 z-[50] bg-black/60">
+        <div className="fixed inset-0 z-[9999] bg-black/60">
+
             {/* top aligned container */}
             <div className="absolute top-36 left-1/2 -translate-x-1/2 w-full px-4">
                 <div
