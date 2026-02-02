@@ -38,7 +38,7 @@ export function ProfileSplit({
           {profile?.avatar_url ? (
             <img
               src={profile.avatar_url}
-              className="w-20 h-20 rounded-full object-cover"
+              className="object-cover"
               alt="Avatar"
             />
           ) : (
