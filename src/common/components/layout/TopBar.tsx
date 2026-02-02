@@ -21,30 +21,30 @@ export default function Topbar({ type }: TopbarProps) {
   const profileLoading = useAppSelector((s) => s.settings.account.loading); // 🔴 added
   const jwtUser = useAppSelector((s) => s.auth.user);
   const token = useAppSelector((s) => s.auth.token);
-const Avatar = ({ size = 40 }: { size?: number }) => {
-  const [imgError, setImgError] = useState(false);
+  const Avatar = ({ size = 40 }: { size?: number }) => {
+    const [imgError, setImgError] = useState(false);
 
-  if (profile?.avatar_url && !imgError) {
+    if (profile?.avatar_url && !imgError) {
+      return (
+        <img
+          src={profile.avatar_url}
+          alt={name}
+          className="rounded-full object-cover"
+          style={{ width: size, height: size }}
+          onError={() => setImgError(true)}
+        />
+      );
+    }
+
     return (
-      <img
-        src={profile.avatar_url}
-        alt={name}
-        className="rounded-full object-cover"
+      <div
+        className="rounded-full bg-purple-600 text-white flex items-center justify-center font-medium"
         style={{ width: size, height: size }}
-        onError={() => setImgError(true)}
-      />
+      >
+        {initials}
+      </div>
     );
-  }
-
-  return (
-    <div
-      className="rounded-full bg-purple-600 text-white flex items-center justify-center font-medium"
-      style={{ width: size, height: size }}
-    >
-      {initials}
-    </div>
-  );
-};
+  };
 
   useEffect(() => {
     if (token) {
@@ -189,7 +189,7 @@ const Avatar = ({ size = 40 }: { size?: number }) => {
             onClick={() => !isLoadingUser && setOpen((p) => !p)}
           >
             {isLoadingUser ? SkeletonAvatar : (
-             <Avatar size={40} />
+              <Avatar size={40} />
             )}
           </div>
 
