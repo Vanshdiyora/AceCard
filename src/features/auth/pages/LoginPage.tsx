@@ -23,48 +23,42 @@ export default function LoginPage() {
     await dispatch(login(form));
   };
 
-  /* ---------------- ROLE ROUTING ---------------- */
   useEffect(() => {
     if (!token || !role) return;
 
-    if (role === "manager" || role === "vendor_admin") {
-      navigate("/admin");
-    } else if (role === "super_admin") {
-      navigate("/super");
-    } else if (role === "sales_rep") {
-      navigate(`/profile-settings`);
-    }
-
-    else {
-      navigate("/unauthorized");
-    }
+    if (role === "manager" || role === "vendor_admin") navigate("/admin");
+    else if (role === "super_admin") navigate("/super");
+    else if (role === "sales_rep") navigate(`/profile-settings`);
+    else navigate("/unauthorized");
   }, [token, role, navigate]);
 
-  /* ---------------- UI ---------------- */
   return (
     <>
       <BlockerLoader show={loading} />
 
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-purple-100 px-4">
-        <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8 space-y-6">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-purple-100 px-4 sm:px-6">
+        <div className="w-full max-w-md sm:max-w-lg bg-white rounded-2xl shadow-lg p-6 sm:p-8 space-y-5">
+          
+          {/* HEADER */}
           <div className="text-center space-y-1">
-            <h2 className="text-2xl font-semibold text-gray-800">
+            <h2 className="text-xl sm:text-2xl font-semibold text-gray-800">
               Welcome back
             </h2>
-            <p className="text-sm text-gray-500">
+            <p className="text-xs sm:text-sm text-gray-500">
               Sign in to your account
             </p>
           </div>
 
           {(error || localError) && (
-            <p className="text-red-500 text-sm text-center">
+            <p className="text-red-500 text-xs sm:text-sm text-center">
               {localError || error}
             </p>
           )}
 
-          <div className="space-y-4">
-            <div className="space-y-1">
-              <label className="text-sm font-medium text-gray-700">
+          {/* FORM */}
+          <div className="space-y-3 sm:space-y-4">
+            <div>
+              <label className="text-xs sm:text-sm font-medium text-gray-700">
                 Email address
               </label>
               <input
@@ -74,12 +68,12 @@ export default function LoginPage() {
                   setForm({ ...form, email: e.target.value })
                 }
                 placeholder="you@example.com"
-                className="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300"
+                className="w-full rounded-lg border px-3 py-3 sm:py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300"
               />
             </div>
 
-            <div className="space-y-1">
-              <label className="text-sm font-medium text-gray-700">
+            <div>
+              <label className="text-xs sm:text-sm font-medium text-gray-700">
                 Password
               </label>
               <div className="relative">
@@ -90,12 +84,12 @@ export default function LoginPage() {
                     setForm({ ...form, password: e.target.value })
                   }
                   placeholder="••••••••"
-                  className="w-full rounded-lg border px-3 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300"
+                  className="w-full rounded-lg border px-3 py-3 sm:py-2 pr-12 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300"
                 />
                 <button
                   type="button"
                   onClick={() => setShow(!show)}
-                  className="absolute inset-y-0 right-2 flex items-center text-xs text-gray-500 hover:text-gray-700"
+                  className="absolute inset-y-0 right-3 flex items-center text-xs sm:text-sm text-gray-500"
                 >
                   {show ? "Hide" : "Show"}
                 </button>
@@ -103,19 +97,21 @@ export default function LoginPage() {
             </div>
           </div>
 
+          {/* FORGOT */}
           <div className="text-right">
             <button
               onClick={() => navigate("/forgot-password")}
-              className="text-xs text-purple-600 hover:underline"
+              className="text-xs sm:text-sm text-purple-600 hover:underline"
             >
               Forgot password?
             </button>
           </div>
 
+          {/* SUBMIT */}
           <button
             onClick={submit}
             disabled={loading}
-            className="w-full flex justify-center items-center gap-2 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white rounded-lg py-2.5 text-sm font-medium transition"
+            className="w-full h-12 sm:h-11 flex justify-center items-center gap-2 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white rounded-lg text-sm sm:text-base font-medium transition"
           >
             {loading && (
               <span className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
