@@ -23,7 +23,7 @@ import { AlignLeft, AlignCenter, AlignRight } from "lucide-react";
 import CoverCropModal from "../../../../../common/ui/CoverCropModal";
 import PhotoGallerySection from "./sections/PhotoGallerySection";
 import VideoGallerySection from "./sections/VideoGallerySection";
-
+import { normalizeApiError } from "../../../../../utils/normalizeApiError";
 const THEME_COLOR_KEYS = [
   "card_background",
   "button_color",
@@ -441,11 +441,20 @@ export default function TeamMemberPublicProfileTab({
       setResultSuccess(true);
       setResultMessage("Public profile saved successfully.");
       setResultOpen(true);
-    } catch (err) {
+    } catch (err: any) {
+      let msg = "Something went wrong while saving.";
+
+      if (err?.error) msg = err.error;
+      else if (err?.response?.data?.error) msg = err.response.data.error;
+      else if (err?.message) msg = err.message;
+
+      msg = normalizeApiError(msg);
+
       setResultSuccess(false);
-      setResultMessage("Something went wrong while saving.");
+      setResultMessage(msg);
       setResultOpen(true);
     }
+
   };
   const role = useAppSelector((s) => s.auth.role);
 
@@ -1137,7 +1146,6 @@ export default function TeamMemberPublicProfileTab({
 
       </Card>
 
-
       <Card title="Profile" desc="Basic information shown on the card">
         <ProfileSection
           profile={config.profile}
@@ -1197,8 +1205,6 @@ export default function TeamMemberPublicProfileTab({
         </div>
       </Card>
 
-
-
       <Card title="Social Links" desc="Your public social profiles">
         <SocialSection
           items={config.social_links.items}
@@ -1207,8 +1213,6 @@ export default function TeamMemberPublicProfileTab({
           }
         />
       </Card>
-
-
 
       <Card title="Theme" desc="Colors used across the profile">
         {showLockable && (
@@ -1598,8 +1602,6 @@ export default function TeamMemberPublicProfileTab({
           }
         />
       </Card>
-
-
 
       <button
         onClick={save}

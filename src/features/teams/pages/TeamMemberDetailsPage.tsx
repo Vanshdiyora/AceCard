@@ -335,7 +335,6 @@ export default function TeamMemberDetailsPage() {
                           memberId: member.id,
                         })
                       ).unwrap();
-                      console.log(res)
                       const ids = res.data.map((l: any) => l.id); // 🔴 FIX
 
                       if (ids.length > 0) {

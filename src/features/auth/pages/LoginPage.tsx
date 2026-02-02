@@ -31,7 +31,11 @@ export default function LoginPage() {
       navigate("/admin");
     } else if (role === "super_admin") {
       navigate("/super");
-    } else {
+    } else if (role === "sales_rep") {
+      navigate(`/profile-settings`);
+    }
+
+    else {
       navigate("/unauthorized");
     }
   }, [token, role, navigate]);

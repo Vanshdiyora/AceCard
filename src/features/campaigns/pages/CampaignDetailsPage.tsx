@@ -56,7 +56,6 @@ export default function CampaignDetailsPage() {
   const campaign = useAppSelector(
     selectEnrichedCampaignById(Number(id))
   ) as EnrichedCampaign | null;
-  console.log(campaign)
   const loading = useAppSelector((s) => s.campaigns.loading);
 
   useEffect(() => {

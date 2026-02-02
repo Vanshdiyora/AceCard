@@ -7,6 +7,8 @@ interface State {
   loading: boolean;
   saving: boolean;
   connecting: boolean;   // 👈
+    error?: string;
+
 }
 
 const initialState: State = {
@@ -14,6 +16,7 @@ const initialState: State = {
   loading: false,
   saving: false,
   connecting: false,
+  error: "" 
 };
 
 export const loadPublicProfile = createAsyncThunk(
@@ -29,19 +32,24 @@ export const loadPublicProfile = createAsyncThunk(
     return res.data;
   }
 );
+
 export const savePublicProfileByUsername = createAsyncThunk(
   "publicProfile/saveByUsername",
-  async ({
-    username,
-    config,
-  }: {
-    username: string;
-    config: any;
-  }) => {
-    const res = await updatePublicProfileByUsername(username, config);
-    return res.data;
+  async (
+    { username, config }: { username: string; config: any },
+    { rejectWithValue }
+  ) => {
+    try {
+      const res = await updatePublicProfileByUsername(username, config);
+      return res.data;
+    } catch (err: any) {
+      return rejectWithValue(
+        err?.response?.data || { error: "Save failed" }
+      );
+    }
   }
 );
+
 
 export const sendConnectRequest = createAsyncThunk(
   "publicProfile/connect",
@@ -63,11 +71,18 @@ export const loadMyProfile = createAsyncThunk(
 
 export const savePublicProfile = createAsyncThunk(
   "publicProfile/save",
-  async ({ config }: { config: any }) => {
-    const res = await updatePublicProfile(config);
-    return res.data;
+  async ({ config }: { config: any }, { rejectWithValue }) => {
+    try {
+      const res = await updatePublicProfile(config);
+      return res.data;
+    } catch (err: any) {
+      return rejectWithValue(
+        err?.response?.data || { error: "Save failed" }
+      );
+    }
   }
 );
+
 
 const publicProfileSlice = createSlice({
   name: "publicProfile",
@@ -101,9 +116,11 @@ const publicProfileSlice = createSlice({
         }
 
       })
-      .addCase(savePublicProfile.rejected, (s) => {
-        s.saving = false;
-      })
+     .addCase(savePublicProfile.rejected, (s, a) => {
+  s.saving = false;
+  s.error = (a.payload as any)?.error || "Save failed";
+})
+
       .addCase(loadMyProfile.pending, (s) => {
         s.loading = true;
       })

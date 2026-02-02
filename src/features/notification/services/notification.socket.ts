@@ -9,8 +9,6 @@ export function connectNotificationSocket(
 ) {
   socket = new WebSocket(`${BASE_URL}/notifications/ws?token=${token}`);
 
-  socket.onopen = () => console.log("🔔 Notification socket connected");
-  socket.onclose = () => console.log("🔕 Notification socket disconnected");
   socket.onerror = (e) => console.error("WS error", e);
 
   socket.onmessage = (event) => {

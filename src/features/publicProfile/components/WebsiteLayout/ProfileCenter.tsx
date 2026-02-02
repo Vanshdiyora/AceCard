@@ -50,10 +50,20 @@ export function ProfileCenter({
               style={{ backgroundColor: t.buttonBg }}
             >
               {/* AVATAR */}
-              <img
-                src={profile.avatar_url || ""}
-                className="w-20 h-20 rounded-full object-cover"
-              />
+              {profile?.avatar_url ? (
+                <img
+                  src={profile.avatar_url}
+                  className="w-20 h-20 rounded-full object-cover"
+                  alt="Avatar"
+                />
+              ) : (
+                <div
+                  className="w-20 h-20 rounded-full flex items-center justify-center text-xs font-semibold"
+                  style={{ backgroundColor: t.cardBg, color: t.text }}
+                >
+                  {user?.name?.[0] || "?"}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -71,11 +81,11 @@ export function ProfileCenter({
 
         {/* Role */}
         <p
-            className="text-xs opacity-90"
-            style={{ color: t.text }}
-          >
-            {formatRole(user?.job_title || user?.role)} at {user?.vendor_name}
-          </p>
+          className="text-xs opacity-90"
+          style={{ color: t.text }}
+        >
+          {formatRole(user?.job_title || user?.role)} at {user?.vendor_name}
+        </p>
       </div>
     </div>
   );

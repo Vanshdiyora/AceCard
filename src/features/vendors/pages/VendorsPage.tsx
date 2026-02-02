@@ -109,7 +109,6 @@ export default function VendorsPage() {
         Stage: deriveStage(v),
       }));
 
-
       downloadCSV(csvData, "vendors_export.csv");
     } catch (err) {
       console.error("Vendor export failed:", err);

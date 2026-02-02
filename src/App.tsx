@@ -32,6 +32,7 @@ import {
   NotificationVendorPage
 } from "./features/index";
 import PublicProfilePage from "./features/publicProfile/pages/PublicProfilePage";
+import ProfileSettingsPage from "./features/settings/pages/ProfileSettingsPage";
 
 export default function App() {
   return (
@@ -47,8 +48,16 @@ export default function App() {
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/verify-otp" element={<VerifyOtpPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
-{/* PUBLIC PROFILE */}
-<Route path="/profile/:username" element={<PublicProfilePage />} />
+        {/* PUBLIC PROFILE */}
+        <Route path="/profile/:username" element={<PublicProfilePage />} />
+        <Route
+          path="/profile-settings"
+          element={
+            <ProtectedRoute>
+              <ProfileSettingsPage />
+            </ProtectedRoute>
+          }
+        />
 
         {/* SUPER ADMIN ROUTES */}
         <Route
@@ -90,10 +99,10 @@ export default function App() {
           <Route path="notifications" element={<NotificationVendorPage />} />
           <Route path="*" element={<Navigate to="/not-found" replace />} />
         </Route>
-<Route
-  path="/integrations/:provider/callback"
-  element={<IntegrationCallback />}
-/>
+        <Route
+          path="/integrations/:provider/callback"
+          element={<IntegrationCallback />}
+        />
 
         {/* GLOBAL FALLBACK */}
         {/* <Route path="*" element={<Navigate to="/not-found" replace />} /> */}
