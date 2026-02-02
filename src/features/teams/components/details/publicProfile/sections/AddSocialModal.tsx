@@ -39,46 +39,66 @@ export default function AddSocialModal({
   const selectedIds = new Set(selected.map((s: any) => s.id));
 
   return createPortal(
-    <div className="fixed inset-0 z-[999] bg-black/40 flex items-center justify-center">
-      <div className="bg-white rounded-2xl w-full max-w-3xl p-6 shadow-xl">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold">Add Social</h3>
-          <button onClick={onClose}>✕</button>
+    <div className="fixed inset-0 z-[999] bg-black/40 flex items-center justify-center px-3">
+      {/* Modal Card */}
+      <div
+        className="
+    bg-white w-full sm:max-w-3xl
+    max-h-[90vh]
+    rounded-2xl
+    p-4 sm:p-6
+    shadow-xl
+    flex flex-col
+    overflow-hidden
+  "
+      >
+
+        {/* HEADER */}
+        <div className="flex justify-between items-center mb-4 sticky top-0 bg-white z-10 pb-2 border-b">
+          <h3 className="text-base sm:text-lg font-semibold">Add Social</h3>
+          <button
+            onClick={onClose}
+            className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-gray-100"
+          >
+            ✕
+          </button>
         </div>
 
-        <div className="grid grid-cols-3 gap-4">
-          {all.map((s: any) => {
-            const Icon = ICONS[s.id] || Globe;
-            const added = selectedIds.has(s.id);
+        {/* CONTENT */}
+        <div className="overflow-y-auto flex-1 pb-4">
 
-            return (
-              <button
-                key={s.id}
-                onClick={() => onToggle(s)}
-                className={`flex items-center justify-between gap-3 px-4 py-3 rounded-xl border transition
-                ${
-                  added
-                    ? "bg-purple-50 border-purple-500 text-purple-700"
-                    : "bg-gray-50 border-gray-200 hover:bg-gray-100"
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <Icon className="w-5 h-5" />
-                  <span className="text-sm">{s.label}</span>
-                </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
+            {all.map((s: any) => {
+              const Icon = ICONS[s.id] || Globe;
+              const added = selectedIds.has(s.id);
 
-                <div
-                  className={`h-7 w-7 flex items-center justify-center rounded-full border ${
-                    added
-                      ? "bg-purple-600 border-purple-600 text-white"
-                      : "border-gray-300"
-                  }`}
+              return (
+                <button
+                  key={s.id}
+                  onClick={() => onToggle(s)}
+                  className={`flex items-center justify-between gap-2 px-3 py-3 rounded-xl border transition text-sm
+                  ${added
+                      ? "bg-purple-50 border-purple-500 text-purple-700"
+                      : "bg-gray-50 border-gray-200 hover:bg-gray-100"
+                    }`}
                 >
-                  {added ? <Check size={14} /> : <Plus size={14} />}
-                </div>
-              </button>
-            );
-          })}
+                  <div className="flex items-center gap-2">
+                    <Icon className="w-5 h-5 shrink-0" />
+                    <span className="truncate">{s.label}</span>
+                  </div>
+
+                  <div
+                    className={`h-7 w-7 flex items-center justify-center rounded-full border shrink-0 ${added
+                        ? "bg-purple-600 border-purple-600 text-white"
+                        : "border-gray-300"
+                      }`}
+                  >
+                    {added ? <Check size={14} /> : <Plus size={14} />}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
     </div>,

@@ -51,6 +51,7 @@ export default function VideoGallerySection({
 
   return (
     <div className="space-y-4 mt-4">
+      {/* SECTION TITLE */}
       <div
         className={`space-y-1 ${disabled ? "opacity-60 pointer-events-none" : ""
           }`}
@@ -61,11 +62,10 @@ export default function VideoGallerySection({
 
         <Input
           value={value.section_title}
-          placeholder="Video Gallery"
+          placeholder="e.g. Video Gallery"
           onChange={(v) => onChange({ ...value, section_title: v })}
         />
       </div>
-
 
       {value.items.map((item: any, i: number) => (
         <div
@@ -77,65 +77,77 @@ export default function VideoGallerySection({
             if (dragIndex !== null) reorder(dragIndex, i);
             setDragIndex(null);
           }}
-          className={`group rounded-2xl border bg-white/80 p-5 space-y-4 shadow-sm transition
-          ${dragIndex === i ? "opacity-50 ring-2 ring-purple-400" : "hover:shadow-md"}`}
+          className={`group rounded-2xl border bg-white/80 p-4 sm:p-5 space-y-4 shadow-sm transition
+          ${dragIndex === i
+              ? "opacity-50 ring-2 ring-purple-400"
+              : "hover:shadow-md"
+            }`}
         >
           {/* ROW 1 */}
-          <div className="flex items-center gap-4">
+          <div className="flex flex-col sm:flex-row sm:flex-wrap md:flex-nowrap items-start sm:items-center gap-3 sm:gap-4">
+            {/* DRAG */}
             <div className="cursor-grab text-gray-400 text-xl">☰</div>
 
-            <div className="flex-1">
-              <p className="text-xs uppercase tracking-wide text-gray-500">
-                Title
-              </p>
-              <Input
-                value={item.title}
-                disabled={disabled}
+            {/* TITLE + URL */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 flex-1 w-full">
+              <div>
+                <p className="text-xs uppercase tracking-wide text-gray-500">
+                  Title
+                </p>
+                <Input
+                  value={item.title}
+                  placeholder="e.g. Product Demo"
+                  disabled={disabled}
+                  onChange={(v) => {
+                    const items = [...value.items];
+                    items[i] = { ...items[i], title: v };
+                    onChange({ ...value, items });
+                  }}
+                />
+              </div>
+
+              <div>
+                <p className="text-xs uppercase tracking-wide text-gray-500">
+                  Video URL
+                </p>
+                <Input
+                  value={item.video_url}
+                  placeholder="https://youtube.com/..."
+                  disabled={disabled}
+                  onChange={(v) => {
+                    const items = [...value.items];
+                    items[i] = { ...items[i], video_url: v };
+                    onChange({ ...value, items });
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* SHOW + DELETE */}
+            <div className="flex justify-between sm:justify-start items-center gap-3 w-full sm:w-auto">
+              <Toggle
+                label="Show"
+                value={item.enabled}
                 onChange={(v) => {
                   const items = [...value.items];
-                  items[i] = { ...items[i], title: v };
+                  items[i] = { ...items[i], enabled: v };
                   onChange({ ...value, items });
                 }}
               />
+
+              {!disabled && (
+                <button
+                  onClick={() => removeItem(i)}
+                  className="px-4 py-2 text-xs rounded-lg border border-red-200 text-red-600 hover:bg-red-50"
+                >
+                  Delete
+                </button>
+              )}
             </div>
-
-            <div className="flex-1">
-              <p className="text-xs uppercase tracking-wide text-gray-500">
-                Video URL
-              </p>
-              <Input
-                value={item.video_url}
-                disabled={disabled}
-                onChange={(v) => {
-                  const items = [...value.items];
-                  items[i] = { ...items[i], video_url: v };
-                  onChange({ ...value, items });
-                }}
-              />
-            </div>
-
-            <Toggle
-              label="Show"
-              value={item.enabled}
-              onChange={(v) => {
-                const items = [...value.items];
-                items[i] = { ...items[i], enabled: v };
-                onChange({ ...value, items });
-              }}
-            />
-
-            {!disabled && (
-              <button
-                onClick={() => removeItem(i)}
-                className="px-3 py-1 text-xs border rounded text-red-600"
-              >
-                Delete
-              </button>
-            )}
           </div>
 
           {/* ROW 2 */}
-          <div className="flex gap-4">
+          <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1">
               <p className="text-xs uppercase tracking-wide text-gray-500">
                 Description
@@ -143,10 +155,14 @@ export default function VideoGallerySection({
               <textarea
                 value={item.description || ""}
                 disabled={disabled}
-                className="w-full min-h-[90px] rounded-xl border px-4 py-3"
+                placeholder="Short description about the video..."
+                className="w-full min-h-[90px] sm:min-h-[110px] rounded-xl border px-4 py-3 focus:ring-2 focus:ring-purple-500 focus:outline-none"
                 onChange={(e) => {
                   const items = [...value.items];
-                  items[i] = { ...items[i], description: e.target.value };
+                  items[i] = {
+                    ...items[i],
+                    description: e.target.value,
+                  };
                   onChange({ ...value, items });
                 }}
               />
@@ -158,7 +174,7 @@ export default function VideoGallerySection({
       {!disabled && (
         <button
           onClick={addItem}
-          className="mt-4 px-5 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white"
+          className="mt-4 w-full sm:w-auto px-5 py-3 rounded-xl bg-purple-600 text-white"
         >
           + Add Video
         </button>
