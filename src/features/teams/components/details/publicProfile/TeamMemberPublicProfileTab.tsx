@@ -372,7 +372,7 @@ export default function TeamMemberPublicProfileTab({
         ? {
           ...v,
           locked: v.locked,
-          lock_mode: v.locked ? v.lock_mode ?? "individual" : undefined,
+          lock_mode: v.lock_mode ?? "individual",
         }
         : { ...v, locked: v.locked };
 
@@ -1997,7 +1997,7 @@ function LockControl({
   );
 }
 
-function Switch({
+export function Switch({
   label,
   value,
   onChange,

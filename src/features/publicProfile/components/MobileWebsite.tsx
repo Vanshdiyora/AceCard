@@ -713,7 +713,7 @@ function Links({ items, theme }: any) {
   );
 }
 
-function useIsMobile(breakpoint = 768) {
+export function useIsMobile(breakpoint = 768) {
   const [isMobile, setIsMobile] = useState(
     typeof window !== "undefined" ? window.innerWidth < breakpoint : false
   );

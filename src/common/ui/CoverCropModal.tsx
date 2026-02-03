@@ -108,7 +108,7 @@ export default function CoverCropModal({ file, onCancel, onSave }: Props) {
                             step={0.01}
                             value={zoom}
                             onChange={(e) => setZoom(Number(e.target.value))}
-                            className="w-52"
+                            className="w-28 xs:w-32 sm:w-40 md:w-48 lg:w-52"
                         />
                         <span>＋</span>
                     </div>
