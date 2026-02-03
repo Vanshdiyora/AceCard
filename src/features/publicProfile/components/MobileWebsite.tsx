@@ -513,10 +513,10 @@ function MeetingCTA({ meeting, theme, shapeClass }: any) {
   const t = resolveTheme(theme);
 
   return (
-    <div className="px-12">
+    <div className="px-2">
       <a
         href={meeting.meeting_url}
-        className={`block text-center py-4 text-sm font-semibold shadow-md ${shapeClass}`}
+        className={`block text-center py-3 text-sm font-semibold shadow-md ${shapeClass}`}
         style={{ backgroundColor: t.buttonBg, color: t.buttonText }}
       >
 

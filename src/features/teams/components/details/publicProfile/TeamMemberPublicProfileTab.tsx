@@ -619,7 +619,7 @@ export default function TeamMemberPublicProfileTab({
   const isLayoutLocked = isReadOnly(config.layout);
 
   return (
-    <div className=" space-y-10">
+    <div className=" space-y-10 mb-4">
       <ResultModal
         open={resultOpen}
         success={resultSuccess}
@@ -643,7 +643,7 @@ export default function TeamMemberPublicProfileTab({
         <div className={isLayoutLocked ? "opacity-60 pointer-events-none" : ""}>
 
           {/* LAYOUT TYPE */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-lg">
             {[1, 2, 3].map((t) => (
               <button
                 key={t}

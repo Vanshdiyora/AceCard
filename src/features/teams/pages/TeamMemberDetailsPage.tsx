@@ -279,21 +279,39 @@ export default function TeamMemberDetailsPage() {
 
   /* ---------------- UI ---------------- */
   return (
-    <div className="p-6 grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-6 h-[calc(100vh-70px)] overflow-hidden">
-
+    <div
+      className={`pt-6 px-6 grid grid-cols-1 gap-6 h-[calc(100vh-64px)]
+        transition-[grid-template-columns] duration-500 ease-in-out
+        ${
+          activeTab === "public-profile"
+            ? "lg:grid-cols-[320px_1fr]"
+            : "lg:grid-cols-[1fr_320px]"
+        }
+      `}
+    >
+         
       {/* LEFT */}
-      <div className="h-full overflow-y-auto overscroll-contain pr-2">
+      <div
+        className={`
+          h-full overflow-y-auto overscroll-contain pr-2
+          transition-all duration-500 ease-in-out
+          ${
+            activeTab === "public-profile"
+              ? "lg:order-2"
+              : "lg:order-1"
+          }
+        `}
+      >
 
-
-        <button
+        {activeTab !== "public-profile" && (<button
           onClick={() => navigate(-1)}
           className="flex items-center gap-2 text-sm text-gray-500 hover:text-black mb-6"
         >
           <ArrowLeft size={16} />
           Back to Team
-        </button>
+        </button>)}
 
-        <DetailPageHeader
+        {activeTab !== "public-profile" && (<DetailPageHeader
           title={member.name}
           subtitle={
             displayManager
@@ -371,9 +389,9 @@ export default function TeamMemberDetailsPage() {
               </button>
             </>
           }
-        />
+        />)}
 
-        <div className="flex gap-6 border-b text-sm mt-6">
+        {activeTab !== "public-profile" && (<div className="flex gap-6 border-b text-sm mt-6">
           {TABS.filter(
             (t) => t !== "total-leads" || member.role === "manager"
           ).map((t) => (
@@ -388,7 +406,17 @@ export default function TeamMemberDetailsPage() {
               {t.replace("-", " ")}
             </button>
           ))}
-        </div>
+        </div>)}
+
+        {activeTab === "public-profile" && (
+          <LeftPulloutTabs
+            tabs={TABS}
+            activeTab={activeTab}
+            onChange={setActiveTab}
+            allowTotalLeads={member.role === "manager"}
+            navigate={navigate}
+          />
+        )}
 
         {activeTab === "overview" && (
           <TeamMemberOverviewTab member={member} />
@@ -403,7 +431,7 @@ export default function TeamMemberDetailsPage() {
           <TeamMemberAnalyticsTab memberId={member.id} />
         )}
         {activeTab === "public-profile" && (
-          <div className="mt-6">
+          <div className="h-[95%] overflow-hidden rounded-2xl bg-white/70 p-6 overflow-y-auto">
             <TeamMemberPublicProfileTab
               key={member.username}
               onLiveChange={(cfg) => setLivePreviewConfig(cfg)}
@@ -415,35 +443,67 @@ export default function TeamMemberDetailsPage() {
 
       </div>
 
-      {/* RIGHT */}
+       {/* RIGHT — MOBILE PREVIEW */}
       <div
-        className={`hidden lg:flex justify-center items-start h-full overflow-hidden transition-opacity duration-200 ${isCropping ? "opacity-0 pointer-events-none" : "opacity-100"
-          }`}
+        className={`
+          hidden lg:flex h-full justify-center items-start overflow-hidden
+          transition-all duration-500 ease-in-out
+          ${
+            activeTab === "public-profile"
+              ? "lg:order-1"
+              : "lg:order-2"
+          }
+          ${isCropping ? "opacity-0 pointer-events-none" : "opacity-100"}
+        `}
       >
+        {/* Preview container to visually separate from dashboard */}
+        <div className="relative h-full flex items-start justify-center px-4">
+          
+          {/* Optional label (helps hierarchy a LOT) */}
+          <div className="absolute -top-6 text-xs text-gray-400 tracking-wide">
+            Live Preview
+          </div>
 
-        <div className="h-full flex items-start">
-
-
-          <div className="w-[330px] max-h-full aspect-[9/19.5] bg-black rounded-[2.5rem] p-2">
-            <div className="h-full bg-white rounded-[2rem] overflow-hidden flex flex-col">
+          {/* SCALE WRAPPER */}
+          <div className="origin-top scale-[0.6] xl:scale-[0.7]">
+            
+            {/* DEVICE FRAME */}
+            <div
+              className="
+                w-[390px] h-[844px]
+                rounded-[44px]
+                bg-white
+                p-[10px]
+              "
+            >
+              {/* DEVICE SCREEN */}
               <div
-                ref={phoneScrollRef}
-                className="flex-1 overflow-y-auto overscroll-contain no-scrollbar"
+                className="
+                  w-full h-full
+                  bg-white
+                  rounded-[36px]
+                  overflow-hidden
+                  flex flex-col
+                "
               >
-
-                {mergedProfile ? (
-                  <PublicMobileWebsite
-                    data={mergedProfile}
-                    scrollRef={phoneScrollRef}
-                  />
-                ) : (
-
-                  <div className="h-full flex items-center justify-center text-sm text-gray-400">
-                    No public profile yet
-                  </div>
-                )}
+                <div
+                  ref={phoneScrollRef}
+                  className="flex-1 overflow-y-auto overscroll-contain no-scrollbar"
+                >
+                  {mergedProfile ? (
+                    <PublicMobileWebsite
+                      data={mergedProfile}
+                      scrollRef={phoneScrollRef}
+                    />
+                  ) : (
+                    <div className="h-full flex items-center justify-center text-sm text-gray-400">
+                      No public profile yet
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
+
           </div>
         </div>
       </div>
@@ -526,6 +586,103 @@ export default function TeamMemberDetailsPage() {
         message={resultMessage}
         onClose={() => setResultOpen(false)}
       />
+    </div>
+  );
+}
+
+type PulloutTabsProps = {
+  tabs: readonly string[];
+  activeTab: string;
+  onChange: (tab: any) => void;
+  allowTotalLeads: boolean;
+  navigate: (delta: number) => void;
+};
+
+export function LeftPulloutTabs({
+  tabs,
+  activeTab,
+  onChange,
+  allowTotalLeads,
+  navigate,
+}: PulloutTabsProps) {
+  return (
+    <div className="fixed top-0 left-[250px] h-screen z-40 block">
+      {/* Hover area */}
+      <div
+        className="
+          group
+          h-full
+          w-[10px]
+          hover:w-[220px]
+          transition-all
+          duration-300
+          ease-out
+        "
+      >
+        {/* Panel */}
+        <div
+          className="
+            h-full
+            w-full
+            bg-gradient-to-b from-purple-600 to-purple-700
+            rounded-r-2xl
+            shadow-xl
+            overflow-hidden
+          "
+        >
+          {/* Expanded content */}
+          <div
+            className="
+              opacity-0
+              group-hover:opacity-100
+              transition-opacity
+              duration-200
+              delay-100
+              h-full
+              px-4
+              py-6
+              text-white
+            "
+          >
+
+            <button
+              onClick={() => navigate(-1)}
+              className="flex items-center gap-2 text-sm text-gray-100 hover:text-white mb-6"
+            >
+              <ArrowLeft size={16} />
+              Back to Team
+            </button>
+
+            <nav className="flex flex-col gap-2">
+              {tabs
+                .filter(
+                  (t) => t !== "total-leads" || allowTotalLeads
+                )
+                .map((t) => {
+                  const active = activeTab === t;
+
+                  return (
+                    <button
+                      key={t}
+                      onClick={() => onChange(t)}
+                      className={`
+                        text-left px-3 py-2 rounded-lg capitalize
+                        transition-colors
+                        ${
+                          active
+                            ? "bg-white text-purple-700 font-medium"
+                            : "text-purple-100 hover:bg-purple-500/30"
+                        }
+                      `}
+                    >
+                      {t.replace("-", " ")}
+                    </button>
+                  );
+                })}
+            </nav>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
