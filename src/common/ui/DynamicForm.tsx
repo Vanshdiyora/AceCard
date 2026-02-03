@@ -133,6 +133,7 @@ export default function DynamicForm({
                   type={field.type}
                   className={`${baseInputClass} ${showError ? "border-red-500" : ""
                     }`}
+                    disabled={disabled || field.disabled}
                   placeholder={field.placeholder}
                   value={form[field.name] ?? ""}
                   onChange={(e) =>
@@ -153,6 +154,7 @@ export default function DynamicForm({
                   type="number"
                   className={`${baseInputClass} ${showError ? "border-red-500" : ""
                     }`}
+                    disabled={disabled || field.disabled}
                   value={form[field.name] ?? ""}
                   onChange={(e) =>
                     handleChange(
@@ -174,6 +176,7 @@ export default function DynamicForm({
             {field.type === "textarea" && (
               <>
                 <textarea
+                disabled={disabled || field.disabled}
                   rows={3}
                   className={`${baseInputClass} ${showError ? "border-red-500" : ""
                     }`}

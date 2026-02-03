@@ -4,6 +4,7 @@
     SuggestedQuestion,
     AccountProfile,
     UpdateAccountProfilePayload,
+    UpdateMyAccountProfilePayload,
     LeadFormConfig,
     TrackingPixels
   } from "./types";
@@ -62,6 +63,39 @@
       }
     }
   );
+  
+export const updateMyAccountProfile = createAsyncThunk<
+  AccountProfile,
+  UpdateMyAccountProfilePayload
+>("settings/updateMyAccountProfile", async (payload, thunkAPI) => {
+  try {
+    const data = await settingsService.updateMyAccountProfile(payload);
+
+    // map API response -> AccountProfile
+    const mapped: AccountProfile = {
+      username: (data as any).username,
+      name: data.name ?? "",
+      email: data.email ?? "",
+      phone: data.phone ?? "",
+      role: data.role ?? "",
+      avatar_url: data.avatar_url ?? "",
+      bio: data.bio ?? "",
+      company_description: data.company_description ?? "",
+      socials: data.socials ?? null,
+      other_links: data.other_links ?? null,
+      display_settings: data.display_settings ?? null,
+      address: (data as any).address ?? "",
+      custom_job_role: data.custom_job_role ?? ""
+    };
+
+    return mapped;
+  } catch (err: any) {
+    return thunkAPI.rejectWithValue(
+      err.response?.data?.message || "Failed to update profile"
+    );
+  }
+});
+
 
   export const updateAccountProfile = createAsyncThunk<
     AccountProfile,
@@ -308,6 +342,27 @@
           s.leadConfig.saving = false;
           s.leadConfig.error = a.payload as string;
         })
+.addCase(updateMyAccountProfile.pending, (s) => {
+  s.account.saving = true;
+  s.account.error = null;
+})
+.addCase(updateMyAccountProfile.fulfilled, (s, a) => {
+  s.account.saving = false;
+
+  if (s.account.data) {
+    s.account.data = {
+      ...s.account.data,   // 👈 keep old fields
+      ...a.payload,        // 👈 override only changed ones
+    };
+  } else {
+    s.account.data = a.payload;
+  }
+})
+
+.addCase(updateMyAccountProfile.rejected, (s, a) => {
+  s.account.saving = false;
+  s.account.error = a.payload as string;
+})
 
         // ---------- Suggested Questions ----------
         .addCase(fetchSuggestedQuestions.pending, (s) => {

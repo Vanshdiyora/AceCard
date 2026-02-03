@@ -13,6 +13,7 @@ export interface AccountProfileResponse {
   other_links: any;
   display_settings: any;
   address?: string;
+  custom_job_role: string;
 }
 
 export interface AccountProfile {
@@ -28,6 +29,7 @@ export interface AccountProfile {
   other_links: any;
   display_settings: any;
   address: string;
+    custom_job_role: string;
 }
 
 export type UpdateAccountProfilePayload = AccountProfile;
@@ -82,13 +84,19 @@ export interface SettingsState {
   };
   suggestedQuestions: SuggestedQuestionsState;
   integrations: CRMIntegrationState;
-  
+
   trackingPixels: {
     data: TrackingPixels | null;
     loading: boolean;
     saving: boolean;
     error: string | null;
   };
+}
+export interface UpdateMyAccountProfilePayload {
+  name: string;
+  custom_job_role: string;
+  address: string;
+  company_description: string;
 }
 
 // ---------- Suggested Questions ----------

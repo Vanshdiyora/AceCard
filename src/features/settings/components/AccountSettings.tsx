@@ -114,7 +114,8 @@ export default function AccountSettings() {
         {renderView("Name", data.name)}
         {renderView("Email", data.email)}
         {renderView("Phone", data.phone)}
-        {renderView("Role", data.role)}
+   {renderView("Role", data.custom_job_role || data.role)}
+
         {renderView("Company Description", data.company_description)}
         {renderView("Address", data.address)}
 

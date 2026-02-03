@@ -4,7 +4,8 @@ import type {
   AccountProfile,
   UpdateAccountProfilePayload,
   LeadFormConfig,
-  CRMIntegration
+  CRMIntegration,
+  UpdateMyAccountProfilePayload
 } from "../types";
 
 const BASE_URL = "/profile";
@@ -27,6 +28,8 @@ export const settingsService = {
       other_links: data.other_links ?? null,
       display_settings: data.display_settings ?? null,
       address: (data as any).address ?? "",
+      custom_job_role: data.custom_job_role?? ""
+
     };
   },
 
@@ -49,6 +52,7 @@ export const settingsService = {
       other_links: data.other_links ?? null,
       display_settings: data.display_settings ?? null,
       address: (data as any).address ?? "",
+      custom_job_role: data.custom_job_role?? ""
     };
   },
 
@@ -132,6 +136,17 @@ async saveTrackingPixels(payload: {
   const res = await axios.post("/vendor/tracking-pixels", payload);
   return res.data;
 },
+
+async updateMyAccountProfile(
+  payload: UpdateMyAccountProfilePayload
+) {
+  // only success message
+  await axios.put("/edit/myprofile", payload);
+
+  // re-fetch full profile
+  const res = await axios.get<AccountProfileResponse>("/profile");
+  return res.data;
+}
 
 
 };
