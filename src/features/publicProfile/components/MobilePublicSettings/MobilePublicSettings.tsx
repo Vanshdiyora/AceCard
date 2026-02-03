@@ -1,7 +1,4 @@
-// import {
-//   Link2,
-//   FileText,
-// } from "lucide-react";
+import SocialSection from "../../../teams/components/details/publicProfile/sections/SocialSection";
 import Links from "./Links/Links";
 import { Pencil } from "lucide-react";
 import {
@@ -82,81 +79,19 @@ export default function MobilePublicSettings({
 }) {
   const config = data?.configuration ?? {};
 
-  //   useEffect(() => {
-  //     if (!data) return;
-
-  //     /* ---------- META ---------- */
-  //     if (data.meta_pixel_id) {
-  //       injectScript(
-  //         "fb-pixel",
-  //         "https://connect.facebook.net/en_US/fbevents.js",
-  //         `
-  //         !function(f,b,e,v,n,t,s){
-  //         if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-  //         n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-  //         if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-  //         n.queue=[];t=b.createElement(e);t.async=!0;
-  //         t.src=v;s=b.getElementsByTagName(e)[0];
-  //         s.parentNode.insertBefore(t,s)
-  //         }(window, document,'script','https://connect.facebook.net/en_US/fbevents.js');
-
-  //         fbq('init', '${data.meta_pixel_id}');
-  //         fbq('track', 'PageView');
-  //       `
-  //       );
-  //     }
-
-  //     /* ---------- GOOGLE / YOUTUBE ---------- */
-  //     if (data.google_analytics_id) {
-  //       injectScript(
-  //         "gtag-js",
-  //         `https://www.googletagmanager.com/gtag/js?id=${data.google_analytics_id}`
-  //       );
-
-  //       injectScript(
-  //         "gtag-init",
-  //         "",
-  //         `
-  //         window.dataLayer = window.dataLayer || [];
-  //         function gtag(){dataLayer.push(arguments);}
-  //         gtag('js', new Date());
-  //         gtag('config', '${data.google_analytics_id}');
-  //       `
-  //       );
-  //     }
-
-  //     /* ---------- LINKEDIN ---------- */
-  //     if (data.linkedin_insight_tag_id) {
-  //       injectScript(
-  //         "linkedin-pixel",
-  //         "https://snap.licdn.com/li.lms-analytics/insight.min.js",
-  //         `
-  //         _linkedin_partner_id = "${data.linkedin_insight_tag_id}";
-  //         window._linkedin_data_partner_ids = window._linkedin_data_partner_ids || [];
-  //         window._linkedin_data_partner_ids.push(_linkedin_partner_id);
-  //       `
-  //       );
-  //     }
-  //   }, [
-  //     data?.meta_pixel_id,
-  //     data?.google_analytics_id,
-  //     data?.linkedin_insight_tag_id,
-  //   ]);
-
-
   const [activePhoto, setActivePhoto] = useState<any | null>(null);
 
   const [open, setOpen] = useState(false);
 
   const {
-    profile = {},
+    // profile = {},
     // cover = {},
     layout = {},
     theme = {},
-    contact = {},
+    // contact = {},
     banner = {},
     meeting = {},
-    social_links = { items: [] },
+    // social_links = { items: [] },
     // youtube = { items: [] },
     // links_files = { items: [] },
     products = { items: [] },
@@ -172,19 +107,27 @@ export default function MobilePublicSettings({
   // local editable copy
   const [draft, setDraft] = useState<any>(config);
   const [showProfileEditor, setShowProfileEditor] = useState(false);
-  console.log(draft)
+
   const handleSave = () => {
     dispatch(savePublicProfile({ config: draft }));
   };
 
   // keep in sync when API loads
   useEffect(() => {
-    setDraft({
-      ...config,
-      youtube: config.youtube || { items: [] },
-      links_files: config.links_files || { items: [] }, // 👈 ADD THIS
-    });
+    if (!config || !Object.keys(config).length) return;
+
+    setDraft((prev: any) => ({
+      ...prev,          // KEEP edits
+      ...config,       // hydrate from API
+      contact: {
+        ...prev.contact,
+        ...config.contact,
+      },
+      youtube: config.youtube || prev.youtube || { items: [] },
+      links_files: config.links_files || prev.links_files || { items: [] },
+    }));
   }, [config]);
+
 
 
   const orderedSections = sortByRank(sections.items);
@@ -270,26 +213,64 @@ export default function MobilePublicSettings({
         );
 
       case "about":
-        return profile.description ? (
-          <Section title="About" theme={theme}>
-            <p
-              className="text-sm leading-relaxed"
-              style={{ color: theme.card_text }}
-            >
-              {profile.description}
-            </p>
-          </Section>
-        ) : null;
-
-
-      case "social_links":
         return (
+          <Section title="About" theme={theme}>
+            <EditableAbout
+              value={draft.profile?.description || ""}
+              theme={theme}
+              editable={!draft.profile?.locked}
+              onChange={(val: string) =>
+                setDraft((prev: any) => ({
+                  ...prev,
+                  profile: {
+                    ...prev.profile,
+                    description: val,
+                  },
+                }))
+              }
+            />
+          </Section>
+        );
+
+case "social_links":
+  return (
+    <Section title="Social" theme={theme}>
+      {draft.social_links?.locked ? (
+        <Social
+          items={sortByRank(draft.social_links.items)}
+          theme={theme}
+          shapeClass={shapeClass}
+        />
+      ) : (
+        <>
           <Social
-            items={sortByRank(social_links.items)}
+            items={sortByRank(draft.social_links.items)}
             theme={theme}
             shapeClass={shapeClass}
           />
-        );
+
+          <div className="pt-4">
+            <SocialSection
+              items={draft.social_links.items || []}
+              onChange={(next: any[]) =>
+                setDraft((prev: any) => ({
+                  ...prev,
+                  social_links: {
+                    ...prev.social_links,
+                    items: next.map((i, idx) => ({
+                      ...i,
+                      rank: idx + 1,
+                      enabled: true,
+                    })),
+                  },
+                }))
+              }
+            />
+          </div>
+        </>
+      )}
+    </Section>
+  );
 
       case "products":
         return (
@@ -325,10 +306,20 @@ export default function MobilePublicSettings({
           <ProfileActions
             user={data}
             theme={theme}
-            contact={contact}
+            contact={draft.contact}
             layout={layout}
-            onConnect={() => isMobile && setOpen(true)}
+            editable={!draft.contact?.locked}
+            onContactChange={(updater: any) =>
+              setDraft((prev: any) => ({
+                ...prev,
+                contact:
+                  typeof updater === "function"
+                    ? updater(prev.contact || {})
+                    : updater,
+              }))
+            }
 
+            onConnect={() => isMobile && setOpen(true)}
           />
         );
 
@@ -1027,7 +1018,7 @@ function useIsMobile(breakpoint = 768) {
 //   );
 // }
 
-function EditModal({ open, onClose, children }: any) {
+export function EditModal({ open, onClose, children }: any) {
   if (!open) return null;
 
   return (
@@ -1300,6 +1291,88 @@ function BackgroundVideo({ src }: { src?: string }) {
         playsInline
         className="w-full h-full object-cover"
       />
+    </div>
+  );
+}
+
+function EditableAbout({
+  value,
+  onChange,
+  theme,
+  editable = true,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  theme: any;
+  editable?: boolean;
+}) {
+  const [editing, setEditing] = useState(false);
+  const t = resolveTheme(theme);
+
+  return (
+    <div
+      className="relative rounded-2xl p-4 shadow-sm backdrop-blur-md
+                 transition-all duration-300"
+      style={{
+        background: "rgba(255,255,255,0.08)",
+        border: "1px solid rgba(255,255,255,0.15)",
+      }}
+    >
+      {/* FLOATING EDIT */}
+      {editable && !editing && (
+        <button
+          onClick={() => setEditing(true)}
+          className="absolute -top-3 -right-3 z-20 h-9 w-9 rounded-full shadow-lg
+                     flex items-center justify-center
+                     bg-gradient-to-br from-orange-400 to-pink-500
+                     text-white transition hover:scale-110 active:scale-95"
+        >
+          <Pencil size={14} />
+        </button>
+      )}
+
+      {!editing ? (
+        <p
+          className={`text-sm leading-relaxed transition-all duration-200 ${!value ? "opacity-60 italic" : ""
+            }`}
+          style={{ color: t.text }}
+        >
+          {value || "Tap the pencil to add your story ✨"}
+        </p>
+      ) : (
+        <div className="space-y-3">
+          <textarea
+            autoFocus
+            rows={4}
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            className="w-full rounded-xl border border-gray-200/40
+                       bg-white/80 backdrop-blur-sm p-3 text-sm
+                       focus:outline-none focus:ring-2 focus:ring-indigo-400"
+          />
+
+          <div className="flex gap-3 pt-1">
+            <button
+              onClick={() => setEditing(false)}
+              className="flex-1 py-2 rounded-xl text-sm font-semibold
+                         bg-gradient-to-r from-indigo-500 to-purple-600
+                         text-white shadow hover:scale-[1.02]
+                         active:scale-[0.97]"
+            >
+              Save
+            </button>
+
+            <button
+              onClick={() => setEditing(false)}
+              className="flex-1 py-2 rounded-xl text-sm font-medium
+                         bg-white/70 border border-gray-300/40
+                         text-gray-600 hover:bg-white"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
