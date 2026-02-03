@@ -9,6 +9,7 @@ import {
   Layers,
   BadgeIndianRupee,
   Activity,
+  Users
 } from "lucide-react";
 import { searchVendorTeam } from "../slice";
 import { useAppDispatch, useAppSelector } from "../../../app/hooks";
@@ -152,11 +153,13 @@ export default function VendorDetailsPage() {
               label="Notify"
               onClick={() => setNotifyOpen(true)}
             />
+
             <ActionButton
-              icon={<Activity size={14} />}
-              label="Team Activity"
+              icon={<Users size={14} />}
+              label="Team Detail"
               onClick={() => navigate(`/super/vendors/${vendor.id}/team`)}
             />
+
 
             {vendor.status === "active" ? (
               <ActionButton

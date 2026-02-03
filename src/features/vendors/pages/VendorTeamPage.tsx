@@ -7,6 +7,21 @@ import PageHeader from "../../../common/components/layout/PageHeader";
 import PageFilters from "../../../common/components/layout/PageFilter";
 import DataTable, { type Column } from "../../../common/components/table/DataTable";
 import ErrorAlert from "../../../common/ui/ErrorAlert";
+import QRCode from "qrcode";
+
+const downloadQR = async (username: string) => {
+  const url = `${window.location.origin}/profile/${username}`; // change if needed
+
+  const dataUrl = await QRCode.toDataURL(url, {
+    width: 300,
+    margin: 2,
+  });
+
+  const link = document.createElement("a");
+  link.href = dataUrl;
+  link.download = `${username}-qr.png`;
+  link.click();
+};
 
 type TeamRow = {
   name:string;
@@ -46,12 +61,27 @@ export default function VendorTeamPage() {
     }));
   }, [teamActivity]);
 
-  const columns: Column<TeamRow>[] = [
-    { header: "Name", accessor: "name", width: "1fr" },
-    { header: "Role", accessor: "role", width: "1fr" },
-    { header: "Username", accessor: "username", width: "1fr" },
-   
-  ];
+const columns: Column<TeamRow>[] = [
+  { header: "Name", accessor: "name", width: "1fr" },
+  { header: "Role", accessor: "role", width: "1fr" },
+  {
+    header: "",
+    width: "120px",
+    align:"center",
+    render: (row) => (
+      <button
+        onClick={(e) => {
+          e.stopPropagation(); // prevent row click
+          downloadQR(row.username);
+        }}
+        className="px-3 py-1 text-xs rounded bg-purple-600 text-white hover:bg-indigo-700"
+      >
+        Download QR
+      </button>
+    ),
+  },
+];
+
 
   return (
     <div className="p-6">
