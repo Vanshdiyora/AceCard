@@ -10,7 +10,7 @@ import {
   BadgeIndianRupee,
   Activity,
 } from "lucide-react";
-
+import { searchVendorTeam } from "../slice";
 import { useAppDispatch, useAppSelector } from "../../../app/hooks";
 import {
   archiveVendor,
@@ -51,6 +51,14 @@ export default function VendorDetailsPage() {
   const [resultOpen, setResultOpen] = useState(false);
   const [resultSuccess, setResultSuccess] = useState(true);
   const [resultMessage, setResultMessage] = useState("");
+  useEffect(() => {
+    if (vendor?.id) {
+      dispatch(searchVendorTeam({
+        vendorId: vendor.id,
+        params: { page: 1, page_size: 10 }
+      }));
+    }
+  }, [vendor?.id, dispatch]);
 
   const showResult = (success: boolean, message: string) => {
     setResultSuccess(success);
@@ -62,7 +70,7 @@ export default function VendorDetailsPage() {
     const d = new Date(value);
     return isNaN(d.getTime()) ? "—" : d.toDateString();
   };
-const CRMS = ["zoho", "hubspot", "salesforce", "odoo"];
+  const CRMS = ["zoho", "hubspot", "salesforce", "odoo"];
 
   useEffect(() => {
     if (!vendorFromStore && id) {
@@ -144,6 +152,11 @@ const CRMS = ["zoho", "hubspot", "salesforce", "odoo"];
               label="Notify"
               onClick={() => setNotifyOpen(true)}
             />
+            <ActionButton
+              icon={<Activity size={14} />}
+              label="Team Activity"
+              onClick={() => navigate(`/super/vendors/${vendor.id}/team`)}
+            />
 
             {vendor.status === "active" ? (
               <ActionButton
@@ -174,12 +187,12 @@ const CRMS = ["zoho", "hubspot", "salesforce", "odoo"];
           <Info label="Status" value={<StatusBadge status={vendor.status} />} />
         </Section>
 
-      <Section title="Business" icon={<Layers size={16} />}>
-  <Info label="Seats" value={vendor.seats_appointed} />
-  <Info label="Stage" value={vendor.status === "active" ? "On-boarded" : "Suspended"} />
-  <Info label="POC Name" value={vendor.vendor_poc_name} />   {/* ✅ NEW */}
-  <Info label="POC Email" value={vendor.vendor_poc_email} />
-</Section>
+        <Section title="Business" icon={<Layers size={16} />}>
+          <Info label="Seats" value={vendor.seats_appointed} />
+          <Info label="Stage" value={vendor.status === "active" ? "On-boarded" : "Suspended"} />
+          <Info label="POC Name" value={vendor.vendor_poc_name} />   {/* ✅ NEW */}
+          <Info label="POC Email" value={vendor.vendor_poc_email} />
+        </Section>
 
 
         <Section title="Billing" icon={<BadgeIndianRupee size={16} />}>
@@ -199,17 +212,17 @@ const CRMS = ["zoho", "hubspot", "salesforce", "odoo"];
 
       {/* Row 2 */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-       <Section title="CRM Integrations" icon={<Activity size={16} />}>
-  <div className="flex flex-wrap gap-2 col-span-2">
-    {CRMS.map((crm) => (
-      <Tag
-        key={crm}
-        active={vendor.allowed_crm_integrations?.includes(crm)}
-        label={crm.charAt(0).toUpperCase() + crm.slice(1)}
-      />
-    ))}
-  </div>
-</Section>
+        <Section title="CRM Integrations" icon={<Activity size={16} />}>
+          <div className="flex flex-wrap gap-2 col-span-2">
+            {CRMS.map((crm) => (
+              <Tag
+                key={crm}
+                active={vendor.allowed_crm_integrations?.includes(crm)}
+                label={crm.charAt(0).toUpperCase() + crm.slice(1)}
+              />
+            ))}
+          </div>
+        </Section>
 
 
         <Section title="Usage Metrics" icon={<Activity size={16} />}>

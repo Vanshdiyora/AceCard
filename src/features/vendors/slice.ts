@@ -1,6 +1,8 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { vendorsService } from "./services/vendors.service";
 import type { VendorItem, VendorStat, VendorMeta } from "./types";
+import type { VendorTeamActivity, VendorTeamMeta } from "./types";
+import type { VendorTeamResponse, SearchVendorTeamParams } from "./types";
 
 /* ---------- STATE ---------- */
 interface VendorsState {
@@ -10,6 +12,9 @@ interface VendorsState {
   loading: boolean;
   seatsUpdating: boolean; // 👈 add
   error?: string;
+  teamActivity: VendorTeamActivity[];
+  teamMeta: VendorTeamMeta | null;
+  teamLoading: boolean;
 }
 
 
@@ -19,7 +24,12 @@ const initialState: VendorsState = {
   stats: [],
   loading: false,
   seatsUpdating: false,
+
+  teamActivity: [],
+  teamMeta: null,
+  teamLoading: false,
 };
+
 
 
 /* ---------- THUNKS ---------- */
@@ -60,6 +70,20 @@ export const fetchVendors = createAsyncThunk<
   }
 );
 
+export const searchVendorTeam = createAsyncThunk<
+  VendorTeamResponse,
+  { vendorId: number; params: SearchVendorTeamParams },
+  { rejectValue: string }
+>(
+  "vendors/searchTeam",
+  async ({ vendorId, params }, { rejectWithValue }) => {
+    try {
+      return await vendorsService.teamSearch(vendorId, params);
+    } catch (err: unknown) {
+      return rejectWithValue(extractError(err, "Failed to fetch team activity"));
+    }
+  }
+);
 
 export const unarchiveVendor = createAsyncThunk<
   number,
@@ -288,7 +312,46 @@ const vendorsSlice = createSlice({
           v.id === action.payload ? { ...v, status: "archived" } : v
         );
         state.stats = computeStats(state.vendors);
-      });
+      })
+
+      /* TEAM SEARCH */
+.addCase(searchVendorTeam.pending, (state, action) => {
+  state.teamLoading = true;
+  state.error = undefined;
+
+  // 🔹 If new vendor or new search, reset list
+  const { append } = action.meta.arg.params || {};
+  if (!append) {
+    state.teamActivity = [];
+    state.teamMeta = null;
+  }
+})
+
+.addCase(searchVendorTeam.fulfilled, (state, action) => {
+  state.teamLoading = false;
+
+  const incoming = action.payload.data ?? [];
+  const { append } = action.meta.arg.params || {};
+
+  // 🔹 De-duplicate by id
+  const map = new Map<number, VendorTeamActivity>();
+
+  if (append) {
+    state.teamActivity.forEach(t => map.set(t.id, t));
+  }
+
+  incoming.forEach(t => map.set(t.id, t));
+
+  state.teamActivity = Array.from(map.values());
+  state.teamMeta = action.payload.meta;
+})
+
+.addCase(searchVendorTeam.rejected, (state, action) => {
+  state.teamLoading = false;
+  state.error = action.payload;
+});
+
+
   },
 });
 

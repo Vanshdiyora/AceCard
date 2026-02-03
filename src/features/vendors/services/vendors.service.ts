@@ -1,5 +1,5 @@
 import type { FetchVendorsParams } from "../slice";
-import type { VendorListResponse, VendorItem } from "../types";
+import type { VendorListResponse, VendorItem, SearchVendorTeamParams , VendorTeamResponse } from "../types";
 import api from "../../../services/axiosClient"; // adjust path if needed
 import type { AxiosResponse } from "axios";
 
@@ -38,5 +38,16 @@ export const vendorsService = {
 
   notify: async (payload: any): Promise<void> => {
     await api.post(`/admin/vendors/notify`, payload);
+  },
+
+  teamSearch: async (
+    vendorId: number,
+    params: SearchVendorTeamParams
+  ): Promise<VendorTeamResponse> => {
+    const res = await api.post(
+      `/admin/vendors/${vendorId}/team/search`,
+      params
+    );
+    return res.data;
   },
 };
