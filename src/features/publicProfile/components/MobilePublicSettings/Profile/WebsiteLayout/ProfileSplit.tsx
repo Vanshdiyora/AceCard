@@ -1,5 +1,9 @@
-import { formatRole } from "../MobileWebsite";
+import { useState } from "react";
+import { uploadImage } from "../../../../services/publicProfile.api";
+import AvatarCropModal from "../../../../../../common/ui/AvatarCropModal";
+import { formatRole } from "../../MobilePublicSettings";
 
+/* ================= ALIGNMENT ================= */
 type CardAlign = "left" | "center" | "right";
 
 const ALIGN_MAP: Record<CardAlign, string> = {
@@ -20,6 +24,7 @@ export function ProfileSplit({
   theme,
   user,
   layout,
+  onProfileChange,
 }: any) {
   const t = resolveTheme(theme);
   const align =
@@ -31,6 +36,7 @@ export function ProfileSplit({
         className="rounded-2xl overflow-hidden shadow-md"
         style={{ backgroundColor: t.cardBg }}
       >
+        {/* IMAGE */}
         <div className="relative h-[180px] w-full flex justify-center">
           {profile?.avatar_url ? (
             <img
@@ -47,6 +53,13 @@ export function ProfileSplit({
             </div>
           )}
 
+          {/* 📸 FLOATING CAMERA */}
+          <InlineAvatarUploader
+            profile={profile}
+            onChange={onProfileChange}
+          />
+
+          {/* 🔥 Fade bottom */}
           {layout?.is_fade && (
             <div
               className="absolute bottom-0 left-0 right-0 h-16"
@@ -67,6 +80,57 @@ export function ProfileSplit({
           {formatRole(user?.job_title || user?.role)} at {user?.vendor_name}
         </p>
       </div>
+    </>
+  );
+}
+
+/* ================= INLINE UPLOADER ================= */
+
+function InlineAvatarUploader({
+  profile,
+  onChange,
+}: {
+  profile: any;
+  onChange: (p: any) => void;
+}) {
+  const [cropFile, setCropFile] = useState<File | null>(null);
+
+  const uploadCropped = async (blob: Blob) => {
+    const file = new File([blob], "avatar.jpg", { type: "image/jpeg" });
+    const res = await uploadImage(file);
+    const url = res.data.url;
+
+    // 🔒 ALWAYS respect custom_profile toggle
+    const next = profile.custom_profile
+      ? { ...profile, custom_profile_url: url }
+      : { ...profile, avatar_url: url };
+
+    onChange(next); // 👈 this now updates correctly
+    setCropFile(null);
+  };
+
+  return (
+    <>
+      {/* 📸 FLOATING BUTTON */}
+      <label className="absolute top-[54px] left-1/2 -translate-x-1/2 bg-orange-500 text-white p-3 rounded-full shadow-lg cursor-pointer hover:scale-105 transition">
+        📷
+        <input
+          type="file"
+          hidden
+          accept="image/*"
+          onChange={(e) =>
+            e.target.files && setCropFile(e.target.files[0])
+          }
+        />
+      </label>
+
+      {cropFile && (
+        <AvatarCropModal
+          file={cropFile}
+          onCancel={() => setCropFile(null)}
+          onSave={uploadCropped}
+        />
+      )}
     </>
   );
 }

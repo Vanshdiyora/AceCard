@@ -1,6 +1,8 @@
 import SocialSection from "./sections/SocialSection";
 import Links from "./Links/Links";
 import { Pencil } from "lucide-react";
+import { X } from "lucide-react";
+import { createPortal } from "react-dom";
 import {
   SiInstagram,
   SiLinkedin,
@@ -11,31 +13,23 @@ import {
   SiSnapchat,
   SiTiktok,
 } from "react-icons/si";
+import { ProfileLayoutModal } from "./Profile/ProfileLayoutModal";
+import { ProfileLayoutEditor } from "./Profile/ProfileLayoutEditor";
+import { uploadImage } from "../../services/publicProfile.api";
+import { VideoGalleryEditModal } from "./VideoGallery/VideoGallery";
 import { useAppDispatch, useAppSelector } from "../../../../app/hooks";
 import { savePublicProfile } from "../../slice";
-import { ProfileTypeInlinePicker } from "./Profile/ProfileTypeInlinePicker";
 import { FiPhone, FiGlobe } from "react-icons/fi";
 import React from "react";
 import { useState, useEffect } from "react";
 import { ConnectModal } from "../ConnectModal";
-import { ProfileActions } from "../WebsiteLayout/ProfileActions";
-import { ProfileWrapper } from "../WebsiteLayout/ProfileWrapper";
+import { ProfileActions } from "../../components/MobilePublicSettings/Profile/WebsiteLayout/ProfileActions";
+import { ProfileWrapper } from "../../components/MobilePublicSettings/Profile/WebsiteLayout/ProfileWrapper";
 import { Banner } from "./Banner/Banner";
 import { EditableMeetingCTA } from "./Meeting/EditableMeetingCTA";
+import PhotoGallerySection from "./sections/PhotoGallerySection";
+import { ProductsEditModal } from "./sections/ProductsEditModal";
 /* ================= HELPERS ================= */
-
-// function injectScript(id: string, src?: string, inner?: string) {
-//   if (document.getElementById(id)) return;
-
-//   const s = document.createElement("script");
-//   s.id = id;
-//   s.async = true;
-
-//   if (src) s.src = src;
-//   if (inner) s.innerHTML = inner;
-
-//   document.head.appendChild(s);
-// }
 
 export const resolveTheme = (theme: any) => ({
   cardBg: theme.card_background || "#6B6E93",
@@ -53,10 +47,9 @@ const getYouTubeId = (url?: string) => {
 
 const sortByRank = (arr: any[]) => {
   if (!Array.isArray(arr)) return [];
-  return arr
-    .filter((i) => i?.enabled !== false)
-    .sort((a, b) => (a.rank ?? 0) - (b.rank ?? 0));
+  return [...arr].sort((a, b) => (a.rank ?? 0) - (b.rank ?? 0));
 };
+
 
 export const resolveShape = (style?: number) => {
   switch (style) {
@@ -69,35 +62,29 @@ export const resolveShape = (style?: number) => {
   }
 };
 /* ================= COMPONENT ================= */
-
 export default function MobilePublicSettings({
   data,
   scrollRef,
+  onLogout,
 }: {
   data: any;
   scrollRef?: React.RefObject<HTMLDivElement | null>;
+  onLogout?: () => void;
 }) {
+
   const config = data?.configuration ?? {};
 
   const [activePhoto, setActivePhoto] = useState<any | null>(null);
 
   const [open, setOpen] = useState(false);
+  const [editProducts, setEditProducts] = useState(false);
 
   const {
-    // profile = {},
-    // cover = {},
-    layout = {},
+    // layout = {},
     theme = {},
-    // contact = {},
     banner = {},
     meeting = {},
-    // social_links = { items: [] },
-    // youtube = { items: [] },
-    // links_files = { items: [] },
-    products = { items: [] },
     sections = { items: [] },
-    photo_gallery = { items: [] },
-    video_gallery = { items: [] },
   } = config;
 
   const dispatch = useAppDispatch();
@@ -106,7 +93,6 @@ export default function MobilePublicSettings({
 
   // local editable copy
   const [draft, setDraft] = useState<any>(config);
-  const [showProfileEditor, setShowProfileEditor] = useState(false);
 
   const handleSave = () => {
     dispatch(savePublicProfile({ config: draft }));
@@ -128,9 +114,10 @@ export default function MobilePublicSettings({
   }, [config]);
 
 
+  const [openLayoutEditor, setOpenLayoutEditor] = useState(false);
 
   const orderedSections = sortByRank(sections.items);
-  const shapeClass = resolveShape(layout?.button_style);
+  const shapeClass = resolveShape(draft.layout?.button_style);
 
   useEffect(() => {
     if (!scrollRef?.current) return;
@@ -174,7 +161,8 @@ export default function MobilePublicSettings({
     );
   };
 
-  const fontClass = resolveFontClass(layout?.font);
+  const fontClass = resolveFontClass(draft.layout?.font);
+
   const renderSection = (type: string) => {
     switch (type) {
       case "profile":
@@ -187,49 +175,32 @@ export default function MobilePublicSettings({
               user={data}
               layout={draft.layout}
               onConnect={() => isMobile && setOpen(true)}
-              onEdit={() => setShowProfileEditor((v) => !v)}
+              onEdit={() => setOpenLayoutEditor(true)}
               onProfileChange={updateDraft}
+
             />
-
-
-            {/* 👇 EDIT PANEL COMES *RIGHT BELOW PROFILE* */}
-            {showProfileEditor && (
-              <ProfileTypeInlinePicker
-                current={draft.layout?.profile_type || 1}
-
-                onSelect={(type) => {
-                  setDraft((prev: any) => ({
-                    ...prev,
-                    layout: {
-                      ...prev.layout,
-                      profile_type: type,
-                    },
-                  }));
-                }}
-              />
-            )}
           </div>
         );
 
-   case "about":
-  return (
-    <Section title="About" theme={theme}>
-      <EditableAbout
-        value={draft.profile?.description || ""}
-        theme={theme}
-        editable={!draft.profile?.locked}
-        onChange={(val: string) =>
-          setDraft((prev: any) => ({
-            ...prev,
-            profile: {
-              ...prev.profile,
-              description: val,
-            },
-          }))
-        }
-      />
-    </Section>
-  );
+      case "about":
+        return (
+          <Section title="About" theme={theme}>
+            <EditableAbout
+              value={draft.profile?.description || ""}
+              theme={theme}
+              editable={!draft.profile?.locked}
+              onChange={(val: string) =>
+                setDraft((prev: any) => ({
+                  ...prev,
+                  profile: {
+                    ...prev.profile,
+                    description: val,
+                  },
+                }))
+              }
+            />
+          </Section>
+        );
 
       case "social_links":
         return (
@@ -268,24 +239,38 @@ export default function MobilePublicSettings({
           </Section>
         );
 
-      case "products":
+      case "products": {
+        const p = draft.products;
         return (
           <Products
-            title={products.section_title}
-            items={sortByRank(products.items)}
+            title={p.section_title}
+            items={sortByRank(p.items)}
             theme={theme}
-            showPrice={products.toggle_price}
+            showPrice={p.toggle_price}
+            editable={p.locked}
+            onEdit={() => setEditProducts(true)}
           />
-
         );
-      case "video_gallery":
-        return video_gallery?.items?.length ? (
+      }
+
+      case "video_gallery": {
+        const vg = draft.video_gallery;
+        return (
           <VideoGallery
-            title={video_gallery.section_title}
-            items={sortByRank(video_gallery.items)}
+            title={vg?.section_title}
+            items={sortByRank(vg?.items || [])}  // 👈 pass empty array
             theme={theme}
+            editable={!draft.video_gallery?.locked}
+            galleryValue={vg}
+            onGalleryChange={(v: any) =>
+              setDraft((prev: any) => ({
+                ...prev,
+                video_gallery: v,
+              }))
+            }
           />
-        ) : null;
+        );
+      }
 
       case "youtube":
         return (
@@ -303,7 +288,7 @@ export default function MobilePublicSettings({
             user={data}
             theme={theme}
             contact={draft.contact}
-            layout={layout}
+            layout={draft.layout}
             editable={!draft.contact?.locked}
             onContactChange={(updater: any) =>
               setDraft((prev: any) => ({
@@ -371,22 +356,29 @@ export default function MobilePublicSettings({
 
         ) : null;
 
-      case "photo_gallery":
-        return photo_gallery?.items?.length ? (
+      case "photo_gallery": {
+        const pg = draft.photo_gallery;
+
+        return (
           <PhotoGallery
-            title={photo_gallery.section_title}
-            items={sortByRank(photo_gallery.items)}
+            title={pg?.section_title}
+            items={sortByRank(pg?.items || [])}
             theme={theme}
-            onOpen={setActivePhoto}   // 👈 add
+            editable={!pg?.locked}              // 🔒 respect lock
+            onEdit={() => setEditPhotoGallery(true)}   // open modal
+            onOpen={setActivePhoto}
           />
-        ) : null;
+        );
+      }
+
 
       default:
         return null;
     }
   };
+
   const bgClass = (() => {
-    switch (layout?.use_background) {
+    switch (draft.layout?.use_background) {
       case "polka":
         return "bg-pattern bg-polka";
       case "waves":
@@ -404,11 +396,13 @@ export default function MobilePublicSettings({
 
 
 
+  const [editPhotoGallery, setEditPhotoGallery] = useState(false);
+
   const resolveBackgroundStyle = () => {
     // IMAGE
-    if (layout?.use_background === "image" && layout?.background_image) {
+    if (draft.layout?.use_background === "image" && draft.layout?.background_image) {
       return {
-        backgroundImage: `url(${layout.background_image})`,
+        backgroundImage: `url(${draft.layout.background_image})`,
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",
@@ -418,16 +412,16 @@ export default function MobilePublicSettings({
     // PATTERN BACKGROUNDS → handled by CSS
     if (
       ["waves", "polka", "stripes", "zigzag"].includes(
-        layout?.use_background || ""
+        draft.layout?.use_background || ""
       )
     ) {
       return {};
     }
 
     // GRADIENT
-    if (layout?.use_background === "gradient") {
-      const from = layout?.color1 || "#7c3aed";
-      const to = layout?.color2 || "#6366f1";
+    if (draft.layout?.use_background === "gradient") {
+      const from = draft.layout?.color1 || "#7c3aed";
+      const to = draft.layout?.color2 || "#6366f1";
 
       const validDirections = {
         "to-r": "to right",
@@ -437,7 +431,7 @@ export default function MobilePublicSettings({
       };
 
       const dir =
-        validDirections[layout?.direction as keyof typeof validDirections] ||
+        validDirections[draft.layout?.direction as keyof typeof validDirections] ||
         "to right";
 
       return {
@@ -448,14 +442,14 @@ export default function MobilePublicSettings({
     // SOLID
     return {
       backgroundColor:
-        layout?.color1 || theme?.background_color || "#000",
+        draft.layout?.color1 || draft.theme?.background_color || "#000",
     };
   };
 
   useEffect(() => {
-    if (!layout?.use_custom_font || !layout?.custom_font) return;
+    if (!draft.layout?.use_custom_font || !draft.layout?.custom_font) return;
 
-    const fontUrl = layout.custom_font;
+    const fontUrl = draft.layout.custom_font;
 
     const font = new FontFace("UserCustomFont", `url(${fontUrl})`);
 
@@ -475,7 +469,7 @@ export default function MobilePublicSettings({
       .catch((err) => {
         console.error("❌ Custom font failed", err);
       });
-  }, [layout?.custom_font, layout?.use_custom_font]);
+  }, [draft.layout?.custom_font, draft.layout?.use_custom_font]);
 
   // useEffect(() => {
   //   // always test with this local URL
@@ -501,10 +495,10 @@ export default function MobilePublicSettings({
   const dragFrom = React.useRef<number | null>(null);
   return (
     <div
-      className={`relative min-h-screen w-full no-scrollbar overflow-hidden p-4 ${bgClass} ${fontClass}`}
+      className={`relative min-h-screen w-full no-scrollbar overflow-hidden p-4 pb-28 ${bgClass} ${fontClass}`}
       style={{
         ...(bgClass
-          ? { ["--pattern-bg" as any]: theme?.background_color || layout?.color1 || "#2f343a" }
+          ? { ["--pattern-bg" as any]: draft.theme?.background_color || draft.layout?.color1 || "#2f343a" }
           : resolveBackgroundStyle()),
       }}
     >
@@ -633,23 +627,82 @@ export default function MobilePublicSettings({
 
       </EditModal>
 
+      <EditModal
+        open={editPhotoGallery}
+        onClose={() => setEditPhotoGallery(false)}
+      >
+        <h3 className="text-lg font-semibold">Manage Photo Gallery</h3>
 
-      {/* SAVE BAR */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/90 backdrop-blur border-t shadow flex justify-center p-3">
+        <PhotoGallerySection
+          value={draft.photo_gallery}
+          disabled={draft.photo_gallery?.locked}
+          onChange={(v: any) =>
+            setDraft((prev: any) => ({
+              ...prev,
+              photo_gallery: v,
+            }))
+          }
+        />
+
+        <div className="pt-3">
+          <button
+            onClick={() => setEditPhotoGallery(false)}
+            className="w-full py-2 rounded-lg bg-indigo-600 text-white"
+          >
+            Done
+          </button>
+        </div>
+      </EditModal>
+
+      <ProductsEditModal
+        open={editProducts}
+        onClose={() => setEditProducts(false)}
+        value={draft.products}
+        onChange={(v: any) =>
+          setDraft((prev: any) => ({ ...prev, products: v }))
+        }
+      />
+
+
+
+      {/* BOTTOM ACTION BAR */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur border-t shadow px-4 py-3 flex gap-3 justify-center">
+        <button
+          onClick={onLogout}
+          className="flex-1 py-3 rounded-xl font-semibold border border-red-200 text-red-600 hover:bg-red-50 transition"
+        >
+          Sign out
+        </button>
+
         <button
           onClick={handleSave}
           disabled={saving}
-          className="px-6 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-indigo-500 to-purple-600 shadow disabled:opacity-60"
+          className="flex-1 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-indigo-500 to-purple-600 shadow disabled:opacity-60"
         >
           {saving ? "Saving..." : "Save Changes"}
         </button>
+
+        <ProfileLayoutModal
+          open={openLayoutEditor}
+          onClose={() => setOpenLayoutEditor(false)}
+        >
+          <ProfileLayoutEditor
+            config={draft}
+            update={setDraft}
+            isLayoutLocked={false}
+            isReadOnly={(m: any) => m?.locked}
+            uploadImage={uploadImage}
+          />
+        </ProfileLayoutModal>
+
+
       </div>
 
 
       <span className="wave-3 absolute inset-0" />
       <span className="wave-fade" />
-      {layout?.use_background === "video" && (
-        <BackgroundVideo src={layout?.background_video} />
+      {draft.layout?.use_background === "video" && (
+        <BackgroundVideo src={draft.layout?.background_video} />
       )}
       <div className="relative z-10 space-y-6">
 
@@ -704,57 +757,64 @@ function Products({
   items,
   theme,
   showPrice,
-}: {
-  title: string;
-  items: any[];
-  theme: any;
-  showPrice: boolean;
-}) {
+  editable = false,
+  onEdit,
+}: any) {
   if (!items?.length) return null;
 
   return (
     <Section title={title || "Products"} theme={theme}>
-      <div className="flex gap-4 overflow-x-auto pb-3 snap-x snap-mandatory">
-        {items.map((p: any) => (
-          <div
-            key={p.id}
-            className="relative min-w-[220px] h-48 rounded-2xl overflow-hidden snap-start shadow-lg transition hover:scale-[1.02]"
-            style={{ backgroundColor: theme.card_background }}
+      <div className="relative">
+        {editable && (
+          <button
+            onClick={onEdit}
+            className="absolute -top-4 -right-1 z-20 h-9 w-9 rounded-full
+              shadow-lg flex items-center justify-center bg-orange-500 text-white
+              hover:scale-110 active:scale-95"
           >
-            {/* IMAGE */}
-            <img
-              src={p.image_url || p.product_img_url}
-              alt={p.name}
-              className="absolute inset-0 w-full h-full object-cover"
-            />
+            <Pencil size={14} />
+          </button>
+        )}
 
-            {/* OVERLAY */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+        <div className="flex gap-4 overflow-x-auto pb-3 snap-x snap-mandatory">
+          {items.map((p: any) => (
+            <div
+              key={p.id}
+              className="relative min-w-[220px] h-48 rounded-2xl overflow-hidden snap-start shadow-lg"
+              style={{ backgroundColor: theme.card_background }}
+            >
+              <img
+                src={p.image_url || p.product_img_url}
+                className="absolute inset-0 w-full h-full object-cover"
+              />
 
-            {/* CONTENT */}
-            <div className="absolute bottom-3 left-3 right-3">
-              <h3
-                className="text-sm font-semibold leading-tight line-clamp-2"
-                style={{ color: theme.card_text }}
-              >
-                {p.name}
-              </h3>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
 
-              {showPrice && (
-                <p
-                  className="text-xs mt-1 font-medium"
-                  style={{ color: theme.button_text }}
+              <div className="absolute bottom-3 left-3 right-3">
+                <h3
+                  className="text-sm font-semibold line-clamp-2"
+                  style={{ color: theme.card_text }}
                 >
-                  ₹{p.price}
-                </p>
-              )}
+                  {p.name}
+                </h3>
+
+                {showPrice && (
+                  <p
+                    className="text-xs mt-1"
+                    style={{ color: theme.button_text }}
+                  >
+                    ₹{p.price}
+                  </p>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </Section>
   );
 }
+
 
 /* ================= YOUTUBE ================= */
 const YoutubeEmbed = React.memo(({ id }: { id: string }) => (
@@ -862,6 +922,7 @@ function YouTube({
     </Section>
   );
 }
+
 /* ================= SOCIAL ================= */
 function Social({ items, theme, shapeClass }: any) {
   if (!items?.length) return null;
@@ -912,54 +973,6 @@ function Social({ items, theme, shapeClass }: any) {
   );
 }
 
-/* ================= LINKS ================= */
-
-// function Links({ items, theme }: any) {
-//   if (!items?.length) return null;
-
-//   const t = resolveTheme(theme)
-
-//   return (
-//     <Section title="Links & Files" theme={theme}>
-//       <div className="flex flex-col gap-4">
-//         {items.map((l: any) => (
-//           <a
-//             key={l.id}
-//             href={l.url || l.file_url}
-//             target="_blank"
-//             rel="noopener noreferrer"
-//             className="flex items-center gap-3 rounded-xl p-2 transition hover:scale-[1.01]"
-//             style={{ backgroundColor: "transparent" }}
-//           >
-//             {/* ICON */}
-//             <div
-//               className="h-9 w-9 rounded-full flex items-center justify-center shadow"
-//               style={{
-//                 backgroundColor: t.buttonBg,
-//                 color: t.buttonText,
-//               }}
-//             >
-//               {l.type === "file" ? (
-//                 <FileText size={16} />
-//               ) : (
-//                 <Link2 size={16} />
-//               )}
-//             </div>
-
-//             {/* TEXT */}
-//             <p
-//               className="text-sm font-semibold truncate"
-//               style={{ color: t.text }}
-//             >
-//               {l.title}
-//             </p>
-//           </a>
-//         ))}
-//       </div>
-//     </Section>
-//   );
-// }
-
 function useIsMobile(breakpoint = 768) {
   const [isMobile, setIsMobile] = useState(
     typeof window !== "undefined" ? window.innerWidth < breakpoint : false
@@ -974,46 +987,6 @@ function useIsMobile(breakpoint = 768) {
   return isMobile;
 }
 
-/* ================= BANNER ================= */
-// function Banner({
-//   image,
-//   ctaText,
-//   ctaUrl,
-//   theme,
-// }: {
-//   image: string;
-//   ctaText?: string;
-//   ctaUrl?: string;
-//   theme?: any;
-// }) {
-//   const t = resolveTheme(theme)
-//   return (
-//     <div className="space-y-2">
-//       {ctaText && (
-//         <p
-//           className="text-sm font-semibold text-left pb-2"
-//           style={{ color: t?.text }}
-//         >
-//           {ctaText}
-//         </p>
-//       )}
-
-//       <div
-//         className="cursor-pointer"
-//         onClick={() => {
-//           if (ctaUrl) window.open(ctaUrl, "_blank");
-//         }}
-//       >
-//         <img
-//           src={image}
-//           className="w-full h-28 rounded-2xl object-cover"
-//           alt="Banner"
-//         />
-//       </div>
-//     </div>
-//   );
-// }
-
 export function EditModal({ open, onClose, children }: any) {
   if (!open) return null;
 
@@ -1024,13 +997,15 @@ export function EditModal({ open, onClose, children }: any) {
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-md bg-white rounded-2xl shadow-xl p-4 space-y-3 animate-fadeIn"
+        className="w-full max-w-md bg-white rounded-2xl shadow-xl 
+                   max-h-[85vh] overflow-y-auto p-4 space-y-3 animate-fadeIn"
       >
         {children}
       </div>
     </div>
   );
 }
+
 
 
 /* ================= VCARD ================= */
@@ -1064,68 +1039,75 @@ END:VCARD
 }
 
 // Photo Gallery
-function PhotoGallery({ title, items, theme, onOpen }: any) {
-
+export function PhotoGallery({
+  title,
+  items,
+  theme,
+  onOpen,
+  editable = false,
+  onEdit,
+}: any) {
   const t = resolveTheme(theme);
 
-  if (!items?.length) return null;
-
   return (
-    <>
-      <Section title={title || "Photo Gallery"} theme={theme}>
-        <div className="flex gap-4 overflow-x-auto pb-3 snap-x snap-mandatory no-scrollbar">
-          {items.map((p: any, i: number) => (
-            <button
-              key={i}
-              onClick={() => {
-                const scroller = document.querySelector(".flex-1.overflow-y-auto");
+    <Section title={title || "Photo Gallery"} theme={theme}>
+      <div className="relative">
+        {/* FLOATING EDIT ICON */}
+        {editable && (
+          <button
+            onClick={onEdit}
+            className="absolute -top-4 -right-1 z-20 h-9 w-9 rounded-full shadow-lg
+              flex items-center justify-center bg-orange-500 text-white
+              hover:scale-110 active:scale-95"
+          >
+            <Pencil size={14} />
+          </button>
+        )}
 
-                console.log(scroller)
-                if (scroller) {
-                  scroller.scrollTo({ top: 0, behavior: "smooth" });
-                }
+        {!items?.length ? (
+          <div className="w-full py-10 text-center opacity-70">
+            No photos added yet
+          </div>
+        ) : (
+          <div className="flex gap-4 overflow-x-auto pb-3 snap-x snap-mandatory no-scrollbar">
+            {items.map((p: any, i: number) => (
+              <button
+                key={i}
+                onClick={() => onOpen(p)}
+                className="group block text-left snap-start"
+              >
+                <div className="relative min-w-[220px] h-48 rounded-2xl overflow-hidden shadow-md">
+                  <img
+                    src={p.img_url}
+                    alt={p.title}
+                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
 
-                setTimeout(() => {
-                  onOpen(p);
-                }, 80);
-              }}
-              className="group block text-left snap-start"
-            >
-              <div className="relative min-w-[220px] h-48 rounded-2xl overflow-hidden shadow-md">
-                <img
-                  src={p.img_url}
-                  alt={p.title}
-                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                />
+                  <div
+                    className="absolute inset-0"
+                    style={{
+                      background:
+                        "linear-gradient(to top, rgba(0,0,0,.55), transparent)",
+                    }}
+                  />
 
-                {/* gradient overlay */}
-                <div
-                  className="absolute inset-0"
-                  style={{
-                    background:
-                      "linear-gradient(to top, rgba(0,0,0,.55), transparent)",
-                  }}
-                />
-
-                {/* title */}
-                {p.title && (
-                  <div className="absolute bottom-2 left-2 right-2">
-                    <p
-                      className="text-xs font-semibold leading-tight line-clamp-2"
-                      style={{ color: t.text }}
-                    >
-                      {p.title}
-                    </p>
-                  </div>
-                )}
-              </div>
-            </button>
-          ))}
-        </div>
-      </Section>
-
-
-    </>
+                  {p.title && (
+                    <div className="absolute bottom-2 left-2 right-2">
+                      <p
+                        className="text-xs font-semibold leading-tight line-clamp-2"
+                        style={{ color: t.text }}
+                      >
+                        {p.title}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </Section>
   );
 }
 
@@ -1202,9 +1184,17 @@ function PhotoModal({
   );
 }
 
-
-function VideoGallery({ title, items, theme }: any) {
+function VideoGallery({
+  title,
+  items,
+  theme,
+  editable = false,
+  galleryValue,
+  onGalleryChange,
+}: any) {
   const t = resolveTheme(theme);
+  const [open, setOpen] = useState(false);
+
   const isYouTube = (url?: string) =>
     !!url && /youtube\.com|youtu\.be/.test(url);
 
@@ -1213,61 +1203,93 @@ function VideoGallery({ title, items, theme }: any) {
 
   return (
     <Section title={title || "Video Gallery"} theme={theme}>
-      <div className="flex gap-4 overflow-x-auto pb-3 snap-x snap-mandatory">
-        {items.map((v: any, i: number) => {
-          const id = getYouTubeId(v.video_url);
-          if (!id) return null;
+      <div className="relative">
+        {/* FLOATING EDIT ICON */}
+        {editable && (
+          <button
+            onClick={() => setOpen(true)}
+            className="absolute -top-4 -right-0 z-20 h-9 w-9 rounded-full shadow-lg
+                     flex items-center justify-center
+                     bg-orange-500 
+                     text-white hover:scale-110 active:scale-95"
+          >
+            <Pencil size={14} />
+          </button>
+        )}
 
-          return (
-            <div
-              key={i}
-              className="min-w-[220px] h-48 snap-start rounded-2xl overflow-hidden shadow-lg flex flex-col"
-              style={{ backgroundColor: t.cardBg }}
-            >
-              {/* VIDEO */}
-              <div className="w-full h-[140px] bg-black">
-                {isYouTube(v.video_url) ? (
-                  <iframe
-                    src={`https://www.youtube.com/embed/${getYouTubeId(v.video_url)}`}
-                    className="w-full h-full"
-                    frameBorder="0"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                  />
-                ) : isDirectVideo(v.video_url) ? (
-                  <video
-                    src={v.video_url}
-                    controls
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-white text-sm">
-                    Video preview not available
-                  </div>
-                )}
-              </div>
+        {/* EMPTY STATE */}
+        {!items?.length ? (
+          <div className="w-full py-10 text-center rounded-2xl">
+            <p className="text-sm opacity-70" style={{ color: t.text }}>
+              No videos added yet
+            </p>
+          </div>
+        ) : (
+          <div className="flex gap-4 overflow-x-auto pb-3 snap-x snap-mandatory">
+            {items.map((v: any, i: number) => {
+              const id = getYouTubeId(v.video_url);
+              if (!id || !v.enabled) return null;
 
-              {/* INFO */}
-              <div className="px-3 py-1 space-y-1">
-                <h4
-                  className="text-sm font-semibold line-clamp-1"
-                  style={{ color: t.text }}
+              return (
+                <div
+                  key={i}
+                  className="min-w-[220px] h-48 snap-start rounded-2xl overflow-hidden shadow-lg flex flex-col"
+                  style={{ backgroundColor: t.cardBg }}
                 >
-                  {v.title}
-                </h4>
+                  {/* VIDEO */}
+                  <div className="w-full h-[140px] bg-black">
+                    {isYouTube(v.video_url) ? (
+                      <iframe
+                        src={`https://www.youtube.com/embed/${id}`}
+                        className="w-full h-full"
+                        frameBorder="0"
+                        allowFullScreen
+                      />
+                    ) : isDirectVideo(v.video_url) ? (
+                      <video
+                        src={v.video_url}
+                        controls
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-white text-sm">
+                        Video preview not available
+                      </div>
+                    )}
+                  </div>
 
-                {v.description && (
-                  <p
-                    className="text-xs opacity-80 line-clamp-2"
-                    style={{ color: t.text }}
-                  >
-                    {v.description}
-                  </p>
-                )}
-              </div>
-            </div>
-          );
-        })}
+                  {/* INFO */}
+                  <div className="px-3 py-1 space-y-1">
+                    <h4
+                      className="text-sm font-semibold line-clamp-1"
+                      style={{ color: t.text }}
+                    >
+                      {v.title}
+                    </h4>
+
+                    {v.description && (
+                      <p
+                        className="text-xs opacity-80 line-clamp-2"
+                        style={{ color: t.text }}
+                      >
+                        {v.description}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* MODAL */}
+        <VideoGalleryEditModal
+          open={open}
+          value={galleryValue}
+          disabled={false}
+          onClose={() => setOpen(false)}
+          onSave={(v: any) => onGalleryChange(v)}
+        />
       </div>
     </Section>
   );
@@ -1291,9 +1313,7 @@ function BackgroundVideo({ src }: { src?: string }) {
   );
 }
 
-// import { useState } from "react";
-import {  X } from "lucide-react";
-import { createPortal } from "react-dom";
+
 function EditableAbout({
   value,
   onChange,
@@ -1314,16 +1334,15 @@ function EditableAbout({
           className="absolute -top-4 right-0 z-20 h-9 w-9 rounded-full shadow-lg
                      flex items-center justify-center
                      bg-orange-500
-                     text-white transition hover:scale-110 active:scale-95" 
+                     text-white transition hover:scale-110 active:scale-95"
         >
           <Pencil size={14} />
         </button>
       )}
 
       <p
-        className={`text-sm leading-relaxed ${
-          !value ? "opacity-60 italic" : ""
-        }`}
+        className={`text-sm leading-relaxed ${!value ? "opacity-60 italic" : ""
+          }`}
         style={{ color: t.text }}
       >
         {value || "Tap the pencil to add your story ✨"}

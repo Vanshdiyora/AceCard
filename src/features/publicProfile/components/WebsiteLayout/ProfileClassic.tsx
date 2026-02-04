@@ -1,10 +1,4 @@
-import { useRef, useState } from "react";
 import { formatRole } from "../MobileWebsite";
-import { uploadImage } from "../../../publicProfile/services/publicProfile.api";
-import AvatarCropModal from "../../../../common/ui/AvatarCropModal";
-import CoverCropModal from "../../../../common/ui/CoverCropModal";
-import { Image, Camera } from "lucide-react";
-
 
 type CardAlign = "left" | "center" | "right";
 
@@ -27,50 +21,11 @@ export function ProfileClassic({
   theme,
   user,
   layout,
-  onProfileChange,
 }: any) {
   const t = resolveTheme(theme);
   const align =
     ALIGN_MAP[(layout?.card_alignment as CardAlign) || "center"];
   const ring = Number(layout?.profile_width || 6);
-
-  const [cropFile, setCropFile] = useState<File | null>(null);
-  const [isCoverCropping, setIsCoverCropping] = useState(false);
-  const coverFileRef = useRef<File | null>(null);
-
-  /* ---------- AVATAR ---------- */
-  const uploadAvatar = async (blob: Blob) => {
-    const file = new File([blob], "avatar.jpg", { type: "image/jpeg" });
-    const res = await uploadImage(file);
-    const url = res.data.url;
-
-    const next = profile.custom_profile
-      ? { ...profile, custom_profile_url: url }
-      : { ...profile, avatar_url: url };
-
-    onProfileChange(next);
-    setCropFile(null);
-  };
-
-  /* ---------- COVER ---------- */
-  const openCoverPicker = () => {
-    const el = document.getElementById("coverInput") as HTMLInputElement;
-    el?.click();
-  };
-
-  const uploadCover = async (blob: Blob) => {
-    const file = new File([blob], "cover.jpg", { type: "image/jpeg" });
-    const res = await uploadImage(file);
-    const url = res.data.url;
-
-    onProfileChange((prev: any) => ({
-      ...prev,
-      cover: { ...prev.cover, cover_url: url },
-      profile: { ...prev.profile }, // keep ref change
-    }));
-
-    setIsCoverCropping(false);
-  };
 
   return (
     <div>
@@ -78,7 +33,6 @@ export function ProfileClassic({
         className="relative h-[220px] rounded-2xl overflow-hidden"
         style={{ backgroundColor: t.cardBg }}
       >
-        {/* COVER */}
         {cover?.cover_url ? (
           <img
             src={cover.cover_url}
@@ -86,36 +40,11 @@ export function ProfileClassic({
             alt="Cover"
           />
         ) : (
-          <div className="h-full flex items-center justify-center text-xs text-gray-400 bg-gray-100">
+          <div className="h-full flex items-center justify-center text-xs text-gray-400
+           style={{ backgroundColor: t.cardBg }}">
             No cover image
           </div>
         )}
-
-        {/* FLOATING BUTTON */}
-        <button
-          onClick={openCoverPicker}
-          className="absolute top-3 left-3 z-30 h-10 w-10 rounded-full shadow
-    flex items-center justify-center transition hover:scale-105
-    bg-orange-500 text-white"
-          title="Change cover"
-        >
-          <Image size={18} />
-          <input
-            id="coverInput"
-            type="file"
-            hidden
-            accept="image/*"
-            onChange={(e) => {
-              if (e.target.files?.[0]) {
-                coverFileRef.current = e.target.files[0];
-                setIsCoverCropping(true);
-              }
-            }}
-          />
-        </button>
-
-        {/* VISUAL OVERLAY */}
-        <div className="absolute inset-0 bg-black/40 pointer-events-none" />
 
         {layout?.is_fade && (
           <div
@@ -126,17 +55,16 @@ export function ProfileClassic({
           />
         )}
 
-        {/* AVATAR + TEXT */}
         <div className={`absolute bottom-3 flex flex-col ${align}`}>
           <div
-            className="rounded-full flex items-center justify-center transition-all duration-300 relative"
+            className="rounded-full flex items-center justify-center"
             style={{
               backgroundColor: "#9ca3af",
               padding: `${ring}px`,
             }}
           >
             <div
-              className="rounded-full relative"
+              className="rounded-full"
               style={{ backgroundColor: t.buttonBg }}
             >
               {profile?.avatar_url ? (
@@ -153,25 +81,6 @@ export function ProfileClassic({
                   {user?.name?.[0] || "?"}
                 </div>
               )}
-
-              {/* AVATAR BUTTON */}
-              <label
-                className="absolute -bottom-3 left-1/2 -translate-x-1/2 h-10 w-10 rounded-full shadow-lg
-    flex items-center justify-center cursor-pointer transition hover:scale-105
-    bg-orange-500 text-white"
-                title="Change avatar"
-              >
-                <Camera size={18} />
-                <input
-                  type="file"
-                  hidden
-                  accept="image/*"
-                  onChange={(e) =>
-                    e.target.files && setCropFile(e.target.files[0])
-                  }
-                />
-              </label>
-
             </div>
           </div>
 
@@ -183,23 +92,6 @@ export function ProfileClassic({
             {formatRole(user?.job_title || user?.role)} at {user?.vendor_name}
           </p>
         </div>
-
-        {/* MODALS */}
-        {cropFile && (
-          <AvatarCropModal
-            file={cropFile}
-            onCancel={() => setCropFile(null)}
-            onSave={uploadAvatar}
-          />
-        )}
-
-        {isCoverCropping && coverFileRef.current && (
-          <CoverCropModal
-            file={coverFileRef.current}
-            onCancel={() => setIsCoverCropping(false)}
-            onSave={uploadCover}
-          />
-        )}
       </div>
     </div>
   );

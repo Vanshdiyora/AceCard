@@ -1870,7 +1870,7 @@ function ColorPickerField({
   );
 }
 
-function LockControl({
+export function LockControl({
   value,
   onChange,
 }: {

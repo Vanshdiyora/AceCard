@@ -14,7 +14,12 @@ async getAll(
   return res.data;
 },
 
-
+async getAllSales(
+  params: PaginationParams & { search?: string,status?: "active" | "archived";} = { page: 1, page_size: 10 }
+): Promise<ProductListResponse> {
+  const res = await axiosClient.get("/sales/products", { params });
+  return res.data;
+},
   /* -------- GET PRODUCT BY ID -------- */
   async getById(id: number): Promise<Product> {
     const res = await axiosClient.get(

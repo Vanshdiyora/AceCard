@@ -12,6 +12,13 @@ export interface Product {
   product_img_url?: string; 
 }
 
+export interface ExtendedProductState extends ProductState {
+  salesProducts: Product[];
+  salesMeta: any;
+  error: string | null;
+}
+
+
 /* ---------- PAGINATION ---------- */
 export interface ProductMeta {
   total_count: number;

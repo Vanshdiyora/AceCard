@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Input, Toggle } from "../../../../teams/components/details/publicProfile/TeamMemberPublicProfileTab";
+import { Toggle, Input } from "../../../../teams/components/details/publicProfile/TeamMemberPublicProfileTab";
 
 export default function VideoGallerySection({
   value,
@@ -12,21 +12,23 @@ export default function VideoGallerySection({
 }) {
   const [dragIndex, setDragIndex] = useState<number | null>(null);
 
+  // ➕ ADD AT TOP
   const addItem = () => {
-    onChange({
-      ...value,
-      items: [
-        ...value.items,
-        {
-          title: "",
-          description: "",
-          link: "",
-          video_url: "",
-          rank: value.items.length + 1,
-          enabled: true,
-        },
-      ],
-    });
+    const newItem = {
+      title: "",
+      description: "",
+      link: "",
+      video_url: "",
+      rank: 1,
+      enabled: true,
+    };
+
+    const items = [newItem, ...value.items].map((p, i) => ({
+      ...p,
+      rank: i + 1,
+    }));
+
+    onChange({ ...value, items });
   };
 
   const reorder = (from: number, to: number) => {
@@ -51,20 +53,27 @@ export default function VideoGallerySection({
 
   return (
     <div className="space-y-4 mt-4">
-      {/* SECTION TITLE */}
-      <div
-        className={`space-y-1 ${disabled ? "opacity-60 pointer-events-none" : ""
-          }`}
-      >
-        <p className="text-xs uppercase tracking-wide text-gray-500">
-          Section Title
-        </p>
+      {/* HEADER */}
+      <div className="flex items-end justify-between">
+        <div className="space-y-1">
+          <p className="text-xs uppercase tracking-wide text-gray-500">
+            Section Title
+          </p>
+          <Input
+            value={value.section_title}
+            placeholder="e.g. Video Gallery"
+            onChange={(v) => onChange({ ...value, section_title: v })}
+          />
+        </div>
 
-        <Input
-          value={value.section_title}
-          placeholder="e.g. Video Gallery"
-          onChange={(v:any) => onChange({ ...value, section_title: v })}
-        />
+        {!disabled && (
+          <button
+            onClick={addItem}
+            className="h-10 px-4 rounded-xl bg-purple-600 text-white text-sm font-semibold hover:scale-105 transition"
+          >
+            Add
+          </button>
+        )}
       </div>
 
       {value.items.map((item: any, i: number) => (
@@ -85,8 +94,21 @@ export default function VideoGallerySection({
         >
           {/* ROW 1 */}
           <div className="flex flex-col sm:flex-row sm:flex-wrap md:flex-nowrap items-start sm:items-center gap-3 sm:gap-4">
-            {/* DRAG */}
-            <div className="cursor-grab text-gray-400 text-xl">☰</div>
+            {/* DRAG + DELETE */}
+            <div className="flex items-center gap-2 w-full">
+              <div className="cursor-grab text-gray-400 text-xl">☰</div>
+
+              {!disabled && (
+                <button
+                  onClick={() => removeItem(i)}
+                  className="ml-auto h-7 w-7 flex items-center justify-center rounded-full text-red-500 text-xs hover:bg-red-50 transition"
+                  title="Delete"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+
 
             {/* TITLE + URL */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 flex-1 w-full">
@@ -98,7 +120,7 @@ export default function VideoGallerySection({
                   value={item.title}
                   placeholder="e.g. Product Demo"
                   disabled={disabled}
-                  onChange={(v:any) => {
+                  onChange={(v) => {
                     const items = [...value.items];
                     items[i] = { ...items[i], title: v };
                     onChange({ ...value, items });
@@ -114,7 +136,7 @@ export default function VideoGallerySection({
                   value={item.video_url}
                   placeholder="https://youtube.com/..."
                   disabled={disabled}
-                  onChange={(v:any) => {
+                  onChange={(v) => {
                     const items = [...value.items];
                     items[i] = { ...items[i], video_url: v };
                     onChange({ ...value, items });
@@ -123,26 +145,17 @@ export default function VideoGallerySection({
               </div>
             </div>
 
-            {/* SHOW + DELETE */}
+            {/* SHOW */}
             <div className="flex justify-between sm:justify-start items-center gap-3 w-full sm:w-auto">
               <Toggle
                 label="Show"
                 value={item.enabled}
-                onChange={(v:any) => {
+                onChange={(v) => {
                   const items = [...value.items];
                   items[i] = { ...items[i], enabled: v };
                   onChange({ ...value, items });
                 }}
               />
-
-              {!disabled && (
-                <button
-                  onClick={() => removeItem(i)}
-                  className="px-4 py-2 text-xs rounded-lg border border-red-200 text-red-600 hover:bg-red-50"
-                >
-                  Delete
-                </button>
-              )}
             </div>
           </div>
 
@@ -170,15 +183,6 @@ export default function VideoGallerySection({
           </div>
         </div>
       ))}
-
-      {!disabled && (
-        <button
-          onClick={addItem}
-          className="mt-4 w-full sm:w-auto px-5 py-3 rounded-xl bg-purple-600 text-white"
-        >
-          + Add Video
-        </button>
-      )}
     </div>
   );
 }

@@ -38,29 +38,8 @@ export default function ProfileSettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-indigo-50 flex justify-center pt-6">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-indigo-50 flex justify-center">
       <div className="w-full max-w-5xl space-y-6">
-
-        {/* Header */}
-        <div className="sticky top-0 z-20 bg-white/70 backdrop-blur rounded-2xl shadow-sm px-6 mx-4 py-4 flex items-center justify-between">
-          <div>
-            <h1 className="text-xl sm:text-2xl font-semibold text-gray-800">
-              My Public Profile
-            </h1>
-            <p className="text-sm text-gray-500">
-              Manage how your card looks to customers
-            </p>
-          </div>
-
-          {role === "sales_rep" && (
-            <button
-              onClick={handleLogout}
-              className="text-sm font-medium text-red-600 hover:text-red-700 transition"
-            >
-              Sign out
-            </button>
-          )}
-        </div>
 
         {/* Phone Preview */}
         <div className="flex justify-center">
@@ -73,7 +52,9 @@ export default function ProfileSettingsPage() {
                 <MobilePublicSettings
                   data={myProfile}
                   scrollRef={scrollRef}
+                  onLogout={handleLogout}
                 />
+
               </div>
             </div>
           </div>

@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { ProductsAPI } from "./services/products.service";
-import type { ProductState, ProductListResponse, Product, ProductLookup } from "./types";
+import type { ExtendedProductState, ProductListResponse, Product, ProductLookup } from "./types";
 
 type ApiError = { response?: { data?: { error?: string; message?: string } } };
 type FetchMode = "paginate" | "infinite";
@@ -12,30 +12,29 @@ const extractApiError = (err: unknown, fallback: string): string =>
   fallback;
 
 /* ---------------- THUNKS ---------------- */
-
 export const fetchProducts = createAsyncThunk<
   ProductListResponse,
-  {
-    page?: number;
-    page_size?: number;
-    search?: string;
-    status?: "active" | "archived";
-    mode?: FetchMode;
-  },
+  { page?: number; page_size?: number; search?: string; status?: "active" | "archived"; mode?: FetchMode },
   { rejectValue: string }
->(
-  "products/fetchAll",
-  async (
-    { page = 1, page_size = 10, search, status },
-    { rejectWithValue }
-  ) => {
-    try {
-      return await ProductsAPI.getAll({ page, page_size, search, status });
-    } catch (err) {
-      return rejectWithValue(extractApiError(err, "Failed to fetch products"));
-    }
+>("products/fetchProducts", async (args, { rejectWithValue }) => {
+  try {
+    return await ProductsAPI.getAll(args);
+  } catch (err) {
+    return rejectWithValue(extractApiError(err, "Failed to fetch products"));
   }
-);
+});
+
+export const fetchSalesProducts = createAsyncThunk<
+  ProductListResponse,
+  { page?: number; page_size?: number; search?: string; status?: "active" | "archived"; mode?: FetchMode },
+  { rejectValue: string }
+>("products/fetchSalesProducts", async (args, { rejectWithValue }) => {
+  try {
+    return await ProductsAPI.getAllSales({ ...args, status: "active" });
+  } catch (err) {
+    return rejectWithValue(extractApiError(err, "Failed to fetch sales products"));
+  }
+});
 
 
 export const fetchProductById = createAsyncThunk<Product, number, { rejectValue: string }>(
@@ -115,9 +114,11 @@ export const unarchiveProduct = createAsyncThunk<
 
 /* ---------------- STATE ---------------- */
 
-const initialState: ProductState & { error: string | null } = {
+const initialState: ExtendedProductState & { error: string | null } = {
   products: [],
+  salesProducts: [],
   meta: null,
+  salesMeta: null,
   selectedProduct: null,
   loading: false,
   error: null,
@@ -138,11 +139,8 @@ const productsSlice = createSlice({
     builder
 
       /* ---------- FETCH LIST ---------- */
-      .addCase(fetchProducts.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(fetchProducts.fulfilled, (state, action) => {
+      /* NORMAL */
+.addCase(fetchProducts.fulfilled, (state, action) => {
   state.loading = false;
 
   const page = action.meta.arg.page ?? 1;
@@ -150,22 +148,32 @@ const productsSlice = createSlice({
   const newItems = action.payload.data ?? [];
 
   if (mode === "paginate" || page === 1) {
-    // 🔥 Classic pagination
     state.products = newItems;
   } else {
-    // 🚀 Infinite scroll
-    const existingIds = new Set(state.products.map(p => p.id));
-    const filtered = newItems.filter(p => !existingIds.has(p.id));
-    state.products.push(...filtered);
+    const ids = new Set(state.products.map(p => p.id));
+    state.products.push(...newItems.filter(p => !ids.has(p.id)));
   }
 
   state.meta = action.payload.meta ?? null;
 })
 
-      .addCase(fetchProducts.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload ?? "Failed to fetch products";
-      })
+/* SALES */
+.addCase(fetchSalesProducts.fulfilled, (state, action) => {
+  state.loading = false;
+
+  const page = action.meta.arg.page ?? 1;
+  const mode = action.meta.arg.mode ?? "paginate";
+  const newItems = action.payload.data ?? [];
+
+  if (mode === "paginate" || page === 1) {
+    state.salesProducts = newItems;
+  } else {
+    const ids = new Set(state.salesProducts.map(p => p.id));
+    state.salesProducts.push(...newItems.filter(p => !ids.has(p.id)));
+  }
+
+  state.salesMeta = action.payload.meta ?? null;
+})
 
       /* ---------- FETCH SINGLE ---------- */
       .addCase(fetchProductById.pending, (state) => {
@@ -256,25 +264,25 @@ const productsSlice = createSlice({
         state.error = action.payload ?? "Failed to lookup products";
       })
       /* ---------- UNARCHIVE ---------- */
-.addCase(unarchiveProduct.pending, (state) => {
-  state.loading = true;
-  state.error = null;
-})
-.addCase(unarchiveProduct.fulfilled, (state, action) => {
-  state.loading = false;
-  const id = action.payload.id;
+      .addCase(unarchiveProduct.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(unarchiveProduct.fulfilled, (state, action) => {
+        state.loading = false;
+        const id = action.payload.id;
 
-  const p = state.products.find(p => p.id === id);
-  if (p) p.status = "active";
+        const p = state.products.find(p => p.id === id);
+        if (p) p.status = "active";
 
-  if (state.selectedProduct?.id === id) {
-    state.selectedProduct.status = "active";
-  }
-})
-.addCase(unarchiveProduct.rejected, (state, action) => {
-  state.loading = false;
-  state.error = action.payload ?? "Failed to activate product";
-});
+        if (state.selectedProduct?.id === id) {
+          state.selectedProduct.status = "active";
+        }
+      })
+      .addCase(unarchiveProduct.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload ?? "Failed to activate product";
+      });
 
   },
 });
