@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Toggle, Input } from "../TeamMemberPublicProfileTab";
+import { Input, Toggle } from "../../../../teams/components/details/publicProfile/TeamMemberPublicProfileTab";
 
 export default function VideoGallerySection({
   value,
@@ -63,7 +63,7 @@ export default function VideoGallerySection({
         <Input
           value={value.section_title}
           placeholder="e.g. Video Gallery"
-          onChange={(v) => onChange({ ...value, section_title: v })}
+          onChange={(v:any) => onChange({ ...value, section_title: v })}
         />
       </div>
 
@@ -98,7 +98,7 @@ export default function VideoGallerySection({
                   value={item.title}
                   placeholder="e.g. Product Demo"
                   disabled={disabled}
-                  onChange={(v) => {
+                  onChange={(v:any) => {
                     const items = [...value.items];
                     items[i] = { ...items[i], title: v };
                     onChange({ ...value, items });
@@ -114,7 +114,7 @@ export default function VideoGallerySection({
                   value={item.video_url}
                   placeholder="https://youtube.com/..."
                   disabled={disabled}
-                  onChange={(v) => {
+                  onChange={(v:any) => {
                     const items = [...value.items];
                     items[i] = { ...items[i], video_url: v };
                     onChange({ ...value, items });
@@ -128,7 +128,7 @@ export default function VideoGallerySection({
               <Toggle
                 label="Show"
                 value={item.enabled}
-                onChange={(v) => {
+                onChange={(v:any) => {
                   const items = [...value.items];
                   items[i] = { ...items[i], enabled: v };
                   onChange({ ...value, items });

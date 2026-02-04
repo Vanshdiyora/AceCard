@@ -9,7 +9,7 @@ import {
   arrayMove,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import type { SectionItem } from "../../../../../publicProfile/types";
+import type { SectionItem } from "../../../../teams/components/details/publicProfile/TeamMemberPublicProfileTab";
 
 export default function SectionsReorder({
   sections,

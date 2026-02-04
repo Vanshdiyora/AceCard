@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { uploadImage } from "../../../../../publicProfile/services/publicProfile.api";
-import AvatarCropModal from "../../../../../../common/ui/AvatarCropModal";
-import { Toggle } from "../TeamMemberPublicProfileTab";
+import { Toggle } from "../../../../teams/components/details/publicProfile/TeamMemberPublicProfileTab";
+import { uploadImage } from "../../../services/publicProfile.api";
+import AvatarCropModal from "../../../../../common/ui/AvatarCropModal";
 
 export default function ProfileSection({
   profile,
@@ -30,7 +30,7 @@ export default function ProfileSection({
       <Toggle
         label="Use Custom Profile"
         value={profile.custom_profile}
-        onChange={(v) =>
+        onChange={(v:any) =>
           onChange({
             ...profile,
             custom_profile: v,

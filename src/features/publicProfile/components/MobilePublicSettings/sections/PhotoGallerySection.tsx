@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { uploadImage } from "../../../../../publicProfile/services/publicProfile.api";
-import { Toggle, Input } from "../TeamMemberPublicProfileTab";
-import CoverCropModal from "../../../../../../common/ui/CoverCropModal";
+import { uploadImage } from "../../../../publicProfile/services/publicProfile.api";
+import { Toggle,Input } from "../../../../teams/components/details/publicProfile/TeamMemberPublicProfileTab";
+import CoverCropModal from "../../../../../common/ui/CoverCropModal";
 
 export default function PhotoGallerySection({
   value,
@@ -80,7 +80,7 @@ export default function PhotoGallerySection({
           value={value.section_title}
           disabled={disabled}
           placeholder="Section title"
-          onChange={(v) => onChange({ ...value, section_title: v })}
+          onChange={(v:any) => onChange({ ...value, section_title: v })}
         />
       </div>
 
@@ -118,7 +118,7 @@ export default function PhotoGallerySection({
                   value={item.title}
                   disabled={disabled}
                   placeholder="Photo title"
-                  onChange={(v) => {
+                  onChange={(v:any) => {
                     const items = [...value.items];
                     items[i] = { ...items[i], title: v };
                     onChange({ ...value, items });
@@ -134,7 +134,7 @@ export default function PhotoGallerySection({
                   value={item.link}
                   disabled={disabled}
                   placeholder="External link"
-                  onChange={(v) => {
+                  onChange={(v:any) => {
                     const items = [...value.items];
                     items[i] = { ...items[i], link: v };
                     onChange({ ...value, items });
@@ -152,7 +152,7 @@ export default function PhotoGallerySection({
                 <Toggle
                   label=""
                   value={item.enabled}
-                  onChange={(v) => {
+                  onChange={(v: any) => {
                     const items = [...value.items];
                     items[i] = { ...items[i], enabled: v };
                     onChange({ ...value, items });

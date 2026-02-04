@@ -9,7 +9,7 @@ import {
   arrayMove,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import type { ProductRef } from "../TeamMemberPublicProfileTab";
+import type { ProductRef } from "../../../../teams/components/details/publicProfile/TeamMemberPublicProfileTab";
 
 export default function ProductsReorder({
   items,
