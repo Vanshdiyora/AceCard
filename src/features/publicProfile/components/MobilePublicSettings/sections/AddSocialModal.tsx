@@ -33,8 +33,9 @@ export default function AddSocialModal({
   open,
   all,
   selected,
-  onClose,
   onToggle,
+  onCancel,     // 👈 new
+  onContinue,   // 👈 new
 }: any) {
   if (!open) return null;
 
@@ -51,7 +52,7 @@ export default function AddSocialModal({
         <div className="flex justify-between items-center mb-4 sticky top-0 bg-white z-10 pb-2 border-b">
           <h3 className="text-base sm:text-lg font-semibold">Add Social</h3>
           <button
-            onClick={onClose}
+            onClick={onCancel}  // 👈 cancel only
             className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-gray-100"
           >
             ✕
@@ -70,10 +71,11 @@ export default function AddSocialModal({
                   key={s.id}
                   onClick={() => onToggle(s)}
                   className={`flex items-center justify-between gap-2 px-3 py-3 rounded-xl border transition text-sm
-                  ${added
+                  ${
+                    added
                       ? "bg-purple-50 border-purple-500 text-purple-700"
                       : "bg-gray-50 border-gray-200 hover:bg-gray-100"
-                    }`}
+                  }`}
                 >
                   <div className="flex items-center gap-2">
                     <Icon className="w-5 h-5 shrink-0" />
@@ -81,10 +83,11 @@ export default function AddSocialModal({
                   </div>
 
                   <div
-                    className={`h-7 w-7 flex items-center justify-center rounded-full border shrink-0 ${added
+                    className={`h-7 w-7 flex items-center justify-center rounded-full border shrink-0 ${
+                      added
                         ? "bg-purple-600 border-purple-600 text-white"
                         : "border-gray-300"
-                      }`}
+                    }`}
                   >
                     {added ? <Check size={14} /> : <Plus size={14} />}
                   </div>
@@ -93,15 +96,23 @@ export default function AddSocialModal({
             })}
           </div>
         </div>
-        <div className="pt-3 border-t mt-3">
+
+        {/* FOOTER */}
+        <div className="pt-3 border-t mt-3 flex gap-3">
           <button
-            onClick={onClose}
-            className="w-full py-3 rounded-xl bg-purple-600 text-white font-semibold"
+            onClick={onCancel} // 👈 cancel
+            className="flex-1 py-3 rounded-xl bg-gray-100 text-gray-700 font-semibold"
           >
-            Done
+            Cancel
+          </button>
+
+          <button
+            onClick={onContinue} // 👈 go to next step
+            className="flex-1 py-3 rounded-xl bg-purple-600 text-white font-semibold"
+          >
+            Continue
           </button>
         </div>
-
       </div>
     </div>,
     document.body

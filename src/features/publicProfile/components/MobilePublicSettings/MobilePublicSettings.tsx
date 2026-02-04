@@ -29,6 +29,22 @@ import { Banner } from "./Banner/Banner";
 import { EditableMeetingCTA } from "./Meeting/EditableMeetingCTA";
 import PhotoGallerySection from "./sections/PhotoGallerySection";
 import { ProductsEditModal } from "./sections/ProductsEditModal";
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  useSortable,
+  arrayMove,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+
 /* ================= HELPERS ================= */
 
 export const resolveTheme = (theme: any) => ({
@@ -153,6 +169,12 @@ export default function MobilePublicSettings({
         return "font-inter";
     }
   };
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 5 } })
+  );
+
 
   const isMobile = useIsMobile();
   const updateDraft = (updater: any) => {
@@ -445,6 +467,16 @@ export default function MobilePublicSettings({
         draft.layout?.color1 || draft.theme?.background_color || "#000",
     };
   };
+  const safeSort = (arr: any[]) =>
+    Array.isArray(arr)
+      ? [...arr].sort((a, b) => (a.rank ?? 0) - (b.rank ?? 0))
+      : [];
+
+  const youtubeSorted = React.useMemo(
+    () => safeSort(draft.youtube?.items),
+    [draft.youtube?.items]
+  );
+
 
   useEffect(() => {
     if (!draft.layout?.use_custom_font || !draft.layout?.custom_font) return;
@@ -492,7 +524,44 @@ export default function MobilePublicSettings({
   //       console.error("❌ Local font failed", err);
   //     });
   // }, []);  // empty dependency for local test only
-  const dragFrom = React.useRef<number | null>(null);
+
+  // any overlay open?
+  const isAnyModalOpen =
+    open ||                     // ConnectModal
+    !!activePhoto ||            // PhotoModal
+    editProducts ||
+    editPhotoGallery ||
+    openLayoutEditor ||
+    editSection?.type === "youtube";
+  useEffect(() => {
+    if (!isAnyModalOpen) {
+      document.body.style.overflow = "";
+      document.body.style.position = "";
+      document.body.style.width = "";
+      return;
+    }
+
+    // lock body
+    const scrollY = window.scrollY;
+    document.body.style.position = "fixed";
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.left = "0";
+    document.body.style.right = "0";
+    document.body.style.width = "100%";
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      const y = document.body.style.top;
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.left = "";
+      document.body.style.right = "";
+      document.body.style.width = "";
+      document.body.style.overflow = "";
+      window.scrollTo(0, parseInt(y || "0") * -1);
+    };
+  }, [isAnyModalOpen]);
+
   return (
     <div
       className={`relative min-h-screen w-full no-scrollbar overflow-hidden p-4 pb-28 ${bgClass} ${fontClass}`}
@@ -547,79 +616,52 @@ export default function MobilePublicSettings({
         </button>
 
         {/* LIST */}
-        <div className="space-y-2 max-h-72 overflow-y-auto">
-          {(draft.youtube?.items || []).map((v: any, idx: number) => (
-            <div
-              key={v.id}
-              draggable
-              onDragStart={() => (dragFrom.current = idx)}
-              onDragOver={(e) => e.preventDefault()}
-              onDrop={() => {
-                if (dragFrom.current === null) return;
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={(e) => {
+            const { active, over } = e;
+            if (!over || active.id === over.id) return;
 
-                const from = dragFrom.current;
-                const to = idx;
+            setDraft((prev: any) => {
+              const items = safeSort(prev.youtube?.items);
 
-                setDraft((prev: any) => {
-                  const items = [...prev.youtube.items];
-                  const [moved] = items.splice(from, 1);
-                  items.splice(to, 0, moved);
+              const oldIndex = items.findIndex(i => i.id === active.id);
+              const newIndex = items.findIndex(i => i.id === over.id);
 
-                  return {
-                    ...prev,
-                    youtube: {
-                      ...prev.youtube,
-                      items: items.map((i, r) => ({ ...i, rank: r + 1 })),
-                    },
-                  };
-                });
+              const reordered = arrayMove(items, oldIndex, newIndex)
+                .map((i, idx) => ({ ...i, rank: idx + 1 }));
 
-                dragFrom.current = null;
-              }}
-              className="flex items-center gap-2 bg-gray-50 p-2 rounded-lg border cursor-move active:scale-[0.98]"
-            >
-              <span className="text-xs text-gray-400">☰</span>
+              return {
+                ...prev,
+                youtube: {
+                  ...prev.youtube,
+                  items: reordered,
+                },
+              };
+            });
+          }}
 
-              <input
-                value={v.url}
-                onChange={(e) =>
-                  setDraft((prev: any) => ({
-                    ...prev,
-                    youtube: {
-                      ...prev.youtube,
-                      items: prev.youtube.items.map((i: any) =>
-                        i.id === v.id ? { ...i, url: e.target.value } : i
-                      ),
-                    },
-                  }))
-                }
-                placeholder="YouTube link"
-                className="flex-1 border rounded-md p-2 text-sm"
-              />
+        >
+          <SortableContext
+            items={youtubeSorted.map((i: any) => i.id)}
+            strategy={verticalListSortingStrategy}
+          >
+            <div className="space-y-2 max-h-72 overflow-y-auto overscroll-contain">
 
-              <button
-                onClick={() =>
-                  setDraft((prev: any) => ({
-                    ...prev,
-                    youtube: {
-                      ...prev.youtube,
-                      items: prev.youtube.items
-                        .filter((i: any) => i.id !== v.id)
-                        .map((i: any, r: number) => ({ ...i, rank: r + 1 })),
-                    },
-                  }))
-                }
-                className="text-red-500 text-sm px-2"
-              >
-                ✕
-              </button>
+              {youtubeSorted.map((v: any) => (
+                <YouTubeRow key={v.id} v={v} setDraft={setDraft} />
+              ))}
             </div>
-          ))}
-        </div>
+          </SortableContext>
+
+        </DndContext>
+
+
         <div className="pt-3">
           <button
             onClick={() => setEditSection(null)}
-            className="w-full py-2 rounded-lg bg-indigo-600 text-white"
+            className="w-full py-2 rounded-lg bg-purple-600 text-white"
           >
             Done
           </button>
@@ -718,6 +760,78 @@ export default function MobilePublicSettings({
 }
 
 /* ================= UI BLOCKS ================= */
+function YouTubeRow({
+  v,
+  setDraft,
+}: {
+  v: any;
+  setDraft: any;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
+    useSortable({ id: v.id });
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={{
+        transform: CSS.Transform.toString(transform),
+        transition,
+      }}
+      className={`flex items-center gap-2 bg-gray-50 p-2 rounded-lg border
+  touch-none
+  ${isDragging ? "opacity-50 scale-[1.02] z-50" : ""}
+`}
+
+    >
+      {/* drag handle */}
+      <span
+        {...attributes}
+        {...listeners}
+        className="cursor-grab active:cursor-grabbing select-none
+             touch-none text-gray-500 px-2 py-1"
+      >
+        ☰
+      </span>
+
+      {/* input */}
+      <input
+        value={v.url}
+        onChange={(e) =>
+          setDraft((prev: any) => ({
+            ...prev,
+            youtube: {
+              ...prev.youtube,
+              items: prev.youtube.items.map((i: any) =>
+                i.id === v.id ? { ...i, url: e.target.value } : i
+              ),
+            },
+          }))
+        }
+        placeholder="YouTube link"
+        className="flex-1 border rounded-md p-2 text-sm"
+      />
+
+      {/* delete */}
+      <button
+        onClick={() =>
+          setDraft((prev: any) => ({
+            ...prev,
+            youtube: {
+              ...prev.youtube,
+              items: prev.youtube.items
+                .filter((i: any) => i.id !== v.id)
+                .map((i: any, r: number) => ({ ...i, rank: r + 1 })),
+            },
+          }))
+        }
+        className="text-red-500 text-sm px-2"
+      >
+        ✕
+      </button>
+    </div>
+  );
+}
+
 
 export function Section({ title, children, theme }: any) {
   const t = resolveTheme(theme);
@@ -768,7 +882,7 @@ function Products({
         {editable && (
           <button
             onClick={onEdit}
-            className="absolute -top-4 -right-1 z-20 h-9 w-9 rounded-full
+            className="absolute -top-4 -right-0 z-20 h-9 w-9 rounded-full
               shadow-lg flex items-center justify-center bg-orange-500 text-white
               hover:scale-110 active:scale-95"
           >
@@ -889,7 +1003,7 @@ function YouTube({
               {editable && (
                 <button
                   onClick={() => onEdit(v)}
-                  className="absolute top-2 right-3 z-20 h-8 w-8 rounded-full shadow
+                  className="absolute top-2 right-0 z-20 h-8 w-8 rounded-full shadow
                     flex items-center justify-center transition hover:scale-105
                     bg-orange-500 text-white"
                   title="Edit"
@@ -899,7 +1013,7 @@ function YouTube({
               )}
 
               {/* iframe blocker layer so drag works */}
-              <div className="absolute inset-0 z-10" />
+              {/* <div className="absolute inset-0 z-10" /> */}
 
               <div className="w-full h-full rounded-2xl overflow-hidden shadow-md">
                 <YoutubeEmbed id={id!} />
@@ -926,12 +1040,16 @@ function YouTube({
 /* ================= SOCIAL ================= */
 function Social({ items, theme, shapeClass }: any) {
   if (!items?.length) return null;
-
   const t = resolveTheme(theme);
 
+  // 👇 ONLY enabled
+  const visible = items.filter((i: any) => i.enabled);
+
+  if (!visible.length) return null;
+
   const rows: any[][] = [];
-  for (let i = 0; i < items.length; i += 3) {
-    rows.push(items.slice(i, i + 3));
+  for (let i = 0; i < visible.length; i += 3) {
+    rows.push(visible.slice(i, i + 3));
   }
 
   return (
@@ -964,7 +1082,6 @@ function Social({ items, theme, shapeClass }: any) {
               {s.id === "website" && <FiGlobe size={32} />}
               {s.id === "snapchat" && <SiSnapchat size={32} />}
               {s.id === "tiktok" && <SiTiktok size={32} />}
-
             </a>
           ))}
         </div>
@@ -972,6 +1089,7 @@ function Social({ items, theme, shapeClass }: any) {
     </div>
   );
 }
+
 
 function useIsMobile(breakpoint = 768) {
   const [isMobile, setIsMobile] = useState(
@@ -993,10 +1111,10 @@ export function EditModal({ open, onClose, children }: any) {
   return (
     <div
       className="fixed inset-0 z-[9999] bg-black/60 flex items-center justify-center px-4"
-      onClick={onClose}
+      onClick={onClose}   // 👈 only backdrop closes
     >
       <div
-        onClick={(e) => e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()} // 👈 block inner clicks
         className="w-full max-w-md bg-white rounded-2xl shadow-xl 
                    max-h-[85vh] overflow-y-auto p-4 space-y-3 animate-fadeIn"
       >
@@ -1005,8 +1123,6 @@ export function EditModal({ open, onClose, children }: any) {
     </div>
   );
 }
-
-
 
 /* ================= VCARD ================= */
 export function saveContact(user: any) {
@@ -1323,6 +1439,40 @@ function EditableAbout({
   const [open, setOpen] = useState(false);
   const t = resolveTheme(theme);
 
+  // 🔒 lock background scroll when modal is open
+  useEffect(() => {
+    if (!open) {
+      document.body.style.overflow = "";
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.left = "";
+      document.body.style.right = "";
+      return;
+    }
+
+    const scrollY = window.scrollY;
+
+    document.body.style.position = "fixed";
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.left = "0";
+    document.body.style.right = "0";
+    document.body.style.width = "100%";
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      const y = document.body.style.top;
+
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.left = "";
+      document.body.style.right = "";
+      document.body.style.width = "";
+      document.body.style.overflow = "";
+
+      window.scrollTo(0, parseInt(y || "0") * -1);
+    };
+  }, [open]);
+
   return (
     <div
       className="relative rounded-2xl"
@@ -1389,7 +1539,7 @@ function AboutEditModal({
           rows={5}
           value={text}
           onChange={(e) => setText(e.target.value)}
-          className="w-full rounded-xl border p-3 text-sm focus:ring-2 focus:ring-indigo-400 outline-none"
+          className="w-full rounded-xl border p-3 text-sm focus:ring-2 focus:ring-purple-400 outline-none"
         />
 
         <div className="flex gap-3 pt-4">
@@ -1398,7 +1548,7 @@ function AboutEditModal({
               onSave(text);
               onClose();
             }}
-            className="flex-1 py-2 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold"
+            className="flex-1 py-2 rounded-xl bg-purple-600 text-white font-semibold"
           >
             Save
           </button>

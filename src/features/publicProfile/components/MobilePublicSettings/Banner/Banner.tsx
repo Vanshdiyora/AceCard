@@ -10,7 +10,7 @@ export function Banner({
     ctaUrl,
     theme,
     onBannerChange,
-    editable=false
+    editable = false
 }: any) {
     const t = resolveTheme(theme);
 
@@ -58,8 +58,46 @@ export function Banner({
         setIsEditing(false);
     };
 
+    // 🔒 lock background scroll when banner modal/crop is open
+    useEffect(() => {
+        const open = isEditing || isCropping;
+
+        if (!open) {
+            document.body.style.overflow = "";
+            document.body.style.position = "";
+            document.body.style.top = "";
+            document.body.style.left = "";
+            document.body.style.right = "";
+            document.body.style.width = "";
+            return;
+        }
+
+        const scrollY = window.scrollY;
+
+        document.body.style.position = "fixed";
+        document.body.style.top = `-${scrollY}px`;
+        document.body.style.left = "0";
+        document.body.style.right = "0";
+        document.body.style.width = "100%";
+        document.body.style.overflow = "hidden";
+
+        return () => {
+            const y = document.body.style.top;
+
+            document.body.style.position = "";
+            document.body.style.top = "";
+            document.body.style.left = "";
+            document.body.style.right = "";
+            document.body.style.width = "";
+            document.body.style.overflow = "";
+
+            window.scrollTo(0, parseInt(y || "0") * -1);
+        };
+    }, [isEditing, isCropping]);
+
+
     return (
-        <div className="space-y-2 relative">
+        <div className="relative">
             {ctaText && (
                 <p
                     className="text-sm font-semibold text-left pb-2"
@@ -72,7 +110,7 @@ export function Banner({
             {/* ROUND EDIT ICON */}
             {editable !== false && (<button
                 onClick={() => setIsEditing(true)}
-                className="absolute top-2 right-2 z-20 h-9 w-9 rounded-full shadow
+                className="absolute top-2 right-0 z-20 h-9 w-9 rounded-full shadow
     flex items-center justify-center transition hover:scale-105
     bg-orange-500 text-white"
                 title="Edit"
@@ -94,8 +132,12 @@ export function Banner({
 
             {/* ---------- EDIT POPUP ---------- */}
             {isEditing && (
-                <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-                    <div className="bg-white rounded-2xl w-80 p-4 space-y-4">
+                <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50
+                  touch-none overscroll-none">
+                    <div
+                        className="bg-white rounded-2xl w-80 p-4 space-y-4"
+                        onClick={(e) => e.stopPropagation()}
+                    >
                         <h3 className="font-semibold text-lg">Edit Banner</h3>
 
                         <button
@@ -120,19 +162,29 @@ export function Banner({
                             }}
                         />
 
-                        <input
-                            className="w-full border rounded-xl p-2 text-sm"
-                            placeholder="CTA Text"
-                            value={draftText}
-                            onChange={(e) => setDraftText(e.target.value)}
-                        />
+                        <div className="space-y-1">
+                            <label className="text-xs font-semibold text-gray-600">
+                                CTA Text
+                            </label>
+                            <input
+                                className="w-full border rounded-xl p-2 text-sm"
+                                placeholder="e.g. Shop Now"
+                                value={draftText}
+                                onChange={(e) => setDraftText(e.target.value)}
+                            />
+                        </div>
 
-                        <input
-                            className="w-full border rounded-xl p-2 text-sm"
-                            placeholder="CTA Link"
-                            value={draftUrl}
-                            onChange={(e) => setDraftUrl(e.target.value)}
-                        />
+                        <div className="space-y-1">
+                            <label className="text-xs font-semibold text-gray-600">
+                                CTA Link
+                            </label>
+                            <input
+                                className="w-full border rounded-xl p-2 text-sm"
+                                placeholder="https://your-link.com"
+                                value={draftUrl}
+                                onChange={(e) => setDraftUrl(e.target.value)}
+                            />
+                        </div>
 
                         <div className="flex gap-2 pt-2">
                             <button
@@ -143,7 +195,7 @@ export function Banner({
                             </button>
                             <button
                                 onClick={saveText}
-                                className="flex-1 bg-indigo-600 text-white rounded-xl p-2"
+                                className="flex-1 bg-purple-600 text-white rounded-xl p-2"
                             >
                                 Save
                             </button>
@@ -151,6 +203,7 @@ export function Banner({
                     </div>
                 </div>
             )}
+
 
             {/* ---------- CROP ---------- */}
             {isCropping && fileRef.current && (

@@ -45,6 +45,7 @@ const ALL_SOCIALS = [
 export default function SocialSection({ items = [], onChange, locked }: any) {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [formOpen, setFormOpen] = useState(false);
+  const isAnyOpen = pickerOpen || formOpen;
 
   const enabled = items.filter((i: any) => i.enabled === true);
 
@@ -75,13 +76,39 @@ export default function SocialSection({ items = [], onChange, locked }: any) {
 
   // lock background scroll when picker is open
   useEffect(() => {
-    if (!pickerOpen) return;
-    const original = document.body.style.overflow;
+    if (!isAnyOpen) {
+      document.body.style.overflow = "";
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.left = "";
+      document.body.style.right = "";
+      document.body.style.width = "";
+      return;
+    }
+
+    const scrollY = window.scrollY;
+
+    document.body.style.position = "fixed";
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.left = "0";
+    document.body.style.right = "0";
+    document.body.style.width = "100%";
     document.body.style.overflow = "hidden";
+
     return () => {
-      document.body.style.overflow = original;
+      const y = document.body.style.top;
+
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.left = "";
+      document.body.style.right = "";
+      document.body.style.width = "";
+      document.body.style.overflow = "";
+
+      window.scrollTo(0, parseInt(y || "0") * -1);
     };
-  }, [pickerOpen]);
+  }, [isAnyOpen]);
+
 
   return (
     <>
@@ -93,11 +120,10 @@ export default function SocialSection({ items = [], onChange, locked }: any) {
           setFormOpen(false);
           setPickerOpen(true);
         }}
-        className={`mt-3 px-4 py-2 rounded-lg text-sm font-semibold ${
-          locked
+        className={`mt-3 px-4 py-2 rounded-lg text-sm font-semibold ${locked
             ? "bg-gray-300 text-gray-500 cursor-not-allowed"
             : "bg-purple-600 text-white"
-        }`}
+          }`}
       >
         + Add Social
       </button>
@@ -108,11 +134,13 @@ export default function SocialSection({ items = [], onChange, locked }: any) {
         all={ALL_SOCIALS}
         selected={items}
         onToggle={toggle}
-        onClose={() => {
+        onCancel={() => setPickerOpen(false)}      // 👈 cancel only
+        onContinue={() => {                        // 👈 done / next
           setPickerOpen(false);
-          if (enabled.length > 0) setFormOpen(true); // 👈 only open form if any selected
+          if (enabled.length > 0) setFormOpen(true);
         }}
       />
+
 
       {/* STEP 2: LINK FORM */}
       <SocialLinksModal

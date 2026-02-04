@@ -36,16 +36,49 @@ export function ProfileActions({
     }));
     setEditing(false);
   };
+  useEffect(() => {
+    if (!editing) {
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.left = "";
+      document.body.style.right = "";
+      document.body.style.width = "";
+      document.body.style.overflow = "";
+      return;
+    }
+
+    const scrollY = window.scrollY;
+
+    document.body.style.position = "fixed";
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.left = "0";
+    document.body.style.right = "0";
+    document.body.style.width = "100%";
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      const y = document.body.style.top;
+
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.left = "";
+      document.body.style.right = "";
+      document.body.style.width = "";
+      document.body.style.overflow = "";
+
+      window.scrollTo(0, parseInt(y || "0") * -1);
+    };
+  }, [editing]);
 
   return (
     <div className="relative mt-4">
       {editable && (
         <button
           onClick={() => setEditing(true)}
-          className="absolute -top-3 -right-2 z-20 h-8 w-8 rounded-full shadow
+          className="absolute -top-4 -right-0 z-20 h-9 w-9 rounded-full shadow
           flex items-center justify-center bg-orange-500 text-white"
         >
-          <Pencil size={14} />
+          <Pencil size={16} />
         </button>
       )}
 
@@ -128,7 +161,7 @@ export function ProfileActions({
 
             <button
               onClick={commit}
-              className="flex-1 py-2 rounded-lg bg-indigo-600 text-white font-semibold"
+              className="flex-1 py-2 rounded-lg bg-purple-600 text-white font-semibold"
             >
               Done
             </button>

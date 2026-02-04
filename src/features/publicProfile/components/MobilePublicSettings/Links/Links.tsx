@@ -13,7 +13,6 @@ export default function Links({
   if (!items?.length && !editable) return null;
 
   const t = resolveTheme(theme);
-
   const [open, setOpen] = useState(false);
   const [buffer, setBuffer] = useState<any[]>([]);
 
@@ -104,10 +103,49 @@ function LinksFilesModal({
   onClose,
   onSave,
 }: any) {
+  // 🔒 lock background scroll while modal is open
+  useEffect(() => {
+    if (!open) {
+      document.body.style.overflow = "";
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.left = "";
+      document.body.style.right = "";
+      document.body.style.width = "";
+      return;
+    }
+
+    const scrollY = window.scrollY;
+
+    document.body.style.position = "fixed";
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.left = "0";
+    document.body.style.right = "0";
+    document.body.style.width = "100%";
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      const y = document.body.style.top;
+
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.left = "";
+      document.body.style.right = "";
+      document.body.style.width = "";
+      document.body.style.overflow = "";
+
+      window.scrollTo(0, parseInt(y || "0") * -1);
+    };
+  }, [open]);
+
   if (!open) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[9999] bg-black/50 flex items-center justify-center px-3">
+    <div
+      className="fixed inset-0 z-[9999] bg-black/50 flex items-center justify-center px-3
+                 touch-none overscroll-none"
+      onClick={onClose}
+    >
       <div
         className="bg-white w-full max-w-md rounded-2xl p-4 shadow-xl
                    max-h-[85vh] flex flex-col animate-fadeIn"
@@ -115,7 +153,7 @@ function LinksFilesModal({
       >
         <h3 className="text-base font-semibold mb-3">Edit Links & Files</h3>
 
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto overscroll-contain">
           <LinksFilesSection
             value={{ items: buffer }}
             onChange={(v) => setBuffer(v.items)}
@@ -132,8 +170,8 @@ function LinksFilesModal({
 
           <button
             onClick={onSave}
-            className="flex-1 py-2 rounded-xl bg-green-500
-                       text-white font-semibold hover:bg-green-600"
+            className="flex-1 py-2 rounded-xl bg-purple-600
+                       text-white font-semibold hover:bg-purple-300"
           >
             Save
           </button>

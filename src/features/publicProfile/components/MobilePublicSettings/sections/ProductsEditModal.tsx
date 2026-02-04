@@ -5,6 +5,26 @@ import { fetchSalesProducts } from "../../../../products/slice";
 import { useAppDispatch } from "../../../../../app/hooks";
 import type { Product } from "../../../../products/types";
 
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+
+import {
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+  arrayMove,
+} from "@dnd-kit/sortable";
+
+import { CSS } from "@dnd-kit/utilities";
+
+/* ================================================= */
+
 export function ProductsEditModal({
   open,
   onClose,
@@ -26,9 +46,14 @@ export function ProductsEditModal({
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   const update = (next: any) => onChange(next);
-
   const isSelected = (id: number) =>
     value.items.some((i: any) => i.id === id);
+
+  /* ---------- SENSORS ---------- */
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } })
+  );
 
   /* ---------- CLICK OUTSIDE ---------- */
   useEffect(() => {
@@ -73,7 +98,7 @@ export function ProductsEditModal({
     const data = r.data ?? [];
     const meta = r.meta;
 
-    setResults(reset ? data : prev => [...prev, ...data]);
+    setResults(reset ? data : (prev) => [...prev, ...data]);
     setHasNext(Boolean(meta?.has_next));
     setPage(pg);
     setLoading(false);
@@ -119,7 +144,8 @@ export function ProductsEditModal({
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-md bg-white rounded-2xl shadow-xl max-h-[85vh] overflow-y-auto p-4 space-y-4"
+        className="w-full max-w-md bg-white rounded-2xl shadow-xl 
+                   max-h-[85vh] overflow-y-auto p-4 space-y-4"
       >
         <h3 className="text-lg font-semibold">Edit Products</h3>
 
@@ -138,7 +164,7 @@ export function ProductsEditModal({
           }
         />
 
-        {/* ---------- DROPDOWN SEARCH ---------- */}
+        {/* ---------- SEARCH ---------- */}
         <div ref={containerRef} className="relative">
           <input
             placeholder="Search & add products..."
@@ -152,7 +178,8 @@ export function ProductsEditModal({
             <div
               ref={dropdownRef}
               onScroll={onScroll}
-              className="absolute z-50 w-full bg-white border rounded-lg mt-1 max-h-48 overflow-y-auto shadow"
+              className="absolute z-50 w-full bg-white border rounded-lg mt-1 
+                         max-h-48 overflow-y-auto shadow"
             >
               {results.map((p) => {
                 const selected = isSelected(p.id);
@@ -172,7 +199,9 @@ export function ProductsEditModal({
                     {selected ? (
                       <span className="text-xs">Added</span>
                     ) : (
-                      <span className="text-indigo-600 font-semibold">Add</span>
+                      <span className="text-indigo-600 font-semibold">
+                        Add
+                      </span>
                     )}
                   </div>
                 );
@@ -193,41 +222,113 @@ export function ProductsEditModal({
           )}
         </div>
 
-        {/* ---------- CURRENT ---------- */}
-        <div className="pt-2 space-y-2 border-t">
-          {value.items.map((p: any, i: number) => (
-            <div key={p.id} className="flex items-center gap-2">
-              <span className="cursor-grab">☰</span>
+        {/* ---------- CURRENT (DRAGGABLE) ---------- */}
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={(e) => {
+            const { active, over } = e;
+            if (!over || active.id === over.id) return;
 
-              <p
-                className="flex-1 border rounded p-2 text-sm"
-              >{p.name}</p>
+            const oldIndex = value.items.findIndex(
+              (i: any) => i.id === active.id
+            );
+            const newIndex = value.items.findIndex(
+              (i: any) => i.id === over.id
+            );
 
-              <button
-                onClick={() =>
-                  update({
-                    ...value,
-                    items: value.items.filter(
-                      (_: any, idx: number) => idx !== i
-                    ),
-                  })
-                }
-                className="text-red-500"
-              >
-                ✕
-              </button>
+            const reordered = arrayMove(
+              value.items,
+              oldIndex,
+              newIndex
+            ).map((i: any, idx: number) => ({
+              ...i,
+              rank: idx + 1,
+            }));
+
+            update({ ...value, items: reordered });
+          }}
+        >
+          <SortableContext
+            items={value.items.map((i: any) => i.id)}
+            strategy={verticalListSortingStrategy}
+          >
+            <div className="pt-2 space-y-2 border-t max-h-48 overflow-y-auto overscroll-contain">
+              {value.items.map((p: any) => (
+                <ProductRow
+                  key={p.id}
+                  p={p}
+                  value={value}
+                  update={update}
+                />
+              ))}
             </div>
-          ))}
-        </div>
+          </SortableContext>
+        </DndContext>
 
         <button
           onClick={onClose}
-          className="w-full py-2 rounded-lg bg-indigo-600 text-white"
+          className="w-full py-2 rounded-lg bg-purple-600 text-white"
         >
           Done
         </button>
       </div>
     </div>,
     document.body
+  );
+}
+
+/* ================= ROW ================= */
+
+function ProductRow({ p, value, update }: any) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: p.id });
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={{
+        transform: CSS.Transform.toString(transform),
+        transition,
+      }}
+      className={`flex items-center gap-2 bg-gray-50 p-2 rounded-lg border
+        touch-none ${isDragging ? "opacity-50 scale-[1.02] z-50" : ""}`}
+    >
+      <span
+        {...attributes}
+        {...listeners}
+        className="cursor-grab active:cursor-grabbing select-none touch-none
+                   text-gray-500 px-2"
+      >
+        ☰
+      </span>
+
+      <p className="flex-1 border rounded p-2 text-sm bg-white">
+        {p.name}
+      </p>
+
+      <button
+        onClick={() =>
+          update({
+            ...value,
+            items: value.items
+              .filter((i: any) => i.id !== p.id)
+              .map((i: any, idx: number) => ({
+                ...i,
+                rank: idx + 1,
+              })),
+          })
+        }
+        className="text-red-500"
+      >
+        ✕
+      </button>
+    </div>
   );
 }

@@ -1,5 +1,12 @@
 import { arrayMove } from "@dnd-kit/sortable";
-import { DndContext, closestCenter } from "@dnd-kit/core";
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
 import {
   SortableContext,
   verticalListSortingStrategy,
@@ -7,7 +14,9 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type { ReactNode } from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
+/* ================= TYPES ================= */
 
 interface Item {
   id: string;
@@ -20,6 +29,8 @@ interface Item {
   enabled: boolean;
 }
 
+/* ================= MAIN ================= */
+
 export default function LinksFilesSection({
   value,
   onChange,
@@ -30,6 +41,23 @@ export default function LinksFilesSection({
   disabled?: boolean;
 }) {
   const items = [...value.items].sort((a, b) => a.rank - b.rank);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } })
+  );
+
+  const [dragging, setDragging] = useState(false);
+
+  // 🔒 lock page scroll while dragging
+  useEffect(() => {
+    if (!dragging) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [dragging]);
 
   const addItem = () => {
     if (disabled) return;
@@ -56,7 +84,6 @@ export default function LinksFilesSection({
     const next = items
       .filter((i) => i.id !== id)
       .map((i, idx) => ({ ...i, rank: idx + 1 }));
-
     onChange({ ...value, items: next });
   };
 
@@ -67,17 +94,20 @@ export default function LinksFilesSection({
         <button
           onClick={addItem}
           disabled={disabled}
-          className={`w-full px-4 py-3 sm:py-2 rounded text-white text-sm ${
-            disabled ? "bg-gray-400 cursor-not-allowed" : "bg-purple-600"
-          }`}
+          className={`w-full px-4 py-3 sm:py-2 rounded text-white text-sm ${disabled ? "bg-gray-400 cursor-not-allowed" : "bg-purple-600"
+            }`}
         >
           + Add Link / File
         </button>
       </div>
 
       <DndContext
+        sensors={sensors}
         collisionDetection={closestCenter}
+        onDragStart={() => setDragging(true)}
+        onDragCancel={() => setDragging(false)}
         onDragEnd={(e) => {
+          setDragging(false);
           if (disabled) return;
           const { active, over } = e;
           if (!over) return;
@@ -98,16 +128,43 @@ export default function LinksFilesSection({
           items={items.map((i) => i.id)}
           strategy={verticalListSortingStrategy}
         >
-          <div className="space-y-3 overflow-x-hidden">
+          <div className="space-y-4">
             {items.map((item) => (
-              <SortableItem
-                key={item.id}
-                id={item.id}
-                disabled={disabled}
-                onRemove={() => removeItem(item.id)}
-              >
-                <div className="grid grid-cols-1 sm:grid-cols-6 gap-2 items-center">
-                  <div className="w-full sm:w-44">
+              <SortableItem key={item.id} id={item.id} disabled={disabled} onRemove={() => removeItem(item.id)}>
+                {/* DESKTOP REMOVE */}
+                <button
+                  onClick={() => removeItem(item.id)}
+                  disabled={disabled}
+                  className={`hidden md:flex absolute top-2 right-2 font-bold ${disabled
+                      ? "text-gray-300 cursor-not-allowed"
+                      : "text-red-500 hover:text-red-700"
+                    }`}
+                >
+                  ✕
+                </button>
+
+                {/* MOBILE HEADER */}
+                {/* <div className="flex justify-between items-center mb-2 md:hidden">
+                  <span className="text-xs text-gray-400">Drag</span>
+                  <button
+                    onClick={() => removeItem(item.id)}
+                    disabled={disabled}
+                    className={`font-bold ${
+                      disabled
+                        ? "text-gray-300 cursor-not-allowed"
+                        : "text-red-500 hover:text-red-700"
+                    }`}
+                  >
+                    ✕
+                  </button>
+                </div> */}
+
+                {/* FORM GRID */}
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end pointer-events-auto">
+                  <div className="md:col-span-2">
+                    <label className="block text-xs font-semibold text-gray-500 mb-1">
+                      Type
+                    </label>
                     <CustomSelect
                       disabled={disabled}
                       value={item.type}
@@ -122,87 +179,93 @@ export default function LinksFilesSection({
                     />
                   </div>
 
-                  <input
-                    disabled={disabled}
-                    value={item.title}
-                    placeholder="Title"
-                    className="border rounded p-3 text-sm w-full"
-                    onChange={(e) =>
-                      onChange({
-                        ...value,
-                        items: items.map((i) =>
-                          i.id === item.id
-                            ? { ...i, title: e.target.value }
-                            : i
-                        ),
-                      })
-                    }
-                  />
+                  <div className="md:col-span-3">
+                    <label className="block text-xs font-semibold text-gray-500 mb-1">
+                      Title
+                    </label>
+                    <input
+                      disabled={disabled}
+                      value={item.title}
+                      placeholder="e.g. Website"
+                      className="border rounded p-3 text-sm w-full"
+                      onChange={(e) =>
+                        onChange({
+                          ...value,
+                          items: items.map((i) =>
+                            i.id === item.id
+                              ? { ...i, title: e.target.value }
+                              : i
+                          ),
+                        })
+                      }
+                    />
+                  </div>
 
-                  <input
-                    disabled={disabled || item.type === "file"}
-                    value={item.url}
-                    placeholder="Link URL"
-                    className="border rounded p-3 text-sm w-full"
-                    onChange={(e) =>
-                      onChange({
-                        ...value,
-                        items: items.map((i) =>
-                          i.id === item.id
-                            ? { ...i, url: e.target.value }
-                            : i
-                        ),
-                      })
-                    }
-                  />
+                  <div className="md:col-span-3">
+                    <label className="block text-xs font-semibold text-gray-500 mb-1">
+                      Link URL
+                    </label>
+                    <input
+                      disabled={disabled || item.type === "file"}
+                      value={item.url}
+                      placeholder="https://example.com"
+                      className="border rounded p-3 text-sm w-full"
+                      onChange={(e) =>
+                        onChange({
+                          ...value,
+                          items: items.map((i) =>
+                            i.id === item.id
+                              ? { ...i, url: e.target.value }
+                              : i
+                          ),
+                        })
+                      }
+                    />
+                  </div>
 
-                  <input
-                    disabled={disabled || item.type === "link"}
-                    value={item.file_url}
-                    placeholder="File URL"
-                    className="border rounded p-3 text-sm w-full"
-                    onChange={(e) =>
-                      onChange({
-                        ...value,
-                        items: items.map((i) =>
-                          i.id === item.id
-                            ? { ...i, file_url: e.target.value }
-                            : i
-                        ),
-                      })
-                    }
-                  />
+                  <div className="md:col-span-2">
+                    <label className="block text-xs font-semibold text-gray-500 mb-1">
+                      File URL
+                    </label>
+                    <input
+                      disabled={disabled || item.type === "link"}
+                      value={item.file_url}
+                      placeholder="https://file.pdf"
+                      className="border rounded p-3 text-sm w-full"
+                      onChange={(e) =>
+                        onChange({
+                          ...value,
+                          items: items.map((i) =>
+                            i.id === item.id
+                              ? { ...i, file_url: e.target.value }
+                              : i
+                          ),
+                        })
+                      }
+                    />
+                  </div>
 
-                  <input
-                    disabled={disabled || item.type === "link"}
-                    value={item.file_type}
-                    placeholder="File type"
-                    className="border rounded p-3 text-sm w-full"
-                    onChange={(e) =>
-                      onChange({
-                        ...value,
-                        items: items.map((i) =>
-                          i.id === item.id
-                            ? { ...i, file_type: e.target.value }
-                            : i
-                        ),
-                      })
-                    }
-                  />
-
-                  {/* DESKTOP REMOVE */}
-                  <button
-                    type="button"
-                    disabled={disabled}
-                    onClick={() => removeItem(item.id)}
-                    className={`hidden sm:block font-bold text-center ${
-                      disabled
-                        ? "text-gray-300 cursor-not-allowed"
-                        : "text-red-500 hover:text-red-700"
-                    }`}
-                  >
-                    ✕
-                  </button>
+                  <div className="md:col-span-1">
+                    <label className="block text-xs font-semibold text-gray-500 mb-1">
+                      File Type
+                    </label>
+                    <input
+                      disabled={disabled || item.type === "link"}
+                      value={item.file_type}
+                      placeholder="pdf"
+                      className="border rounded p-3 text-sm w-full"
+                      onChange={(e) =>
+                        onChange({
+                          ...value,
+                          items: items.map((i) =>
+                            i.id === item.id
+                              ? { ...i, file_type: e.target.value }
+                              : i
+                          ),
+                        })
+                      }
+                    />
+                  </div>
                 </div>
               </SortableItem>
             ))}
@@ -215,7 +278,7 @@ export default function LinksFilesSection({
 
 /* ================= SORTABLE ITEM ================= */
 
-export function SortableItem({
+function SortableItem({
   id,
   children,
   disabled,
@@ -232,42 +295,36 @@ export function SortableItem({
   return (
     <div
       ref={setNodeRef}
+      {...(!disabled ? attributes : {})}
+      {...(!disabled ? listeners : {})}
       style={{
         transform: CSS.Transform.toString(transform),
         transition,
       }}
-      className={`bg-white border rounded-lg p-3 shadow-sm ${
-        disabled ? "opacity-60" : ""
-      }`}
+      className="relative bg-white border rounded-lg p-3 shadow-sm
+                 select-none touch-none cursor-grab"
     >
-      <div className="flex items-center justify-between mb-2 text-sm select-none">
-        {/* Drag handle */}
-        <div
-          className={`flex items-center gap-2 ${
-            disabled ? "text-gray-300" : "cursor-grab text-gray-600"
-          }`}
-          {...(!disabled ? attributes : {})}
-          {...(!disabled ? listeners : {})}
-        >
-          ☰ <span className="text-xs sm:text-sm">Drag</span>
-        </div>
+      {/* HEADER */}
+      <div className="flex justify-between items-center mb-2">
+        <span className="text-xs text-gray-400">☰ Drag row</span>
 
         {/* MOBILE REMOVE */}
-        <button
-          type="button"
-          onClick={onRemove}
-          disabled={disabled}
-          className={`sm:hidden font-bold ${
-            disabled
-              ? "text-gray-300 cursor-not-allowed"
-              : "text-red-500 hover:text-red-700"
-          }`}
-        >
-          ✕
-        </button>
+        {onRemove && (
+          <button
+            onClick={onRemove}
+            disabled={disabled}
+            className={`md:hidden font-bold ${disabled
+                ? "text-gray-300 cursor-not-allowed"
+                : "text-red-500 hover:text-red-700"
+              }`}
+          >
+            ✕
+          </button>
+        )}
       </div>
 
-      {children}
+      {/* CONTENT */}
+      <div className="pointer-events-auto">{children}</div>
     </div>
   );
 }
@@ -288,39 +345,37 @@ function CustomSelect({
   const options = [
     { value: "link", label: "Link" },
     { value: "file", label: "File" },
-  ];
+  ] as const;
 
   const current = options.find((o) => o.value === value);
 
   return (
-    <div className="relative w-full sm:w-44">
+    <div className="relative">
       <button
         type="button"
         disabled={disabled}
         onClick={() => !disabled && setOpen((v) => !v)}
-        className={`w-full border rounded p-3 text-sm flex justify-between items-center ${
-          disabled
+        className={`w-full border rounded p-3 text-sm flex justify-between items-center ${disabled
             ? "bg-gray-100 text-gray-400 cursor-not-allowed"
             : "bg-white hover:bg-gray-50"
-        }`}
+          }`}
       >
         <span>{current?.label}</span>
         <span className="text-xs">▾</span>
       </button>
 
       {open && !disabled && (
-        <div className="absolute z-50 mt-1 w-full bg-white border rounded shadow-lg overflow-hidden">
+        <div className="absolute z-50 mt-1 w-full bg-white border rounded shadow-lg">
           {options.map((o) => (
             <button
               key={o.value}
               type="button"
               onClick={() => {
-                onChange(o.value as any);
+                onChange(o.value);
                 setOpen(false);
               }}
-              className={`w-full text-left px-3 py-2 text-sm hover:bg-indigo-50 ${
-                value === o.value ? "bg-indigo-100 font-semibold" : ""
-              }`}
+              className={`w-full text-left px-3 py-2 text-sm hover:bg-indigo-50 ${value === o.value ? "bg-indigo-100 font-semibold" : ""
+                }`}
             >
               {o.label}
             </button>
