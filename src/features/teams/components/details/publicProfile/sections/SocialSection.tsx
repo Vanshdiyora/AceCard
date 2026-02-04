@@ -47,14 +47,22 @@ const ALL_SOCIALS = [
 export default function SocialSection({ items = [], onChange }: any) {
   const [open, setOpen] = useState(false);
 
-  const toggle = (s: any) => {
-    const exists = items.find((i: any) => i.id === s.id);
-    if (exists) {
-      onChange(items.filter((i: any) => i.id !== s.id));
-    } else {
-      onChange([...items, { ...s, url: "", enabled: true }]);
+const toggle = (s: any) => {
+  onChange((prevItems: any[]) => {
+    const index = prevItems.findIndex((i) => i.id === s.id);
+
+    // If already exists → just toggle enabled
+    if (index !== -1) {
+      return prevItems.map((i, idx) =>
+        idx === index ? { ...i, enabled: !i.enabled } : i
+      );
     }
-  };
+
+    // If not exists → add new as enabled
+    return [...prevItems, { ...s, url: "", enabled: true }];
+  });
+};
+
 
   const update = (id: string, val: string) => {
     onChange(items.map((i: any) => (i.id === id ? { ...i, url: val } : i)));

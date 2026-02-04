@@ -1,0 +1,185 @@
+import { useState, useEffect } from "react";
+import { Trash2 } from "lucide-react";
+import { createPortal } from "react-dom";
+import AddSocialModal from "./AddSocialModal";
+
+// Icons
+import {
+  SiInstagram,
+  SiLinkedin,
+  SiYoutube,
+  SiX,
+  SiFacebook,
+  SiWhatsapp,
+  SiSnapchat,
+  SiTiktok,
+} from "react-icons/si";
+import { FiPhone, FiGlobe } from "react-icons/fi";
+
+const ICONS: Record<string, any> = {
+  instagram: SiInstagram,
+  linkedin: SiLinkedin,
+  twitter: SiX,
+  youtube: SiYoutube,
+  facebook: SiFacebook,
+  snapchat: SiSnapchat,
+  tiktok: SiTiktok,
+  whatsapp: SiWhatsapp,
+  phone: FiPhone,
+  website: FiGlobe,
+};
+
+const ALL_SOCIALS = [
+  { id: "instagram", label: "Instagram" },
+  { id: "linkedin", label: "LinkedIn" },
+  { id: "twitter", label: "X (Twitter)" },
+  { id: "youtube", label: "YouTube" },
+  { id: "facebook", label: "Facebook" },
+  { id: "snapchat", label: "Snapchat" },
+  { id: "tiktok", label: "TikTok" },
+  { id: "whatsapp", label: "WhatsApp" },
+  { id: "phone", label: "Phone" },
+  { id: "website", label: "Website" },
+];
+
+export default function SocialSection({ items = [], onChange, locked }: any) {
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [formOpen, setFormOpen] = useState(false);
+
+  const enabled = items.filter((i: any) => i.enabled === true);
+
+  // Toggle enabled instead of add/remove
+  const toggle = (s: any) => {
+    if (locked) return;
+
+    onChange((prev: any[]) => {
+      const index = prev.findIndex((i) => i.id === s.id);
+      if (index !== -1) {
+        return prev.map((i, idx) =>
+          idx === index ? { ...i, enabled: !i.enabled } : i
+        );
+      }
+      return [...prev, { ...s, url: "", enabled: true }];
+    });
+  };
+
+  const update = (id: string, val: string) => {
+    onChange((prev: any[]) =>
+      prev.map((i) => (i.id === id ? { ...i, url: val } : i))
+    );
+  };
+
+  const remove = (id: string) => {
+    onChange((prev: any[]) => prev.filter((i) => i.id !== id));
+  };
+
+  // lock background scroll when picker is open
+  useEffect(() => {
+    if (!pickerOpen) return;
+    const original = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = original;
+    };
+  }, [pickerOpen]);
+
+  return (
+    <>
+      {/* ADD BUTTON */}
+      <button
+        disabled={locked}
+        onClick={() => {
+          if (locked) return;
+          setFormOpen(false);
+          setPickerOpen(true);
+        }}
+        className={`mt-3 px-4 py-2 rounded-lg text-sm font-semibold ${
+          locked
+            ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+            : "bg-purple-600 text-white"
+        }`}
+      >
+        + Add Social
+      </button>
+
+      {/* STEP 1: PICKER */}
+      <AddSocialModal
+        open={pickerOpen}
+        all={ALL_SOCIALS}
+        selected={items}
+        onToggle={toggle}
+        onClose={() => {
+          setPickerOpen(false);
+          if (enabled.length > 0) setFormOpen(true); // 👈 only open form if any selected
+        }}
+      />
+
+      {/* STEP 2: LINK FORM */}
+      <SocialLinksModal
+        open={formOpen}
+        items={enabled}
+        onUpdate={update}
+        onRemove={remove}
+        onClose={() => setFormOpen(false)}
+      />
+    </>
+  );
+}
+
+function SocialLinksModal({
+  open,
+  items,
+  onClose,
+  onUpdate,
+  onRemove,
+}: any) {
+  if (!open) return null;
+
+  return createPortal(
+    <div className="fixed inset-0 z-[999] bg-black/40 flex items-center justify-center px-3">
+      <div className="bg-white w-full max-w-md rounded-2xl p-4 shadow-xl max-h-[85vh] flex flex-col">
+
+        <h3 className="text-base font-semibold mb-3">Add your links</h3>
+
+        <div className="flex-1 overflow-y-auto space-y-3">
+          {items.map((s: any) => {
+            const Icon = ICONS[s.id] || FiGlobe;
+
+            return (
+              <div
+                key={s.id}
+                className="flex items-center gap-3 p-3 rounded-xl border bg-white shadow-sm"
+              >
+                <div className="h-10 w-10 rounded-xl bg-gray-900 flex items-center justify-center text-white shadow">
+                  <Icon size={18} />
+                </div>
+
+                <input
+                  className="flex-1 rounded-lg border px-3 py-2 text-sm"
+                  placeholder={`Enter ${s.label} link`}
+                  value={s.url}
+                  onChange={(e) => onUpdate(s.id, e.target.value)}
+                />
+
+                <button
+                  onClick={() => onRemove(s.id)}
+                  className="text-red-500 hover:text-red-700"
+                >
+                  <Trash2 size={18} />
+                </button>
+              </div>
+            );
+          })}
+        </div>
+
+        <button
+          onClick={onClose}
+          className="mt-4 w-full py-3 rounded-xl bg-purple-600 text-white font-semibold"
+        >
+          Done
+        </button>
+      </div>
+    </div>,
+    document.body
+  );
+}

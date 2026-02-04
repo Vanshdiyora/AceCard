@@ -1,4 +1,4 @@
-import SocialSection from "../../../teams/components/details/publicProfile/sections/SocialSection";
+import SocialSection from "./sections/SocialSection";
 import Links from "./Links/Links";
 import { Pencil } from "lucide-react";
 import {
@@ -117,14 +117,13 @@ export default function MobilePublicSettings({
     if (!config || !Object.keys(config).length) return;
 
     setDraft((prev: any) => ({
-      ...prev,          // KEEP edits
-      ...config,       // hydrate from API
-      contact: {
-        ...prev.contact,
-        ...config.contact,
-      },
+      ...prev,
+      ...config,
+      contact: { ...prev.contact, ...config.contact },
+
       youtube: config.youtube || prev.youtube || { items: [] },
       links_files: config.links_files || prev.links_files || { items: [] },
+      social_links: config.social_links || prev.social_links || { items: [] }, // 👈 FIX
     }));
   }, [config]);
 
@@ -212,65 +211,62 @@ export default function MobilePublicSettings({
           </div>
         );
 
-      case "about":
-        return (
-          <Section title="About" theme={theme}>
-            <EditableAbout
-              value={draft.profile?.description || ""}
-              theme={theme}
-              editable={!draft.profile?.locked}
-              onChange={(val: string) =>
-                setDraft((prev: any) => ({
-                  ...prev,
-                  profile: {
-                    ...prev.profile,
-                    description: val,
-                  },
-                }))
-              }
-            />
-          </Section>
-        );
-
-case "social_links":
+   case "about":
   return (
-    <Section title="Social" theme={theme}>
-      {draft.social_links?.locked ? (
-        <Social
-          items={sortByRank(draft.social_links.items)}
-          theme={theme}
-          shapeClass={shapeClass}
-        />
-      ) : (
-        <>
-          <Social
-            items={sortByRank(draft.social_links.items)}
-            theme={theme}
-            shapeClass={shapeClass}
-          />
-
-          <div className="pt-4">
-            <SocialSection
-              items={draft.social_links.items || []}
-              onChange={(next: any[]) =>
-                setDraft((prev: any) => ({
-                  ...prev,
-                  social_links: {
-                    ...prev.social_links,
-                    items: next.map((i, idx) => ({
-                      ...i,
-                      rank: idx + 1,
-                      enabled: true,
-                    })),
-                  },
-                }))
-              }
-            />
-          </div>
-        </>
-      )}
+    <Section title="About" theme={theme}>
+      <EditableAbout
+        value={draft.profile?.description || ""}
+        theme={theme}
+        editable={!draft.profile?.locked}
+        onChange={(val: string) =>
+          setDraft((prev: any) => ({
+            ...prev,
+            profile: {
+              ...prev.profile,
+              description: val,
+            },
+          }))
+        }
+      />
     </Section>
   );
+
+      case "social_links":
+        return (
+          <Section title="Social" theme={theme}>
+            <Social
+              items={sortByRank(draft.social_links.items)}
+              theme={theme}
+              shapeClass={shapeClass}
+            />
+
+            <SocialSection
+              locked={draft.social_links?.locked}
+              items={draft.social_links?.items || []}
+              onChange={(updater: any) =>
+                setDraft((prev: any) => {
+                  const nextItems =
+                    typeof updater === "function"
+                      ? updater(prev.social_links?.items || [])
+                      : updater;
+
+                  return {
+                    ...prev,
+                    social_links: {
+                      ...(prev.social_links || {}),
+                      items: nextItems.map((i: any, idx: number) => ({
+                        ...i,
+                        rank: i.rank ?? idx + 1,
+                        enabled: i.enabled ?? true,
+                      })),
+                    },
+                  };
+                })
+              }
+            />
+
+          </Section>
+        );
 
       case "products":
         return (
@@ -878,7 +874,7 @@ function Social({ items, theme, shapeClass }: any) {
   }
 
   return (
-    <div className="flex flex-col items-center gap-4">
+    <div className="flex flex-col items-center gap-4 pb-5">
       {rows.map((row, rIdx) => (
         <div
           key={rIdx}
@@ -1295,84 +1291,108 @@ function BackgroundVideo({ src }: { src?: string }) {
   );
 }
 
+// import { useState } from "react";
+import {  X } from "lucide-react";
+import { createPortal } from "react-dom";
 function EditableAbout({
   value,
   onChange,
   theme,
   editable = true,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  theme: any;
-  editable?: boolean;
-}) {
-  const [editing, setEditing] = useState(false);
+}: any) {
+  const [open, setOpen] = useState(false);
   const t = resolveTheme(theme);
 
   return (
     <div
-      className="relative rounded-2xl p-4 shadow-sm backdrop-blur-md
-                 transition-all duration-300"
-      style={{
-        background: "rgba(255,255,255,0.08)",
-        border: "1px solid rgba(255,255,255,0.15)",
-      }}
+      className="relative rounded-2xl"
     >
       {/* FLOATING EDIT */}
-      {editable && !editing && (
+      {editable && (
         <button
-          onClick={() => setEditing(true)}
-          className="absolute -top-3 -right-3 z-20 h-9 w-9 rounded-full shadow-lg
+          onClick={() => setOpen(true)}
+          className="absolute -top-4 right-0 z-20 h-9 w-9 rounded-full shadow-lg
                      flex items-center justify-center
-                     bg-gradient-to-br from-orange-400 to-pink-500
-                     text-white transition hover:scale-110 active:scale-95"
+                     bg-orange-500
+                     text-white transition hover:scale-110 active:scale-95" 
         >
           <Pencil size={14} />
         </button>
       )}
 
-      {!editing ? (
-        <p
-          className={`text-sm leading-relaxed transition-all duration-200 ${!value ? "opacity-60 italic" : ""
-            }`}
-          style={{ color: t.text }}
-        >
-          {value || "Tap the pencil to add your story ✨"}
-        </p>
-      ) : (
-        <div className="space-y-3">
-          <textarea
-            autoFocus
-            rows={4}
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            className="w-full rounded-xl border border-gray-200/40
-                       bg-white/80 backdrop-blur-sm p-3 text-sm
-                       focus:outline-none focus:ring-2 focus:ring-indigo-400"
-          />
+      <p
+        className={`text-sm leading-relaxed ${
+          !value ? "opacity-60 italic" : ""
+        }`}
+        style={{ color: t.text }}
+      >
+        {value || "Tap the pencil to add your story ✨"}
+      </p>
 
-          <div className="flex gap-3 pt-1">
-            <button
-              onClick={() => setEditing(false)}
-              className="flex-1 py-2 rounded-xl text-sm font-semibold
-                         bg-gradient-to-r from-indigo-500 to-purple-600
-                         text-white shadow hover:scale-[1.02]
-                         active:scale-[0.97]"
-            >
-              Save
-            </button>
-
-            <button
-              onClick={() => setEditing(false)}
-              className="flex-1 py-2 rounded-xl text-sm font-medium
-                         bg-white/70 border border-gray-300/40
-                         text-gray-600 hover:bg-white"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
+      {/* MODAL */}
+      <AboutEditModal
+        open={open}
+        value={value}
+        onClose={() => setOpen(false)}
+        onSave={(v) => onChange(v)}
+      />
     </div>
+  );
+}
+
+function AboutEditModal({
+  open,
+  value,
+  onClose,
+  onSave,
+}: {
+  open: boolean;
+  value: string;
+  onClose: () => void;
+  onSave: (v: string) => void;
+}) {
+  const [text, setText] = useState(value);
+
+  if (!open) return null;
+
+  return createPortal(
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+      <div className="w-[90%] max-w-md rounded-2xl bg-white p-5 shadow-xl animate-scaleIn">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-lg font-semibold">Edit About</h3>
+          <button onClick={onClose}>
+            <X size={18} />
+          </button>
+        </div>
+
+        <textarea
+          autoFocus
+          rows={5}
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          className="w-full rounded-xl border p-3 text-sm focus:ring-2 focus:ring-indigo-400 outline-none"
+        />
+
+        <div className="flex gap-3 pt-4">
+          <button
+            onClick={() => {
+              onSave(text);
+              onClose();
+            }}
+            className="flex-1 py-2 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold"
+          >
+            Save
+          </button>
+
+          <button
+            onClick={onClose}
+            className="flex-1 py-2 rounded-xl bg-gray-100 text-gray-700"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body
   );
 }

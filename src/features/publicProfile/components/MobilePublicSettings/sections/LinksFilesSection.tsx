@@ -67,9 +67,8 @@ export default function LinksFilesSection({
         <button
           onClick={addItem}
           disabled={disabled}
-          className={`w-full px-4 py-3 sm:py-2 rounded text-white text-sm ${
-            disabled ? "bg-gray-400 cursor-not-allowed" : "bg-purple-600"
-          }`}
+          className={`w-full px-4 py-3 sm:py-2 rounded text-white text-sm ${disabled ? "bg-gray-400 cursor-not-allowed" : "bg-purple-600"
+            }`}
         >
           + Add Link / File
         </button>
@@ -100,12 +99,7 @@ export default function LinksFilesSection({
         >
           <div className="space-y-3 overflow-x-hidden">
             {items.map((item) => (
-              <SortableItem
-                key={item.id}
-                id={item.id}
-                disabled={disabled}
-                onRemove={() => removeItem(item.id)}
-              >
+              <SortableItem key={item.id} id={item.id} disabled={disabled}>
                 <div className="grid grid-cols-1 sm:grid-cols-6 gap-2 items-center">
                   <div className="w-full sm:w-44">
                     <CustomSelect
@@ -120,6 +114,7 @@ export default function LinksFilesSection({
                         })
                       }
                     />
+
                   </div>
 
                   <input
@@ -190,16 +185,14 @@ export default function LinksFilesSection({
                     }
                   />
 
-                  {/* DESKTOP REMOVE */}
                   <button
                     type="button"
                     disabled={disabled}
                     onClick={() => removeItem(item.id)}
-                    className={`hidden sm:block font-bold text-center ${
-                      disabled
+                    className={`font-bold text-center ${disabled
                         ? "text-gray-300 cursor-not-allowed"
                         : "text-red-500 hover:text-red-700"
-                    }`}
+                      }`}
                   >
                     ✕
                   </button>
@@ -219,12 +212,10 @@ export function SortableItem({
   id,
   children,
   disabled,
-  onRemove,
 }: {
   id: string;
   children: ReactNode;
   disabled?: boolean;
-  onRemove?: () => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition } =
     useSortable({ id, disabled });
@@ -236,43 +227,22 @@ export function SortableItem({
         transform: CSS.Transform.toString(transform),
         transition,
       }}
-      className={`bg-white border rounded-lg p-3 shadow-sm ${
-        disabled ? "opacity-60" : ""
-      }`}
+      className={`bg-white border rounded-lg p-3 shadow-sm ${disabled ? "opacity-60" : ""
+        }`}
     >
-      <div className="flex items-center justify-between mb-2 text-sm select-none">
-        {/* Drag handle */}
-        <div
-          className={`flex items-center gap-2 ${
-            disabled ? "text-gray-300" : "cursor-grab text-gray-600"
+      <div
+        className={`flex items-center gap-2 mb-2 select-none text-sm ${disabled ? "text-gray-300" : "cursor-grab text-gray-600"
           }`}
-          {...(!disabled ? attributes : {})}
-          {...(!disabled ? listeners : {})}
-        >
-          ☰ <span className="text-xs sm:text-sm">Drag</span>
-        </div>
-
-        {/* MOBILE REMOVE */}
-        <button
-          type="button"
-          onClick={onRemove}
-          disabled={disabled}
-          className={`sm:hidden font-bold ${
-            disabled
-              ? "text-gray-300 cursor-not-allowed"
-              : "text-red-500 hover:text-red-700"
-          }`}
-        >
-          ✕
-        </button>
+        {...(!disabled ? attributes : {})}
+        {...(!disabled ? listeners : {})}
+      >
+        ☰ <span className="text-xs sm:text-sm">Drag</span>
       </div>
 
       {children}
     </div>
   );
 }
-
-/* ================= CUSTOM SELECT ================= */
 
 function CustomSelect({
   value,
@@ -298,11 +268,10 @@ function CustomSelect({
         type="button"
         disabled={disabled}
         onClick={() => !disabled && setOpen((v) => !v)}
-        className={`w-full border rounded p-3 text-sm flex justify-between items-center ${
-          disabled
+        className={`w-full border rounded p-3 text-sm flex justify-between items-center ${disabled
             ? "bg-gray-100 text-gray-400 cursor-not-allowed"
             : "bg-white hover:bg-gray-50"
-        }`}
+          }`}
       >
         <span>{current?.label}</span>
         <span className="text-xs">▾</span>
@@ -318,9 +287,8 @@ function CustomSelect({
                 onChange(o.value as any);
                 setOpen(false);
               }}
-              className={`w-full text-left px-3 py-2 text-sm hover:bg-indigo-50 ${
-                value === o.value ? "bg-indigo-100 font-semibold" : ""
-              }`}
+              className={`w-full text-left px-3 py-2 text-sm hover:bg-indigo-50 ${value === o.value ? "bg-indigo-100 font-semibold" : ""
+                }`}
             >
               {o.label}
             </button>
