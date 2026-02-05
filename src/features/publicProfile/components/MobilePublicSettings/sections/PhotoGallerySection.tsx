@@ -152,14 +152,15 @@ export default function PhotoGallerySection({
           items={items.map((i) => i.rank)}
           strategy={verticalListSortingStrategy}
         >
-          <div className="space-y-4">
+    <div className="space-y-4 mt-4 touch-pan-y">
+
             {items.map((item, index) => (
               <SortablePhotoRow
                 key={item.rank}
                 item={item}
                 disabled={disabled}
                 onRemove={() => removeItem(item.rank)}
-                onImageChange={(file:any) => {
+                onImageChange={(file: any) => {
                   setCropFile(file);
                   setCropIndex(index);
                 }}
@@ -211,15 +212,17 @@ function SortablePhotoRow({
         transition,
       }}
       className="group rounded-2xl border bg-white/80 p-4 space-y-4 shadow-sm
-                 select-none touch-none"
+           select-none touch-pan-y"
+
     >
       {/* HEADER */}
       <div className="flex items-center justify-between">
         <span
           {...attributes}
           {...listeners}
-          className="text-gray-400 cursor-grab active:cursor-grabbing"
+          className="text-gray-400 cursor-grab active:cursor-grabbing touch-none"
         >
+
           ☰ Drag
         </span>
 

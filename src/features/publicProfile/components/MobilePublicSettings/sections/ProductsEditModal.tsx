@@ -191,8 +191,8 @@ export function ProductsEditModal({
                     className={`px-3 py-2 text-sm cursor-pointer flex justify-between items-center
                       ${
                         selected
-                          ? "bg-indigo-50 text-gray-400"
-                          : "hover:bg-indigo-50"
+                        ? "bg-indigo-50 text-gray-400"
+                        : "hover:bg-indigo-50"
                       }`}
                   >
                     <span>{p.name}</span>
@@ -253,7 +253,7 @@ export function ProductsEditModal({
             items={value.items.map((i: any) => i.id)}
             strategy={verticalListSortingStrategy}
           >
-            <div className="pt-2 space-y-2 border-t max-h-48 overflow-y-auto overscroll-contain">
+            <div className="pt-2 space-y-2 border-t max-h-48 overflow-y-auto overscroll-contain touch-pan-y">
               {value.items.map((p: any) => (
                 <ProductRow
                   key={p.id}
@@ -279,7 +279,6 @@ export function ProductsEditModal({
 }
 
 /* ================= ROW ================= */
-
 function ProductRow({ p, value, update }: any) {
   const {
     attributes,
@@ -298,13 +297,15 @@ function ProductRow({ p, value, update }: any) {
         transition,
       }}
       className={`flex items-center gap-2 bg-gray-50 p-2 rounded-lg border
-        touch-none ${isDragging ? "opacity-50 scale-[1.02] z-50" : ""}`}
+        ${isDragging ? "opacity-50 scale-[1.02] z-50" : ""}
+      `}
     >
+      {/* drag handle */}
       <span
         {...attributes}
         {...listeners}
-        className="cursor-grab active:cursor-grabbing select-none touch-none
-                   text-gray-500 px-2"
+        className="cursor-grab active:cursor-grabbing select-none
+                   touch-none text-gray-500 px-2"
       >
         ☰
       </span>

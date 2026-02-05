@@ -586,7 +586,7 @@ export default function MobilePublicSettings({
         theme={draft.theme}
         onClose={() => setActivePhoto(null)}
       />
-
+      {/* Youtube */}
       <EditModal
         open={editSection?.type === "youtube"}
         onClose={() => setEditSection(null)}
@@ -671,6 +671,7 @@ export default function MobilePublicSettings({
 
       </EditModal>
 
+      {/* Photo gallery */}
       <EditModal
         open={editPhotoGallery}
         onClose={() => setEditPhotoGallery(false)}
