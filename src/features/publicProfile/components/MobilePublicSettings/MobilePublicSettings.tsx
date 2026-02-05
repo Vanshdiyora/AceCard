@@ -97,7 +97,7 @@ export default function MobilePublicSettings({
 
   const {
     // layout = {},
-    theme = {},
+    // theme = {},
     banner = {},
     meeting = {},
     sections = { items: [] },
@@ -184,7 +184,7 @@ export default function MobilePublicSettings({
   };
 
   const fontClass = resolveFontClass(draft.layout?.font);
-
+console.log(draft)
   const renderSection = (type: string) => {
     switch (type) {
       case "profile":
@@ -193,7 +193,7 @@ export default function MobilePublicSettings({
             <ProfileWrapper
               profile={draft.profile}   // 👈 must be from draft
               cover={draft.cover}
-              theme={theme}
+              theme={draft.theme}
               user={data}
               layout={draft.layout}
               onConnect={() => isMobile && setOpen(true)}
@@ -206,10 +206,10 @@ export default function MobilePublicSettings({
 
       case "about":
         return (
-          <Section title="About" theme={theme}>
+          <Section title="About" theme={draft.theme}>
             <EditableAbout
               value={draft.profile?.description || ""}
-              theme={theme}
+              theme={draft.theme}
               editable={!draft.profile?.locked}
               onChange={(val: string) =>
                 setDraft((prev: any) => ({
@@ -226,10 +226,10 @@ export default function MobilePublicSettings({
 
       case "social_links":
         return (
-          <Section title="Social" theme={theme}>
+          <Section title="Social" theme={draft.theme}>
             <Social
               items={sortByRank(draft.social_links.items)}
-              theme={theme}
+              theme={draft.theme}
               shapeClass={shapeClass}
             />
 
@@ -267,7 +267,7 @@ export default function MobilePublicSettings({
           <Products
             title={p.section_title}
             items={sortByRank(p.items)}
-            theme={theme}
+            theme={draft.theme}
             showPrice={p.toggle_price}
             editable={p.locked}
             onEdit={() => setEditProducts(true)}
@@ -281,7 +281,7 @@ export default function MobilePublicSettings({
           <VideoGallery
             title={vg?.section_title}
             items={sortByRank(vg?.items || [])}  // 👈 pass empty array
-            theme={theme}
+            theme={draft.theme}
             editable={!draft.video_gallery?.locked}
             galleryValue={vg}
             onGalleryChange={(v: any) =>
@@ -298,7 +298,7 @@ export default function MobilePublicSettings({
         return (
           <YouTube
             items={sortByRank(draft.youtube?.items || [])}
-            theme={theme}
+            theme={draft.theme}
             editable={!draft.youtube?.locked}
             onEdit={(item) => setEditSection({ type: "youtube", item })}
           />
@@ -308,7 +308,7 @@ export default function MobilePublicSettings({
         return (
           <ProfileActions
             user={data}
-            theme={theme}
+            theme={draft.theme}
             contact={draft.contact}
             layout={draft.layout}
             editable={!draft.contact?.locked}
@@ -330,7 +330,7 @@ export default function MobilePublicSettings({
         return (
           <Links
             items={draft.links_files?.items || []}
-            theme={theme}
+            theme={draft.theme}
             editable={!draft.links_files?.locked} // 👈 only if NOT locked
             onChange={(next: any) =>
               setDraft((prev: any) => ({
@@ -348,7 +348,7 @@ export default function MobilePublicSettings({
         return meeting?.enabled ? (
           <EditableMeetingCTA
             meeting={draft.meeting}
-            theme={theme}
+            theme={draft.theme}
             shapeClass={shapeClass}
             editable={!draft.meeting?.locked}
             onMeetingChange={(updater: any) =>
@@ -366,7 +366,7 @@ export default function MobilePublicSettings({
             image={draft.banner.image_url}
             ctaText={draft.banner.cta_text}
             ctaUrl={draft.banner.cta_url}
-            theme={theme}
+            theme={draft.theme}
             editable={!draft.banner?.locked}
             onBannerChange={(updater: any) =>
               setDraft((prev: any) =>
@@ -385,7 +385,7 @@ export default function MobilePublicSettings({
           <PhotoGallery
             title={pg?.section_title}
             items={sortByRank(pg?.items || [])}
-            theme={theme}
+            theme={draft.theme}
             editable={!pg?.locked}              // 🔒 respect lock
             onEdit={() => setEditPhotoGallery(true)}   // open modal
             onOpen={setActivePhoto}
@@ -575,14 +575,14 @@ export default function MobilePublicSettings({
         open={open}
         onClose={() => setOpen(false)}
         handle={data?.username}
-        theme={theme}
+        theme={draft.theme}
       />
 
       {/* MODAL */}
       <PhotoModal
         open={!!activePhoto}
         item={activePhoto}
-        theme={theme}
+        theme={draft.theme}
         onClose={() => setActivePhoto(null)}
       />
 

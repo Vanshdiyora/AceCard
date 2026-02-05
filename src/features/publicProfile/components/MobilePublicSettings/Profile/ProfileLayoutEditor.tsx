@@ -78,43 +78,43 @@ function MobileColorPicker({
 
 
 const THEME_COLOR_KEYS = [
-  "card_background",
-  "button_color",
-  "card_text",
-  "button_text",
+    "card_background",
+    "button_color",
+    "card_text",
+    "button_text",
 ] as const;
 
 function MobileThemeColorPicker({
-  label,
-  value,
-  onChange,
+    label,
+    value,
+    onChange,
 }: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
+    label: string;
+    value: string;
+    onChange: (v: string) => void;
 }) {
-  return (
-    <div className="flex items-center justify-between gap-3 border rounded-xl p-2">
-      <span className="text-sm capitalize">
-        {label.replace("_", " ")}
-      </span>
+    return (
+        <div className="flex items-center justify-between gap-3 border rounded-xl p-2">
+            <span className="text-sm capitalize">
+                {label.replace("_", " ")}
+            </span>
 
-      <div className="flex items-center gap-2">
-        <input
-          type="color"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          className="h-8 w-8 rounded border"
-        />
-        <input
-          type="text"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          className="w-20 border rounded-md px-2 py-1 text-xs"
-        />
-      </div>
-    </div>
-  );
+            <div className="flex items-center gap-2">
+                <input
+                    type="color"
+                    value={value}
+                    onChange={(e) => onChange(e.target.value)}
+                    className="h-8 w-8 rounded border"
+                />
+                <input
+                    type="text"
+                    value={value}
+                    onChange={(e) => onChange(e.target.value)}
+                    className="w-20 border rounded-md px-2 py-1 text-xs"
+                />
+            </div>
+        </div>
+    );
 }
 
 export function ProfileLayoutEditor({
@@ -594,32 +594,32 @@ export function ProfileLayoutEditor({
                     )}
                 </div>
             )}
-            
-            {/* ================= THEME ================= */}
-<div>
-  <h4 className="text-sm font-semibold mb-2">
-    Theme Colors
-  </h4>
 
-  <div className="space-y-2">
-    {THEME_COLOR_KEYS.map((key) => (
-      <MobileThemeColorPicker
-        key={key}
-        label={key}
-        value={config.theme?.[key] || "#000000"}
-        onChange={(val) =>
-          update({
-            ...config,
-            theme: {
-              ...config.theme,
-              [key]: val,
-            },
-          })
-        }
-      />
-    ))}
-  </div>
-</div>
+            {/* ================= THEME ================= */}
+            <div>
+                <h4 className="text-sm font-semibold mb-2">
+                    Theme Colors
+                </h4>
+
+                <div className="space-y-2">
+                    {THEME_COLOR_KEYS.map((key) => (
+                        <MobileThemeColorPicker
+                            key={key}
+                            label={key}
+                            value={config.theme?.[key] || "#000000"}
+                            onChange={(val) =>
+                                update({
+                                    ...config,
+                                    theme: {
+                                        ...config.theme,
+                                        [key]: val,
+                                    },
+                                })
+                            }
+                        />
+                    ))}
+                </div>
+            </div>
 
 
         </div>
