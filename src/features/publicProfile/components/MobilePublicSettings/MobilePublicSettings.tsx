@@ -184,7 +184,7 @@ export default function MobilePublicSettings({
   };
 
   const fontClass = resolveFontClass(draft.layout?.font);
-console.log(draft)
+  console.log(draft)
   const renderSection = (type: string) => {
     switch (type) {
       case "profile":
@@ -533,6 +533,7 @@ console.log(draft)
     editPhotoGallery ||
     openLayoutEditor ||
     editSection?.type === "youtube";
+
   useEffect(() => {
     if (!isAnyModalOpen) {
       document.body.style.overflow = "";
@@ -647,7 +648,8 @@ console.log(draft)
             items={youtubeSorted.map((i: any) => i.id)}
             strategy={verticalListSortingStrategy}
           >
-            <div className="space-y-2 max-h-72 overflow-y-auto overscroll-contain">
+            <div className="space-y-2 max-h-72 overflow-y-auto overscroll-contain touch-pan-y">
+
 
               {youtubeSorted.map((v: any) => (
                 <YouTubeRow key={v.id} v={v} setDraft={setDraft} />
@@ -767,8 +769,14 @@ function YouTubeRow({
   v: any;
   setDraft: any;
 }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
-    useSortable({ id: v.id });
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: v.id });
 
   return (
     <div
@@ -778,17 +786,15 @@ function YouTubeRow({
         transition,
       }}
       className={`flex items-center gap-2 bg-gray-50 p-2 rounded-lg border
-  touch-none
-  ${isDragging ? "opacity-50 scale-[1.02] z-50" : ""}
-`}
-
+        ${isDragging ? "opacity-50 scale-[1.02] z-50" : ""}
+      `}
     >
       {/* drag handle */}
       <span
         {...attributes}
         {...listeners}
         className="cursor-grab active:cursor-grabbing select-none
-             touch-none text-gray-500 px-2 py-1"
+                   touch-none text-gray-500 px-2 py-1"
       >
         ☰
       </span>
