@@ -88,10 +88,9 @@ export default function DashboardPage() {
                 key={p}
                 onClick={() => dispatch(setPeriod(p))}
                 className={`px-4 py-1.5 text-sm font-semibold rounded-full transition-all
-                  ${
-                    period === p
-                      ? "bg-purple-500 text-white shadow"
-                      : "text-gray-500 hover:text-gray-800"
+                  ${period === p
+                    ? "bg-purple-500 text-white shadow"
+                    : "text-gray-500 hover:text-gray-800"
                   }`}
               >
                 {p.toUpperCase()}
@@ -105,8 +104,10 @@ export default function DashboardPage() {
         ) : data ? (
           <PipelineAreaChart
             data={data.pipeline_graph}
+            period={period}        // ✅ ADD THIS
             color="#a855f7"
           />
+
         ) : null}
       </div>
 
