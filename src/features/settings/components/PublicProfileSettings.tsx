@@ -27,21 +27,7 @@ export default function PublicProfileSettings() {
     if (data) setLiveConfig(data);
   }, [data]);
   return (
-    <div className="flex gap-6 h-[calc(100vh-200px)] overflow-hidden">
-
-      {/* LEFT — Scrollable Editor */}
-      <div className="flex-1 min-w-[480px] h-full overflow-y-auto overscroll-contain pr-2">
-
-        <TeamMemberPublicProfileTab
-          key={username}
-          useSelfApi={true}
-          showLockable={true}
-          onLiveChange={(cfg) => {
-            if (!data) return;
-            setLiveConfig(denormalizeProfile(cfg, data));
-          }}   // 🔥 connect
-        />
-      </div>
+    <div className="flex gap-6 h-[calc(100vh-120px)] overflow-hidden">
 
       {/* RIGHT — Fixed Preview */}
       <div className="hidden lg:flex justify-center items-start h-full overflow-hidden">
@@ -61,7 +47,19 @@ export default function PublicProfileSettings() {
         </div>
       </div>
 
+      {/* LEFT — Scrollable Editor */}
+      <div className="flex-1 min-w-[480px] h-full overflow-y-auto overscroll-contain pr-2">
 
+        <TeamMemberPublicProfileTab
+          key={username}
+          useSelfApi={true}
+          showLockable={true}
+          onLiveChange={(cfg) => {
+            if (!data) return;
+            setLiveConfig(denormalizeProfile(cfg, data));
+          }}   // 🔥 connect
+        />
+      </div>
     </div>
   );
 }

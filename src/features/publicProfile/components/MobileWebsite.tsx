@@ -585,31 +585,85 @@ function Products({
 }
 
 /* ================= YOUTUBE ================= */
+import { useRef } from "react";
 function YouTube({ items, theme }: any) {
   if (!items?.length) return null;
 
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [index, setIndex] = useState(0);
+
+  const videos = items
+    .map((v: any) => ({
+      ...v,
+      ytId: getYouTubeId(v.url),
+    }))
+    .filter((v: any) => v.ytId);
+
+  if (!videos.length) return null;
+
+  const handleScroll = () => {
+    if (!containerRef.current) return;
+
+    const { scrollLeft, offsetWidth } = containerRef.current;
+    const currentIndex = Math.round(scrollLeft / offsetWidth);
+    setIndex(currentIndex);
+  };
+
+  const scrollTo = (i: number) => {
+    if (!containerRef.current) return;
+
+    containerRef.current.scrollTo({
+      left: i * containerRef.current.offsetWidth,
+      behavior: "smooth",
+    });
+  };
+
   return (
     <Section title="Videos" theme={theme}>
-      <div className="space-y-4">
-        {items.map((v: any) => {
-          const id = getYouTubeId(v.url);
-          if (!id) return null;
-
-          return (
-            <div
-              key={v.id}
-              className="w-full h-40 rounded-2xl overflow-hidden shadow-md"
-            >
+      {/* Carousel */}
+      <div
+        ref={containerRef}
+        onScroll={handleScroll}
+        className="
+          flex overflow-x-auto scroll-smooth
+          snap-x snap-mandatory
+          scrollbar-hide
+        "
+      >
+        {videos.map((v: any, i: number) => (
+          <div
+            key={v.id ?? i}
+            className="
+              min-w-full h-48
+              snap-center
+              px-1
+            "
+          >
+            <div className="w-full h-full rounded-2xl overflow-hidden shadow-md">
               <iframe
-                src={`https://www.youtube.com/embed/${id}`}
+                src={`https://www.youtube.com/embed/${v.ytId}`}
                 className="w-full h-full"
                 frameBorder="0"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
               />
             </div>
-          );
-        })}
+          </div>
+        ))}
+      </div>
+
+      {/* Dots */}
+      <div className="flex justify-center gap-2 mt-3">
+        {videos.map((_: any, i: number) => (
+          <button
+            key={i}
+            onClick={() => scrollTo(i)}
+            className={`h-2 w-2 rounded-full transition ${i === index
+                ? "bg-gray-900"
+                : "bg-gray-300 hover:bg-gray-400"
+              }`}
+          />
+        ))}
       </div>
     </Section>
   );

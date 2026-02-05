@@ -1639,13 +1639,15 @@ export default function TeamMemberPublicProfileTab({
           }
         />
       </Card>
+          <div className="px-6">
 
       <button
         onClick={save}
-        className="w-full py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-purple-600 to-indigo-600 shadow-lg hover:opacity-90 transition"
-      >
+        className="w-full py-3 rounded-xl font-semibold text-white bg-purple-600 shadow-lg hover:opacity-90 transition"
+        >
         Save Public Profile
       </button>
+        </div>
       {isCropping && coverFileRef.current && (
         <CoverCropModal
           file={coverFileRef.current}

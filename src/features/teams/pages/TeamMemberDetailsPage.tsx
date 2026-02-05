@@ -431,12 +431,14 @@ export default function TeamMemberDetailsPage() {
           <TeamMemberAnalyticsTab memberId={member.id} />
         )}
         {activeTab === "public-profile" && (
-          <div className="h-[95%] overflow-hidden rounded-2xl bg-white/70 p-6 overflow-y-auto">
+          <div className="">
+          <div className="h-[95%] overflow-hidden rounded-2xl bg-white overflow-y-auto">
             <TeamMemberPublicProfileTab
               key={member.username}
               onLiveChange={(cfg) => setLivePreviewConfig(cfg)}
               onCropToggle={setIsCropping}   // 👈 ADD
             />
+          </div>
           </div>
         )}
 
