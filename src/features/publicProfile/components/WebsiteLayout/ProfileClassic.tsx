@@ -40,9 +40,9 @@ export function ProfileClassic({
             alt="Cover"
           />
         ) : (
-          <div className="h-full flex items-center justify-center text-xs text-gray-400
-           style={{ backgroundColor: t.cardBg }}">
-            No cover image
+          <div className="h-full flex items-center justify-center text-xs text-gray-400"
+           style={{ backgroundColor: t.cardBg }}>
+            
           </div>
         )}
 

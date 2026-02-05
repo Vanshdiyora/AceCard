@@ -596,9 +596,17 @@ export function ProfileLayoutEditor({
             )}
 
             {/* ================= THEME ================= */}
-            <div>
-                <h4 className="text-sm font-semibold mb-2">
+            <div
+                className={`relative ${config.theme.locked ? "opacity-60 pointer-events-none" : ""
+                    }`}
+            >
+                <h4 className="text-sm font-semibold mb-2 flex items-center gap-2">
                     Theme Colors
+                    {config.theme.locked && (
+                        <span className="text-xs text-gray-500 font-normal">
+                            (Locked)
+                        </span>
+                    )}
                 </h4>
 
                 <div className="space-y-2">
@@ -620,8 +628,6 @@ export function ProfileLayoutEditor({
                     ))}
                 </div>
             </div>
-
-
         </div>
     );
 }

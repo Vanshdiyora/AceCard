@@ -86,17 +86,18 @@ export function ProfileClassic({
           />
         ) : (
           <div className="h-full flex items-center justify-center text-xs text-gray-400 bg-gray-100">
-            No cover image
+           
           </div>
         )}
 
         {/* FLOATING BUTTON */}
+        {cover.locked?? 
         <button
-          onClick={openCoverPicker}
-          className="absolute top-3 left-3 z-30 h-10 w-10 rounded-full shadow
-    flex items-center justify-center transition hover:scale-105
-    bg-orange-500 text-white"
-          title="Change cover"
+        onClick={openCoverPicker}
+        className="absolute top-3 left-3 z-30 h-10 w-10 rounded-full shadow
+        flex items-center justify-center transition hover:scale-105
+        bg-orange-500 text-white"
+        title="Change cover"
         >
           <Image size={18} />
           <input
@@ -110,8 +111,9 @@ export function ProfileClassic({
                 setIsCoverCropping(true);
               }
             }}
-          />
+            />
         </button>
+          }
 
         {/* VISUAL OVERLAY */}
         <div className="absolute inset-0 bg-black/40 pointer-events-none" />

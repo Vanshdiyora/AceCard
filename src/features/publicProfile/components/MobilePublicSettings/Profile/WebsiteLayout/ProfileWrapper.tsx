@@ -5,19 +5,6 @@ import { ProfileCenter } from "./ProfileCenter";
 import { ProfileClassic } from "./ProfileClassic";
 import { ProfileSplit } from "./ProfileSplit";
 
-interface ProfileWrapperProps {
-  profile: any;
-  cover?: any;
-  theme?: any;
-  user?: any;
-  layout?: {
-    profile_type?: number;
-  };
-  onConnect?: () => void;
-  onEdit?: () => void;
-  onProfileChange?: (data: any) => void;
-}
-
 export function ProfileWrapper({
   profile,
   cover,
@@ -27,8 +14,10 @@ export function ProfileWrapper({
   onConnect,
   onEdit,
   onProfileChange,
-}: ProfileWrapperProps) {
-  const [, setIsEditing] = useState(false); // keep setter only
+}: any) {
+  const [, setIsEditing] = useState(false);
+
+  const isLocked = layout?.locked === true;
 
   const renderProfile = () => {
     switch (layout?.profile_type) {
@@ -73,20 +62,22 @@ export function ProfileWrapper({
 
   return (
     <div className="relative">
-      {/* EDIT BUTTON */}
-      <button
-        type="button"
-        onClick={() => {
-          setIsEditing((v) => !v);
-          onEdit?.();
-        }}
-        className="absolute top-2 right-2 z-30 h-9 w-9 rounded-full shadow
-          flex items-center justify-center transition hover:scale-105
-          bg-orange-500 text-white"
-        title="Edit"
-      >
-        <Pencil size={16} />
-      </button>
+      {/* EDIT BUTTON – only if NOT locked */}
+      {!isLocked && (
+        <button
+          type="button"
+          onClick={() => {
+            setIsEditing((v) => !v);
+            onEdit?.();
+          }}
+          className="absolute top-2 right-2 z-30 h-9 w-9 rounded-full shadow
+            flex items-center justify-center transition hover:scale-105
+            bg-orange-500 text-white"
+          title="Edit"
+        >
+          <Pencil size={16} />
+        </button>
+      )}
 
       {renderProfile()}
     </div>

@@ -184,7 +184,7 @@ export default function MobilePublicSettings({
   };
 
   const fontClass = resolveFontClass(draft.layout?.font);
-  console.log(draft)
+  
   const renderSection = (type: string) => {
     switch (type) {
       case "profile":
@@ -269,7 +269,7 @@ export default function MobilePublicSettings({
             items={sortByRank(p.items)}
             theme={draft.theme}
             showPrice={p.toggle_price}
-            editable={p.locked}
+            editable={!p.locked}
             onEdit={() => setEditProducts(true)}
           />
         );
@@ -722,7 +722,7 @@ export default function MobilePublicSettings({
         <button
           onClick={handleSave}
           disabled={saving}
-          className="flex-1 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-indigo-500 to-purple-600 shadow disabled:opacity-60"
+          className="flex-1 py-3 rounded-xl font-semibold text-white bg-purple-600 shadow disabled:opacity-60"
         >
           {saving ? "Saving..." : "Save Changes"}
         </button>

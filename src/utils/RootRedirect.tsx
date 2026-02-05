@@ -4,12 +4,17 @@ import { useAppSelector } from "../app/hooks";
 export default function RootRedirect() {
   const { token, role, loading } = useAppSelector((s) => s.auth);
 
-  if (loading) return null; // ⬅ wait
+  if (loading) return null;
 
-  if (!token || !role) return <Navigate to="/login" replace />;
+  if (!token) return <Navigate to="/login" replace />;
 
-  if (role === "super_admin") return <Navigate to="/super" replace />;
-  if (role === "manager" || role === "vendor_admin") return <Navigate to="/admin" replace />;
+  if (role === "sales_rep") {
+    return <Navigate to="/profile-settings" replace />;
+  }
 
-  return <Navigate to="/unauthorized" replace />;
+  if (role === "super_admin") {
+    return <Navigate to="/super" replace />;
+  }
+
+  return <Navigate to="/admin" replace />;
 }
