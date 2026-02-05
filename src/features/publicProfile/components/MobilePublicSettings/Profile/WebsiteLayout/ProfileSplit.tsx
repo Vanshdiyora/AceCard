@@ -2,6 +2,7 @@ import { useState } from "react";
 import { uploadImage } from "../../../../services/publicProfile.api";
 import AvatarCropModal from "../../../../../../common/ui/AvatarCropModal";
 import { formatRole } from "../../MobilePublicSettings";
+import { Camera } from "lucide-react";
 
 /* ================= ALIGNMENT ================= */
 type CardAlign = "left" | "center" | "right";
@@ -112,8 +113,12 @@ function InlineAvatarUploader({
   return (
     <>
       {/* 📸 FLOATING BUTTON */}
-      <label className="absolute top-[54px] left-1/2 -translate-x-1/2 bg-orange-500 text-white p-3 rounded-full shadow-lg cursor-pointer hover:scale-105 transition">
-        📷
+      <label className="absolute top-[64px] left-1/2 -translate-x-1/2 
+                  bg-orange-500 text-white p-3 rounded-full shadow-lg 
+                  cursor-pointer hover:scale-105 transition
+                  flex items-center justify-center">
+        <Camera size={18} />
+
         <input
           type="file"
           hidden

@@ -201,16 +201,23 @@ function SortablePhotoRow({
   onChange,
   onImageChange,
 }: any) {
-  const { attributes, listeners, setNodeRef, transform, transition } =
-    useSortable({ id: item.rank, disabled });
+const {
+  attributes,
+  listeners,
+  setNodeRef,
+  transform,
+  transition,
+  isDragging,
+} = useSortable({ id: item.rank, disabled });
 
   return (
     <div
       ref={setNodeRef}
-      style={{
-        transform: CSS.Transform.toString(transform),
-        transition,
-      }}
+     style={{
+  transform: CSS.Transform.toString(transform),
+  transition: isDragging ? transition : undefined,
+}}
+
       className="group rounded-2xl border bg-white/80 p-4 space-y-4 shadow-sm
            select-none touch-pan-y"
 

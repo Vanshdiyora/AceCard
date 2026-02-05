@@ -128,7 +128,8 @@ export default function VideoGallerySection({
           items={items.map((i) => i.rank)}
           strategy={verticalListSortingStrategy}
         >
-          <div className="space-y-4">
+          <div className="space-y-4 touch-pan-y">
+
             {items.map((item) => (
               <SortableVideoRow
                 key={item.rank}
@@ -160,26 +161,35 @@ function SortableVideoRow({
   onRemove,
   onChange,
 }: any) {
-  const { attributes, listeners, setNodeRef, transform, transition } =
-    useSortable({ id: item.rank, disabled });
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: item.rank, disabled });
 
   return (
     <div
       ref={setNodeRef}
       style={{
         transform: CSS.Transform.toString(transform),
-        transition,
+        transition: isDragging ? transition : "none",
       }}
+
       className="bg-white border rounded-2xl p-4 shadow-sm
-                 select-none touch-none cursor-grab"
+           select-none touch-pan-y"
+
     >
       {/* HEADER */}
       <div className="flex items-center justify-between mb-3">
         <span
           {...attributes}
           {...listeners}
-          className="text-gray-400 cursor-grab active:cursor-grabbing"
+          className="text-gray-400 cursor-grab active:cursor-grabbing touch-none"
         >
+
           ☰ Drag
         </span>
 
