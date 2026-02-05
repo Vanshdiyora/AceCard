@@ -10,6 +10,10 @@ export function normalizeProfile(api: any) {
       description: cfg.profile.description,
       custom_profile: cfg.profile.custom_profile,
       custom_profile_url: cfg.profile.custom_profile_url,
+      custom_job_role:
+        api.custom_job_role ??
+        cfg.profile?.custom_job_role ??
+        "",
     },
 
     /* ================= COVER ================= */
@@ -87,10 +91,14 @@ export function normalizeProfile(api: any) {
 
     /* ================= SOCIAL ================= */
     social_links: {
+      locked: Boolean(cfg.social_links?.locked),
+      lock_mode: cfg.social_links?.lock_mode ?? undefined,
+
       items: Array.isArray(cfg.social_links?.items)
         ? cfg.social_links.items
         : [],
     },
+
 
     /* ================= PRODUCTS ================= */
     products: {
@@ -245,6 +253,7 @@ export function denormalizeProfile(
     avatar_url: cfg.profile.avatar_url,
     cover_url: cfg.cover.cover_url,
     description: cfg.profile.description,
+    custom_job_role: cfg.profile.custom_job_role,
 
     configuration: {
       ...baseApi.configuration,

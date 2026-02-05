@@ -1,5 +1,5 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import { fetchPublicCard, updatePublicProfile, updatePublicProfileByUsername, fetchMyProfile, sendVisitorConnect } from "./services/publicProfile.api";
+import { fetchPublicCard, updatePublicProfile, fetchProfileViewByUsername, updatePublicProfileByUsername, fetchMyProfile, sendVisitorConnect } from "./services/publicProfile.api";
 import type { PublicProfileApi } from "./types";
 
 interface State {
@@ -7,7 +7,7 @@ interface State {
   loading: boolean;
   saving: boolean;
   connecting: boolean;   // 👈
-    error?: string;
+  error?: string;
 
 }
 
@@ -16,7 +16,7 @@ const initialState: State = {
   loading: false,
   saving: false,
   connecting: false,
-  error: "" 
+  error: ""
 };
 
 export const loadPublicProfile = createAsyncThunk(
@@ -50,6 +50,27 @@ export const savePublicProfileByUsername = createAsyncThunk(
     } catch (err: any) {
       return rejectWithValue(
         err?.response?.data || { error: "Save failed" }
+      );
+    }
+  }
+);
+
+export const loadProfileViewByUsername = createAsyncThunk(
+  "publicProfile/loadViewByUsername",
+  async (
+    {
+      username,
+    }: {
+      username: string;
+    },
+    { rejectWithValue }
+  ) => {
+    try {
+      const res = await fetchProfileViewByUsername(username);
+      return res.data;
+    } catch (err: any) {
+      return rejectWithValue(
+        err?.response?.data || { error: "Failed to load profile" }
       );
     }
   }
@@ -121,10 +142,23 @@ const publicProfileSlice = createSlice({
         }
 
       })
-     .addCase(savePublicProfile.rejected, (s, a) => {
-  s.saving = false;
-  s.error = (a.payload as any)?.error || "Save failed";
-})
+      .addCase(savePublicProfile.rejected, (s, a) => {
+        s.saving = false;
+        s.error = (a.payload as any)?.error || "Save failed";
+      })
+
+      .addCase(loadProfileViewByUsername.pending, (s) => {
+        s.loading = true;
+        s.error = "";
+      })
+      .addCase(loadProfileViewByUsername.fulfilled, (s, a) => {
+        s.loading = false;
+        s.data = a.payload;
+      })
+      .addCase(loadProfileViewByUsername.rejected, (s, a) => {
+        s.loading = false;
+        s.error = (a.payload as any)?.error || "Failed to load profile";
+      })
 
       .addCase(loadMyProfile.pending, (s) => {
         s.loading = true;

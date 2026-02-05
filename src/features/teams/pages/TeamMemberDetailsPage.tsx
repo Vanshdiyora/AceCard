@@ -8,7 +8,7 @@ import { useAppDispatch, useAppSelector } from "../../../app/hooks";
 import { updateMember, fetchMemberById, updatePermissions, transferLeads } from "../slice";
 import EditMemberModal from "../components/EditMemberModal";
 import PermissionsModal from "../components/PermissionsModal";
-import { loadPublicProfile } from "../../publicProfile/slice";
+import { loadProfileViewByUsername } from "../../publicProfile/slice";
 import { TransferLeadsModal } from "../components/TransferLeadsModal";
 import TeamMemberOverviewTab from "../components/details/TeamMemberOverviewTab";
 import TeamMemberLeadsTab from "../components/details/TeamMemberLeadsTab";
@@ -116,8 +116,8 @@ export default function TeamMemberDetailsPage() {
   useEffect(() => {
     if (member?.username) {
       dispatch(
-        loadPublicProfile({
-          handle: member.username,
+        loadProfileViewByUsername({
+          username: member.username,
         })
       );
     }
@@ -527,7 +527,7 @@ export default function TeamMemberDetailsPage() {
         onSuccess={() => {
           dispatch(fetchMemberById(member.id));
           if (member.username) {
-            dispatch(loadPublicProfile({ handle: member.username }));
+            dispatch(loadProfileViewByUsername({ username: member.username }));
           }
         }}
 

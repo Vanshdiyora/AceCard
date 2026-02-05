@@ -6,6 +6,7 @@ import MobileWebsite from "../components/MobileWebsite";
 
 type Props = {
   handle?: string;
+  
 };
 
 export default function PublicProfilePage({ handle: propHandle }: Props) {

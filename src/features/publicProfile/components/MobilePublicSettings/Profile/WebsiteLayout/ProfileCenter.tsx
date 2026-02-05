@@ -105,7 +105,7 @@ export function ProfileCenter({
 
         {/* Role */}
         <p className="text-xs opacity-90" style={{ color: t.text }}>
-          {formatRole(user?.job_title || user?.role)} at {user?.vendor_name}
+          {formatRole(profile.custom_job_role || user?.job_title || user?.role)} at {user?.vendor_name}
         </p>
 
         {cropFile && (

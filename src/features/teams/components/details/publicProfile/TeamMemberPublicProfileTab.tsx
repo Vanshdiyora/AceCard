@@ -446,8 +446,6 @@ export default function TeamMemberPublicProfileTab({
 
         ).unwrap();
       }
-      // dispatch(loadPublicProfile({ handle: publicProfile!.username! }));
-      // window.location.reload();
       setResultSuccess(true);
       setResultMessage("Public profile saved successfully.");
       setResultOpen(true);

@@ -35,6 +35,12 @@ export const updatePublicProfile = (config: any) =>
   });
 };
 
+export const fetchProfileViewByUsername = (
+  username: string,
+) => {
+  return axiosClient.get(`/view/${username}`);
+};
+
 
 export const sendVisitorConnect = (handle: string, payload: any) => {
   return axiosClient.post(`/card/${handle}/connect`, payload);

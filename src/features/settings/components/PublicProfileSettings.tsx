@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../../app/hooks";
 import TeamMemberPublicProfileTab from "../../teams/components/details/publicProfile/TeamMemberPublicProfileTab";
-import { loadPublicProfile } from "../../publicProfile/slice";
+import { loadMyProfile } from "../../publicProfile/slice";
 import MobileWebsite from "../../publicProfile/components/MobileWebsite";
 import { denormalizeProfile } from "../../publicProfile/utils/normalizeProfile";
 
@@ -18,7 +18,7 @@ export default function PublicProfileSettings() {
 
   useEffect(() => {
     if (username) {
-      dispatch(loadPublicProfile({ handle: username }));
+      dispatch(loadMyProfile());
     }
   }, [username, dispatch]);
 
