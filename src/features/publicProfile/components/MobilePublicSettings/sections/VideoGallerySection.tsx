@@ -1,5 +1,22 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  useSortable,
+  arrayMove,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { Toggle, Input } from "../../../../teams/components/details/publicProfile/TeamMemberPublicProfileTab";
+
+/* ================= MAIN ================= */
 
 export default function VideoGallerySection({
   value,
@@ -10,179 +27,204 @@ export default function VideoGallerySection({
   onChange: (v: any) => void;
   disabled?: boolean;
 }) {
-  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const items = [...value.items].sort((a, b) => a.rank - b.rank);
 
-  // ➕ ADD AT TOP
-  const addItem = () => {
-    const newItem = {
-      title: "",
-      description: "",
-      link: "",
-      video_url: "",
-      rank: 1,
-      enabled: true,
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } })
+  );
+
+  const [dragging, setDragging] = useState(false);
+
+  // 🔒 lock body scroll while dragging
+  useEffect(() => {
+    if (!dragging) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
     };
+  }, [dragging]);
 
-    const items = [newItem, ...value.items].map((p, i) => ({
-      ...p,
-      rank: i + 1,
-    }));
+  const addItem = () => {
+    if (disabled) return;
 
-    onChange({ ...value, items });
+    const next = [
+      {
+        title: "",
+        description: "",
+        video_url: "",
+        enabled: true,
+        rank: 1,
+      },
+      ...items,
+    ].map((i, idx) => ({ ...i, rank: idx + 1 }));
+
+    onChange({ ...value, items: next });
   };
 
-  const reorder = (from: number, to: number) => {
-    if (from === to) return;
-    const items = [...value.items];
-    const [moved] = items.splice(from, 1);
-    items.splice(to, 0, moved);
-    onChange({
-      ...value,
-      items: items.map((p, i) => ({ ...p, rank: i + 1 })),
-    });
-  };
+  const removeItem = (rank: number) => {
+    if (disabled) return;
 
-  const removeItem = (index: number) => {
-    const items = value.items
-      .filter((_: any, i: number) => i !== index)
-      .map((p: any, i: number) => ({ ...p, rank: i + 1 }));
-    onChange({ ...value, items });
-  };
+    const next = items
+      .filter((i) => i.rank !== rank)
+      .map((i, idx) => ({ ...i, rank: idx + 1 }));
 
-  if (!value) return null;
+    onChange({ ...value, items: next });
+  };
 
   return (
-    <div className="space-y-4 mt-4">
+    <div className="space-y-4">
       {/* HEADER */}
-      <div className="flex items-end justify-between">
+      <div className="flex justify-between items-end">
         <div className="space-y-1">
           <p className="text-xs uppercase tracking-wide text-gray-500">
             Section Title
           </p>
           <Input
             value={value.section_title}
-            placeholder="e.g. Video Gallery"
-            onChange={(v) => onChange({ ...value, section_title: v })}
+            onChange={(v) =>
+              onChange({ ...value, section_title: v })
+            }
           />
         </div>
 
         {!disabled && (
           <button
             onClick={addItem}
-            className="h-10 px-4 rounded-xl bg-purple-600 text-white text-sm font-semibold hover:scale-105 transition"
+            className="h-10 px-4 rounded-xl bg-purple-600 text-white text-sm font-semibold"
           >
             Add
           </button>
         )}
       </div>
 
-      {value.items.map((item: any, i: number) => (
-        <div
-          key={i}
-          draggable={!disabled}
-          onDragStart={() => setDragIndex(i)}
-          onDragOver={(e) => e.preventDefault()}
-          onDrop={() => {
-            if (dragIndex !== null) reorder(dragIndex, i);
-            setDragIndex(null);
-          }}
-          className={`group rounded-2xl border bg-white/80 p-4 sm:p-5 space-y-4 shadow-sm transition
-          ${dragIndex === i
-              ? "opacity-50 ring-2 ring-purple-400"
-              : "hover:shadow-md"
-            }`}
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragStart={() => setDragging(true)}
+        onDragCancel={() => setDragging(false)}
+        onDragEnd={({ active, over }) => {
+          setDragging(false);
+          if (!over || disabled) return;
+
+          const oldIndex = items.findIndex(
+            (i) => i.rank === active.id
+          );
+          const newIndex = items.findIndex(
+            (i) => i.rank === over.id
+          );
+
+          if (oldIndex === -1 || newIndex === -1) return;
+
+          const next = arrayMove(items, oldIndex, newIndex).map(
+            (i, idx) => ({ ...i, rank: idx + 1 })
+          );
+
+          onChange({ ...value, items: next });
+        }}
+      >
+        <SortableContext
+          items={items.map((i) => i.rank)}
+          strategy={verticalListSortingStrategy}
         >
-          {/* ROW 1 */}
-          <div className="flex flex-col sm:flex-row sm:flex-wrap md:flex-nowrap items-start sm:items-center gap-3 sm:gap-4">
-            {/* DRAG + DELETE */}
-            <div className="flex items-center gap-2 w-full">
-              <div className="cursor-grab text-gray-400 text-xl">☰</div>
-
-              {!disabled && (
-                <button
-                  onClick={() => removeItem(i)}
-                  className="ml-auto h-7 w-7 flex items-center justify-center rounded-full text-red-500 text-xs hover:bg-red-50 transition"
-                  title="Delete"
-                >
-                  ✕
-                </button>
-              )}
-            </div>
-
-
-            {/* TITLE + URL */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 flex-1 w-full">
-              <div>
-                <p className="text-xs uppercase tracking-wide text-gray-500">
-                  Title
-                </p>
-                <Input
-                  value={item.title}
-                  placeholder="e.g. Product Demo"
-                  disabled={disabled}
-                  onChange={(v) => {
-                    const items = [...value.items];
-                    items[i] = { ...items[i], title: v };
-                    onChange({ ...value, items });
-                  }}
-                />
-              </div>
-
-              <div>
-                <p className="text-xs uppercase tracking-wide text-gray-500">
-                  Video URL
-                </p>
-                <Input
-                  value={item.video_url}
-                  placeholder="https://youtube.com/..."
-                  disabled={disabled}
-                  onChange={(v) => {
-                    const items = [...value.items];
-                    items[i] = { ...items[i], video_url: v };
-                    onChange({ ...value, items });
-                  }}
-                />
-              </div>
-            </div>
-
-            {/* SHOW */}
-            <div className="flex justify-between sm:justify-start items-center gap-3 w-full sm:w-auto">
-              <Toggle
-                label="Show"
-                value={item.enabled}
-                onChange={(v) => {
-                  const items = [...value.items];
-                  items[i] = { ...items[i], enabled: v };
-                  onChange({ ...value, items });
-                }}
-              />
-            </div>
-          </div>
-
-          {/* ROW 2 */}
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex-1">
-              <p className="text-xs uppercase tracking-wide text-gray-500">
-                Description
-              </p>
-              <textarea
-                value={item.description || ""}
+          <div className="space-y-4">
+            {items.map((item) => (
+              <SortableVideoRow
+                key={item.rank}
+                item={item}
                 disabled={disabled}
-                placeholder="Short description about the video..."
-                className="w-full min-h-[90px] sm:min-h-[110px] rounded-xl border px-4 py-3 focus:ring-2 focus:ring-purple-500 focus:outline-none"
-                onChange={(e) => {
-                  const items = [...value.items];
-                  items[i] = {
-                    ...items[i],
-                    description: e.target.value,
-                  };
-                  onChange({ ...value, items });
-                }}
+                onRemove={() => removeItem(item.rank)}
+                onChange={(patch: any) =>
+                  onChange({
+                    ...value,
+                    items: items.map((i) =>
+                      i.rank === item.rank ? { ...i, ...patch } : i
+                    ),
+                  })
+                }
               />
-            </div>
+            ))}
           </div>
-        </div>
-      ))}
+        </SortableContext>
+      </DndContext>
+    </div>
+  );
+}
+
+/* ================= SORTABLE ROW ================= */
+
+function SortableVideoRow({
+  item,
+  disabled,
+  onRemove,
+  onChange,
+}: any) {
+  const { attributes, listeners, setNodeRef, transform, transition } =
+    useSortable({ id: item.rank, disabled });
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={{
+        transform: CSS.Transform.toString(transform),
+        transition,
+      }}
+      className="bg-white border rounded-2xl p-4 shadow-sm
+                 select-none touch-none cursor-grab"
+    >
+      {/* HEADER */}
+      <div className="flex items-center justify-between mb-3">
+        <span
+          {...attributes}
+          {...listeners}
+          className="text-gray-400 cursor-grab active:cursor-grabbing"
+        >
+          ☰ Drag
+        </span>
+
+        {!disabled && (
+          <button
+            onClick={onRemove}
+            className="text-red-500 text-sm"
+          >
+            ✕
+          </button>
+        )}
+      </div>
+
+      {/* FORM */}
+      <div className="grid gap-3">
+        <Input
+          value={item.title}
+          placeholder="Video title"
+          disabled={disabled}
+          onChange={(v) => onChange({ title: v })}
+        />
+
+        <Input
+          value={item.video_url}
+          placeholder="https://youtube.com/..."
+          disabled={disabled}
+          onChange={(v) => onChange({ video_url: v })}
+        />
+
+        <textarea
+          value={item.description || ""}
+          placeholder="Description"
+          disabled={disabled}
+          className="w-full min-h-[90px] rounded-xl border px-3 py-2"
+          onChange={(e) =>
+            onChange({ description: e.target.value })
+          }
+        />
+
+        <Toggle
+          label="Show"
+          value={item.enabled}
+          onChange={(v) => onChange({ enabled: v })}
+        />
+      </div>
     </div>
   );
 }

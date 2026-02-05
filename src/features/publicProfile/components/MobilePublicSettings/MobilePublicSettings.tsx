@@ -689,7 +689,7 @@ export default function MobilePublicSettings({
         <div className="pt-3">
           <button
             onClick={() => setEditPhotoGallery(false)}
-            className="w-full py-2 rounded-lg bg-indigo-600 text-white"
+            className="w-full py-2 rounded-lg bg-purple-600 text-white"
           >
             Done
           </button>

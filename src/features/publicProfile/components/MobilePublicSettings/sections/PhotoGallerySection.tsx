@@ -1,7 +1,25 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  useSortable,
+  arrayMove,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+
 import { uploadImage } from "../../../../publicProfile/services/publicProfile.api";
 import { Input } from "../../../../teams/components/details/publicProfile/TeamMemberPublicProfileTab";
 import CoverCropModal from "../../../../../common/ui/CoverCropModal";
+
+/* ================= MAIN ================= */
 
 export default function PhotoGallerySection({
   value,
@@ -12,9 +30,30 @@ export default function PhotoGallerySection({
   onChange: (v: any) => void;
   disabled?: boolean;
 }) {
-  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  if (!value) return null;
+
+  const items = [...value.items].sort((a, b) => a.rank - b.rank);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor, {
+      activationConstraint: { delay: 200, tolerance: 5 },
+    })
+  );
+
+  const [dragging, setDragging] = useState(false);
   const [cropFile, setCropFile] = useState<File | null>(null);
   const [cropIndex, setCropIndex] = useState<number | null>(null);
+
+  // 🔒 lock body scroll while dragging
+  useEffect(() => {
+    if (!dragging) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [dragging]);
 
   const saveCropped = async (blob: Blob) => {
     if (cropIndex === null) return;
@@ -22,56 +61,46 @@ export default function PhotoGallerySection({
     const file = new File([blob], "gallery.jpg", { type: "image/jpeg" });
     const res = await uploadImage(file);
 
-    const items = [...value.items];
-    items[cropIndex] = { ...items[cropIndex], img_url: res.data.url };
+    const next = items.map((i, idx) =>
+      idx === cropIndex ? { ...i, img_url: res.data.url } : i
+    );
 
-    onChange({ ...value, items });
+    onChange({ ...value, items: next });
     setCropFile(null);
     setCropIndex(null);
   };
 
-  const addPhotoItem = () => {
-    onChange({
-      ...value,
-      items: [
-        {
-          title: "",
-          description: "",
-          link: "",
-          img_url: "",
-          rank: 1,
-          enabled: true,
-        },
-        ...value.items,
-      ],
-    });
+  const addItem = () => {
+    if (disabled) return;
+
+    const next = [
+      {
+        title: "",
+        description: "",
+        link: "",
+        img_url: "",
+        enabled: true,
+        rank: 1,
+      },
+      ...items,
+    ].map((i, idx) => ({ ...i, rank: idx + 1 }));
+
+    onChange({ ...value, items: next });
   };
 
-  const reorder = (from: number, to: number) => {
-    if (from === to) return;
-    const items = [...value.items];
-    const [moved] = items.splice(from, 1);
-    items.splice(to, 0, moved);
+  const removeItem = (rank: number) => {
+    if (disabled) return;
 
-    onChange({
-      ...value,
-      items: items.map((p, i) => ({ ...p, rank: i + 1 })),
-    });
+    const next = items
+      .filter((i) => i.rank !== rank)
+      .map((i, idx) => ({ ...i, rank: idx + 1 }));
+
+    onChange({ ...value, items: next });
   };
-
-  const removePhoto = (index: number) => {
-    const items = value.items
-      .filter((_: any, i: number) => i !== index)
-      .map((p: any, i: number) => ({ ...p, rank: i + 1 }));
-
-    onChange({ ...value, items });
-  };
-
-  if (!value) return null;
 
   return (
     <div className="space-y-4 mt-4">
-      {/* Section title */}
+      {/* HEADER */}
       <div className="space-y-1">
         <p className="text-xs uppercase tracking-wide text-gray-500">
           Section label
@@ -79,94 +108,74 @@ export default function PhotoGallerySection({
         <Input
           value={value.section_title}
           disabled={disabled}
-          placeholder="Section title"
-          onChange={(v: any) => onChange({ ...value, section_title: v })}
+          onChange={(v) =>
+            onChange({ ...value, section_title: v })
+          }
         />
       </div>
 
       {!disabled && (
         <button
-          onClick={addPhotoItem}
+          onClick={addItem}
           className="w-full py-2 rounded-xl border border-dashed text-sm text-gray-600 hover:bg-gray-100"
         >
           ➕ Add Photo
         </button>
       )}
 
-      {value.items.map((item: any, i: number) => (
-        <div
-          key={i}
-          draggable={!disabled}
-          onDragStart={() => setDragIndex(i)}
-          onDragOver={(e) => e.preventDefault()}
-          onDrop={() => {
-            if (dragIndex !== null) reorder(dragIndex, i);
-            setDragIndex(null);
-          }}
-          className={`group rounded-2xl border bg-white/80 p-4 space-y-4 shadow-sm
-          ${dragIndex === i ? "opacity-50 ring-2 ring-purple-400" : ""}`}
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragStart={() => setDragging(true)}
+        onDragCancel={() => setDragging(false)}
+        onDragEnd={({ active, over }) => {
+          setDragging(false);
+          if (!over || disabled) return;
+
+          const oldIndex = items.findIndex(
+            (i) => i.rank === active.id
+          );
+          const newIndex = items.findIndex(
+            (i) => i.rank === over.id
+          );
+
+          if (oldIndex === -1 || newIndex === -1) return;
+
+          const next = arrayMove(items, oldIndex, newIndex).map(
+            (i, idx) => ({ ...i, rank: idx + 1 })
+          );
+
+          onChange({ ...value, items: next });
+        }}
+      >
+        <SortableContext
+          items={items.map((i) => i.rank)}
+          strategy={verticalListSortingStrategy}
         >
-          {/* Drag */}
-          <div className="text-gray-400 cursor-grab text-xl">☰</div>
-
-          {/* Title + Link */}
-          <Input
-            value={item.title}
-            placeholder="Title"
-            disabled={disabled}
-            onChange={(v: any) => {
-              const items = [...value.items];
-              items[i] = { ...items[i], title: v };
-              onChange({ ...value, items });
-            }}
-          />
-
-          {/* Image */}
-          <div className="relative h-28 w-28 rounded-xl overflow-hidden bg-gray-100">
-            {item.img_url && (
-              <img src={item.img_url} className="w-full h-full object-cover" />
-            )}
-
-            {!disabled && (
-              <label className="absolute inset-0 bg-black/40 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 cursor-pointer">
-                Change
-                <input
-                  type="file"
-                  hidden
-                  accept="image/*"
-                  onChange={(e) => {
-                    if (!e.target.files) return;
-                    setCropFile(e.target.files[0]);
-                    setCropIndex(i);
-                  }}
-                />
-              </label>
-            )}
+          <div className="space-y-4">
+            {items.map((item, index) => (
+              <SortablePhotoRow
+                key={item.rank}
+                item={item}
+                disabled={disabled}
+                onRemove={() => removeItem(item.rank)}
+                onImageChange={(file:any) => {
+                  setCropFile(file);
+                  setCropIndex(index);
+                }}
+                onChange={(patch: any) =>
+                  onChange({
+                    ...value,
+                    items: items.map((i) =>
+                      i.rank === item.rank ? { ...i, ...patch } : i
+                    ),
+                  })
+                }
+              />
+            ))}
           </div>
-
-          {/* Description */}
-          <textarea
-            value={item.description || ""}
-            disabled={disabled}
-            placeholder="Description..."
-            className="w-full rounded-xl border p-3 text-sm"
-            onChange={(e) => {
-              const items = [...value.items];
-              items[i] = { ...items[i], description: e.target.value };
-              onChange({ ...value, items });
-            }}
-          />
-
-          {!disabled && (
-            <button
-              onClick={() => removePhoto(i)}
-              className="text-xs text-red-600"
-            >
-              Delete
-            </button>
-          )}
-        </div>
-      ))}
+        </SortableContext>
+      </DndContext>
 
       {cropFile && (
         <CoverCropModal
@@ -178,6 +187,95 @@ export default function PhotoGallerySection({
           onSave={saveCropped}
         />
       )}
+    </div>
+  );
+}
+
+/* ================= SORTABLE ROW ================= */
+
+function SortablePhotoRow({
+  item,
+  disabled,
+  onRemove,
+  onChange,
+  onImageChange,
+}: any) {
+  const { attributes, listeners, setNodeRef, transform, transition } =
+    useSortable({ id: item.rank, disabled });
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={{
+        transform: CSS.Transform.toString(transform),
+        transition,
+      }}
+      className="group rounded-2xl border bg-white/80 p-4 space-y-4 shadow-sm
+                 select-none touch-none"
+    >
+      {/* HEADER */}
+      <div className="flex items-center justify-between">
+        <span
+          {...attributes}
+          {...listeners}
+          className="text-gray-400 cursor-grab active:cursor-grabbing"
+        >
+          ☰ Drag
+        </span>
+
+        {!disabled && (
+          <button
+            onClick={onRemove}
+            className="text-xs text-red-600"
+          >
+            Delete
+          </button>
+        )}
+      </div>
+
+      {/* TITLE */}
+      <Input
+        value={item.title}
+        placeholder="Title"
+        disabled={disabled}
+        onChange={(v) => onChange({ title: v })}
+      />
+
+      {/* IMAGE */}
+      <div className="relative h-28 w-28 rounded-xl overflow-hidden bg-gray-100">
+        {item.img_url && (
+          <img
+            src={item.img_url}
+            className="w-full h-full object-cover"
+          />
+        )}
+
+        {!disabled && (
+          <label className="absolute inset-0 bg-black/40 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 cursor-pointer">
+            Change
+            <input
+              type="file"
+              hidden
+              accept="image/*"
+              onChange={(e) => {
+                if (!e.target.files) return;
+                onImageChange(e.target.files[0]);
+              }}
+            />
+          </label>
+        )}
+      </div>
+
+      {/* DESCRIPTION */}
+      <textarea
+        value={item.description || ""}
+        disabled={disabled}
+        placeholder="Description..."
+        className="w-full rounded-xl border p-3 text-sm"
+        onChange={(e) =>
+          onChange({ description: e.target.value })
+        }
+      />
     </div>
   );
 }

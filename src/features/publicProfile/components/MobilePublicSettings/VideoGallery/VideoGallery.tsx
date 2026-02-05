@@ -16,6 +16,43 @@ export function VideoGalleryEditModal({
     if (open) setDraft(value);
   }, [open, value]);
 
+  // 🔒 lock background scroll
+useEffect(() => {
+  if (!open) {
+    document.body.style.position = "";
+    document.body.style.top = "";
+    document.body.style.left = "";
+    document.body.style.right = "";
+    document.body.style.width = "";
+    document.body.style.overflow = "";
+    return;
+  }
+
+  // lock body (iOS-safe)
+  const scrollY = window.scrollY;
+
+  document.body.style.position = "fixed";
+  document.body.style.top = `-${scrollY}px`;
+  document.body.style.left = "0";
+  document.body.style.right = "0";
+  document.body.style.width = "100%";
+  document.body.style.overflow = "hidden";
+
+  return () => {
+    const y = document.body.style.top;
+
+    document.body.style.position = "";
+    document.body.style.top = "";
+    document.body.style.left = "";
+    document.body.style.right = "";
+    document.body.style.width = "";
+    document.body.style.overflow = "";
+
+    window.scrollTo(0, Math.abs(parseInt(y || "0", 10)));
+  };
+}, [open]);
+
+
   if (!open) return null;
 
   return createPortal(
@@ -29,13 +66,13 @@ export function VideoGalleryEditModal({
         <VideoGallerySection
           value={draft}
           disabled={disabled}
-          onChange={(v: any) => setDraft(v)}   // 👈 LOCAL edits
+          onChange={(v: any) => setDraft(v)} // local edits
         />
 
         <div className="pt-4 flex gap-3">
           <button
             onClick={() => {
-              onSave(draft);   // 👈 commit once
+              onSave(draft);
               onClose();
             }}
             className="flex-1 py-2 rounded-xl bg-purple-600 text-white"
