@@ -22,6 +22,7 @@ import {
 } from "@dnd-kit/sortable";
 
 import { CSS } from "@dnd-kit/utilities";
+import BrandLoader from "../../../../../common/ui/BrandLoader";
 
 /* ================================================= */
 
@@ -209,7 +210,7 @@ export function ProductsEditModal({
 
               {loading && (
                 <p className="text-xs text-gray-400 text-center py-2">
-                  Loading...
+                  <BrandLoader />
                 </p>
               )}
 

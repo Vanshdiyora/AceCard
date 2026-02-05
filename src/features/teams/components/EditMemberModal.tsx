@@ -39,7 +39,9 @@ export default function EditMemberModal({
       role: member.role,
       manager_id: member.manager_id ?? undefined,
       avatar: member.avatar_url ?? "",
+      custom_job_role: member.custom_job_role ?? "", // 👈 ADD
     });
+
 
     setErrors({});
   }, [member, open]);
@@ -90,6 +92,14 @@ export default function EditMemberModal({
       required: true,
       pattern: /^[0-9+\-()\s]{7,15}$/,
     },
+    {
+      name: "custom_job_role",
+      label: "Custom Job Role",
+      type: "text",
+      placeholder: "e.g. Senior Sales Manager",
+      required: false,
+    },
+
     ...(currentRole === "vendor_admin"
       ? [
         {
@@ -123,31 +133,31 @@ export default function EditMemberModal({
 
   /* ---------- SUBMIT ---------- */
   const submit = async () => {
-  const hasErrors = fields.some((field) => {
-    const error = validateField(field, form[field.name], form);
-    setErrors((prev) => ({ ...prev, [field.name]: error }));
-    return error;
-  });
+    const hasErrors = fields.some((field) => {
+      const error = validateField(field, form[field.name], form);
+      setErrors((prev) => ({ ...prev, [field.name]: error }));
+      return error;
+    });
 
-  if (hasErrors) return;
+    if (hasErrors) return;
 
-  if (
-    member.role === "sales_rep" &&
-    form.manager_id !== member.manager_id &&
-    currentRole !== "vendor_admin"
-  ) {
-    alert("Only vendor admin can change sales rep manager.");
-    return;
-  }
+    if (
+      member.role === "sales_rep" &&
+      form.manager_id !== member.manager_id &&
+      currentRole !== "vendor_admin"
+    ) {
+      alert("Only vendor admin can change sales rep manager.");
+      return;
+    }
 
-  try {
-    const updated = await onSubmit(form); // 👈 wait
-    onSuccess?.(updated);                 // 👈 notify parent
-    onClose();
-  } catch (e) {
-    console.error("Update failed", e);
-  }
-};
+    try {
+      const updated = await onSubmit(form); // 👈 wait
+      onSuccess?.(updated);                 // 👈 notify parent
+      onClose();
+    } catch (e) {
+      console.error("Update failed", e);
+    }
+  };
 
 
   /* ---------- UI ---------- */

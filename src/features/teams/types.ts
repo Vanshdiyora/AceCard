@@ -28,6 +28,7 @@ export interface TeamMember {
   email: string;
   phone: string;
   role: "manager" | "sales_rep" | "vendor_admin" | string;
+  custom_job_role: string;
   status: "active" | "pending" | "suspended";
   username: string;
   // 👇 ADD THIS

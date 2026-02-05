@@ -21,6 +21,10 @@ import TeamMemberTotalLeadsTab from "../components/details/TeamMemberTotalLeadsT
 import TeamMemberAnalyticsTab from "../components/details/TeamMemberAnalyticsTab";
 // import MemberMobileWebsite from "../components/MemberMobileWebsite";
 import { fetchLeads } from "../../leads/slice"; // adjust path
+import {
+  normalizeProfile,
+  denormalizeProfile,
+} from "../../publicProfile/utils/normalizeProfile";
 
 const TABS = [
   "overview",
@@ -156,16 +160,33 @@ export default function TeamMemberDetailsPage() {
 
   const mergedProfile = useMemo(() => {
     if (!publicProfile) return null;
-    if (!livePreviewConfig) return publicProfile;
 
-    return {
-      ...publicProfile,
-      configuration: {
-        ...publicProfile.configuration,
+    // 🔥 normalize base once
+    const normalizedBase = normalizeProfile(publicProfile);
+
+    if (!livePreviewConfig) {
+      return denormalizeProfile(normalizedBase, publicProfile);
+    }
+
+    return denormalizeProfile(
+      {
+        ...normalizedBase,
         ...livePreviewConfig,
       },
-    };
+      publicProfile
+    );
   }, [publicProfile, livePreviewConfig]);
+
+    const displayRoleWithCustom = useMemo(() => {
+    if (!member) return "";
+
+    const base = displayRole;
+    const custom = member.custom_job_role?.trim();
+
+    if (!custom) return base;
+
+    return `${base} (${custom})`;
+  }, [member, displayRole]);
 
   /* ---------------- LOADING STATES ---------------- */
 
@@ -282,23 +303,21 @@ export default function TeamMemberDetailsPage() {
     <div
       className={`pt-6 px-6 grid grid-cols-1 gap-6 h-[calc(100vh-64px)]
         transition-[grid-template-columns] duration-500 ease-in-out
-        ${
-          activeTab === "public-profile"
-            ? "lg:grid-cols-[320px_1fr]"
-            : "lg:grid-cols-[1fr_320px]"
+        ${activeTab === "public-profile"
+          ? "lg:grid-cols-[320px_1fr]"
+          : "lg:grid-cols-[1fr_320px]"
         }
       `}
     >
-         
+
       {/* LEFT */}
       <div
         className={`
           h-full overflow-y-auto overscroll-contain pr-2
           transition-all duration-500 ease-in-out
-          ${
-            activeTab === "public-profile"
-              ? "lg:order-2"
-              : "lg:order-1"
+          ${activeTab === "public-profile"
+            ? "lg:order-2"
+            : "lg:order-1"
           }
         `}
       >
@@ -315,9 +334,10 @@ export default function TeamMemberDetailsPage() {
           title={member.name}
           subtitle={
             displayManager
-              ? `${displayRole} • Manager - ${displayManager}`
-              : displayRole
+              ? `${displayRoleWithCustom} • Manager - ${displayManager}`
+              : displayRoleWithCustom
           }
+
           avatar={
             <Avatar
               src={avatarUrl}
@@ -432,35 +452,34 @@ export default function TeamMemberDetailsPage() {
         )}
         {activeTab === "public-profile" && (
           <div className="">
-          <div className="h-[95%] overflow-hidden rounded-2xl bg-white overflow-y-auto">
-            <TeamMemberPublicProfileTab
-              key={member.username}
-              onLiveChange={(cfg) => setLivePreviewConfig(cfg)}
-              onCropToggle={setIsCropping}   // 👈 ADD
-            />
-          </div>
+            <div className="h-[95%] overflow-hidden rounded-2xl bg-white overflow-y-auto">
+              <TeamMemberPublicProfileTab
+                key={member.username}
+                onLiveChange={(cfg) => setLivePreviewConfig(cfg)}
+                onCropToggle={setIsCropping}   // 👈 ADD
+              />
+            </div>
           </div>
         )}
 
 
       </div>
 
-       {/* RIGHT — MOBILE PREVIEW */}
+      {/* RIGHT — MOBILE PREVIEW */}
       <div
         className={`
           hidden lg:flex h-full justify-center items-start overflow-hidden
           transition-all duration-500 ease-in-out
-          ${
-            activeTab === "public-profile"
-              ? "lg:order-1"
-              : "lg:order-2"
+          ${activeTab === "public-profile"
+            ? "lg:order-1"
+            : "lg:order-2"
           }
           ${isCropping ? "opacity-0 pointer-events-none" : "opacity-100"}
         `}
       >
         {/* Preview container to visually separate from dashboard */}
         <div className="relative h-full flex items-start justify-center px-4">
-          
+
           {/* Optional label (helps hierarchy a LOT) */}
           <div className="absolute -top-6 text-xs text-gray-400 tracking-wide">
             Live Preview
@@ -468,7 +487,7 @@ export default function TeamMemberDetailsPage() {
 
           {/* SCALE WRAPPER */}
           <div className="origin-top scale-[0.6] xl:scale-[0.7]">
-            
+
             {/* DEVICE FRAME */}
             <div
               className="
@@ -670,10 +689,9 @@ export function LeftPulloutTabs({
                       className={`
                         text-left px-3 py-2 rounded-lg capitalize
                         transition-colors
-                        ${
-                          active
-                            ? "bg-white text-purple-700 font-medium"
-                            : "text-purple-100 hover:bg-purple-500/30"
+                        ${active
+                          ? "bg-white text-purple-700 font-medium"
+                          : "text-purple-100 hover:bg-purple-500/30"
                         }
                       `}
                     >

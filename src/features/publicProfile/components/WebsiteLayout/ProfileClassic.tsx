@@ -26,7 +26,6 @@ export function ProfileClassic({
   const align =
     ALIGN_MAP[(layout?.card_alignment as CardAlign) || "center"];
   const ring = Number(layout?.profile_width || 6);
-
   return (
     <div>
       <div

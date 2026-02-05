@@ -13,7 +13,7 @@ import {
   SiSnapchat,
   SiTiktok,
 } from "react-icons/si";
-
+import { normalizeProfile } from "../utils/normalizeProfile";
 import { FiPhone, FiGlobe } from "react-icons/fi";
 
 import { ProfileWrapper } from "./WebsiteLayout/ProfileWrapper";
@@ -75,7 +75,9 @@ export default function MobileWebsite({
   data: any;
   scrollRef?: React.RefObject<HTMLDivElement | null>;
 }) {
-  const config = data?.configuration ?? {};
+  const normalized = normalizeProfile(data);
+  const config = normalized;
+
 
   useEffect(() => {
     if (!data) return;
@@ -144,21 +146,22 @@ export default function MobileWebsite({
   const [open, setOpen] = useState(false);
 
   const {
-    profile = {},
-    cover = {},
-    layout = {},
-    theme = {},
-    contact = {},
-    banner = {},
-    meeting = {},
-    social_links = { items: [] },
-    youtube = { items: [] },
-    links_files = { items: [] },
-    products = { items: [] },
-    sections = { items: [] },
-    photo_gallery = { items: [] },
-    video_gallery = { items: [] },
+    profile,
+    cover,
+    layout,
+    theme,
+    contact,
+    banner,
+    meeting,
+    social_links,
+    youtube,
+    links_files,
+    products,
+    sections,
+    photo_gallery,
+    video_gallery,
   } = config;
+
 
 
   const orderedSections = sortByRank(sections.items);
@@ -379,7 +382,7 @@ export default function MobileWebsite({
     // SOLID
     return {
       backgroundColor:
-        layout?.color1 || theme?.background_color || "#000",
+        layout?.color1 || layout?.background_color || "#000",
     };
   };
 
@@ -435,7 +438,7 @@ export default function MobileWebsite({
       className={`relative min-h-screen w-full no-scrollbar overflow-hidden p-4 ${bgClass} ${fontClass}`}
       style={{
         ...(bgClass
-          ? { ["--pattern-bg" as any]: theme?.background_color || layout?.color1 || "#2f343a" }
+          ? { ["--pattern-bg" as any]: layout?.background_color || layout?.color1 || "#2f343a" }
           : resolveBackgroundStyle()),
       }}
     >
@@ -659,8 +662,8 @@ function YouTube({ items, theme }: any) {
             key={i}
             onClick={() => scrollTo(i)}
             className={`h-2 w-2 rounded-full transition ${i === index
-                ? "bg-gray-900"
-                : "bg-gray-300 hover:bg-gray-400"
+              ? "bg-gray-900"
+              : "bg-gray-300 hover:bg-gray-400"
               }`}
           />
         ))}
@@ -868,7 +871,6 @@ function PhotoGallery({ title, items, theme, onOpen }: any) {
               onClick={() => {
                 const scroller = document.querySelector(".flex-1.overflow-y-auto");
 
-                console.log(scroller)
                 if (scroller) {
                   scroller.scrollTo({ top: 0, behavior: "smooth" });
                 }

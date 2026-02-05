@@ -55,7 +55,7 @@ export function normalizeProfile(api: any) {
 
       background_image: cfg.layout?.background_image || "",
       background_video: cfg.layout?.background_video || "",   // 👈 NEW
-
+      background_color: cfg.layout?.background_color || "",
       custom_font: cfg.layout?.custom_font || "",
       use_custom_font: Boolean(cfg.layout?.use_custom_font),
       profile_width: Number(cfg.layout?.profile_width) || 2,

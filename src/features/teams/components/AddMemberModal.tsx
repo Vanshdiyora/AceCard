@@ -24,7 +24,10 @@ interface FormState {
   role: "manager" | "sales_rep";
   manager_id?: number;
   avatar?: string;
+
+  custom_job_role?: string; // 👈 ADD
 }
+
 
 export default function AddMemberModal({
   open,
@@ -40,22 +43,23 @@ export default function AddMemberModal({
   >({});
 
   /* ---------- INIT FORM ---------- */
-  useEffect(() => {
-    if (!open) return;
+useEffect(() => {
+  if (!open) return;
 
-    setForm({
-      name: "",
-      email: "",
-      phone: "",
-      password: "",
-      role: currentRole === "vendor_admin" ? "manager" : "sales_rep",
-      manager_id:
-        currentRole === "manager" ? currentUserId : undefined,
-      avatar: "",
-    });
+  setForm({
+    name: "",
+    email: "",
+    phone: "",
+    password: "",
+    role: currentRole === "vendor_admin" ? "manager" : "sales_rep",
+    manager_id:
+      currentRole === "manager" ? currentUserId : undefined,
+    avatar: "",
+    custom_job_role: "", // 👈 ADD
+  });
 
-    setErrors({});
-  }, [open, currentRole, currentUserId]);
+  setErrors({});
+}, [open, currentRole, currentUserId]);
 
   if (!open || !form) return null;
 
@@ -83,57 +87,67 @@ export default function AddMemberModal({
         : [];
 
   /* ---------- FIELD CONFIG ---------- */
-  const fields: FieldConfig[] = [
-    {
-      name: "avatar",
-      label: "Avatar",
-      type: "image",
-      upload: async (file: File) => {
-        const res = await uploadImage(file);
-        return res.data.url;
-      },
+const fields: FieldConfig[] = [
+  {
+    name: "avatar",
+    label: "Avatar",
+    type: "image",
+    upload: async (file: File) => {
+      const res = await uploadImage(file);
+      return res.data.url;
     },
-    {
-      name: "name",
-      label: "Full Name",
-      type: "text" as const,
-      placeholder: "Enter full name",
-      required: true,
-    },
-    {
-      name: "email",
-      label: "Email",
-      type: "email" as const,
-      placeholder: "Enter email address",
-      required: true,
-    },
-    {
-      name: "phone",
-      label: "Phone",
-      type: "text" as const,
-      placeholder: "Enter phone number",
-      required: true,
-    },
-    {
-      name: "password",
-      label: "Password",
-      type: "text" as const,
-      placeholder: "Set a temporary password",
-      required: true,
-    },
-    {
-      name: "role",
-      label: "Role",
-      type: "select" as const,
-      required: true,
-      options: roleOptions,
-    },
-    ...(form.role === "sales_rep" && currentRole === "vendor_admin"
-      ? [
+  },
+  {
+    name: "name",
+    label: "Full Name",
+    type: "text",
+    placeholder: "Enter full name",
+    required: true,
+  },
+  {
+    name: "email",
+    label: "Email",
+    type: "email",
+    placeholder: "Enter email address",
+    required: true,
+  },
+  {
+    name: "phone",
+    label: "Phone",
+    type: "text",
+    placeholder: "Enter phone number",
+    required: true,
+  },
+  {
+    name: "password",
+    label: "Password",
+    type: "text",
+    placeholder: "Set a temporary password",
+    required: true,
+  },
+  {
+    name: "role",
+    label: "Role",
+    type: "select",
+    required: true,
+    options: roleOptions,
+  },
+
+  // 👇 NEW FIELD
+  {
+    name: "custom_job_role",
+    label: "Custom Job Role",
+    type: "text",
+    placeholder: "e.g. Senior Sales Manager",
+    required: true,
+  },
+
+  ...(form.role === "sales_rep" && currentRole === "vendor_admin"
+    ? [
         {
           name: "manager_id",
           label: "Manager",
-          type: "select" as const,
+          type: "select",
           required: true,
           options: managers.map((m) => ({
             label: m.name,
@@ -141,8 +155,8 @@ export default function AddMemberModal({
           })),
         } satisfies FieldConfig,
       ]
-      : []),
-  ];
+    : []),
+];
 
 
   /* ---------- SUBMIT ---------- */

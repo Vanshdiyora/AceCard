@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../../app/hooks";
 import { loadPublicProfile } from "../slice";
 import MobileWebsite from "../components/MobileWebsite";
+import BrandLoader from "../../../common/ui/BrandLoader";
 
 type Props = {
   handle?: string;
@@ -18,7 +19,6 @@ export default function PublicProfilePage({ handle: propHandle }: Props) {
   const handle = propHandle || routeHandle || username;
   const dispatch = useAppDispatch();
   const { data, loading } = useAppSelector((s) => s.publicProfile);
-
   /* -------- Load Profile -------- */
 useEffect(() => {
   if (!handle) return;
@@ -55,7 +55,7 @@ useEffect(() => {
   }, []);
 
   if (!handle) return <div className="p-6">No profile handle found.</div>;
-  if (loading || !data) return <div className="p-6">Loading...</div>;
+  if (loading || !data) return <div className="p-6 mt-64"> <BrandLoader /> </div>;
 
   return (
     <div className="min-h-screen sm:min-h-[100svh] w-full bg-[#f6f7fb] flex items-center justify-center">

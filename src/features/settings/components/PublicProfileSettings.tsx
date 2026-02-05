@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { normalizeProfile } from "../../publicProfile/utils/normalizeProfile";
 import { useAppDispatch, useAppSelector } from "../../../app/hooks";
 import TeamMemberPublicProfileTab from "../../teams/components/details/publicProfile/TeamMemberPublicProfileTab";
 import { loadMyProfile } from "../../publicProfile/slice";
@@ -23,9 +24,14 @@ export default function PublicProfileSettings() {
   }, [username, dispatch]);
 
   // 👇 when API loads, seed live preview
+
   useEffect(() => {
-    if (data) setLiveConfig(data);
+    if (!data) return;
+
+    const normalized = normalizeProfile(data);
+    setLiveConfig(denormalizeProfile(normalized, data));
   }, [data]);
+
   return (
     <div className="flex gap-6 h-[calc(100vh-120px)] overflow-hidden">
 

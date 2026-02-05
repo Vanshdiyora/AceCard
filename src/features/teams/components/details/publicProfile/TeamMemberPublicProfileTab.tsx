@@ -79,6 +79,7 @@ interface ProfileConfig {
   description: string;
   custom_profile: boolean;
   custom_profile_url: string;
+  custom_job_role: string;
 }
 
 export interface ProductRef {
@@ -1158,7 +1159,13 @@ export default function TeamMemberPublicProfileTab({
         <ProfileSection
           profile={config.profile}
           onChange={(p: ProfileConfig) =>
-            update({ ...config, profile: p })
+            update({
+              ...config,
+              profile: {
+                ...config.profile,   // 👈 KEEP existing fields
+                ...p,                // 👈 overwrite edited ones
+              },
+            })
           }
           onCropToggle={onCropToggle}   // 👈 ADD
         />
@@ -1637,15 +1644,15 @@ export default function TeamMemberPublicProfileTab({
           }
         />
       </Card>
-          <div className="px-6">
+      <div className="px-6">
 
-      <button
-        onClick={save}
-        className="w-full py-3 rounded-xl font-semibold text-white bg-purple-600 shadow-lg hover:opacity-90 transition"
+        <button
+          onClick={save}
+          className="w-full py-3 rounded-xl font-semibold text-white bg-purple-600 shadow-lg hover:opacity-90 transition"
         >
-        Save Public Profile
-      </button>
-        </div>
+          Save Public Profile
+        </button>
+      </div>
       {isCropping && coverFileRef.current && (
         <CoverCropModal
           file={coverFileRef.current}
@@ -1991,10 +1998,9 @@ export function LockControl({
                     setOpen(false);
                   }}
                   className={`block w-full text-left px-3 py-2 text-xs hover:bg-purple-50
-                    ${
-                      active.id === m.id
-                        ? "bg-purple-100 text-purple-700"
-                        : ""
+                    ${active.id === m.id
+                      ? "bg-purple-100 text-purple-700"
+                      : ""
                     }`}
                 >
                   {m.label}

@@ -23,7 +23,6 @@ export default function EditAccountModal({ open, onClose }: Props) {
   /* ---------- INIT FORM ---------- */
   useEffect(() => {
     if (!data || !open) return;
-  console.log(data)
 
     setForm({
       name: data.name ?? "",
