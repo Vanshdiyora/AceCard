@@ -8,6 +8,7 @@ export const vendorsService = {
     const res = await api.get("/admin/vendors", { params });
     return res.data;
   },
+
   getById: async (id: number): Promise<VendorItem> => {
     const res: AxiosResponse<VendorItem> = await api.get(`/admin/vendors/${id}`);
     return res.data;
@@ -47,6 +48,23 @@ export const vendorsService = {
     const res = await api.post(
       `/admin/vendors/${vendorId}/team/search`,
       params
+    );
+    return res.data;
+  },
+
+  search: async (
+    params: FetchVendorsParams,
+    body?: { legal_name?: string; status?: "active" | "archived" }
+  ): Promise<VendorListResponse> => {
+    const res = await api.post(
+      "/admin/vendors/search",
+      body ?? {},
+      {
+        params: {
+          page: params.page,
+          page_size: params.page_size,
+        },
+      }
     );
     return res.data;
   },

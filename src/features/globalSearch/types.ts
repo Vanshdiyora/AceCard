@@ -6,9 +6,9 @@ export type GlobalSearchType =
   | "product";
 
 export interface GlobalSearchItem {
-  id: string;
+  id: number | string;
   label: string;
-  type: GlobalSearchType;
+  type: string;
   route: string;
-  description?: string;
 }
+

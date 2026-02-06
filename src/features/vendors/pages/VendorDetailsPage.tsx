@@ -1,4 +1,4 @@
-import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import {
   ArrowLeft,
@@ -19,7 +19,6 @@ import {
   fetchVendors,
   unarchiveVendor,
 } from "../slice";
-import type { VendorItem } from "../types";
 
 import EditVendorModal from "../components/EditVendorModal";
 import NotifyVendorModal from "../components/NotifyVendorModal";
@@ -34,14 +33,12 @@ import ConfirmationModal from "../../../common/ui/ConfirmationModal";
 export default function VendorDetailsPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const location = useLocation();
   const dispatch = useAppDispatch();
 
-  const passedVendor = (location.state as any)?.vendor as VendorItem | undefined;
   const { vendors } = useAppSelector((s) => s.vendors);
 
   const vendorFromStore = vendors.find((v) => v.id === Number(id));
-  const vendor = vendorFromStore ?? passedVendor ?? null;
+  const vendor = vendorFromStore ?? null;
 
   const [editOpen, setEditOpen] = useState(false);
   const [notifyOpen, setNotifyOpen] = useState(false);
@@ -74,10 +71,10 @@ export default function VendorDetailsPage() {
   const CRMS = ["zoho", "hubspot", "salesforce", "odoo"];
 
   useEffect(() => {
-    if (!vendorFromStore && id) {
+    if (id) {
       dispatch(fetchVendorById(Number(id)));
     }
-  }, [vendorFromStore, id, dispatch]);
+  }, [id, dispatch]);
 
   const anyModalOpen =
     editOpen || notifyOpen || seatsOpen || confirmArchiveOpen || processing;
@@ -227,15 +224,32 @@ export default function VendorDetailsPage() {
           </div>
         </Section>
 
-
         <Section title="Usage Metrics" icon={<Activity size={16} />}>
-          <Metric label="Total Leads" value={0} />
-          <Metric label="Voice Time" value="0 m" />
+          <div className="col-span-2 flex gap-4 w-full">
+
+            <Metric label="Total Leads" value={vendor.total_leads ?? 0} />
+            <Metric label="Seats Used" value={vendor.seats_used ?? 0} />
+            <Metric
+              label="Voice Time"
+              value={formatMinutes(vendor.total_voice_time ?? 0)}
+            />
+          </div>
         </Section>
+
+
       </div>
 
       {/* Modals */}
-      <EditVendorModal vendor={vendor} open={editOpen} onClose={() => setEditOpen(false)} />
+      <EditVendorModal
+  vendor={vendor}
+  open={editOpen}
+  onClose={() => setEditOpen(false)}
+  onSuccess={() => {
+    if (id) {
+      dispatch(fetchVendorById(Number(id))); // 🔥 refetch latest data
+    }
+  }}
+/>
       <NotifyVendorModal vendor={vendor} open={notifyOpen} onClose={() => setNotifyOpen(false)} />
       <UpdateSeatsModal vendor={vendor} open={seatsOpen} onClose={() => setSeatsOpen(false)} />
       <ConfirmationModal
@@ -336,7 +350,7 @@ function Tag({ active, label }: any) {
 
 function Metric({ label, value }: any) {
   return (
-    <div className="bg-gray-50 rounded-xl p-4">
+    <div className="bg-gray-50 rounded-xl p-4 flex-1">
       <p className="text-xs text-gray-500">{label}</p>
       <p className="text-xl font-semibold">{value}</p>
     </div>
@@ -355,4 +369,19 @@ function ActionButton({ icon, label, onClick, danger }: any) {
       {icon} {label}
     </button>
   );
+}
+
+function formatMinutes(totalMinutes: number): string {
+  if (!totalMinutes || totalMinutes <= 0) return "0m";
+
+  const minutes = totalMinutes % 60;
+  const hours = Math.floor(totalMinutes / 60) % 24;
+  const days = Math.floor(totalMinutes / (60 * 24));
+
+  const parts = [];
+  if (days) parts.push(`${days}d`);
+  if (hours) parts.push(`${hours}h`);
+  if (minutes) parts.push(`${minutes}m`);
+
+  return parts.join(" ");
 }

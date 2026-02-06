@@ -5,11 +5,13 @@ import DynamicForm, { type FieldConfig } from "../../../common/ui/DynamicForm";
 import { validateField } from "../../../common/utils/formValidator";
 import type { VendorItem } from "../types";
 
-interface EditVendorModalProps {
-  vendor: VendorItem | null;
+type Props = {
+  vendor: VendorItem;
   open: boolean;
   onClose: () => void;
-}
+  onSuccess?: () => void; // ✅ add
+};
+
 
 type VendorForm = Partial<VendorItem>;
 
@@ -17,7 +19,9 @@ export default function EditVendorModal({
   vendor,
   open,
   onClose,
-}: EditVendorModalProps) {
+  onSuccess, // ✅ receive it
+}: Props) {
+
   const dispatch = useAppDispatch();
 
   const [form, setForm] = useState<VendorForm>({});
@@ -128,8 +132,13 @@ export default function EditVendorModal({
           : ["none"],
     };
 
-    const res = await dispatch(updateVendor({ id: vendor.id, data: payload }));
-    if (updateVendor.fulfilled.match(res)) onClose();
+  const res = await dispatch(updateVendor({ id: vendor.id, data: payload }));
+
+if (updateVendor.fulfilled.match(res)) {
+  onSuccess?.();   // 🔥 tell parent to refetch
+  onClose();
+}
+
   };
 
   /* ---------- UI ---------- */

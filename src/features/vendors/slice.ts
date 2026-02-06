@@ -9,6 +9,11 @@ interface VendorsState {
   vendors: VendorItem[];
   meta: VendorMeta | null;
   stats: VendorStat[];
+ searchResults: VendorItem[];
+  searchMeta: VendorMeta | null;
+  searchLoading: boolean;
+  
+
   loading: boolean;
   seatsUpdating: boolean; // 👈 add
   error?: string;
@@ -25,6 +30,11 @@ const initialState: VendorsState = {
   loading: false,
   seatsUpdating: false,
 
+  searchResults: [],
+  searchMeta: null,
+  searchLoading: false,
+
+
   teamActivity: [],
   teamMeta: null,
   teamLoading: false,
@@ -37,7 +47,7 @@ const initialState: VendorsState = {
 export type FetchVendorsParams = {
   page?: number;
   page_size?: number;
-  search?: string;
+  legal_name?: string; // ✅ add
   status?: "active" | "archived";
   append?: boolean;
 };
@@ -69,6 +79,19 @@ export const fetchVendors = createAsyncThunk<
     }
   }
 );
+
+export const searchVendors = createAsyncThunk<
+  { data: VendorItem[]; meta: VendorMeta },
+  FetchVendorsParams,
+  { rejectValue: string }
+>("vendors/search", async (params, { rejectWithValue }) => {
+  try {
+    const { legal_name, status, ...pagination } = params;
+    return await vendorsService.search(pagination, { legal_name, status });
+  } catch (err: unknown) {
+    return rejectWithValue(extractError(err, "Failed to search vendors"));
+  }
+});
 
 export const searchVendorTeam = createAsyncThunk<
   VendorTeamResponse,
@@ -315,41 +338,67 @@ const vendorsSlice = createSlice({
       })
 
       /* TEAM SEARCH */
-.addCase(searchVendorTeam.pending, (state, action) => {
-  state.teamLoading = true;
-  state.error = undefined;
+      .addCase(searchVendorTeam.pending, (state, action) => {
+        state.teamLoading = true;
+        state.error = undefined;
 
-  // 🔹 If new vendor or new search, reset list
-  const { append } = action.meta.arg.params || {};
-  if (!append) {
-    state.teamActivity = [];
-    state.teamMeta = null;
-  }
-})
+        // 🔹 If new vendor or new search, reset list
+        const { append } = action.meta.arg.params || {};
+        if (!append) {
+          state.teamActivity = [];
+          state.teamMeta = null;
+        }
+      })
 
-.addCase(searchVendorTeam.fulfilled, (state, action) => {
-  state.teamLoading = false;
+      .addCase(searchVendorTeam.fulfilled, (state, action) => {
+        state.teamLoading = false;
 
-  const incoming = action.payload.data ?? [];
-  const { append } = action.meta.arg.params || {};
+        const incoming = action.payload.data ?? [];
+        const { append } = action.meta.arg.params || {};
 
-  // 🔹 De-duplicate by id
-  const map = new Map<number, VendorTeamActivity>();
+        // 🔹 De-duplicate by id
+        const map = new Map<number, VendorTeamActivity>();
 
-  if (append) {
-    state.teamActivity.forEach(t => map.set(t.id, t));
-  }
+        if (append) {
+          state.teamActivity.forEach(t => map.set(t.id, t));
+        }
 
-  incoming.forEach(t => map.set(t.id, t));
+        incoming.forEach(t => map.set(t.id, t));
 
-  state.teamActivity = Array.from(map.values());
-  state.teamMeta = action.payload.meta;
-})
+        state.teamActivity = Array.from(map.values());
+        state.teamMeta = action.payload.meta;
+      })
 
-.addCase(searchVendorTeam.rejected, (state, action) => {
-  state.teamLoading = false;
-  state.error = action.payload;
-});
+      .addCase(searchVendorTeam.rejected, (state, action) => {
+        state.teamLoading = false;
+        state.error = action.payload;
+      })
+      /* SEARCH VENDORS */
+     .addCase(searchVendors.pending, (state) => {
+        state.searchLoading = true;
+        state.error = undefined;
+      })
+      .addCase(searchVendors.fulfilled, (state, action) => {
+        state.searchLoading = false;
+
+        const incoming = action.payload.data ?? [];
+        const { append } = action.meta.arg || {};
+
+        const map = new Map<number, VendorItem>();
+
+        if (append) {
+          state.searchResults.forEach(v => map.set(v.id, v));
+        }
+
+        incoming.forEach(v => map.set(v.id, v));
+
+        state.searchResults = Array.from(map.values());
+        state.searchMeta = action.payload.meta;
+      })
+      .addCase(searchVendors.rejected, (state, action) => {
+        state.searchLoading = false;
+        state.error = action.payload;
+      });
 
 
   },

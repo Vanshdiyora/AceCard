@@ -1,36 +1,41 @@
   /* ---------- VENDOR ---------- */
-  export interface VendorItem {
-    id: number;
-    legal_name: string;
-    address: string;
-    gst?: string;
-    vendor_poc_name: string;
-    primary_phone: string;
-    primary_email: string;
+export interface VendorItem {
+  id: number;
+  legal_name: string;
+  address: string;
+  gst?: string;
+  vendor_poc_name: string;
+  primary_phone: string;
+  primary_email: string;
 
-    secondary_phone?: string;
-    secondary_email?: string;
+  secondary_phone?: string;
+  secondary_email?: string;
 
-    logo_url?: string;
-    brand_color?: string;
-    tagline?: string;
-    industry_type?: string;
+  logo_url?: string;
+  brand_color?: string;
+  tagline?: string;
+  industry_type?: string;
 
-    status: "active" | "archived";
+  status: "active" | "archived";
 
-    subscription_end_date: string;
-    seats_appointed: number;
-    pricing_per_card: number;
-    payment_terms: string;
-    vendor_poc_email: string;
+  subscription_end_date: string;
+  seats_appointed: number;
+  pricing_per_card: number;
+  payment_terms: string;
+  vendor_poc_email: string;
 
-    allowed_crm_integrations: string[],
-    crm_manual_trigger: boolean;
-    crm_realtime_sync: boolean;
+  allowed_crm_integrations: string[];
+  crm_manual_trigger: boolean;
+  crm_realtime_sync: boolean;
 
-    created_at: string;
-    updated_at: string;
-  }
+  created_at: string;
+  updated_at: string;
+
+  /* ✅ NEW METRICS */
+  total_leads: number;
+  seats_used: number;
+  total_voice_time: number; // ⏱ minutes
+}
 
   /* ---------- PAGINATION ---------- */
   export interface VendorMeta {
