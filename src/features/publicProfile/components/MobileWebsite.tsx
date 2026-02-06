@@ -70,7 +70,6 @@ export const resolveShape = (style?: number) => {
 
 export default function MobileWebsite({
   data,
-  scrollRef,
 }: {
   data: any;
   scrollRef?: React.RefObject<HTMLDivElement | null>;
@@ -166,19 +165,6 @@ export default function MobileWebsite({
 
   const orderedSections = sortByRank(sections.items);
   const shapeClass = resolveShape(layout?.button_style);
-
-  useEffect(() => {
-    if (!scrollRef?.current) return;
-    const el = scrollRef.current;
-
-    if (open || activePhoto) {
-      el.style.overflow = "hidden";
-      el.style.touchAction = "none";
-    } else {
-      el.style.overflow = "auto";
-      el.style.touchAction = "auto";
-    }
-  }, [open, activePhoto, scrollRef]);
 
   const resolveFontClass = (font?: string) => {
     if (font === "custom") return "font-[var(--custom-font)]";
@@ -432,6 +418,38 @@ export default function MobileWebsite({
   //       console.error("❌ Local font failed", err);
   //     });
   // }, []);  // empty dependency for local test only
+const isAnyModalOpen = open || !!activePhoto;
+useEffect(() => {
+  if (!isAnyModalOpen) {
+    document.body.style.overflow = "";
+    document.body.style.position = "";
+    document.body.style.width = "";
+    return;
+  }
+
+  // lock body (iOS-safe)
+  const scrollY = window.scrollY;
+
+  document.body.style.position = "fixed";
+  document.body.style.top = `-${scrollY}px`;
+  document.body.style.left = "0";
+  document.body.style.right = "0";
+  document.body.style.width = "100%";
+  document.body.style.overflow = "hidden";
+
+  return () => {
+    const y = document.body.style.top;
+
+    document.body.style.position = "";
+    document.body.style.top = "";
+    document.body.style.left = "";
+    document.body.style.right = "";
+    document.body.style.width = "";
+    document.body.style.overflow = "";
+
+    window.scrollTo(0, parseInt(y || "0") * -1);
+  };
+}, [isAnyModalOpen]);
 
   return (
     <div

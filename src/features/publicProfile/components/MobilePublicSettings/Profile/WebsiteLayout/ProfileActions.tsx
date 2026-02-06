@@ -87,6 +87,7 @@ export function ProfileActions({
         <button
           onClick={() => saveContact(user)}
           className={`h-11 border text-sm font-medium ${shapeClass}`}
+          disabled={true}
           style={{
             color: theme.card_text,
             borderColor: theme.button_color,
