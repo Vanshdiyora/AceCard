@@ -7,7 +7,7 @@ interface UpdateSeatsModalProps {
   vendor: VendorSeatsTarget | null;
   open: boolean;
   onClose: () => void;
-  onSuccess: (seats: number) => void;
+  onSuccess?: (seats: number) => void;
 }
 
 
@@ -37,7 +37,7 @@ export default function UpdateSeatsModal({
     ).unwrap();
 
     onClose();
-    onSuccess(parsedSeats);
+    onSuccess?.(parsedSeats);
 
   };
 
