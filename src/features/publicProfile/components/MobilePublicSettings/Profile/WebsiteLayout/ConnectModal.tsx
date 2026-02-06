@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { useAppDispatch } from "../../../app/hooks";
-import { sendConnectRequest } from "../slice";
+import { useAppDispatch } from "../../../../../../app/hooks";
+import { sendConnectRequest } from "../../../../slice";
 
 export function ConnectModal({ open, onClose, handle, theme }: any) {
   const dispatch = useAppDispatch();
@@ -225,7 +225,7 @@ export function ConnectModal({ open, onClose, handle, theme }: any) {
           {/* CTA */}
           <button
             onClick={submit}
-            disabled={!isValid}
+            disabled={true}
             className={`w-full mt-5 py-3 rounded-xl font-semibold text-sm transition
               ${
                 !isValid

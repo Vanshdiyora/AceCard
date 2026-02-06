@@ -8,8 +8,12 @@ import {
   CartesianGrid,
 } from "recharts";
 
+/* -----------------------------------------------------
+   TYPES
+----------------------------------------------------- */
+
 export interface ChartPoint {
-  label?: string; // day/hour/month label
+  label?: string;
   value: number | null;
 }
 
@@ -32,14 +36,20 @@ function buildDay(data: ChartPoint[]): ChartPoint[] {
     map.set(Number(d.label.split(":")[0]), d.value as number);
   });
 
-  return Array.from({ length: 24 }, (_, h) => ({
-    label: `${h.toString().padStart(2, "0")}:00`,
-    value: h <= nowHour ? map.get(h) ?? null : null,
-  }));
+  const STEP = 4;
+
+  return Array.from({ length: Math.ceil(24 / STEP) }, (_, i) => {
+    const hour = i * STEP;
+
+    return {
+      label: `${hour.toString().padStart(2, "0")}:00`,
+      value: hour <= nowHour ? map.get(hour) ?? null : null,
+    };
+  });
 }
 
 function buildWeek(data: ChartPoint[]): ChartPoint[] {
-  const today = new Date().getDay(); // 0=Sun
+  const today = new Date().getDay(); // 0 = Sun
   const map = new Map<string, number>();
 
   data.forEach((d) => d.label && map.set(d.label, d.value as number));
@@ -76,23 +86,35 @@ function buildMonth(data: ChartPoint[]): ChartPoint[] {
 }
 
 function buildYear(data: ChartPoint[]): ChartPoint[] {
-  const currentMonth = new Date().getMonth(); // 0 = Jan
-
+  const currentMonth = new Date().getMonth();
   const map = new Map<string, number>();
+
   data.forEach((d) => d.label && map.set(d.label, d.value as number));
 
   const months = [
-    "Jan","Feb","Mar","Apr","May","Jun",
-    "Jul","Aug","Sep","Oct","Nov","Dec",
+    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
   ];
 
   return months.map((month, index) => ({
     label: month,
-    value:
-      index <= currentMonth
-        ? map.get(month) ?? null
-        : null,
+    value: index <= currentMonth ? map.get(month) ?? null : null,
   }));
+}
+
+/* -----------------------------------------------------
+   HELPERS
+----------------------------------------------------- */
+
+// ONLY ticks we want for month view: 1st, 8th, 15th...
+function getMonthlyTicks(data: ChartPoint[]): string[] {
+  return data
+    .filter((d): d is { label: string; value: number | null } => {
+      if (!d.label) return false;
+      const day = Number(d.label.split(" ")[0]);
+      return day === 1 || (day - 1) % 7 === 0;
+    })
+    .map((d) => d.label);
 }
 
 /* -----------------------------------------------------
@@ -121,6 +143,9 @@ export default function PipelineAreaChart({
       break;
   }
 
+  const monthTicks =
+    period === "month" ? getMonthlyTicks(finalData) : undefined;
+
   return (
     <div className="w-full h-64">
       <ResponsiveContainer width="100%" height="100%">
@@ -136,7 +161,7 @@ export default function PipelineAreaChart({
 
           <XAxis
             dataKey="label"
-            interval="preserveStartEnd"
+            ticks={monthTicks}
             tick={{ fill: "#9ca3af", fontSize: 12 }}
             axisLine={false}
             tickLine={false}
@@ -157,7 +182,7 @@ export default function PipelineAreaChart({
             fill="url(#pipelineGradient)"
             strokeWidth={2}
             dot={false}
-            connectNulls={false} // 🔑 stops future line
+            connectNulls={false}
             activeDot={{ r: 4 }}
           />
         </AreaChart>

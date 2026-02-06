@@ -22,7 +22,7 @@ import { savePublicProfile } from "../../slice";
 import { FiPhone, FiGlobe } from "react-icons/fi";
 import React from "react";
 import { useState, useEffect } from "react";
-import { ConnectModal } from "../ConnectModal";
+import { ConnectModal } from "./Profile/WebsiteLayout/ConnectModal";
 import { ProfileActions } from "../../components/MobilePublicSettings/Profile/WebsiteLayout/ProfileActions";
 import { ProfileWrapper } from "../../components/MobilePublicSettings/Profile/WebsiteLayout/ProfileWrapper";
 import { Banner } from "./Banner/Banner";
