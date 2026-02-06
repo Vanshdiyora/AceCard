@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { useAppDispatch, useAppSelector } from "../../../app/hooks";
 import { fetchVendors, archiveVendor, unarchiveVendor } from "../slice";
+import UnarchiveVendorModal from "../components/UnarchiveVendorModal";
 
 import PageHeader from "../../../common/components/layout/PageHeader";
 import PageFilters from "../../../common/components/layout/PageFilter";
@@ -51,6 +52,7 @@ export default function VendorsPage() {
   const [archiveOpen, setArchiveOpen] = useState(false);
   const [notifyOpen, setNotifyOpen] = useState(false);
   const [selectedVendor, setSelectedVendor] = useState<VendorItem | null>(null);
+  const [unarchiveOpen, setUnarchiveOpen] = useState(false);
 
   const [processing, setProcessing] = useState(false);
   const [resultOpen, setResultOpen] = useState(false);
@@ -143,16 +145,9 @@ export default function VendorsPage() {
           onSeats={() => { setSelectedVendor(v); setSeatsOpen(true); }}
           onNotify={() => { setSelectedVendor(v); setNotifyOpen(true); }}
           onArchive={() => { setSelectedVendor(v); setArchiveOpen(true); }}
-          onUnarchive={async () => {
-            try {
-              setProcessing(true);
-              await dispatch(unarchiveVendor(v.id)).unwrap();
-              showResult(true, "Vendor unarchived successfully.");
-            } catch (err) {
-              showResult(false, getErrorMessage(err));
-            } finally {
-              setProcessing(false);
-            }
+          onUnarchive={() => {
+            setSelectedVendor(v);
+            setUnarchiveOpen(true);
           }}
         />
       ),
@@ -195,6 +190,24 @@ export default function VendorsPage() {
               }
             }}
           />
+          <UnarchiveVendorModal
+            vendor={selectedVendor}
+            open={unarchiveOpen}
+            onClose={() => setUnarchiveOpen(false)}
+            onConfirm={async () => {
+              try {
+                setProcessing(true);
+                await dispatch(unarchiveVendor(selectedVendor.id)).unwrap();
+                showResult(true, "Vendor unarchived successfully.");
+                setUnarchiveOpen(false);
+              } catch (err) {
+                showResult(false, getErrorMessage(err));
+              } finally {
+                setProcessing(false);
+              }
+            }}
+          />
+
         </>
       )}
 
@@ -205,9 +218,22 @@ export default function VendorsPage() {
           { label: "Archived", value: "archived" },
         ]}
         activeTab={activeTab}
-        onTabChange={(v) => { setActiveTab(v as "all" | "active" | "archived"); setPage(1); }}
+        onTabChange={(v) => {
+          setActiveTab((prev) => {
+            if (prev === v) return prev;
+            setPage(1);
+            return v as "all" | "active" | "archived";
+          });
+        }}
         searchPlaceholder="Search vendors..."
-        onSearch={(v) => { setSearch(v); setPage(1); }}
+        onSearch={(v) => {
+          setSearch((prev) => {
+            if (prev === v) return prev; // 🚫 no-op
+            setPage(1);
+            return v;
+          });
+        }}
+
         filters={[
           {
             key: "sort",

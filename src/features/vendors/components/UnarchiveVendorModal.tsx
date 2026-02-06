@@ -8,7 +8,7 @@ interface Props {
   onConfirm: () => void;
 }
 
-export default function ArchiveVendorModal({
+export default function UnarchiveVendorModal({
   open,
   vendor,
   onClose,
@@ -32,14 +32,14 @@ export default function ArchiveVendorModal({
         {/* Header */}
         <div className="px-6 py-4">
           <h2 className="text-lg font-semibold text-gray-900">
-            Archive Vendor
+            Unarchive Vendor
           </h2>
         </div>
 
         {/* Body */}
         <div className="px-6 py-5">
           <p className="text-sm text-gray-600 leading-relaxed">
-            Are you sure you want to archive{" "}
+            Are you sure you want to unarchive{" "}
             <span className="font-semibold text-gray-900">
               {vendor.legal_name}
             </span>
@@ -55,11 +55,12 @@ export default function ArchiveVendorModal({
           >
             Cancel
           </button>
+
           <button
-            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
+            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition"
             onClick={onConfirm}
           >
-            Archive Vendor
+            Unarchive Vendor
           </button>
         </div>
 

@@ -1,5 +1,6 @@
 import { X, MessageSquare } from "lucide-react";
 import { useEffect, useState } from "react";
+import { formatDate } from "../pages/SupportAdmin";
 
 type TicketStatus = "open" | "pending" | "closed";
 
@@ -10,6 +11,13 @@ interface Props {
   onReply: (ticketId: number, message: string, status: TicketStatus) => void;
 }
 
+/* -------- Helpers -------- */
+
+const formatStatusLabel = (status: TicketStatus) => {
+  if (status === "pending") return "In-progress";
+  return status.charAt(0).toUpperCase() + status.slice(1);
+};
+
 export default function TicketDetailsModal({
   open,
   onClose,
@@ -18,19 +26,38 @@ export default function TicketDetailsModal({
 }: Props) {
   const [message, setMessage] = useState("");
   const [status, setStatus] = useState<TicketStatus>("open");
+  const [statusOpen, setStatusOpen] = useState(false);
+  const [messageError, setMessageError] = useState("");
 
-  // Sync status whenever ticket changes or modal opens
+  // Sync status whenever ticket changes
   useEffect(() => {
     if (ticket?.status) {
       setStatus(ticket.status);
     }
   }, [ticket]);
 
+  // Close dropdown on outside click
+  useEffect(() => {
+    const close = () => setStatusOpen(false);
+    if (statusOpen) document.addEventListener("click", close);
+    return () => document.removeEventListener("click", close);
+  }, [statusOpen]);
+
+  // Close dropdown when modal closes
+  useEffect(() => {
+    if (!open) setStatusOpen(false);
+  }, [open]);
+
   if (!open || !ticket) return null;
 
   const handleSubmit = () => {
-    if (!message.trim()) return;
-    onReply(ticket.id, message, status);
+    if (!message.trim()) {
+      setMessageError("Response is required.");
+      return;
+    }
+
+    setMessageError("");
+    onReply(ticket.id, message, status); // 👈 backend still gets "pending"
     setMessage("");
   };
 
@@ -50,13 +77,20 @@ export default function TicketDetailsModal({
         </div>
 
         {/* Scrollable content */}
-        <div className="p-5 space-y-6 overflow-y-auto custom-scrollbar flex-1">
+        <div className="p-5 space-y-6 overflow-y-auto flex-1">
 
           {/* Info Grid */}
           <div className="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-xl border">
-            <Info label="Vendor" value={ticket.vendorName} />
-            <Info label="Contact Person" value={ticket.vendorContact} />
-            <Info label="Issue Type" value={ticket.category} pill />
+            <Info label="Vendor" value={ticket.vendor_name} />
+            <Info label="Contact Person" value={ticket.vendor_email} />
+            <Info
+              label="Issue Type"
+              value={
+                ticket.category
+                  ? ticket.category.charAt(0).toUpperCase() + ticket.category.slice(1)
+                  : ""
+              }
+            />
             <Info
               label="Priority"
               value={ticket.priority}
@@ -70,18 +104,17 @@ export default function TicketDetailsModal({
             />
             <Info
               label="Status"
-              value={ticket.status}
+              value={formatStatusLabel(ticket.status)}
               className={
                 ticket.status === "open"
-                  ? "bg-blue-100 text-blue-600"
+                  ? "bg-gray-100 text-gray-600"
                   : ticket.status === "pending"
-                  ? "bg-yellow-100 text-yellow-600"
+                  ? "bg-blue-100 text-blue-600"
                   : "bg-green-100 text-green-600"
               }
             />
-            <Info label="Assigned To" value={ticket.assigned_to || "—"} />
-            <Info label="Created" value={ticket.created_at} />
-            <Info label="Last Update" value={ticket.updated_at} />
+            <Info label="Created" value={formatDate(ticket.created_at)} />
+            <Info label="Last Update" value={formatDate(ticket.updated_at)} />
           </div>
 
           {/* Description */}
@@ -105,7 +138,7 @@ export default function TicketDetailsModal({
                   <div key={r.id} className="bg-gray-50 p-3 rounded-lg border text-sm">
                     <p className="font-medium text-gray-700">Support Response:</p>
                     <p className="text-gray-600">{r.message}</p>
-                    <p className="text-xs text-gray-400 mt-1">{r.created_at}</p>
+                    <p className="text-xs text-gray-400 mt-1">{formatDate(r.created_at)}</p>
                   </div>
                 ))}
               </div>
@@ -115,22 +148,61 @@ export default function TicketDetailsModal({
           {/* Response Input */}
           <div>
             <p className="font-medium mb-1">Add Response</p>
+
             <textarea
-              className="w-full border rounded-lg p-3 h-24"
+              className={`w-full rounded-lg p-3 h-24 border ${
+                messageError ? "border-red-500" : "border-gray-300"
+              }`}
               placeholder="Type your response..."
               value={message}
-              onChange={(e) => setMessage(e.target.value)}
+              onChange={(e) => {
+                setMessage(e.target.value);
+                if (messageError) setMessageError("");
+              }}
             />
 
-            <select
-              className="mt-3 border rounded-lg px-3 py-2 text-sm"
-              value={status}
-              onChange={(e) => setStatus(e.target.value as TicketStatus)}
-            >
-              <option value="open">Open</option>
-              <option value="pending">Pending</option>
-              <option value="closed">Closed</option>
-            </select>
+            {messageError && (
+              <p className="mt-1 text-xs text-red-600">{messageError}</p>
+            )}
+
+            {/* Status Dropdown */}
+            <div className="relative mt-3 w-48">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setStatusOpen((v) => !v);
+                }}
+                className="w-full flex items-center justify-between border rounded-lg px-3 py-2 text-sm bg-white hover:bg-gray-50"
+              >
+                <span className="capitalize px-2 py-1 rounded-md text-xs">
+                  {formatStatusLabel(status)}
+                </span>
+                <span className="text-gray-400">▾</span>
+              </button>
+
+              {statusOpen && (
+                <div
+                  onClick={(e) => e.stopPropagation()}
+                  className="absolute z-20 bottom-full mb-1 w-full bg-white border rounded-lg shadow-lg overflow-hidden"
+                >
+                  {(["open", "pending", "closed"] as TicketStatus[]).map((s) => (
+                    <button
+                      key={s}
+                      onClick={() => {
+                        setStatus(s);
+                        setStatusOpen(false);
+                      }}
+                      className={`w-full text-left px-3 py-2 text-sm capitalize hover:bg-purple-50 ${
+                        status === s ? "bg-purple-100 text-purple-700" : ""
+                      }`}
+                    >
+                      {formatStatusLabel(s)}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
