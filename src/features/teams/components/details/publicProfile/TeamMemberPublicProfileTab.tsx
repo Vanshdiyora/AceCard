@@ -660,10 +660,10 @@ export default function TeamMemberPublicProfileTab({
                 <img
                   src={
                     t === 1
-                      ? "/profileLayout/profile-1.jpg"
+                      ? "/profileLayout/profile1.png"
                       : t === 2
-                        ? "/profileLayout/profile-2.jpg"
-                        : "/profileLayout/profile-3.jpg"
+                        ? "/profileLayout/profile2.png"
+                        : "/profileLayout/profile3.png"
                   }
                   className="w-full rounded"
                 />

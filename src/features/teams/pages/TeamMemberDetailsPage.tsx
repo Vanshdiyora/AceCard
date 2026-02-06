@@ -304,7 +304,7 @@ export default function TeamMemberDetailsPage() {
       className={`pt-6 px-6 grid grid-cols-1 gap-6 h-[calc(100vh-64px)]
         transition-[grid-template-columns] duration-500 ease-in-out
         ${activeTab === "public-profile"
-          ? "lg:grid-cols-[320px_1fr]"
+          ? "lg:grid-cols-[720px_1fr]"
           : "lg:grid-cols-[1fr_320px]"
         }
       `}
