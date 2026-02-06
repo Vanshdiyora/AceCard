@@ -95,3 +95,8 @@ export interface SearchVendorTeamParams {
   page_size?: number;
   append?: boolean;
 }
+
+export interface VendorSeatsTarget {
+  id: number;
+  seats_appointed: number;
+}

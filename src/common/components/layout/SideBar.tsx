@@ -2,6 +2,7 @@ import { Link, useLocation } from "react-router-dom";
 import { useState } from "react";
 import type { IconType } from "react-icons";
 import { IoNotifications } from "react-icons/io5";
+import { CreditCard } from "lucide-react";
 
 type MenuItem = {
   label: string;
@@ -36,6 +37,8 @@ export default function Sidebar({ type }: SidebarProps) {
     { label: "Tickets & Support", path: `${superBase}/support`, icon: "/sidebar/support.png" },
     // { label: "System Settings", path: `${superBase}/system-settings`, icon: "/sidebar/settings.png" },
     { label: "Notifications", path: `${superBase}/notifications`,  icon: IoNotifications },
+      { label: "Payments", path: `${superBase}/payments`, icon: CreditCard },
+
   ];
 
   const menu = type === "superadmin" ? superMenu : adminMenu;

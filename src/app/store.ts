@@ -13,6 +13,7 @@ import settingsReducer from "../features/settings/slice";
 import globalSearchReducer from "../features/globalSearch/slice"; 
 import subscriptionReducer from "../features/teams/subscrption.slice";
 import publicProfileReducer from "../features/publicProfile/slice";
+import paymentsReducer from "../features/paymentHistory/slice";
 
 export const store = configureStore({
   reducer: {
@@ -29,6 +30,7 @@ export const store = configureStore({
     globalSearch: globalSearchReducer,
     subscription: subscriptionReducer,
     publicProfile: publicProfileReducer,
+    payments: paymentsReducer,
   },
 });
 

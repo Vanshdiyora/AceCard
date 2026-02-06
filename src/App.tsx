@@ -15,7 +15,7 @@ import IntegrationCallback from "./features/settings/pages/IntegrationCallback";
 import { SupportAdmin, VendorsPage } from "./features";
 import LeadDetailsPage from "./features/leads/pages/LeadDetailsPage";
 import VendorTeamActivityPage from "./features/vendors/pages/VendorTeamPage";
-
+import PaymentsPage from "./features/paymentHistory/pages/PaymentsPage";
 // ADMIN PAGES
 import {
   SupportPage,
@@ -75,6 +75,7 @@ export default function App() {
           <Route path="vendors/:id/team" element={<VendorTeamActivityPage />} />
           <Route path="support" element={<SupportAdmin />} />
           <Route path="notifications" element={<NotificationsPage />} />
+          <Route path="payments" element={<PaymentsPage />} />
           <Route path="*" element={<Navigate to="/not-found" replace />} />
         </Route>
 
