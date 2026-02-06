@@ -124,6 +124,7 @@ export function ProfileLayoutEditor({
     uploadCustomFont,
     uploadImage,
 }: any) {
+    console.log(config)
     return (
         <div
             className={`space-y-6 ${isLayoutLocked ? "opacity-60 pointer-events-none" : ""
@@ -597,12 +598,12 @@ export function ProfileLayoutEditor({
 
             {/* ================= THEME ================= */}
             <div
-                className={`relative ${config.theme.locked ? "opacity-60 pointer-events-none" : ""
+                className={`relative ${config.theme?.locked ? "opacity-60 pointer-events-none" : ""
                     }`}
             >
                 <h4 className="text-sm font-semibold mb-2 flex items-center gap-2">
                     Theme Colors
-                    {config.theme.locked && (
+                    {config.theme?.locked && (
                         <span className="text-xs text-gray-500 font-normal">
                             (Locked)
                         </span>
