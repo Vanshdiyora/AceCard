@@ -478,11 +478,13 @@ export default function TeamMemberDetailsPage() {
         `}
       >
         {/* Preview container to visually separate from dashboard */}
-        <div className="relative h-full flex items-start justify-center px-4">
+        <div className="relative h-full flex items-start justify-center px-4 mt-8">
 
           {/* Optional label (helps hierarchy a LOT) */}
-          <div className="absolute -top-6 text-xs text-gray-400 tracking-wide">
-            Live Preview
+          <div className="absolute -top-8 text-xs text-gray-400 tracking-wide border border-[#D5d5d5] rounded-xl px-2 py-1">
+            <a href="" target="_blank" rel="noopener noreferrer">
+              Live Preview
+            </a>
           </div>
 
           {/* SCALE WRAPPER */}
@@ -491,7 +493,7 @@ export default function TeamMemberDetailsPage() {
             {/* DEVICE FRAME */}
             <div
               className="
-                w-[390px] h-[844px]
+                w-[390px] h-[780px]
                 rounded-[44px]
                 bg-white
                 p-[10px]
