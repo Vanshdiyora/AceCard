@@ -12,17 +12,20 @@ const axiosClient = axios.create({
 // -----------------------------
 // REQUEST INTERCEPTOR
 // -----------------------------
-axiosClient.interceptors.request.use((config) => {
-  const token = getCookie("token");
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  } else {
-    delete config.headers.Authorization;
-  }
-  return config;
-});
+axiosClient.interceptors.request.use(
+  (config) => {
+    const token = getCookie("token");
 
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    } else {
+      delete config.headers.Authorization;
+    }
 
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
 
 // -----------------------------
 // RESPONSE INTERCEPTOR
@@ -30,12 +33,19 @@ axiosClient.interceptors.request.use((config) => {
 axiosClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
-      // Remove token
+    const status = error?.response?.status;
+    const message = error?.response?.data?.error;
+
+    const shouldLogout = (status === 403 && message === "Your Vendor account is archived");
+
+    if (shouldLogout) {
+      // 🔥 Clear auth cookie
       eraseCookie("token");
 
-      // Redirect user to login page
-      window.location.href = "/login";
+      // 🔁 Prevent redirect loop
+      if (!window.location.pathname.includes("/login")) {
+        window.location.href = "/login";
+      }
     }
 
     return Promise.reject(error);

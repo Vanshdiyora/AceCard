@@ -47,6 +47,7 @@ const initialState: VendorsState = {
 export type FetchVendorsParams = {
   page?: number;
   page_size?: number;
+  search?: string;
   legal_name?: string; // ✅ add
   status?: "active" | "archived";
   append?: boolean;

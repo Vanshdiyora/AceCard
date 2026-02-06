@@ -264,24 +264,28 @@ export default function VendorDetailsPage() {
         confirmVariant={vendor.status === "active" ? "danger" : "primary"}
         loading={processing}
         onClose={() => setConfirmArchiveOpen(false)}
-        onConfirm={async () => {
-          try {
-            setProcessing(true);
-            if (vendor.status === "active") {
-              await dispatch(archiveVendor(vendor.id)).unwrap();
-              showResult(true, "Vendor archived successfully.");
-            } else {
-              await dispatch(unarchiveVendor(vendor.id)).unwrap();
-              showResult(true, "Vendor unarchived successfully.");
-            }
-            dispatch(fetchVendors());
-          } catch (err: any) {
-            showResult(false, err?.message || "Operation failed.");
-          } finally {
-            setProcessing(false);
-            setConfirmArchiveOpen(false);
-          }
-        }}
+      onConfirm={async () => {
+  setConfirmArchiveOpen(false); // ✅ close modal FIRST
+  setProcessing(true);          // ✅ then show loader
+
+  try {
+    if (vendor.status === "active") {
+      await dispatch(archiveVendor(vendor.id)).unwrap();
+      showResult(true, "Vendor archived successfully.");
+    } else {
+      await dispatch(unarchiveVendor(vendor.id)).unwrap();
+      showResult(true, "Vendor unarchived successfully.");
+    }
+
+    await dispatch(fetchVendors());
+    await dispatch(fetchVendorById(vendor.id)); // ✅ keep detail page in sync
+  } catch (err: any) {
+    showResult(false, err?.message || "Operation failed.");
+  } finally {
+    setProcessing(false); // ✅ always stops loader
+  }
+}}
+
       />
 
 
