@@ -4,6 +4,7 @@ import { Input, Switch } from "../../../../teams/components/details/publicProfil
 import { fetchSalesProducts } from "../../../../products/slice";
 import { useAppDispatch } from "../../../../../app/hooks";
 import type { Product } from "../../../../products/types";
+import { X } from "lucide-react";
 
 import {
   DndContext,
@@ -31,6 +32,7 @@ export function ProductsEditModal({
   onClose,
   value,
   onChange,
+  onSave,
 }: any) {
   if (!open) return null;
 
@@ -50,28 +52,13 @@ export function ProductsEditModal({
   const isSelected = (id: number) =>
     value.items.some((i: any) => i.id === id);
 
-  /* ---------- SENSORS ---------- */
+  /* ---------- SENSORS (UNCHANGED) ---------- */
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
     useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } })
   );
 
-  /* ---------- CLICK OUTSIDE ---------- */
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (
-        containerRef.current &&
-        !containerRef.current.contains(e.target as Node)
-      ) {
-        setShowDropdown(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
-
-  /* ---------- DEBOUNCED SEARCH ---------- */
+  /* ---------- SEARCH ---------- */
   useEffect(() => {
     if (!open) return;
 
@@ -108,14 +95,13 @@ export function ProductsEditModal({
   /* ---------- INFINITE SCROLL ---------- */
   const onScroll = () => {
     if (!dropdownRef.current || loading || !hasNext) return;
-
     const { scrollTop, scrollHeight, clientHeight } = dropdownRef.current;
     if (scrollTop + clientHeight >= scrollHeight - 20) {
       runSearch(search, page + 1);
     }
   };
 
-  /* ---------- ADD ---------- */
+  /* ---------- ADD PRODUCT ---------- */
   const addProduct = (p: Product) => {
     if (isSelected(p.id)) return;
 
@@ -140,15 +126,34 @@ export function ProductsEditModal({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[9999] bg-black/60 flex justify-center items-center px-4"
+      className="
+    fixed inset-0 z-[9999]
+    bg-black/60 backdrop-blur-sm
+    flex items-center justify-center
+    px-4
+    animate-slide-from-bottom
+  "
       onClick={onClose}
     >
+
       <div
         onClick={(e) => e.stopPropagation()}
         className="w-full max-w-md bg-white rounded-2xl shadow-xl 
                    max-h-[85vh] overflow-y-auto p-4 space-y-4"
       >
-        <h3 className="text-lg font-semibold">Edit Products</h3>
+        {/* HEADER */}
+        <div className="relative flex items-center justify-center">
+          <h3 className="text-lg font-semibold">Edit Products</h3>
+
+          <button
+            onClick={onClose}
+            className="absolute right-0 top-1/2 -translate-y-1/2
+                       h-8 w-8 rounded-full flex items-center justify-center
+                       text-gray-500 hover:bg-gray-100"
+          >
+            <X size={18} />
+          </button>
+        </div>
 
         <Input
           value={value.section_title}
@@ -190,8 +195,7 @@ export function ProductsEditModal({
                     key={p.id}
                     onClick={() => !selected && addProduct(p)}
                     className={`px-3 py-2 text-sm cursor-pointer flex justify-between items-center
-                      ${
-                        selected
+                      ${selected
                         ? "bg-indigo-50 text-gray-400"
                         : "hover:bg-indigo-50"
                       }`}
@@ -267,12 +271,22 @@ export function ProductsEditModal({
           </SortableContext>
         </DndContext>
 
-        <button
-          onClick={onClose}
-          className="w-full py-2 rounded-lg bg-purple-600 text-white"
-        >
-          Done
-        </button>
+        {/* FOOTER */}
+        <div className="flex gap-3 pt-4">
+          <button
+            onClick={onClose}
+            className="flex-1 py-2 rounded-lg border"
+          >
+            Cancel
+          </button>
+
+          <button
+            onClick={onSave}
+            className="flex-1 py-2 rounded-lg bg-purple-600 text-white"
+          >
+            Save
+          </button>
+        </div>
       </div>
     </div>,
     document.body
@@ -301,7 +315,7 @@ function ProductRow({ p, value, update }: any) {
         ${isDragging ? "opacity-50 scale-[1.02] z-50" : ""}
       `}
     >
-      {/* drag handle */}
+      {/* drag handle (UNCHANGED) */}
       <span
         {...attributes}
         {...listeners}

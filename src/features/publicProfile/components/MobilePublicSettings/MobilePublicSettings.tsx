@@ -129,8 +129,15 @@ export default function MobilePublicSettings({
     }));
   }, [config]);
 
-
   const [openLayoutEditor, setOpenLayoutEditor] = useState(false);
+
+  const [productsDraft, setProductsDraft] = useState<any | null>(null);
+  const [layoutDraft, setLayoutDraft] = useState<{
+    layout: any;
+    theme: any;
+  } | null>(null);
+
+
 
   const orderedSections = sortByRank(sections.items);
   const shapeClass = resolveShape(draft.layout?.button_style);
@@ -184,7 +191,7 @@ export default function MobilePublicSettings({
   };
 
   const fontClass = resolveFontClass(draft.layout?.font);
-  
+
   const renderSection = (type: string) => {
     switch (type) {
       case "profile":
@@ -197,7 +204,14 @@ export default function MobilePublicSettings({
               user={data}
               layout={draft.layout}
               onConnect={() => isMobile && setOpen(true)}
-              onEdit={() => setOpenLayoutEditor(true)}
+              onEdit={() => {
+                setLayoutDraft({
+                  layout: { ...(draft.layout || {}) },
+                  theme: { ...(draft.theme || {}) },
+                });
+                setOpenLayoutEditor(true);
+              }}
+
               onProfileChange={updateDraft}
 
             />
@@ -270,7 +284,11 @@ export default function MobilePublicSettings({
             theme={draft.theme}
             showPrice={p.toggle_price}
             editable={!p.locked}
-            onEdit={() => setEditProducts(true)}
+            onEdit={() => {
+              setProductsDraft(structuredClone(draft.products));
+              setEditProducts(true);
+            }}
+
           />
         );
       }
@@ -701,12 +719,24 @@ export default function MobilePublicSettings({
 
       <ProductsEditModal
         open={editProducts}
-        onClose={() => setEditProducts(false)}
-        value={draft.products}
-        onChange={(v: any) =>
-          setDraft((prev: any) => ({ ...prev, products: v }))
-        }
+        value={productsDraft}
+        onClose={() => {
+          // ❌ discard
+          setProductsDraft(null);
+          setEditProducts(false);
+        }}
+        onChange={setProductsDraft}
+        onSave={() => {
+          // ✅ commit
+          setDraft((prev: any) => ({
+            ...prev,
+            products: productsDraft,
+          }));
+          setProductsDraft(null);
+          setEditProducts(false);
+        }}
       />
+
 
 
 
@@ -729,17 +759,31 @@ export default function MobilePublicSettings({
 
         <ProfileLayoutModal
           open={openLayoutEditor}
-          onClose={() => setOpenLayoutEditor(false)}
+          onClose={() => {
+            // ✅ revert to previously saved layout + theme
+            setLayoutDraft({
+              layout: { ...(draft.layout || {}) },
+              theme: { ...(draft.theme || {}) },
+            });
+            setOpenLayoutEditor(false);
+          }}
+          onSave={() => {
+            // ✅ commit both layout + theme
+            setDraft((prev: any) => ({
+              ...prev,
+              layout: layoutDraft?.layout,
+              theme: layoutDraft?.theme,
+            }));
+
+            setOpenLayoutEditor(false);
+          }}
         >
           <ProfileLayoutEditor
-            config={draft}
-            update={setDraft}
-            isLayoutLocked={false}
-            isReadOnly={(m: any) => m?.locked}
+            config={layoutDraft}
+            update={setLayoutDraft}
             uploadImage={uploadImage}
           />
         </ProfileLayoutModal>
-
 
       </div>
 
@@ -922,7 +966,7 @@ function Products({
                 {showPrice && (
                   <p
                     className="text-xs mt-1"
-                    style={{ color: theme.button_text }}
+                    style={{ color: theme.card_text }}
                   >
                     ₹{p.price}
                   </p>
