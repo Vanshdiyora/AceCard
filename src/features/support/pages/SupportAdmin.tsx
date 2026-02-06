@@ -19,6 +19,24 @@ import BlockingLoader from "../../../common/ui/BlockingLoader";
 import ResultModal from "../../../common/ui/ResultModal";
 
 type TicketStatus = "open" | "pending" | "closed";
+const formatStatusLabel = (status: TicketStatus | string) => {
+  if (status === "pending") return "In-progress";
+  return status.charAt(0).toUpperCase() + status.slice(1);
+};
+
+export const formatDate = (value?: string) => {
+  if (!value) return "—";
+  const d = new Date(value);
+  if (isNaN(d.getTime())) return "—";
+  return d.toLocaleString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  });
+};
 
 export default function SupportAdmin() {
   const dispatch = useAppDispatch();
@@ -69,37 +87,25 @@ export default function SupportAdmin() {
   }, [activeTab, search]);
 
   useEffect(() => {
-  if (!detailsModal) return;
+    if (!detailsModal) return;
 
-  const scrollY = window.scrollY;
+    const scrollY = window.scrollY;
 
-  document.body.style.position = "fixed";
-  document.body.style.top = `-${scrollY}px`;
-  document.body.style.left = "0";
-  document.body.style.right = "0";
+    document.body.style.position = "fixed";
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.left = "0";
+    document.body.style.right = "0";
 
-  return () => {
-    document.body.style.position = "";
-    document.body.style.top = "";
-    document.body.style.left = "";
-    document.body.style.right = "";
-    window.scrollTo(0, scrollY);
-  };
-}, [detailsModal]);
+    return () => {
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.left = "";
+      document.body.style.right = "";
+      window.scrollTo(0, scrollY);
+    };
+  }, [detailsModal]);
 
-  const formatDate = (value?: string) => {
-    if (!value) return "—";
-    const d = new Date(value);
-    if (isNaN(d.getTime())) return "—";
-    return d.toLocaleString(undefined, {
-      year: "numeric",
-      month: "short",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: true,
-    });
-  };
+
 
   const stats = useMemo(
     () => [
@@ -109,10 +115,11 @@ export default function SupportAdmin() {
         icon: <MessageSquare className="text-purple-600" />,
       },
       {
-        title: "Pending",
+        title: "In-progress",
         value: statsAdmin?.pending ?? 0,
         icon: <Clock className="text-yellow-600" />,
       },
+
       {
         title: "Closed",
         value: statsAdmin?.closed ?? 0,
@@ -144,10 +151,10 @@ export default function SupportAdmin() {
       render: (t) => (
         <span
           className={`px-2 py-1 rounded-md text-xs ${t.priority === "high"
-              ? "bg-red-100 text-red-600"
-              : t.priority === "medium"
-                ? "bg-yellow-100 text-yellow-600"
-                : "bg-blue-100 text-blue-600"
+            ? "bg-red-100 text-red-600"
+            : t.priority === "medium"
+              ? "bg-yellow-100 text-yellow-600"
+              : "bg-blue-100 text-blue-600"
             }`}
         >
           {t.priority}
@@ -159,13 +166,13 @@ export default function SupportAdmin() {
       render: (t) => (
         <span
           className={`px-2 py-1 rounded-md text-xs ${t.status === "open"
+            ? "bg-gray-100 text-gray-600"
+            : t.status === "pending"
               ? "bg-blue-100 text-blue-600"
-              : t.status === "pending"
-                ? "bg-yellow-100 text-yellow-600"
-                : "bg-green-100 text-green-600"
+              : "bg-green-100 text-green-600"
             }`}
         >
-          {t.status}
+          {formatStatusLabel(t.status)}
         </span>
       ),
     },
@@ -205,7 +212,7 @@ export default function SupportAdmin() {
         tabs={[
           { label: "All", value: "all" },
           { label: "Open", value: "open" },
-          { label: "Pending", value: "pending" },
+          { label: "In-progress", value: "pending" },
           { label: "Closed", value: "closed" },
         ]}
         activeTab={activeTab}

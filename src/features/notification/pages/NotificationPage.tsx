@@ -56,29 +56,29 @@ export default function NotificationsPage() {
     return () => clearTimeout(t);
   }, [search, dispatch]);
 
-useEffect(() => {
-  const scrollContainers = [
-    document.body,
-    document.documentElement,
-    document.getElementById("root"),
-  ];
+  useEffect(() => {
+    const scrollContainers = [
+      document.body,
+      document.documentElement,
+      document.getElementById("root"),
+    ];
 
-  if (resultOpen) {
-    scrollContainers.forEach((el) => {
-      if (el) el.style.overflow = "hidden";
-    });
-  } else {
-    scrollContainers.forEach((el) => {
-      if (el) el.style.overflow = "";
-    });
-  }
+    if (resultOpen) {
+      scrollContainers.forEach((el) => {
+        if (el) el.style.overflow = "hidden";
+      });
+    } else {
+      scrollContainers.forEach((el) => {
+        if (el) el.style.overflow = "";
+      });
+    }
 
-  return () => {
-    scrollContainers.forEach((el) => {
-      if (el) el.style.overflow = "";
-    });
-  };
-}, [resultOpen]);
+    return () => {
+      scrollContainers.forEach((el) => {
+        if (el) el.style.overflow = "";
+      });
+    };
+  }, [resultOpen]);
 
   const filtered = useMemo(() => {
     if (!search) return vendors;
@@ -152,50 +152,50 @@ useEffect(() => {
     setSelectAllLoading(false);
   };
   const validate = (): string | null => {
-  if (!Object.keys(selected).length) return "Please select at least one vendor.";
-  if (!title.trim()) return "Notification title is required.";
-  if (!body || !body.replace(/<[^>]*>/g, "").trim())
-    return "Notification body is required.";
-  return null;
-};
+    if (!Object.keys(selected).length) return "Please select at least one vendor.";
+    if (!title.trim()) return "Notification title is required.";
+    if (!body || !body.replace(/<[^>]*>/g, "").trim())
+      return "Notification body is required.";
+    return null;
+  };
 
 
- const send = async () => {
-  const error = validate();
+  const send = async () => {
+    const error = validate();
 
-  if (error) {
-    setResultSuccess(false);
-    setResultMessage(error);
-    setResultOpen(true);
-    return;
-  }
+    if (error) {
+      setResultSuccess(false);
+      setResultMessage(error);
+      setResultOpen(true);
+      return;
+    }
 
-  setSending(true);
-  try {
-    await dispatch(
-      sendVendorNotification({
-        vendor_ids: Object.keys(selected).map(Number),
-        title,
-        body,
-        in_app: true,
-        email: false,
-      })
-    ).unwrap();
+    setSending(true);
+    try {
+      await dispatch(
+        sendVendorNotification({
+          vendor_ids: Object.keys(selected).map(Number),
+          title,
+          body,
+          in_app: true,
+          email: false,
+        })
+      ).unwrap();
 
-    setResultSuccess(true);
-    setResultMessage("Notification sent successfully!");
-    setSelected({});
-    setTitle("");
-    setBody("");
-    setAllSelected(false);
-  } catch (err: any) {
-    setResultSuccess(false);
-    setResultMessage(err?.message || "Failed to send notification");
-  } finally {
-    setSending(false);
-    setResultOpen(true);
-  }
-};
+      setResultSuccess(true);
+      setResultMessage("Notification sent successfully!");
+      setSelected({});
+      setTitle("");
+      setBody("");
+      setAllSelected(false);
+    } catch (err: any) {
+      setResultSuccess(false);
+      setResultMessage(err?.message || "Failed to send notification");
+    } finally {
+      setSending(false);
+      setResultOpen(true);
+    }
+  };
 
 
   const editorConfig = {
@@ -218,11 +218,12 @@ useEffect(() => {
         onClose={() => setResultOpen(false)}
       />
 
-      <div className="min-h-screen p-6">
+      <div className="h-[calc(100dvh-var(--app-header-height))] p-6 overflow-hidden">
+
         <div className="mx-auto space-y-5">
           <div className="flex items-center justify-between">
             <h1 className="text-3xl font-bold text-gray-800">
-              New Notification
+              Notification
             </h1>
 
             <div className="flex gap-3">
@@ -234,8 +235,8 @@ useEffect(() => {
                 {allSelected
                   ? "Unselect All"
                   : selectAllLoading
-                  ? "Selecting..."
-                  : "Select All"}
+                    ? "Selecting..."
+                    : "Select All"}
               </button>
 
               <button
@@ -308,11 +309,10 @@ useEffect(() => {
                     <div
                       key={v.id}
                       onClick={() => !isSelected && toggleVendor(v)}
-                      className={`px-4 py-3 text-sm ${
-                        isSelected
+                      className={`px-4 py-3 text-sm ${isSelected
                           ? "bg-gray-100 text-gray-400 cursor-not-allowed"
                           : "hover:bg-purple-50 cursor-pointer"
-                      }`}
+                        }`}
                     >
                       <div className="font-medium">{v.legal_name}</div>
                       <div className="text-xs text-gray-500">

@@ -15,18 +15,29 @@ export default function UpdateSeatsModal({
   onClose,
 }: UpdateSeatsModalProps) {
   const dispatch = useAppDispatch();
-  const [seats, setSeats] = useState(0);
+  const [seats, setSeats] = useState<string>("");
+
 
   useEffect(() => {
-    if (vendor) setSeats(vendor.seats_appointed);
+    if (vendor) {
+      setSeats(String(vendor.seats_appointed ?? ""));
+    }
   }, [vendor]);
+
 
   const save = async () => {
     if (!vendor) return;
 
+    const parsedSeats = Number(seats);
+
+    if (!Number.isInteger(parsedSeats) || parsedSeats < 0) {
+      // optional: show validation error
+      return;
+    }
+
     try {
       await dispatch(
-        updateSeats({ id: vendor.id, seats })
+        updateSeats({ id: vendor.id, seats: parsedSeats })
       ).unwrap();
 
       onClose();
@@ -34,6 +45,7 @@ export default function UpdateSeatsModal({
       console.error(err);
     }
   };
+
 
   if (!open || !vendor) return null;
 
@@ -52,10 +64,13 @@ export default function UpdateSeatsModal({
           <label className="text-sm font-medium">Seats Appointed</label>
           <input
             type="number"
+            inputMode="numeric"
             value={seats}
-            onChange={(e) => setSeats(Number(e.target.value))}
+            onChange={(e) => setSeats(e.target.value)}
             className="border rounded-lg w-full px-3 py-2"
+            placeholder="Enter number of seats"
           />
+
         </div>
 
         <div className="px-6 py-4 border-t flex justify-end gap-3">
