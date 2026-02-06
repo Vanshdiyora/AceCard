@@ -93,9 +93,6 @@ export default function Links({
     </Section>
   );
 }
-
-/* ================= MODAL ================= */
-
 function LinksFilesModal({
   open,
   buffer,
@@ -142,36 +139,64 @@ function LinksFilesModal({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[9999] bg-black/50 flex items-center justify-center px-3
-                 touch-none overscroll-none"
+      className="
+        fixed inset-0 z-[9999]
+        bg-black/50 backdrop-blur-sm
+        flex items-center justify-center px-3
+        animate-fade-in
+        touch-none overscroll-none
+      "
       onClick={onClose}
     >
       <div
-        className="bg-white w-full max-w-md rounded-2xl p-4 shadow-xl
-                   max-h-[85vh] flex flex-col animate-fadeIn"
         onClick={(e) => e.stopPropagation()}
+        className="
+          relative
+          bg-white w-full max-w-md
+          rounded-2xl shadow-xl
+          max-h-[85vh] flex flex-col
+          animate-slide-from-bottom
+        "
       >
-        <h3 className="text-base font-semibold mb-3">Edit Links & Files</h3>
+        {/* ❌ TOP RIGHT CLOSE */}
+        <button
+          onClick={onClose}
+          className="absolute right-3 top-3 h-8 w-8
+                     rounded-full flex items-center justify-center
+                     text-gray-400 hover:text-gray-700 hover:bg-gray-100"
+          aria-label="Close"
+        >
+          ✕
+        </button>
 
-        <div className="flex-1 overflow-y-auto overscroll-contain">
+        {/* HEADER */}
+        <h3 className="text-base font-semibold px-4 pt-4 pb-2">
+          Edit Links & Files
+        </h3>
+
+        {/* BODY */}
+        <div className="flex-1 overflow-y-auto overscroll-contain px-4">
           <LinksFilesSection
             value={{ items: buffer }}
             onChange={(v) => setBuffer(v.items)}
           />
         </div>
 
-        <div className="flex gap-3 mt-4">
+        {/* FOOTER */}
+        <div className="sticky bottom-0 bg-white border-t p-4 flex gap-3">
           <button
             onClick={onClose}
-            className="flex-1 py-2 rounded-xl border text-gray-600 hover:bg-gray-50"
+            className="flex-1 py-2 rounded-xl border
+                       text-gray-600 font-semibold hover:bg-gray-50"
           >
             Cancel
           </button>
 
           <button
             onClick={onSave}
-            className="flex-1 py-2 rounded-xl bg-purple-600
-                       text-white font-semibold hover:bg-purple-300"
+            className="flex-1 py-2 rounded-xl
+                       bg-purple-600 text-white font-semibold
+                       hover:bg-purple-500"
           >
             Save
           </button>

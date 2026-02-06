@@ -1,5 +1,5 @@
 import { saveContact, resolveShape } from "../../MobilePublicSettings";
-import { Pencil, X } from "lucide-react";
+import { Pencil } from "lucide-react";
 import { useEffect, useState } from "react";
 import { EditModal } from "../../MobilePublicSettings";
 
@@ -21,13 +21,19 @@ export function ProfileActions({
   });
 
   useEffect(() => {
-    if (editing) {
-      setLocal({
+    if (!editing) return;
+
+    setLocal((prev) => {
+      // 🔒 keep existing draft if already present
+      if (prev.contact_title || prev.connect_title) return prev;
+
+      return {
         contact_title: contact?.contact_title || "",
         connect_title: contact?.connect_title || "",
-      });
-    }
+      };
+    });
   }, [editing, contact]);
+
 
   const commit = () => {
     onContactChange?.((prev: any) => ({
@@ -110,17 +116,17 @@ export function ProfileActions({
 
       {/* EDIT PANEL */}
       {editing && (
-        <EditModal open onClose={() => setEditing(false)}>
-          <div className="flex justify-between items-center">
-            <h3 className="text-lg font-semibold">Edit Contact Buttons</h3>
-            <button
-              onClick={() => setEditing(false)}
-              className="text-gray-400 hover:text-gray-600"
-            >
-              <X size={18} />
-            </button>
-          </div>
+        <EditModal
+          open={editing}
+          onClose={() => setEditing(false)}
+          onSave={commit}          // ✅ save handled here
+        >
+          {/* TITLE */}
+          <h3 className="text-lg font-semibold">
+            Edit Contact Buttons
+          </h3>
 
+          {/* BODY */}
           <div className="space-y-4">
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">
@@ -129,7 +135,10 @@ export function ProfileActions({
               <input
                 value={local.contact_title}
                 onChange={(e) =>
-                  setLocal((s) => ({ ...s, contact_title: e.target.value }))
+                  setLocal((s) => ({
+                    ...s,
+                    contact_title: e.target.value,
+                  }))
                 }
                 className="w-full border rounded-lg p-2 text-sm"
                 placeholder="e.g. Save Contact"
@@ -143,32 +152,19 @@ export function ProfileActions({
               <input
                 value={local.connect_title}
                 onChange={(e) =>
-                  setLocal((s) => ({ ...s, connect_title: e.target.value }))
+                  setLocal((s) => ({
+                    ...s,
+                    connect_title: e.target.value,
+                  }))
                 }
                 className="w-full border rounded-lg p-2 text-sm"
                 placeholder="e.g. Connect Now"
               />
             </div>
           </div>
-
-          {/* FOOTER */}
-          <div className="flex gap-3 pt-4">
-            <button
-              onClick={() => setEditing(false)}
-              className="flex-1 py-2 rounded-lg border text-sm font-semibold"
-            >
-              Close
-            </button>
-
-            <button
-              onClick={commit}
-              className="flex-1 py-2 rounded-lg bg-purple-600 text-white font-semibold"
-            >
-              Done
-            </button>
-          </div>
         </EditModal>
       )}
+
     </div>
   );
 }

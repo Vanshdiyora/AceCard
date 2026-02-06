@@ -97,7 +97,7 @@ export default function LinksFilesSection({
           items={items.map((i) => i.id)}
           strategy={verticalListSortingStrategy}
         >
-<div className="space-y-3 overflow-x-hidden touch-pan-y">
+          <div className="space-y-3 overflow-x-hidden touch-pan-y">
 
             {items.map((item) => (
               <SortableItem key={item.id} id={item.id} disabled={disabled}>
@@ -191,8 +191,8 @@ export default function LinksFilesSection({
                     disabled={disabled}
                     onClick={() => removeItem(item.id)}
                     className={`font-bold text-center ${disabled
-                        ? "text-gray-300 cursor-not-allowed"
-                        : "text-red-500 hover:text-red-700"
+                      ? "text-gray-300 cursor-not-allowed"
+                      : "text-red-500 hover:text-red-700"
                       }`}
                   >
                     ✕
@@ -222,16 +222,15 @@ export function SortableItem({
     useSortable({ id, disabled });
 
   return (
-   <div
-  ref={setNodeRef}
-  style={{
-    transform: CSS.Transform.toString(transform),
-    transition,
-  }}
-  className={`bg-white border rounded-lg p-3 shadow-sm touch-pan-y ${
-    disabled ? "opacity-60" : ""
-  }`}
->
+    <div
+      ref={setNodeRef}
+      style={{
+        transform: CSS.Transform.toString(transform),
+        transition,
+      }}
+      className={`bg-white border rounded-lg p-3 shadow-sm touch-pan-y ${disabled ? "opacity-60" : ""
+        }`}
+    >
 
       <div
         className={`flex items-center gap-2 mb-2 select-none text-sm touch-none ${disabled ? "text-gray-300" : "cursor-grab text-gray-600"
@@ -272,8 +271,8 @@ function CustomSelect({
         disabled={disabled}
         onClick={() => !disabled && setOpen((v) => !v)}
         className={`w-full border rounded p-3 text-sm flex justify-between items-center ${disabled
-            ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-            : "bg-white hover:bg-gray-50"
+          ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+          : "bg-white hover:bg-gray-50"
           }`}
       >
         <span>{current?.label}</span>

@@ -57,8 +57,26 @@ export const resolveTheme = (theme: any) => ({
 
 const getYouTubeId = (url?: string) => {
   if (!url) return null;
-  const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&]+)/);
-  return match?.[1];
+
+  try {
+    const u = new URL(url);
+
+    // youtu.be/VIDEO_ID
+    if (u.hostname.includes("youtu.be")) {
+      return u.pathname.slice(1);
+    }
+
+    // youtube.com/watch?v=VIDEO_ID
+    if (u.searchParams.has("v")) {
+      return u.searchParams.get("v");
+    }
+
+    // youtube.com/embed/VIDEO_ID
+    const match = u.pathname.match(/\/embed\/([^/]+)/);
+    return match?.[1] ?? null;
+  } catch {
+    return null;
+  }
 };
 
 const sortByRank = (arr: any[]) => {
@@ -131,6 +149,7 @@ export default function MobilePublicSettings({
 
   const [openLayoutEditor, setOpenLayoutEditor] = useState(false);
 
+  const [photoGalleryDraft, setPhotoGalleryDraft] = useState<any | null>(null);
   const [productsDraft, setProductsDraft] = useState<any | null>(null);
   const [layoutDraft, setLayoutDraft] = useState<{
     layout: any;
@@ -405,7 +424,11 @@ export default function MobilePublicSettings({
             items={sortByRank(pg?.items || [])}
             theme={draft.theme}
             editable={!pg?.locked}              // 🔒 respect lock
-            onEdit={() => setEditPhotoGallery(true)}   // open modal
+            onEdit={() => {
+              setPhotoGalleryDraft(draft.photo_gallery);
+              setEditPhotoGallery(true);
+            }}
+
             onOpen={setActivePhoto}
           />
         );
@@ -437,6 +460,15 @@ export default function MobilePublicSettings({
 
 
   const [editPhotoGallery, setEditPhotoGallery] = useState(false);
+  const [youtubeDraft, setYoutubeDraft] = useState<any | null>(null);
+  useEffect(() => {
+    if (editSection?.type !== "youtube") return;
+
+    setYoutubeDraft({
+      ...(draft.youtube || {}),
+      items: safeSort(draft.youtube?.items || []),
+    });
+  }, [editSection?.type]);
 
   const resolveBackgroundStyle = () => {
     // IMAGE
@@ -489,12 +521,6 @@ export default function MobilePublicSettings({
     Array.isArray(arr)
       ? [...arr].sort((a, b) => (a.rank ?? 0) - (b.rank ?? 0))
       : [];
-
-  const youtubeSorted = React.useMemo(
-    () => safeSort(draft.youtube?.items),
-    [draft.youtube?.items]
-  );
-
 
   useEffect(() => {
     if (!draft.layout?.use_custom_font || !draft.layout?.custom_font) return;
@@ -604,130 +630,131 @@ export default function MobilePublicSettings({
         theme={draft.theme}
         onClose={() => setActivePhoto(null)}
       />
+
       {/* Youtube */}
       <EditModal
         open={editSection?.type === "youtube"}
-        onClose={() => setEditSection(null)}
+        onClose={() => {
+          setYoutubeDraft(null);     // ❌ discard
+          setEditSection(null);
+        }}
+        onSave={() => {
+          setDraft((prev: any) => ({
+            ...prev,
+            youtube: youtubeDraft,   // ✅ commit
+          }));
+          setYoutubeDraft(null);
+          setEditSection(null);
+        }}
       >
-        <h3 className="text-lg font-semibold">Manage YouTube Videos</h3>
+        <h3 className="text-lg font-semibold">
+          Manage YouTube Videos
+        </h3>
 
         {/* ADD */}
         <button
           onClick={() =>
-            setDraft((prev: any) => {
-              const items = prev.youtube?.items || [];
+            setYoutubeDraft((prev: any) => {
+              const items = prev?.items || [];
               return {
                 ...prev,
-                youtube: {
-                  ...prev.youtube,
-                  items: [
-                    ...items,
-                    { id: Date.now(), url: "", rank: items.length + 1 },
-                  ],
-                },
+                items: [
+                  ...items,
+                  { id: Date.now(), url: "", rank: items.length + 1 },
+                ],
               };
             })
           }
           className="w-full py-2 rounded-xl border border-dashed
-             text-sm font-semibold text-gray-600 hover:bg-gray-100"
+               text-sm font-semibold text-gray-600 hover:bg-gray-100"
         >
           ➕ Add Video
         </button>
 
         {/* LIST */}
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragEnd={(e) => {
-            const { active, over } = e;
-            if (!over || active.id === over.id) return;
+        {youtubeDraft && (
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={({ active, over }) => {
+              if (!over || active.id === over.id) return;
 
-            setDraft((prev: any) => {
-              const items = safeSort(prev.youtube?.items);
+              setYoutubeDraft((prev: any) => {
+                const items = safeSort(prev.items);
 
-              const oldIndex = items.findIndex(i => i.id === active.id);
-              const newIndex = items.findIndex(i => i.id === over.id);
+                const oldIndex = items.findIndex(i => i.id === active.id);
+                const newIndex = items.findIndex(i => i.id === over.id);
 
-              const reordered = arrayMove(items, oldIndex, newIndex)
-                .map((i, idx) => ({ ...i, rank: idx + 1 }));
-
-              return {
-                ...prev,
-                youtube: {
-                  ...prev.youtube,
-                  items: reordered,
-                },
-              };
-            });
-          }}
-
-        >
-          <SortableContext
-            items={youtubeSorted.map((i: any) => i.id)}
-            strategy={verticalListSortingStrategy}
+                return {
+                  ...prev,
+                  items: arrayMove(items, oldIndex, newIndex)
+                    .map((i, idx) => ({ ...i, rank: idx + 1 })),
+                };
+              });
+            }}
           >
-            <div className="space-y-2 max-h-72 overflow-y-auto overscroll-contain touch-pan-y">
+            <SortableContext
+              items={(youtubeDraft.items || []).map((i: any) => i.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              <div className="space-y-2 max-h-72 overflow-y-auto
+                        overscroll-contain touch-pan-y">
+                {(youtubeDraft.items || []).map((v: any) => (
+                  <YouTubeRow
+                    key={v.id}
+                    v={v}
+                    setDraft={(updater: any) =>
+                      setYoutubeDraft((prev: any) => {
+                        const items =
+                          typeof updater === "function"
+                            ? updater(prev.items)
+                            : updater;
 
-
-              {youtubeSorted.map((v: any) => (
-                <YouTubeRow key={v.id} v={v} setDraft={setDraft} />
-              ))}
-            </div>
-          </SortableContext>
-
-        </DndContext>
-
-
-        <div className="pt-3">
-          <button
-            onClick={() => setEditSection(null)}
-            className="w-full py-2 rounded-lg bg-purple-600 text-white"
-          >
-            Done
-          </button>
-        </div>
-
+                        return { ...prev, items };
+                      })
+                    }
+                  />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
+        )}
       </EditModal>
 
       {/* Photo gallery */}
       <EditModal
         open={editPhotoGallery}
-        onClose={() => setEditPhotoGallery(false)}
+        onClose={() => {
+          setEditPhotoGallery(false); // 👈 just close
+        }}
+        onSave={() => {
+          setDraft((prev: any) => ({
+            ...prev,
+            photo_gallery: photoGalleryDraft, // ✅ commit
+          }));
+          setEditPhotoGallery(false);
+        }}
       >
         <h3 className="text-lg font-semibold">Manage Photo Gallery</h3>
 
-        <PhotoGallerySection
-          value={draft.photo_gallery}
-          disabled={draft.photo_gallery?.locked}
-          onChange={(v: any) =>
-            setDraft((prev: any) => ({
-              ...prev,
-              photo_gallery: v,
-            }))
-          }
-        />
-
-        <div className="pt-3">
-          <button
-            onClick={() => setEditPhotoGallery(false)}
-            className="w-full py-2 rounded-lg bg-purple-600 text-white"
-          >
-            Done
-          </button>
-        </div>
+        {photoGalleryDraft && (
+          <PhotoGallerySection
+            value={photoGalleryDraft}
+            disabled={draft.photo_gallery?.locked}
+            onChange={setPhotoGalleryDraft} // local only
+          />
+        )}
       </EditModal>
 
       <ProductsEditModal
         open={editProducts}
         value={productsDraft}
         onClose={() => {
-          // ❌ discard
           setProductsDraft(null);
           setEditProducts(false);
         }}
         onChange={setProductsDraft}
         onSave={() => {
-          // ✅ commit
           setDraft((prev: any) => ({
             ...prev,
             products: productsDraft,
@@ -736,9 +763,6 @@ export default function MobilePublicSettings({
           setEditProducts(false);
         }}
       />
-
-
-
 
       {/* BOTTOM ACTION BAR */}
       <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur border-t shadow px-4 py-3 flex gap-3 justify-center">
@@ -980,11 +1004,10 @@ function Products({
   );
 }
 
-
 /* ================= YOUTUBE ================= */
 const YoutubeEmbed = React.memo(({ id }: { id: string }) => (
   <iframe
-    src={`https://www.youtube.com/embed/${id}`}
+    src={`https://www.youtube-nocookie.com/embed/${id}`}
     className="w-full h-full"
     frameBorder="0"
     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -1015,10 +1038,12 @@ function YouTube({
 
   const onScroll = () => {
     if (!ref.current) return;
+
     const index = Math.round(
       ref.current.scrollLeft / ref.current.clientWidth
     );
-    setActive(index);
+
+    setActive((prev) => (prev === index ? prev : index));
   };
 
   return (
@@ -1043,35 +1068,41 @@ function YouTube({
         }}
         className="flex overflow-x-auto snap-x snap-mandatory no-scrollbar cursor-grab active:cursor-grabbing select-none"
       >
-        {valid.map((v) => {
-          const id = getYouTubeId(v.url);
-          return (
-            <div
-              key={v.id}
-              className="relative min-w-full h-48 snap-center px-1"
-            >
-              {/* ROUND EDIT ICON */}
-              {editable && (
-                <button
-                  onClick={() => onEdit(v)}
-                  className="absolute top-2 right-0 z-20 h-8 w-8 rounded-full shadow
-                    flex items-center justify-center transition hover:scale-105
-                    bg-orange-500 text-white"
-                  title="Edit"
-                >
-                  <Pencil size={14} />
-                </button>
-              )}
+      {valid.map((v, i) => {
+  const id = getYouTubeId(v.url);
 
-              {/* iframe blocker layer so drag works */}
-              {/* <div className="absolute inset-0 z-10" /> */}
+  return (
+    <div
+      key={v.id}
+      className="relative min-w-full h-48 snap-center px-1"
+    >
+      {/* ROUND EDIT ICON */}
+      {editable && (
+        <button
+          onClick={() => onEdit(v)}
+          className="absolute top-2 right-0 z-20 h-8 w-8 rounded-full shadow
+            flex items-center justify-center transition hover:scale-105
+            bg-orange-500 text-white"
+          title="Edit"
+        >
+          <Pencil size={14} />
+        </button>
+      )}
 
-              <div className="w-full h-full rounded-2xl overflow-hidden shadow-md">
-                <YoutubeEmbed id={id!} />
-              </div>
-            </div>
-          );
-        })}
+      <div className="w-full h-full rounded-2xl overflow-hidden shadow-md bg-black/5">
+        {i === active && id ? (
+          <YoutubeEmbed id={id} />
+        ) : (
+          // Lightweight placeholder instead of iframe
+          <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm">
+            Video {i + 1}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+})}
+
       </div>
 
       {/* DOTS */}
@@ -1156,20 +1187,79 @@ function useIsMobile(breakpoint = 768) {
   return isMobile;
 }
 
-export function EditModal({ open, onClose, children }: any) {
+export function EditModal({
+  open,
+  onClose,
+  onSave,
+  children,
+  showFooter = true,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onSave?: () => void;
+  children: React.ReactNode;
+  showFooter?: boolean;
+}) {
   if (!open) return null;
 
   return (
     <div
-      className="fixed inset-0 z-[9999] bg-black/60 flex items-center justify-center px-4"
-      onClick={onClose}   // 👈 only backdrop closes
+      className="
+        fixed inset-0 z-[9999]
+        bg-black/60 backdrop-blur-sm
+        flex items-center justify-center px-4
+        animate-fade-in
+      "
+      onClick={onClose}
     >
       <div
-        onClick={(e) => e.stopPropagation()} // 👈 block inner clicks
-        className="w-full max-w-md bg-white rounded-2xl shadow-xl 
-                   max-h-[85vh] overflow-y-auto p-4 space-y-3 animate-fadeIn"
+        onClick={(e) => e.stopPropagation()}
+        className="
+          w-full max-w-md
+          bg-white rounded-2xl shadow-xl
+          max-h-[85vh] overflow-y-auto
+          flex flex-col
+          animate-slide-from-bottom
+        "
       >
-        {children}
+        {/* HEADER */}
+        <div className="relative  border-b">
+          <button
+            onClick={onClose}
+            className="absolute right-3 top-3 h-8 w-8
+                       rounded-full flex items-center justify-center
+                       text-gray-500 hover:bg-gray-100"
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* BODY */}
+        <div className="flex-1 p-4 space-y-3">
+          {children}
+        </div>
+
+        {/* FOOTER */}
+        {showFooter && (
+          <div className="sticky bottom-0 bg-white border-t p-4 flex gap-3">
+            <button
+              onClick={onClose}
+              className="flex-1 py-2 rounded-lg border font-semibold"
+            >
+              Cancel
+            </button>
+
+            {onSave && (
+              <button
+                onClick={onSave}
+                className="flex-1 py-2 rounded-lg
+                           bg-purple-600 text-white font-semibold"
+              >
+                Save
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -1407,7 +1497,7 @@ function VideoGallery({
                   <div className="w-full h-[140px] bg-black">
                     {isYouTube(v.video_url) ? (
                       <iframe
-                        src={`https://www.youtube.com/embed/${id}`}
+                        src={`https://www.youtube-nocookie.com/embed/${id}`}
                         className="w-full h-full"
                         frameBorder="0"
                         allowFullScreen
@@ -1479,7 +1569,6 @@ function BackgroundVideo({ src }: { src?: string }) {
     </div>
   );
 }
-
 
 function EditableAbout({
   value,
