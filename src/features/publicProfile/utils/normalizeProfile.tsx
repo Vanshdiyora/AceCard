@@ -4,6 +4,7 @@ export function normalizeProfile(api: any) {
   const cfg = api.configuration ?? {};
 
   return {
+     role: api.role ?? "manager",
     /* ================= PROFILE ================= */
     profile: {
       avatar_url: cfg.profile.avatar_url,
@@ -249,7 +250,7 @@ export function denormalizeProfile(
 ) {
   return {
     ...baseApi, // keep username, ids, meta, etc
-
+    role: cfg.role,
     avatar_url: cfg.profile.avatar_url,
     cover_url: cfg.cover.cover_url,
     description: cfg.profile.description,

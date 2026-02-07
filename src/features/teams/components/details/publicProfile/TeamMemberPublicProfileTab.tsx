@@ -145,6 +145,7 @@ export interface PhotoGalleryConfig extends LockMeta {
 }
 
 interface PublicProfileConfig {
+  role: string;
   layout: LayoutConfig;
   profile: ProfileConfig;
   cover: CoverConfig;
@@ -386,13 +387,13 @@ export default function TeamMemberPublicProfileTab({
 
       social_links: showLockable
         ? {
+          ...withLock(config.social_links),
           items: config.social_links.items,
-          locked: config.social_links.locked,
-          lock_mode: config.social_links.lock_mode,
         }
         : {
           items: config.social_links.items,
         },
+
 
       photo_gallery: withLock(config.photo_gallery),
       video_gallery: showLockable
@@ -412,19 +413,44 @@ export default function TeamMemberPublicProfileTab({
         items: config.products.items,
       },
 
-      youtube: showLockable
-        ? { items: config.youtube.items, locked: config.youtube.locked, lock_mode: config.youtube.lock_mode }
-        : { items: config.youtube.items },
+      // youtube: showLockable
+      //   ? { items: config.youtube.items, locked: config.youtube.locked, lock_mode: config.youtube.lock_mode }
+      //   : { items: config.youtube.items },
 
+      // links_files: showLockable
+      //   ? { items: config.links_files.items, locked: config.links_files.locked, lock_mode: config.links_files.lock_mode }
+      //   : { items: config.links_files.items },
+
+      // sections: showLockable
+      //   ? {
+      //     items: config.sections.items,
+      //     locked: config.sections.locked,
+      //     lock_mode: config.sections.lock_mode,
+      //   }
+      //   : {
+      //     items: config.sections.items,
+      //   },
+      youtube: showLockable
+        ? {
+          ...withLock(config.youtube),
+          items: config.youtube.items,
+        }
+        : {
+          items: config.youtube.items,
+        },
       links_files: showLockable
-        ? { items: config.links_files.items, locked: config.links_files.locked, lock_mode: config.links_files.lock_mode }
-        : { items: config.links_files.items },
+        ? {
+          ...withLock(config.links_files),
+          items: config.links_files.items,
+        }
+        : {
+          items: config.links_files.items,
+        },
 
       sections: showLockable
         ? {
+          ...withLock(config.sections),
           items: config.sections.items,
-          locked: config.sections.locked,
-          lock_mode: config.sections.lock_mode,
         }
         : {
           items: config.sections.items,
@@ -627,6 +653,7 @@ export default function TeamMemberPublicProfileTab({
         {showLockable && (
           <LockControl
             value={config.layout}
+            role={config.role}
             onChange={(v) =>
               update({
                 ...config,
@@ -697,6 +724,7 @@ export default function TeamMemberPublicProfileTab({
               {showLockable && (
                 <LockControl
                   value={config.cover}
+                  role={config.role}
                   onChange={(v) =>
                     update({
                       ...config,
@@ -1172,14 +1200,20 @@ export default function TeamMemberPublicProfileTab({
         {showLockable && (
           <LockControl
             value={config.contact}
+            role={config.role}
             onChange={(v) =>
               update({ ...config, contact: { ...config.contact, ...v } })
             }
           />
         )}
 
-        <div className="space-y-6">
-
+        <div
+          className={
+            isReadOnly(config.contact)
+              ? "opacity-60 pointer-events-none space-y-2"
+              : "space-y-2"
+          }
+        >
           {/* CONNECT BUTTON TITLE */}
           <div className="space-y-1">
             <p className="text-sm font-medium text-gray-700">
@@ -1213,14 +1247,15 @@ export default function TeamMemberPublicProfileTab({
               placeholder="e.g. Save Contact"
             />
           </div>
-
         </div>
       </Card>
 
-      <Card title="Social Links" desc="Your public social profiles">
+
+      <Card title="Social Links" desc="Your public social   profiles">
         {showLockable && (
           <LockControl
             value={config.social_links}
+            role={config.role}
             onChange={(v) =>
               update({
                 ...config,
@@ -1257,6 +1292,7 @@ export default function TeamMemberPublicProfileTab({
         {showLockable && (
           <LockControl
             value={config.theme}
+            role={config.role}
             onChange={(v) =>
               update({
                 ...config,
@@ -1299,6 +1335,7 @@ export default function TeamMemberPublicProfileTab({
           <div className="px-6 mt-3">
             <LockControl
               value={config.products}
+              role={config.role}
               onChange={(v) =>
                 update({
                   ...config,
@@ -1423,6 +1460,7 @@ export default function TeamMemberPublicProfileTab({
         {showLockable && (
           <LockControl
             value={config.photo_gallery}
+            role={config.role}
             onChange={(v) =>
               update({
                 ...config,
@@ -1445,6 +1483,7 @@ export default function TeamMemberPublicProfileTab({
         {showLockable && (
           <LockControl
             value={config.video_gallery}
+            role={config.role}
             onChange={(v) =>
               update({ ...config, video_gallery: { ...config.video_gallery, ...v } })
             }
@@ -1464,6 +1503,7 @@ export default function TeamMemberPublicProfileTab({
         {showLockable && (
           <LockControl
             value={config.banner}
+            role={config.role}
             onChange={(v) =>
               update({
                 ...config,
@@ -1555,6 +1595,7 @@ export default function TeamMemberPublicProfileTab({
         {showLockable && (
           <LockControl
             value={config.youtube}
+            role={config.role}
             onChange={(v) =>
               update({
                 ...config,
@@ -1578,6 +1619,7 @@ export default function TeamMemberPublicProfileTab({
         {showLockable && (
           <LockControl
             value={config.meeting}
+            role={config.role}
             onChange={(v) =>
               update({
                 ...config,
@@ -1599,6 +1641,7 @@ export default function TeamMemberPublicProfileTab({
 
           <LockControl
             value={config.links_files}
+            role={config.role}
             onChange={(v) =>
               update({
                 ...config,
@@ -1621,6 +1664,7 @@ export default function TeamMemberPublicProfileTab({
         {showLockable && (
           <LockControl
             value={config.sections}
+            role={config.role}
             onChange={(v) =>
               update({
                 ...config,
@@ -1874,21 +1918,29 @@ function ColorPickerField({
   );
 }
 
-
 export function LockControl({
   value,
+  role,
   onChange,
 }: {
   value?: LockMeta;
+  role?: string;
   onChange: (v: LockMeta) => void;
 }) {
   if (!value) return null;
 
+  /* ================= STATE ================= */
   const [open, setOpen] = useState(false);
   const btnRef = useRef<HTMLButtonElement | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
   const [menuW, setMenuW] = useState(0);
 
+  /* 🔒 WAS LOCKED (INITIAL STATE ONLY) */
+  const wasLockedRef = useRef<boolean>(
+    value.lock_mode === "global" && Boolean(value.locked)
+  );
+
+  /* ================= MODES ================= */
   const modes: { id: LockMode; label: string }[] = [
     { id: "individual", label: "Individual" },
     { id: "global", label: "Global" },
@@ -1897,22 +1949,27 @@ export function LockControl({
   const currentMode: LockMode = value.lock_mode ?? "individual";
   const isIndividual = currentMode === "individual";
   const isGlobal = currentMode === "global";
-
   const locked = isGlobal && Boolean(value.locked);
+
+  /* ================= HARD LOCK RULE =================
+     - vendor_admin → never locked
+     - manager → locked ONLY if it was already locked initially */
+  const isHardLocked =
+    role === "manager" && wasLockedRef.current;
 
   const active =
     modes.find((m) => m.id === currentMode) ?? modes[0];
 
-  // Sync dropdown width with button
+  /* ================= EFFECTS ================= */
+
   useEffect(() => {
     if (btnRef.current) {
       setMenuW(btnRef.current.offsetWidth);
     }
   }, [active.label]);
 
-  // Close on outside click or scroll
   useEffect(() => {
-    if (!open) return;
+    if (!open || isHardLocked) return;
 
     const close = (e?: Event) => {
       if (
@@ -1932,41 +1989,38 @@ export function LockControl({
       document.removeEventListener("mousedown", close);
       window.removeEventListener("scroll", close, true);
     };
-  }, [open]);
+  }, [open, isHardLocked]);
+
+  /* ================= RENDER ================= */
 
   return (
     <div className="flex items-center justify-between mb-3">
       <div className="flex items-center gap-3">
+
         {/* LABEL */}
         <span
           className={`text-sm transition
-            ${isIndividual
-              ? "text-gray-400 cursor-not-allowed"
-              : "text-gray-700"
+            ${isHardLocked
+              ? "text-gray-300 cursor-not-allowed"
+              : isIndividual
+                ? "text-gray-400 cursor-not-allowed"
+                : "text-gray-700"
             }`}
           title={
-            isIndividual
-              ? "Locking is disabled for individual mode"
+            isHardLocked
+              ? "Locked by admin"
               : "Lock status"
           }
         >
           Locked
         </span>
 
-
         {/* TOGGLE */}
         <button
           type="button"
-          disabled={isIndividual}
-          title={
-            isIndividual
-              ? "Lock is disabled for individual mode"
-              : locked
-                ? "Lock on"
-                : "Lock off"
-          }
+          disabled={isIndividual || isHardLocked}
           onClick={() => {
-            if (!isGlobal) return;
+            if (!isGlobal || isHardLocked) return;
 
             onChange({
               ...value,
@@ -1976,7 +2030,7 @@ export function LockControl({
             setOpen(false);
           }}
           className={`relative inline-flex h-5 w-9 items-center rounded-full transition
-            ${isIndividual
+            ${isIndividual || isHardLocked
               ? "bg-gray-200 cursor-not-allowed"
               : locked
                 ? "bg-purple-600"
@@ -1985,10 +2039,8 @@ export function LockControl({
         >
           <span
             className={`inline-block h-3 w-3 transform rounded-full bg-white transition
-              ${locked && isGlobal
-                ? "translate-x-5"
-                : "translate-x-1"
-              }`}
+              ${locked ? "translate-x-5" : "translate-x-1"}
+            `}
           />
         </button>
 
@@ -1997,14 +2049,19 @@ export function LockControl({
           <button
             ref={btnRef}
             type="button"
-            onClick={() => setOpen((v) => !v)}
-            className="flex items-center justify-between gap-2 border rounded-md px-3 py-1 text-xs min-w-[120px] bg-white"
+            disabled={isHardLocked}
+            onClick={() => !isHardLocked && setOpen((v) => !v)}
+            className={`flex items-center justify-between gap-2 border rounded-md px-3 py-1 text-xs min-w-[120px]
+              ${isHardLocked
+                ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                : "bg-white"
+              }`}
           >
             {active.label}
             <ChevronDown className="w-3 h-3 text-gray-500" />
           </button>
 
-          {open && (
+          {open && !isHardLocked && (
             <div
               ref={menuRef}
               style={{ width: menuW }}
@@ -2018,10 +2075,7 @@ export function LockControl({
                     onChange({
                       ...value,
                       lock_mode: m.id,
-                      locked:
-                        m.id === "global"
-                          ? value.locked
-                          : false, // 🔒 enforce rule
+                      locked: m.id === "global" ? value.locked : false,
                     });
                     setOpen(false);
                   }}
