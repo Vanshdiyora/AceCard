@@ -61,6 +61,7 @@ export default function TeamPage() {
   const [sortBy, setSortBy] = useState<SortBy>(null);
   const [sortOrder, setSortOrder] = useState<SortOrder>(null);
 
+
   const [roleFilter, setRoleFilter] = useState<RoleFilter>("all");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [page, setPage] = useState(1);
@@ -94,14 +95,10 @@ export default function TeamPage() {
   );
 
   /* ======================================================
-     FETCH TEAM
+     ✅ NEW: MEMOIZED QUERY PARAMS (SINGLE SOURCE OF TRUTH)
   ====================================================== */
 
-  useEffect(() => {
-    dispatch(fetchSubscription());
-  }, [dispatch]);
-
-  useEffect(() => {
+  const teamQueryParams = useMemo(() => {
     const params: any = {
       page,
       page_size: pageSize,
@@ -110,14 +107,11 @@ export default function TeamPage() {
     if (sortBy) params.sort_by = sortBy;
     if (sortOrder) params.sort_order = sortOrder;
     if (search) params.search = search;
-
-    // 🔥 DO NOT SEND "all"
     if (roleFilter !== "all") params.role = roleFilter;
     if (statusFilter !== "all") params.status = statusFilter;
 
-    dispatch(fetchTeam(params));
+    return params;
   }, [
-    dispatch,
     page,
     pageSize,
     search,
@@ -127,13 +121,39 @@ export default function TeamPage() {
     sortOrder,
   ]);
 
-  useEffect(() => {
-    if (searchParams.get("open") === "create") setAddOpen(true);
-  }, [searchParams]);
+  /* ======================================================
+     FETCH TEAM
+  ====================================================== */
 
+  useEffect(() => {
+    dispatch(fetchSubscription());
+  }, [dispatch]);
+
+  // ✅ KEEP — resets page on filter/sort/search
   useEffect(() => {
     setPage(1);
   }, [search, roleFilter, statusFilter, sortBy, sortOrder]);
+
+  // ✅ MODIFIED — GUARANTEES SINGLE API CALL
+  useEffect(() => {
+    // Prevent double call when page resets after filter change
+    if (
+      page !== 1 &&
+      (search ||
+        roleFilter !== "all" ||
+        statusFilter !== "all" ||
+        sortBy ||
+        sortOrder)
+    ) {
+      return;
+    }
+
+    dispatch(fetchTeam(teamQueryParams));
+  }, [dispatch, teamQueryParams, page]);
+
+  useEffect(() => {
+    if (searchParams.get("open") === "create") setAddOpen(true);
+  }, [searchParams]);
 
   /* ======================================================
      TABLE
@@ -284,7 +304,7 @@ export default function TeamPage() {
           {
             key: "sort_by",
             title: "Sort By",
-            placeholder: "Sort By",
+            placeholder: "Sort By", // ✅ REQUIRED
             value: sortBy ?? "",
             onChange: (v) => setSortBy(v ? (v as SortBy) : null),
             options: [
@@ -296,7 +316,7 @@ export default function TeamPage() {
           {
             key: "sort_order",
             title: "Order",
-            placeholder: "Order",
+            placeholder: "Order", // ✅ REQUIRED
             value: sortOrder ?? "",
             onChange: (v) => setSortOrder(v ? (v as SortOrder) : null),
             options: [
@@ -305,6 +325,7 @@ export default function TeamPage() {
             ],
           },
         ]}
+
       />
 
       <div className="mt-6">
@@ -321,7 +342,6 @@ export default function TeamPage() {
         />
       </div>
 
-      {/* MODALS */}
       <AddMemberModal
         open={addOpen}
         currentRole={currentRole}

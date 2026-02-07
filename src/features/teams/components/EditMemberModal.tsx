@@ -38,7 +38,7 @@ export default function EditMemberModal({
       phone: member.phone ?? "",
       role: member.role,
       manager_id: member.manager_id ?? undefined,
-      avatar: member.avatar_url ?? "",
+      avatar: member.avatar ?? "",
       custom_job_role: member.custom_job_role ?? "", // 👈 ADD
     });
 

@@ -5,9 +5,18 @@ interface Props {
 }
 
 export default function RecentActivity({ items }: Props) {
-  if (!items || items.length === 0) {
+  // ✅ Filter only last 24 hours
+  const last24HoursItems =
+    items?.filter((i) => {
+      const createdAt = new Date(i.created_at).getTime();
+      const now = Date.now();
+      return now - createdAt <= 24 * 60 * 60 * 1000;
+    }) ?? [];
+
+  if (!last24HoursItems || last24HoursItems.length === 0) {
     return (
-      <div className="bg-white rounded-2xl border px-6 py-5 text-center text-sm text-gray-500"
+      <div
+        className="bg-white rounded-2xl border px-6 py-5 text-center text-sm text-gray-500"
         style={{ boxShadow: "2px 2px 3px 0px #2D1A5340" }}
       >
         <h3 className="font-semibold text-[#2d1a53] mb-4">Recent Activity</h3>
@@ -24,7 +33,7 @@ export default function RecentActivity({ items }: Props) {
       <h3 className="font-semibold text-[#2d1a53] mb-4">Recent Activity</h3>
 
       <div className="divide-y divide-purple-100">
-        {items.map((i, idx) => (
+        {last24HoursItems.map((i, idx) => (
           <div key={idx} className="relative flex items-center py-4">
             {/* Left */}
             <div className="flex items-center gap-4">

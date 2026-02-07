@@ -114,7 +114,7 @@ export default function EditCampaignModal({
     )
       .unwrap()
       .then((res: any) => setHasNextProducts(res.meta.has_next));
-  }, [open, campaign, dispatch]);
+  }, [open]);
 
   /* ---------- BODY SCROLL LOCK ---------- */
   useEffect(() => {

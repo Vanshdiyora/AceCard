@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect } from "react";
 import { useAppDispatch, useAppSelector } from "../../../../app/hooks";
 import { fetchLeadNotes } from "../../slice";
 import BrandLoader from "../../../../common/ui/BrandLoader";
@@ -12,19 +12,10 @@ export default function LeadNotesTab({ leadId }: Props) {
 
   const notes = useAppSelector((s) => s.leads.notes[leadId]) || [];
   const loading = useAppSelector((s) => s.leads.loading);
-  const teamMembers = useAppSelector((s) => s.team.members);
 
   useEffect(() => {
     dispatch(fetchLeadNotes(leadId));
   }, [dispatch, leadId]);
-
-  const memberMap = useMemo(() => {
-    const map: Record<number, string> = {};
-    teamMembers.forEach((m) => {
-      map[m.id] = m.name || m.email || `User #${m.id}`;
-    });
-    return map;
-  }, [teamMembers]);
 
   return (
     <div className="space-y-6">
@@ -45,7 +36,11 @@ export default function LeadNotesTab({ leadId }: Props) {
           notes.map((n) => (
             <NoteCard
               key={n.id}
-              authorName={memberMap[n.author_id] || `User #${n.author_id}`}
+              authorName={
+                n.author_name ||
+                n.author_email ||
+                `User #${n.author_id}`
+              }
               time={new Date(n.created_at).toLocaleString()}
               text={n.body}
             />
@@ -54,6 +49,10 @@ export default function LeadNotesTab({ leadId }: Props) {
     </div>
   );
 }
+
+/* ======================================================
+   NOTE CARD
+====================================================== */
 
 const NoteCard = ({
   authorName,
@@ -64,10 +63,12 @@ const NoteCard = ({
   time: string;
   text: string;
 }) => (
-  <div className="
-    bg-white border border-gray-100 rounded-2xl
-    px-5 py-4 shadow-sm hover:shadow-md transition
-  ">
+  <div
+    className="
+      bg-white border border-gray-100 rounded-2xl
+      px-5 py-4 shadow-sm hover:shadow-md transition
+    "
+  >
     <div className="flex items-center justify-between mb-1">
       <span className="text-sm font-semibold text-gray-900">
         {authorName}

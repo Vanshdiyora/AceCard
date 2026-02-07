@@ -88,6 +88,19 @@ export default function TeamMemberOverviewTab({
     return allCampaigns;
   }, [allCampaigns, member.role, member.id]);
 
+  const formatDateTime = (iso?: string) => {
+    if (!iso) return "-";
+
+    return new Date(iso).toLocaleString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
+  };
+
   return (
     <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 mt-6">
       {/* ================= MEMBER DETAILS ================= */}
@@ -100,7 +113,11 @@ export default function TeamMemberOverviewTab({
           <Detail label="Role" value={displayRole} />
 
           <Detail label="Status" value={member.status} />
-          <Detail label="Joined On" value={member.created_at} />
+          <Detail
+            label="Joined On"
+            value={formatDateTime(member.created_at)}
+          />
+
         </div>
 
         {/* ================= SHARE ================= */}

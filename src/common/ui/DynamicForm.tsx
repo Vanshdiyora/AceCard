@@ -133,7 +133,7 @@ export default function DynamicForm({
                   type={field.type}
                   className={`${baseInputClass} ${showError ? "border-red-500" : ""
                     }`}
-                    disabled={disabled || field.disabled}
+                  disabled={disabled || field.disabled}
                   placeholder={field.placeholder}
                   value={form[field.name] ?? ""}
                   onChange={(e) =>
@@ -154,8 +154,9 @@ export default function DynamicForm({
                   type="number"
                   className={`${baseInputClass} ${showError ? "border-red-500" : ""
                     }`}
-                    disabled={disabled || field.disabled}
+                  disabled={disabled || field.disabled}
                   value={form[field.name] ?? ""}
+                  placeholder={field.placeholder}
                   onChange={(e) =>
                     handleChange(
                       field,
@@ -176,8 +177,9 @@ export default function DynamicForm({
             {field.type === "textarea" && (
               <>
                 <textarea
-                disabled={disabled || field.disabled}
+                  disabled={disabled || field.disabled}
                   rows={3}
+                  placeholder={field.placeholder}
                   className={`${baseInputClass} ${showError ? "border-red-500" : ""
                     }`}
                   value={form[field.name] ?? ""}
@@ -324,8 +326,8 @@ export default function DynamicForm({
                   {/* AVATAR PREVIEW */}
                   <div
                     className={`relative w-28 h-28 rounded-full border overflow-hidden bg-gray-100 flex items-center justify-center ${disabled || field.disabled
-                        ? "opacity-60 pointer-events-none"
-                        : ""
+                      ? "opacity-60 pointer-events-none"
+                      : ""
                       }`}
                   >
                     {form[field.name] ? (

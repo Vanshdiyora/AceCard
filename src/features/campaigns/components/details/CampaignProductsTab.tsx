@@ -43,11 +43,6 @@ export default function CampaignProductsTab({ assignedProducts = [] }: Props) {
 
   return (
     <div>
-      <div>
-        <h3 className="text-lg font-semibold">Products</h3>
-        <p className="text-sm text-gray-500">Products linked to this campaign</p>
-      </div>
-
       <div className="rounded-2xl border mt-6">
         <DataTable<ProductRow>
           columns={columns}

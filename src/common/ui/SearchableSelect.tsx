@@ -39,6 +39,7 @@ export default function SearchableSelect({
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [pos, setPos] = useState({ top: 0, left: 0, width: 0 });
+  const [openUp, setOpenUp] = useState(false); // ✅ ADD
 
   const triggerRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -84,65 +85,79 @@ export default function SearchableSelect({
   return (
     <>
       {/* ================= TRIGGER ================= */}
-    <div
-  ref={triggerRef}
-  onClick={() => {
-    if (disabled) return;
-    const r = triggerRef.current?.getBoundingClientRect();
-    if (r) {
-      setPos({
-        top: r.bottom + window.scrollY,
-        left: r.left + window.scrollX,
-        width: r.width,
-      });
-    }
-    setOpen((s) => !s);
-  }}
-  className={`border rounded-lg px-3 py-2 text-sm cursor-pointer bg-white
-    min-h-[44px] flex items-center
-    ${disabled ? "opacity-50" : ""}
-  `}
->
-  {/* FIXED CONTENT ROW */}
-  <div className="flex items-center w-full min-h-[20px]">
-    {/* MULTI CHIPS */}
-    {multiple &&
-      Array.isArray(value) &&
-      value.length > 0 &&
-      !hideValues &&
-      options
-        .filter((o) => value.includes(o.value))
-        .map((o) => (
+      <div
+        ref={triggerRef}
+        onClick={() => {
+          if (disabled) return;
+
+          const r = triggerRef.current?.getBoundingClientRect();
+          if (!r) return;
+
+          const viewportHeight = window.innerHeight;
+          const spaceBelow = viewportHeight - r.bottom;
+          const spaceAbove = r.top;
+
+          const DROPDOWN_ESTIMATED_HEIGHT = 260;
+
+          const shouldOpenUp =
+            spaceBelow < DROPDOWN_ESTIMATED_HEIGHT &&
+            spaceAbove > spaceBelow;
+
+          setOpenUp(shouldOpenUp);
+
+          setPos({
+            top: shouldOpenUp
+              ? r.top + window.scrollY
+              : r.bottom + window.scrollY,
+            left: r.left + window.scrollX,
+            width: r.width,
+          });
+
+          setOpen((s) => !s);
+        }}
+        className={`border rounded-lg px-3 py-2 text-sm cursor-pointer bg-white
+          min-h-[44px] flex items-center
+          ${disabled ? "opacity-50" : ""}
+        `}
+      >
+        <div className="flex items-center w-full min-h-[20px]">
+          {/* MULTI CHIPS */}
+          {multiple &&
+            Array.isArray(value) &&
+            value.length > 0 &&
+            !hideValues &&
+            options
+              .filter((o) => value.includes(o.value))
+              .map((o) => (
+                <span
+                  key={o.value}
+                  className="bg-purple-100 text-purple-700 px-2 py-0.5 rounded text-xs mr-1"
+                >
+                  {o.label}
+                </span>
+              ))}
+
+          {/* SINGLE VALUE */}
+          {!multiple && value != null && !hideValues && (
+            <span className="text-gray-800 truncate">
+              {options.find((o) => o.value === value)?.label || placeholder}
+            </span>
+          )}
+
+          {/* PLACEHOLDER */}
           <span
-            key={o.value}
-            className="bg-purple-100 text-purple-700 px-2 py-0.5 rounded text-xs mr-1"
+            className={`text-gray-600 ${
+              hideValues ||
+              (multiple && (!Array.isArray(value) || value.length === 0)) ||
+              (!multiple && value == null)
+                ? "opacity-100"
+                : "opacity-0"
+            }`}
           >
-            {o.label}
+            {placeholder}
           </span>
-        ))}
-
-    {/* SINGLE VALUE */}
-    {!multiple && value != null && !hideValues && (
-      <span className="text-gray-800 truncate">
-        {options.find((o) => o.value === value)?.label || placeholder}
-      </span>
-    )}
-
-    {/* PLACEHOLDER (ALWAYS RENDERED, HIDDEN VIA OPACITY) */}
-    <span
-      className={`text-gray-600 ${
-        hideValues ||
-        (multiple && (!Array.isArray(value) || value.length === 0)) ||
-        (!multiple && value == null)
-          ? "opacity-100"
-          : "opacity-0"
-      }`}
-    >
-      {placeholder}
-    </span>
-  </div>
-</div>
-
+        </div>
+      </div>
 
       {/* ================= DROPDOWN ================= */}
       {open &&
@@ -151,7 +166,10 @@ export default function SearchableSelect({
             ref={dropdownRef}
             className="fixed z-[99999] bg-white border rounded-xl shadow-lg"
             style={{
-              top: pos.top,
+              top: openUp ? undefined : pos.top,
+              bottom: openUp
+                ? window.innerHeight - pos.top + "px"
+                : undefined,
               left: pos.left,
               width: pos.width,
             }}

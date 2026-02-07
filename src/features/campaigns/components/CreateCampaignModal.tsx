@@ -253,14 +253,32 @@ export default function CreateCampaignModal({
   ====================================================== */
 
   const fields: FieldConfig[] = [
-    { name: "name", label: "Campaign Name", type: "text", required: true },
-    { name: "description", label: "Campaign Description", type: "textarea" },
-    { name: "budget", label: "Target / Budget", type: "number", required: true },
+    {
+      name: "name",
+      label: "Campaign Name",
+      type: "text",
+      required: true,
+      placeholder: "Enter campaign name",
+    },
+    {
+      name: "description",
+      label: "Campaign Description",
+      type: "textarea",
+      placeholder: "Describe the campaign (optional)",
+    },
+    {
+      name: "budget",
+      label: "Target / Budget",
+      type: "number",
+      required: true,
+      placeholder: "Enter budget amount",
+    },
     {
       name: "status",
       label: "Status",
       type: "select",
       required: true,
+      placeholder: "Select status",
       options: STATUS_OPTIONS,
     },
     {
@@ -269,6 +287,7 @@ export default function CreateCampaignModal({
       type: "search-select",
       hideValues: false,
       required: true,
+      placeholder: "Search and select manager",
       options: managerOptionsCache,
       onSearch: setManagerSearch,
       onScrollEnd: loadMoreManagers,
@@ -278,6 +297,7 @@ export default function CreateCampaignModal({
       name: "salesperson_ids",
       label: "Assigned Salespersons",
       type: "search-multiselect",
+      placeholder: "Search and select salespersons",
       options: salesOptionsCache,
       onSearch: setSalesSearch,
       onScrollEnd: loadMoreSales,
@@ -290,14 +310,27 @@ export default function CreateCampaignModal({
       required: true,
       hideValues: false,
       minItems: 1,
+      placeholder: "Search and select products",
       options: productOptionsCache,
       onSearch: setProductSearch,
       onScrollEnd: loadMoreProducts,
       showLoader: loadingMoreProducts || productsLoading,
     },
-    { name: "start_date", label: "Start Date", type: "date", required: true },
-    { name: "end_date", label: "End Date (Optional)", type: "date" },
+    {
+      name: "start_date",
+      label: "Start Date",
+      type: "date",
+      required: true,
+      placeholder: "Select start date",
+    },
+    {
+      name: "end_date",
+      label: "End Date (Optional)",
+      type: "date",
+      placeholder: "Select end date (optional)",
+    },
   ];
+
 
   /* ======================================================
      SUBMIT

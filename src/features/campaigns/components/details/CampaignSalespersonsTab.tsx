@@ -114,23 +114,6 @@ export default function CampaignSalespersonsTab({
 
   return (
     <div>
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-lg font-semibold">Assigned Salespersons</h3>
-          <p className="text-sm text-gray-500">
-            People currently working on this campaign
-          </p>
-        </div>
-
-        <button
-          onClick={() => setOpen(true)}
-          className="px-4 py-2 rounded-lg text-sm font-medium bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow hover:shadow-md transition"
-        >
-          + Assign
-        </button>
-      </div>
-
       {/* Table */}
       <div className="rounded-2xl border mt-6">
         <DataTable<SalespersonRow>

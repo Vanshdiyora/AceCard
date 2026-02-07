@@ -26,10 +26,6 @@ export default function LeadOverviewTab({ lead }: Props) {
             label="Created"
             value={new Date(lead.created_at).toLocaleDateString()}
           />
-          <Info
-            label="Last Interaction"
-            value={new Date(lead.last_interaction_at).toLocaleString()}
-          />
         </div>
       </div>
     </div>

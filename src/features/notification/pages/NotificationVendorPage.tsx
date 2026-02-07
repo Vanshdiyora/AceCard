@@ -263,7 +263,7 @@ export default function NotificationTeamPage() {
         onClose={() => setResultOpen(false)}
       />
 
-      <div className="min-h-screen p-6">
+      <div className="h-[calc(100dvh-var(--app-header-height))] p-6 overflow-hidden">
         <div className="mx-auto space-y-5">
           <div className="flex items-center justify-between">
             <h1 className="text-3xl font-bold text-gray-800">

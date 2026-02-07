@@ -8,7 +8,7 @@ export interface Lead {
   assigned_rep_id?: number;
   assigned_rep_name: string;
   stage: string;
-  products?: number[];
+  products?: LeadProduct[];
   deal_amount: number;
   source: string;
   last_interaction_at: string;
@@ -29,7 +29,7 @@ export interface CreateLeadDto {
   age?: number;
 }
 
-export interface UpdateLeadDto extends CreateLeadDto {}
+export interface UpdateLeadDto extends CreateLeadDto { }
 
 export interface PaginationMeta {
   total_count: number;
@@ -49,6 +49,11 @@ export interface LeadNote {
   id: number;
   lead_id: number;
   author_id: number;
+
+  // ✅ ADD THESE (from API)
+  author_name?: string;
+  author_email?: string;
+
   body: string;
   created_at: string;
 }
@@ -75,6 +80,15 @@ export interface Meeting {
   created_by: number;
   created_at: string;
 }
+
+export interface LeadProduct {
+  id: number;           // relation id
+  product_id: number;   // actual product id
+  name: string;
+  quantity?: number;
+  price?: number;
+}
+
 
 export type LeadStage =
   | "new"

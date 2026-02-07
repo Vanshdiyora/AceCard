@@ -55,8 +55,14 @@ export default function LoginPage() {
             </p>
           )}
 
-          {/* FORM */}
-          <div className="space-y-3 sm:space-y-4">
+          {/* ✅ FORM (FIX) */}
+          <form
+            onSubmit={(e) => {
+              e.preventDefault(); // 🚫 stops refresh
+              submit();
+            }}
+            className="space-y-3 sm:space-y-4"
+          >
             <div>
               <label className="text-xs sm:text-sm font-medium text-gray-700">
                 Email address
@@ -95,29 +101,30 @@ export default function LoginPage() {
                 </button>
               </div>
             </div>
-          </div>
 
-          {/* FORGOT */}
-          <div className="text-right">
+            {/* FORGOT */}
+            <div className="text-right">
+              <button
+                type="button"
+                onClick={() => navigate("/forgot-password")}
+                className="text-xs sm:text-sm text-purple-600 hover:underline"
+              >
+                Forgot password?
+              </button>
+            </div>
+
+            {/* SUBMIT */}
             <button
-              onClick={() => navigate("/forgot-password")}
-              className="text-xs sm:text-sm text-purple-600 hover:underline"
+              type="submit"
+              disabled={loading}
+              className="w-full h-12 sm:h-11 flex justify-center items-center gap-2 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white rounded-lg text-sm sm:text-base font-medium transition"
             >
-              Forgot password?
+              {loading && (
+                <span className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              )}
+              {loading ? "Signing in..." : "Sign in"}
             </button>
-          </div>
-
-          {/* SUBMIT */}
-          <button
-            onClick={submit}
-            disabled={loading}
-            className="w-full h-12 sm:h-11 flex justify-center items-center gap-2 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white rounded-lg text-sm sm:text-base font-medium transition"
-          >
-            {loading && (
-              <span className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-            )}
-            {loading ? "Signing in..." : "Sign in"}
-          </button>
+          </form>
         </div>
       </div>
     </>
