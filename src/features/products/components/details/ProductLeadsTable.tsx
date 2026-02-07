@@ -48,7 +48,9 @@ export default function ProductLeadsTable({ productId }: Props) {
 
   const rows: LeadRow[] = useMemo(() => {
     return leads
-      .filter((l) => l.products?.includes(productId))
+      .filter((l) =>
+        l.products?.some((p) => p.product_id === productId) // ✅ FIX
+      )
       .map((l) => {
         const owner = members.find((m) => m.id === l.assigned_rep_id);
         const campaign = campaigns.find((c) => c.id === l.campaign_id);
@@ -77,7 +79,7 @@ export default function ProductLeadsTable({ productId }: Props) {
         <h3 className="text-base font-semibold">Associated Leads</h3>
       </div>
 
-      <div className="">
+      <div>
         <DataTable<LeadRow>
           columns={columns}
           data={rows}
