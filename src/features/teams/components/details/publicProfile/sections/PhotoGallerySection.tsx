@@ -72,17 +72,7 @@ export default function PhotoGallerySection({
   return (
     <div className="space-y-4 mt-4">
       {/* Section title */}
-      <div className="space-y-1">
-        <p className="text-xs uppercase tracking-wide text-gray-500">
-          Section label
-        </p>
-        <Input
-          value={value.section_title}
-          disabled={disabled}
-          placeholder="Section title"
-          onChange={(v) => onChange({ ...value, section_title: v })}
-        />
-      </div>
+    
 
       {value.items.map((item: any, i: number) => (
         <div

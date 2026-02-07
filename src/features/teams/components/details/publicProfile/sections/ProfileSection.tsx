@@ -57,18 +57,6 @@ export default function ProfileSection({
             }}
           />
         </div>
-
-        <div className="flex-1 space-y-2">
-          <Label>Description</Label>
-          <textarea
-            placeholder="Write something about yourself..."
-            className="w-full min-h-[120px] rounded-xl border border-gray-200 bg-white/70 px-4 py-3"
-            value={profile.description || ""}
-            onChange={(e) =>
-              onChange({ ...profile, description: e.target.value })
-            }
-          />
-        </div>
       </div>
 
       {cropFile && (

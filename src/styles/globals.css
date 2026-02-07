@@ -217,13 +217,15 @@ body {
 
 /* ========== STRIPES (DIAGONAL DRIFT) ========== */
 .bg-stripes::before {
-  background-image: repeating-linear-gradient(135deg,
-      rgba(0, 0, 0, 0.1) 0px,
-      rgba(0, 0, 0, 0.1) 24px,
-      transparent 24px,
-      transparent 48px);
+  background-image: repeating-linear-gradient(
+    135deg,
+    rgba(0, 0, 0, 0.1) 0px,
+    rgba(0, 0, 0, 0.1) 32px,
+    transparent 32px,
+    transparent 64px
+  );
   background-size: 200% 200%;
-  animation: stripesDrift 90s linear infinite;
+  animation: stripesDrift 30s linear infinite;
 }
 
 @keyframes stripesDrift {
@@ -239,11 +241,11 @@ body {
 /* ========== ZIGZAG (CHEVRON) ========== */
 .bg-zigzag::before {
   background:
-    linear-gradient(135deg, rgba(0, 0, 0, 0.08) 25%, transparent 25%) -30px 0/60px 60px,
-    linear-gradient(225deg, rgba(0, 0, 0, 0.08) 25%, transparent 25%) -30px 0/60px 60px,
-    linear-gradient(315deg, rgba(0, 0, 0, 0.08) 25%, transparent 25%) 0px 0/60px 60px,
-    linear-gradient(45deg, rgba(0, 0, 0, 0.08) 25%, transparent 25%) 0px 0/60px 60px;
-  animation: zigzagScroll 16s linear infinite;
+    linear-gradient(135deg, rgba(0, 0, 0, 0.08) 25%, transparent 25%) -300px 0/80px 80px,
+    linear-gradient(225deg, rgba(0, 0, 0, 0.08) 25%, transparent 25%) -30px 0/80px 80px,
+    linear-gradient(315deg, rgba(0, 0, 0, 0.08) 25%, transparent 25%) 0px 0/80px 80px,
+    linear-gradient(45deg,  rgba(0, 0, 0, 0.08) 25%, transparent 25%) 0px 0/80px 80px;
+  animation: zigzagScroll 4s linear infinite;
 }
 
 @keyframes zigzagScroll {
@@ -254,15 +256,15 @@ body {
       0px 0,
       0px 0;
   }
-
   to {
     background-position:
-      -30px 120px,
-      -30px 120px,
-      0px 120px,
-      0px 120px;
+      -30px 160px,
+      -30px 160px,
+      0px 160px,
+      0px 160px;
   }
 }
+
 
 
 /* ========== VIDEO GRID ========== */

@@ -22,8 +22,10 @@ import ResultModal from "../../../../../common/ui/ResultModal";
 import { AlignLeft, AlignCenter, AlignRight } from "lucide-react";
 import CoverCropModal from "../../../../../common/ui/CoverCropModal";
 import PhotoGallerySection from "./sections/PhotoGallerySection";
-import VideoGallerySection from "./sections/VideoGallerySection";
+// import VideoGallerySection from "./sections/VideoGallerySection";
 import { normalizeApiError } from "../../../../../utils/normalizeApiError";
+import { SOCIAL_ICONS } from "./sections/socialIcons";
+import CommonModal from "./sections/CommonModal";
 const THEME_COLOR_KEYS = [
   "card_background",
   "button_color",
@@ -33,7 +35,12 @@ const THEME_COLOR_KEYS = [
 
 
 /* ================= TYPES ================= */
-export type LockMode = "global" | "individual" | "locked";
+export type LockMode = "global" | "individual";
+
+export interface LinksFilesConfig extends LockMeta {
+  section_title: string;
+  items: any[];
+}
 
 export interface LockMeta {
   locked: boolean;          // is this section locked?
@@ -41,6 +48,11 @@ export interface LockMeta {
 }
 
 export type ProfileLayoutType = 1 | 2 | 3;
+
+export interface YoutubeConfig extends LockMeta {
+  section_title: string;
+  items: any[];
+}
 
 export interface ContactConfig extends LockMeta {
   connect_title: string;
@@ -64,14 +76,15 @@ export interface LayoutConfig extends LockMeta {
   | "gradient"
   | "image"
   | "video"
-  | "waves"
   | "polka"
   | "stripes"
   | "zigzag";
   use_custom_font?: boolean;
   background_video?: string;
+  fade_color?: string;
   profile_width?: number;
   button_style?: number;
+  profile_radius?: number;
 }
 
 interface ProfileConfig {
@@ -104,6 +117,7 @@ export interface ThemeConfig extends LockMeta {
   button_color: string;
   card_text: string;
   button_text: string;
+  image_text_color: string;
 }
 
 export interface BannerConfig extends LockMeta {
@@ -162,8 +176,8 @@ interface PublicProfileConfig {
 
   products: ProductsConfig;
 
-  youtube: LockMeta & { items: any[] };
-  links_files: LockMeta & { items: any[] };
+  youtube: YoutubeConfig;
+  links_files: LinksFilesConfig;
   sections: LockMeta & {
     items: SectionItem[];
   };
@@ -218,6 +232,21 @@ export default function TeamMemberPublicProfileTab({
   const [productPage, setProductPage] = useState(1);
   const [hasNextProducts, setHasNextProducts] = useState(true);
   const [loadingMoreProducts, setLoadingMoreProducts] = useState(false);
+
+  const [productModalOpen, setProductModalOpen] = useState(false);
+  const [draftProducts, setDraftProducts] = useState<ProductRef[]>([]);
+  const [photoGalleryModalOpen, setPhotoGalleryModalOpen] = useState(false);
+  const [draftPhotoGallery, setDraftPhotoGallery] =
+    useState<PhotoGalleryConfig | null>(null);
+  const [linksFilesModalOpen, setLinksFilesModalOpen] = useState(false);
+  const [draftLinksFiles, setDraftLinksFiles] =
+    useState<PublicProfileConfig["links_files"] | null>(null);
+  const [socialModalOpen, setSocialModalOpen] = useState(false);
+  const [draftSocialLinks, setDraftSocialLinks] =
+    useState<PublicProfileConfig["social_links"] | null>(null);
+  const [youtubeModalOpen, setYoutubeModalOpen] = useState(false);
+  const [draftYoutube, setDraftYoutube] = useState<PublicProfileConfig["youtube"] | null>(null);
+
 
   /* ---------- Options cache ---------- */
   const [productOptions, setProductOptions] = useState<
@@ -569,21 +598,25 @@ export default function TeamMemberPublicProfileTab({
           onClick={() => {
             if (!btnRef.current) return;
 
+            // 👇 CLOSE if already open
+            if (open) {
+              setOpen(false);
+              return;
+            }
+
             const r = btnRef.current.getBoundingClientRect();
 
-            const MENU_H = 120; // height of dropdown
+            const MENU_H = 120;
             const GAP = 6;
 
             let top = r.bottom + GAP;
 
-            // 🔁 flip to top if not enough space below
             if (top + MENU_H > window.innerHeight) {
               top = r.top - MENU_H - GAP;
             }
 
             let left = r.left;
 
-            // keep inside viewport horizontally
             if (left + menuW > window.innerWidth) {
               left = window.innerWidth - menuW - GAP;
             }
@@ -592,7 +625,6 @@ export default function TeamMemberPublicProfileTab({
             setPos({ top, left });
             setOpen(true);
           }}
-
 
           className="flex items-center justify-between gap-2 border rounded-md px-3 py-2 text-sm bg-white w-full"
         >
@@ -700,9 +732,10 @@ export default function TeamMemberPublicProfileTab({
             ))}
           </div>
 
-          {/* FADE TOGGLE */}
+          {/* FADE TOGGLE + COLOR */}
           {config.layout.profile_type !== 2 && (
-            <div className="mt-5">
+            <div className="mt-5 grid grid-cols-[1fr_auto] items-center gap-4">
+              {/* Fade toggle (LEFT) */}
               <Switch
                 label="Fade cover"
                 value={config.layout.is_fade}
@@ -713,8 +746,22 @@ export default function TeamMemberPublicProfileTab({
                   })
                 }
               />
+
+              {/* Fade color (RIGHT) */}
+              <ColorPickerField
+                label="Fade color"
+                value={config.layout.fade_color ?? "#000000"}
+                disabled={!config.layout.is_fade}
+                onChange={(val) =>
+                  update({
+                    ...config,
+                    layout: { ...config.layout, fade_color: val },
+                  })
+                }
+              />
             </div>
           )}
+
 
           {/* COVER UPLOAD (only when layout = 3) */}
           {config.layout.profile_type === 3 && (
@@ -779,49 +826,20 @@ export default function TeamMemberPublicProfileTab({
 
           {/* FONT PICKER */}
           <div className="mt-6">
-            <h4 className="text-sm font-medium mb-3">Choose a Font</h4>
+            <label className="text-sm font-medium mb-2 block">
+              Choose a Font
+            </label>
 
-            <div className="grid grid-cols-2 gap-3">
-              {[
-                "Inter",
-                "Roboto",
-                "Montserrat",
-                "Merriweather",
-                "Caveat",
-                "Gloria Hallelujah",
-              ].map((font) => (
-                <button
-                  key={font}
-                  onClick={() =>
-                    update({
-                      ...config,
-                      layout: { ...config.layout, font },
-                    })
-                  }
-                  className={`border rounded-xl py-3 text-sm transition ${config.layout.font === font
-                    ? "border-black"
-                    : "border-gray-200"
-                    }`}
-                  style={{ fontFamily: font }}
-                >
-                  {font}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Use Custom Font */}
-          <div className="mt-6">
-            <Switch
-              label="Use custom font"
-              value={config.layout.use_custom_font ?? false}
-              onChange={(v) =>
+            <FontDropdown
+              value={config.layout.font}
+              useCustom={config.layout.use_custom_font}
+              onChange={(font, isCustom) =>
                 update({
                   ...config,
                   layout: {
                     ...config.layout,
-                    use_custom_font: v,
-                    font: v ? "custom" : "Inter", // fallback
+                    font,
+                    use_custom_font: isCustom,
                   },
                 })
               }
@@ -829,31 +847,53 @@ export default function TeamMemberPublicProfileTab({
           </div>
 
 
-          {/* Custom font */}
           {config.layout.use_custom_font && (
-            <div className="mt-6">
-              <p className="text-sm font-medium">Custom Font</p>
+            <div className="mt-4">
+              <label className="text-sm font-medium block mb-2">
+                Custom Font
+              </label>
 
-              <label className="inline-block border px-3 py-2 rounded cursor-pointer text-sm">
-                Upload Font
+              <label
+                className="
+        flex cursor-pointer items-center justify-between
+        rounded-xl border border-dashed border-gray-300
+        px-4 py-4 text-sm
+        transition hover:border-gray-400 hover:bg-gray-50
+      "
+              >
+                <div>
+                  <p className="font-medium text-gray-700">
+                    Upload font file
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    TTF, OTF, WOFF, WOFF2
+                  </p>
+                </div>
+
+                <span className="
+        rounded-lg bg-black px-3 py-1.5 text-xs font-medium text-white
+      ">
+                  Browse
+                </span>
+
                 <input
                   type="file"
                   hidden
-                  accept=".ttf,.otf,.woff"
+                  accept=".ttf,.otf,.woff,.woff2"
                   onChange={(e) =>
-                    e.target.files &&
-                    uploadCustomFont(e.target.files[0])
+                    e.target.files && uploadCustomFont(e.target.files[0])
                   }
                 />
               </label>
 
               {config.layout.custom_font && (
-                <p className="text-xs mt-1 text-purple-600">
-                  Uploaded ✔
+                <p className="mt-2 text-xs text-green-600">
+                  ✔ Font uploaded successfully
                 </p>
               )}
             </div>
           )}
+
 
           {/* ALIGNMENT */}
           <div className="mt-8 border-t pt-6">
@@ -917,25 +957,25 @@ export default function TeamMemberPublicProfileTab({
                         layout: { ...config.layout, button_style: s },
                       })
                     }
-                    className={`relative h-12 w-full border transition ${isActive
+                    className={`relative h-12 w-full border transition rounded-xl ${isActive
                       ? "border-black ring-2 ring-gray-300"
                       : "border-gray-300 hover:border-gray-400"
                       }`}
                   >
                     {/* preview button */}
                     <div
-                      className={`absolute inset-2 ${shape} border border-gray-400 bg-white`}
+                      className={`absolute inset-2 ${shape} border border-gray-400 bg-gray-200`}
                     />
+
                   </button>
                 );
               })}
             </div>
           </div>
 
-
           {/* PROFILE WIDTH */}
           <div className="mt-6">
-            <h4 className="text-sm font-medium mb-3">Profile Width</h4>
+            <h4 className="text-sm font-medium mb-3">Avatar Border Thickness</h4>
 
             <div className="flex items-center gap-3 w-1/2">
               <input
@@ -980,7 +1020,54 @@ export default function TeamMemberPublicProfileTab({
             </p>
           </div>
 
+          {/* Border Radius */}
+          <div className="mt-6">
 
+            <div>
+              <h4 className="text-sm font-medium mb-3">Profile Size</h4>
+
+              <div className="flex items-center gap-3 w-1/2">
+                <input
+                  type="number"
+                  min={0}
+                  max={200}
+                  step={1}
+                  value={
+                    config.layout.profile_radius === 0
+                      ? ""
+                      : config.layout.profile_radius
+                  }
+                  onChange={(e) => {
+                    const val = e.target.value;
+
+                    if (val === "") {
+                      update({
+                        ...config,
+                        layout: { ...config.layout, profile_radius: 0 },
+                      });
+                      return;
+                    }
+
+                    update({
+                      ...config,
+                      layout: {
+                        ...config.layout,
+                        profile_radius: Number(val),
+                      },
+                    });
+                  }}
+                  className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  placeholder="e.g. 50"
+                />
+
+                <span className="text-xs text-gray-500">px</span>
+              </div>
+
+              <p className="text-xs text-gray-400 mt-1">
+                50% creates a circular avatar
+              </p>
+            </div>
+          </div>
 
 
           {/* BACKGROUND TYPE */}
@@ -993,7 +1080,6 @@ export default function TeamMemberPublicProfileTab({
                 "gradient",
                 "image",
                 "video",
-                "waves",
                 "polka",
                 "stripes",
                 "zigzag",
@@ -1021,7 +1107,7 @@ export default function TeamMemberPublicProfileTab({
           {/* SOLID BACKGROUND */}
           {config.layout.use_background === "solid" && (
             <div className="mt-6">
-              <p className="text-sm font-medium">Solid Background Color</p>
+              <p className="text-sm font-medium">Card Background Color</p>
 
               <div className="mt-2 w-1/2">
                 <ColorPickerField
@@ -1081,7 +1167,7 @@ export default function TeamMemberPublicProfileTab({
             </div>
           )}
 
-          {["waves", "polka", "stripes", "zigzag"].includes(
+          {["polka", "stripes", "zigzag"].includes(
             config.layout.use_background || ""
           ) && (
               <div className="mt-6">
@@ -1196,6 +1282,25 @@ export default function TeamMemberPublicProfileTab({
         />
       </Card>
 
+      <Card title="About" desc="Short description about yourself">
+        <div className="">
+          <Input
+            textarea
+            value={config.profile.description}
+            placeholder="Write a short description about yourself"
+            onChange={(v) =>
+              update({
+                ...config,
+                profile: {
+                  ...config.profile,
+                  description: v,
+                },
+              })
+            }
+          />
+        </div>
+      </Card>
+
       <Card title="Contact" desc="Customize contact buttons">
         {showLockable && (
           <LockControl
@@ -1250,8 +1355,7 @@ export default function TeamMemberPublicProfileTab({
         </div>
       </Card>
 
-
-      <Card title="Social Links" desc="Your public social   profiles">
+      <Card title="Social Links" desc="Your public social profiles">
         {showLockable && (
           <LockControl
             value={config.social_links}
@@ -1265,28 +1369,81 @@ export default function TeamMemberPublicProfileTab({
           />
         )}
 
+        {/* ICON PREVIEW (enabled only) */}
         <div
-          className={
-            isReadOnly(config.social_links)
-              ? "opacity-60 pointer-events-none"
-              : ""
-          }
+          className={`flex items-center gap-3 mt-3 ${isReadOnly(config.social_links)
+            ? "opacity-60 pointer-events-none"
+            : ""
+            }`}
         >
-          <SocialSection
-            items={config.social_links.items}
-            onChange={(items: any[]) =>
-              update({
-                ...config,
-                social_links: {
-                  ...config.social_links,
-                  items,
-                },
-              })
-            }
-          />
-        </div>
-      </Card>
+          {config.social_links.items?.filter((s: any) => s.enabled).length > 0 ? (
+            config.social_links.items
+              .filter((s: any) => s.enabled === true)
+              .map((s: any) => {
+                const Icon = SOCIAL_ICONS[s.id] || SOCIAL_ICONS.website;
 
+                return (
+                  <div
+                    key={s.id}
+                    className="w-10 h-10 rounded-full border bg-white flex items-center justify-center"
+                    title={s.label}
+                  >
+                    <Icon size={18} />
+                  </div>
+                );
+              })
+          ) : (
+            <span className="text-sm text-gray-400">
+              No social links added
+            </span>
+          )}
+        </div>
+
+        {/* OPEN MODAL BUTTON */}
+        <div className="mt-4">
+          <button
+            type="button"
+            disabled={isReadOnly(config.social_links)}
+            onClick={() => {
+              setDraftSocialLinks(
+                structuredClone(config.social_links)
+              );
+              setSocialModalOpen(true);
+            }}
+            className="px-4 py-2 rounded-lg bg-purple-600 text-white text-sm hover:opacity-90 disabled:opacity-50"
+          >
+            Add / Manage Social Links
+          </button>
+        </div>
+
+        {/* MODAL */}
+        <CommonModal
+          open={socialModalOpen}
+          title="Social Links"
+          onClose={() => setSocialModalOpen(false)}
+          onConfirm={() => {
+            if (!draftSocialLinks) return;
+
+            update({
+              ...config,
+              social_links: draftSocialLinks,
+            });
+            setSocialModalOpen(false);
+          }}
+        >
+          {draftSocialLinks && (
+            <SocialSection
+              items={draftSocialLinks.items}
+              onChange={(items: any[]) =>
+                setDraftSocialLinks({
+                  ...draftSocialLinks,
+                  items,
+                })
+              }
+            />
+          )}
+        </CommonModal>
+      </Card>
 
       <Card title="Theme" desc="Colors used across the profile">
         {showLockable && (
@@ -1301,7 +1458,7 @@ export default function TeamMemberPublicProfileTab({
             }
           />
         )}
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 gap-4">
           {THEME_COLOR_KEYS.map((k) => (
             <ColorPickerField
               key={k}
@@ -1318,7 +1475,6 @@ export default function TeamMemberPublicProfileTab({
           ))}
         </div>
       </Card>
-
 
       <div className="rounded-2xl bg-[#FBFAFF]">
 
@@ -1403,58 +1559,129 @@ export default function TeamMemberPublicProfileTab({
 
 
         {/* SELECT */}
-        <div className="px-1">
-
-          <DynamicForm
-            fields={productField}
+        <div className="px-6 mt-4">
+          <button
+            type="button"
             disabled={isReadOnly(config.products)}
-            form={{
-              product_ids: config.products.items.map((p) => p.id),
+            onClick={() => {
+              // clone current products into draft
+              setDraftProducts(config.products.items);
+              setProductModalOpen(true);
             }}
-            onChange={(_, ids: (string | number)[]) =>
-              update({
-                ...config,
-                products: {
-                  ...config.products,              // 🔥 keep toggle_price + section_title
-                  locked: config.products.locked,  // keep lock
-                  items: mergeSelectedProducts(
+            className="px-4 py-2 rounded-lg bg-purple-600 text-white text-sm hover:opacity-90 disabled:opacity-50"
+          >
+            Add / Manage Products
+          </button>
+
+        </div>
+        {/* PRODUCTS PREVIEW (scaled-down carousel) */}
+        {config.products.items?.length > 0 && (
+          <div
+            className={`px-6 mt-4 ${isReadOnly(config.products)
+              ? "opacity-60 pointer-events-none"
+              : ""
+              }`}
+          >
+            <div className="flex gap-3 overflow-x-auto pb-3 snap-x snap-mandatory no-scrollbar">
+              {config.products.items
+                .filter((p) => p.enabled !== false)
+                .sort((a, b) => a.rank - b.rank)
+                .map((p) => (
+                  <div
+                    key={p.id}
+                    className="snap-start flex-shrink-0"
+                  >
+                    <div
+                      className="relative w-[140px] h-[90px] rounded-xl overflow-hidden shadow-sm border"
+                      style={{ backgroundColor: config.theme.card_background }}
+                    >
+                      {/* IMAGE */}
+                      <img
+                        src={p.image_url || p.image_url}
+                        alt={p.name}
+                        className="absolute inset-0 w-full h-full object-cover"
+                      />
+
+                      {/* OVERLAY */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+
+                      {/* CONTENT */}
+                      <div className="absolute bottom-1.5 left-2 right-2">
+                        <p
+                          className="text-[11px] font-semibold leading-tight line-clamp-2"
+                          style={{ color: config.theme.card_text }}
+                        >
+                          {p.name}
+                        </p>
+
+                        {config.products.toggle_price && (
+                          <p
+                            className="text-[10px] mt-0.5 font-medium"
+                            style={{ color: config.theme.card_text }}
+                          >
+                            ₹{p.price}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+            </div>
+          </div>
+        )}
+
+        <CommonModal
+          open={productModalOpen}
+          title="Manage Products"
+          description="Select and reorder products for your public card"
+          onClose={() => setProductModalOpen(false)}
+          onConfirm={() => {
+            update({
+              ...config,
+              products: {
+                ...config.products,
+                items: draftProducts, // ✅ commit changes
+              },
+            });
+            setProductModalOpen(false);
+          }}
+        >
+          {/* === YOUR EXISTING UI (UNCHANGED) === */}
+          <div className="px-1">
+
+            <DynamicForm
+              fields={productField}
+              form={{
+                product_ids: draftProducts.map((p) => p.id),
+              }}
+              onChange={(_, ids: (string | number)[]) =>
+                setDraftProducts(
+                  mergeSelectedProducts(
                     ids,
                     products,
-                    config.products.items
-                  ),
-                },
-              })
-            }
+                    draftProducts
+                  )
+                )
+              }
+              errors={formErrors}
+              setErrors={setFormErrors}
+            />
+          </div>
 
-            errors={formErrors}
-            setErrors={setFormErrors}
-          />
-        </div>
+          <div className="px-1 pb-2 border-t mt-4">
 
-        <div className="px-6 pb-6 border-t">
-
-          {/* REORDER (keep your existing component) */}
-          {config.products.items.length > 0 && (
-            <div className="space-y-3">
-              <ProductsReorder
-                items={config.products.items}
-                disabled={isReadOnly(config.products)}
-                onChange={(items) =>
-                  update({
-                    ...config,
-                    products: {
-                      ...config.products,
-                      items,
-                    },
-                  })
-                }
-              />
-            </div>
-          )}
-        </div>
+            {draftProducts.length > 0 && (
+              <div className="space-y-3">
+                <ProductsReorder
+                  items={draftProducts}
+                  onChange={setDraftProducts}
+                />
+              </div>
+            )}
+          </div>
+        </CommonModal>
 
       </div>
-
 
       <Card title="Photo Gallery" desc="Manage your gallery images">
         {showLockable && (
@@ -1470,16 +1697,128 @@ export default function TeamMemberPublicProfileTab({
           />
         )}
 
-        <PhotoGallerySection
-          value={config.photo_gallery}
-          disabled={isReadOnly(config.photo_gallery)}
-          onChange={(v: any) =>
-            update({ ...config, photo_gallery: v })
-          }
-        />
+        {/* SECTION LABEL — stays OUTSIDE modal */}
+        <div
+          className={`space-y-1 ${isReadOnly(config.photo_gallery)
+            ? "opacity-60 pointer-events-none"
+            : ""
+            }`}
+        >
+          <p className="text-xs uppercase tracking-wide text-gray-500">
+            Section label
+          </p>
+          <Input
+            value={config.photo_gallery.section_title}
+            disabled={isReadOnly(config.photo_gallery)}
+            placeholder="Section title"
+            onChange={(v) =>
+              update({
+                ...config,
+                photo_gallery: {
+                  ...config.photo_gallery,
+                  section_title: v,
+                },
+              })
+            }
+          />
+        </div>
+
+        {/* OPEN MODAL BUTTON */}
+        <div className="mt-4">
+          <button
+            type="button"
+            disabled={isReadOnly(config.photo_gallery)}
+            onClick={() => {
+              // ✅ clone to draft
+              setDraftPhotoGallery(
+                structuredClone(config.photo_gallery)
+              );
+              setPhotoGalleryModalOpen(true);
+            }}
+            className="px-4 py-2 rounded-lg bg-purple-600 text-white text-sm hover:opacity-90 disabled:opacity-50"
+          >
+            Add / Manage Photos
+          </button>
+        </div>
+
+        {/* PREVIEW CAROUSEL */}
+        {config.photo_gallery.items?.length > 0 && (
+          <div
+            className={`mt-4 ${isReadOnly(config.photo_gallery)
+              ? "opacity-60 pointer-events-none"
+              : ""
+              }`}
+          >
+            <div className="flex gap-3 overflow-x-auto pb-3 snap-x snap-mandatory no-scrollbar">
+              {config.photo_gallery.items
+                .filter((i) => i.enabled)
+                .sort((a, b) => a.rank - b.rank)
+                .map((item, idx) => (
+                  <div
+                    key={idx}
+                    className="snap-start flex-shrink-0"
+                  >
+                    <div className="relative w-[140px] h-[100px] rounded-xl overflow-hidden border shadow-sm bg-gray-100">
+                      <img
+                        src={item.img_url}
+                        alt={item.title || "Photo"}
+                        className="w-full h-full object-cover"
+                      />
+
+                      {/* gradient overlay */}
+                      {item.title && (
+                        <>
+                          <div
+                            className="absolute inset-0"
+                            style={{
+                              background:
+                                "linear-gradient(to top, rgba(0,0,0,.55), transparent)",
+                            }}
+                          />
+
+                          {/* title */}
+                          <div className="absolute bottom-1.5 left-2 right-2">
+                            <p className="text-[11px] font-medium text-white leading-tight line-clamp-2">
+                              {item.title}
+                            </p>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                ))}
+            </div>
+          </div>
+        )}
+
+        {/* MODAL */}
+        <CommonModal
+          open={photoGalleryModalOpen}
+          title="Photo Gallery"
+          onClose={() => setPhotoGalleryModalOpen(false)}
+          onConfirm={() => {
+            if (!draftPhotoGallery) return;
+
+            update({
+              ...config,
+              photo_gallery: draftPhotoGallery,
+            });
+            setPhotoGalleryModalOpen(false);
+          }}
+        >
+          {draftPhotoGallery && (
+            <PhotoGallerySection
+              value={draftPhotoGallery}
+              disabled={isReadOnly(config.photo_gallery)}
+              onChange={(v: PhotoGalleryConfig) =>
+                setDraftPhotoGallery(v)
+              }
+            />
+          )}
+        </CommonModal>
       </Card>
 
-      <Card title="Video Gallery" desc="Manage your videos">
+      {/* <Card title="Video Gallery" desc="Manage your videos">
         {showLockable && (
           <LockControl
             value={config.video_gallery}
@@ -1495,9 +1834,7 @@ export default function TeamMemberPublicProfileTab({
           disabled={isReadOnly(config.video_gallery)}
           onChange={(v) => update({ ...config, video_gallery: v })}
         />
-      </Card>
-
-
+      </Card> */}
 
       <Card title="Banner" desc="Top banner CTA section">
         {showLockable && (
@@ -1513,30 +1850,46 @@ export default function TeamMemberPublicProfileTab({
           />
         )}
 
-        {/* ENABLE TOGGLE */}
-        <Toggle
-          label="Enable banner"
-          value={config.banner.enabled}
-          disabled={isReadOnly(config.banner)}
-          onChange={(v: boolean) =>
-            update({
-              ...config,
-              banner: { ...config.banner, enabled: v },
-            })
-          }
-        />
+        {/* ENABLE BANNER */}
+        <div
+          className={`flex items-center gap-3 ${isReadOnly(config.banner)
+            ? "opacity-60 pointer-events-none"
+            : ""
+            }`}
+        >
+          <p className="text-sm font-medium text-gray-700">
+            Enable Banner
+          </p>
 
-        {/* IMAGE */}
-        <div className="space-y-2">
-          <p className="text-xs text-gray-500">Banner Image</p>
+          <Toggle
+            label=""
+            value={config.banner.enabled}
+            disabled={isReadOnly(config.banner)}
+            onChange={(v: boolean) =>
+              update({
+                ...config,
+                banner: { ...config.banner, enabled: v },
+              })
+            }
+          />
+        </div>
 
-          <div
-            className={`relative h-40 w-full rounded-xl border overflow-hidden bg-gray-50 ${isReadOnly(config.banner) ? "opacity-60 pointer-events-none" : ""
-              }`}
-          >
+        {/* BANNER IMAGE */}
+        <div
+          className={`space-y-2 mt-6 ${isReadOnly(config.banner)
+            ? "opacity-60 pointer-events-none"
+            : ""
+            }`}
+        >
+          <p className="text-sm font-medium text-gray-700">
+            Banner Image
+          </p>
+
+          <div className="relative h-40 w-full rounded-xl border overflow-hidden bg-gray-50">
             {config.banner.image_url ? (
               <img
                 src={config.banner.image_url}
+                alt="Banner"
                 className="w-full h-full object-cover"
               />
             ) : (
@@ -1553,18 +1906,25 @@ export default function TeamMemberPublicProfileTab({
                 disabled={isReadOnly(config.banner)}
                 accept="image/*"
                 onChange={(e) =>
-                  e.target.files && uploadBannerImage(e.target.files[0])
+                  e.target.files &&
+                  uploadBannerImage(e.target.files[0])
                 }
               />
             </label>
           </div>
         </div>
 
-        {/* CTA */}
+        {/* CTA TEXT */}
         <div
-          className={`grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 ${isReadOnly(config.banner) ? "opacity-60 pointer-events-none" : ""
+          className={`mt-6 ${isReadOnly(config.banner)
+            ? "opacity-60 pointer-events-none"
+            : ""
             }`}
         >
+          <p className="text-sm font-medium text-gray-700 mb-1">
+            CTA Button Text
+          </p>
+
           <Input
             value={config.banner.cta_text || ""}
             disabled={isReadOnly(config.banner)}
@@ -1574,8 +1934,20 @@ export default function TeamMemberPublicProfileTab({
                 banner: { ...config.banner, cta_text: v },
               })
             }
-            placeholder="CTA Text"
+            placeholder="e.g. Contact Me"
           />
+        </div>
+
+        {/* CTA LINK */}
+        <div
+          className={`mt-4 ${isReadOnly(config.banner)
+            ? "opacity-60 pointer-events-none"
+            : ""
+            }`}
+        >
+          <p className="text-sm font-medium text-gray-700 mb-1">
+            CTA Button Link
+          </p>
 
           <Input
             value={config.banner.cta_url || ""}
@@ -1586,12 +1958,12 @@ export default function TeamMemberPublicProfileTab({
                 banner: { ...config.banner, cta_url: v },
               })
             }
-            placeholder="CTA URL"
+            placeholder="https://example.com"
           />
         </div>
       </Card>
 
-      <Card title="Videos" desc="Your YouTube / video links">
+      <Card title="Videos" desc="Manage your YouTube / video links">
         {showLockable && (
           <LockControl
             value={config.youtube}
@@ -1605,13 +1977,111 @@ export default function TeamMemberPublicProfileTab({
           />
         )}
 
-        <YoutubeSection
-          disabled={isReadOnly(config.youtube)}
-          items={config.youtube.items}
-          onChange={(items) =>
-            update({ ...config, youtube: { ...config.youtube, items } })
-          }
-        />
+        {/* SECTION LABEL — stays OUTSIDE modal */}
+        <div
+          className={`space-y-1 ${isReadOnly(config.youtube)
+              ? "opacity-60 pointer-events-none"
+              : ""
+            }`}
+        >
+          <p className="text-xs uppercase tracking-wide text-gray-500">
+            Section label
+          </p>
+          <Input
+            value={config.youtube.section_title}
+            disabled={isReadOnly(config.youtube)}
+            placeholder="Section title"
+            onChange={(v) =>
+              update({
+                ...config,
+                youtube: {
+                  ...config.youtube,
+                  section_title: v,
+                },
+              })
+            }
+          />
+        </div>
+
+        {/* OPEN MODAL BUTTON — SAME STYLE */}
+        <div className="mt-4">
+          <button
+            type="button"
+            disabled={isReadOnly(config.youtube)}
+            onClick={() => {
+              // ✅ clone to draft
+              setDraftYoutube(structuredClone(config.youtube));
+              setYoutubeModalOpen(true);
+            }}
+            className="
+        px-4 py-2 rounded-lg
+        bg-purple-600 text-white text-sm
+        hover:opacity-90
+        disabled:opacity-50
+      "
+          >
+            Add / Manage Videos
+          </button>
+        </div>
+
+        {/* OPTIONAL PREVIEW (minimal) */}
+        {config.youtube.items?.length > 0 && (
+          <div
+            className={`mt-4 ${isReadOnly(config.youtube)
+                ? "opacity-60 pointer-events-none"
+                : ""
+              }`}
+          >
+            <div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
+              {config.youtube.items
+                .filter((v) => v.enabled)
+                .sort((a, b) => a.rank - b.rank)
+                .map((item, idx) => (
+                  <div
+                    key={idx}
+                    className="flex-shrink-0 w-[160px] rounded-lg border p-2"
+                  >
+                    <p className="text-xs font-medium truncate">
+                      {item.title || "Video"}
+                    </p>
+                    <p className="text-[11px] text-gray-500 truncate">
+                      {item.url}
+                    </p>
+                  </div>
+                ))}
+            </div>
+          </div>
+        )}
+
+        {/* MODAL — SAME DRAFT FLOW */}
+        <CommonModal
+          open={youtubeModalOpen}
+          title="Videos"
+          description="Add or manage your YouTube / video links"
+          onClose={() => setYoutubeModalOpen(false)}
+          onConfirm={() => {
+            if (!draftYoutube) return;
+
+            update({
+              ...config,
+              youtube: draftYoutube,
+            });
+            setYoutubeModalOpen(false);
+          }}
+        >
+          {draftYoutube && (
+            <YoutubeSection
+              disabled={isReadOnly(config.youtube)}
+              items={draftYoutube.items}
+              onChange={(items) =>
+                setDraftYoutube({
+                  ...draftYoutube,
+                  items,
+                })
+              }
+            />
+          )}
+        </CommonModal>
       </Card>
 
 
@@ -1638,7 +2108,6 @@ export default function TeamMemberPublicProfileTab({
 
       <Card title="Links & Files" desc="Add external links or downloadable files">
         {showLockable && (
-
           <LockControl
             value={config.links_files}
             role={config.role}
@@ -1650,13 +2119,48 @@ export default function TeamMemberPublicProfileTab({
             }
           />
         )}
-        <LinksFilesSection
-          disabled={isReadOnly(config.links_files)}
-          value={config.links_files}
-          onChange={(v) =>
-            update({ ...config, links_files: { ...config.links_files, ...v } })
-          }
-        />
+
+        {/* OPEN MODAL BUTTON */}
+        <div className="mt-4">
+          <button
+            type="button"
+            disabled={isReadOnly(config.links_files)}
+            onClick={() => {
+              // ✅ clone current state into draft
+              setDraftLinksFiles(
+                structuredClone(config.links_files)
+              );
+              setLinksFilesModalOpen(true);
+            }}
+            className="px-4 py-2 rounded-lg bg-purple-600 text-white text-sm hover:opacity-90 disabled:opacity-50"
+          >
+            Add / Manage Links & Files
+          </button>
+        </div>
+
+        {/* MODAL */}
+        <CommonModal
+          open={linksFilesModalOpen}
+          title="Links & Files"
+          onClose={() => setLinksFilesModalOpen(false)}
+          onConfirm={() => {
+            if (!draftLinksFiles) return;
+
+            update({
+              ...config,
+              links_files: draftLinksFiles,
+            });
+            setLinksFilesModalOpen(false);
+          }}
+        >
+          {draftLinksFiles && (
+            <LinksFilesSection
+              disabled={isReadOnly(config.links_files)}
+              value={draftLinksFiles}
+              onChange={(v: any) => setDraftLinksFiles(v)}
+            />
+          )}
+        </CommonModal>
       </Card>
 
       <Card title="Sections" desc="Reorder your public sections">
@@ -1685,8 +2189,8 @@ export default function TeamMemberPublicProfileTab({
           }
         />
       </Card>
-      <div className="px-6">
 
+      <div className="px-6">
         <button
           onClick={save}
           className="w-full py-3 rounded-xl font-semibold text-white bg-purple-600 shadow-lg hover:opacity-90 transition"
@@ -1834,10 +2338,7 @@ function ColorPickerField({
   const PICKER_H = 260;
   const GAP = 8;
 
-  // close on unmount
   useEffect(() => () => setOpen(false), []);
-
-  // close on scroll
   useEffect(() => {
     if (!open) return;
     const close = () => setOpen(false);
@@ -1852,16 +2353,13 @@ function ColorPickerField({
     const spaceBelow = window.innerHeight - r.bottom;
     const spaceAbove = r.top;
 
-
     let top = r.bottom + GAP;
     let left = r.left;
 
-    // vertical flip
     if (spaceBelow < PICKER_H && spaceAbove > PICKER_H) {
       top = r.top - PICKER_H - GAP;
     }
 
-    // horizontal shift
     if (left + PICKER_W > window.innerWidth) {
       left = window.innerWidth - PICKER_W - GAP;
     }
@@ -1872,25 +2370,54 @@ function ColorPickerField({
     setOpen(true);
   };
 
+  /* =========================
+     DISABLED STATE (UPGRADED)
+     ========================= */
   if (disabled) {
     return (
-      <div className="flex justify-between w-full border p-3 rounded bg-gray-100 text-gray-400 cursor-not-allowed">
-        {label}
-        <span className="w-8 h-5 rounded" style={{ background: value }} />
+      <div className="w-full rounded-lg border p-4 bg-gray-100 text-gray-400 cursor-not-allowed">
+        <div className="grid grid-cols-[1fr_32px] items-center">
+          <span className="text-sm capitalize text-left">
+            {label}
+          </span>
+
+          <span
+            className="h-7 w-7 rounded-md border justify-self-end"
+            style={{ backgroundColor: value }}
+          />
+        </div>
       </div>
+
     );
   }
 
+  /* =========================
+     NORMAL STATE (UPGRADED)
+     ========================= */
   return (
     <>
       <button
         ref={btnRef}
         type="button"
         onClick={openPicker}
-        className="flex justify-between w-full border p-3 rounded"
+        className="
+    w-full rounded-lg border p-4
+    hover:bg-gray-50
+    focus:outline-none focus:ring-2 focus:ring-blue-500
+  "
       >
-        {label}
-        <span className="w-8 h-5 rounded" style={{ background: value }} />
+        <div className="grid grid-cols-[1fr_32px] items-center">
+          {/* Label — locked to LEFT */}
+          <span className="text-sm font-medium capitalize text-gray-700 text-left">
+            {label}
+          </span>
+
+          {/* Color box — locked to RIGHT */}
+          <span
+            className="h-7 w-7 rounded-md border justify-self-end"
+            style={{ backgroundColor: value }}
+          />
+        </div>
       </button>
 
       {open &&
@@ -2122,6 +2649,159 @@ export function Switch({
             }`}
         />
       </button>
+    </div>
+  );
+}
+
+function FontDropdown({
+  value,
+  useCustom,
+  onChange,
+}: {
+  value: string;
+  useCustom?: boolean;
+  onChange: (font: string, isCustom: boolean) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const btnRef = useRef<HTMLButtonElement | null>(null);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+  const [menuW, setMenuW] = useState(0);
+  const [pos, setPos] = useState({ top: 0, left: 0 });
+
+  const fonts = [
+    "Inter",
+    "Roboto",
+    "Montserrat",
+    "Merriweather",
+    "Caveat",
+    "Gloria Hallelujah",
+    "custom",
+  ];
+
+  const activeLabel = useCustom ? "Custom font" : value;
+
+  // sync width
+  useEffect(() => {
+    if (btnRef.current) setMenuW(btnRef.current.offsetWidth);
+  }, [activeLabel]);
+
+  // close on outside click / scroll
+  useEffect(() => {
+    if (!open) return;
+
+    const close = (e: any) => {
+      if (
+        btnRef.current?.contains(e.target) ||
+        menuRef.current?.contains(e.target)
+      )
+        return;
+      setOpen(false);
+    };
+
+    document.addEventListener("mousedown", close);
+    window.addEventListener("scroll", close, true);
+
+    return () => {
+      document.removeEventListener("mousedown", close);
+      window.removeEventListener("scroll", close, true);
+    };
+  }, [open]);
+
+  return (
+    <div className="relative">
+      <button
+        ref={btnRef}
+        type="button"
+        onClick={() => {
+          if (!btnRef.current) return;
+
+          // 🔁 close if already open
+          if (open) {
+            setOpen(false);
+            return;
+          }
+
+          const r = btnRef.current.getBoundingClientRect();
+          const width = btnRef.current.offsetWidth;
+
+          const MENU_H = 220;
+          const GAP = 6;
+
+          let top = r.bottom + GAP;
+          if (top + MENU_H > window.innerHeight) {
+            top = r.top - MENU_H - GAP;
+          }
+
+          let left = r.left;
+          if (left + width > window.innerWidth) {
+            left = window.innerWidth - width - GAP;
+          }
+          if (left < GAP) left = GAP;
+
+          setMenuW(width);
+          setPos({ top, left });
+          setOpen(true);
+        }}
+
+        className="
+          flex w-full items-center justify-between
+          rounded-xl border border-gray-300
+          bg-white px-4 py-3 text-sm
+          shadow-sm transition
+          hover:border-gray-400
+          focus:outline-none focus:ring-2 focus:ring-black/20
+        "
+      >
+        <span
+          className="truncate"
+          style={{ fontFamily: !useCustom ? value : undefined }}
+        >
+          {activeLabel}
+        </span>
+        <ChevronDown className="w-4 h-4 text-gray-500" />
+      </button>
+
+      {open &&
+        createPortal(
+          <div
+            ref={menuRef}
+            style={{
+              position: "fixed",
+              top: pos.top,
+              left: pos.left,
+              width: menuW,
+              zIndex: 10000,
+            }}
+            className="rounded-xl border bg-white shadow-xl overflow-hidden"
+          >
+            {fonts.map((font) => {
+              const isActive =
+                (font === "custom" && useCustom) ||
+                (!useCustom && value === font);
+
+              return (
+                <button
+                  key={font}
+                  type="button"
+                  onClick={() => {
+                    onChange(font, font === "custom");
+                    setOpen(false);
+                  }}
+                  style={{
+                    fontFamily: font !== "custom" ? font : undefined,
+                  }}
+                  className={`block w-full text-left px-4 py-2.5 text-sm transition
+                    hover:bg-gray-50
+                    ${isActive ? "bg-gray-100 font-medium" : ""}
+                  `}
+                >
+                  {font === "custom" ? "Custom font…" : font}
+                </button>
+              );
+            })}
+          </div>,
+          document.body
+        )}
     </div>
   );
 }

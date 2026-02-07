@@ -43,7 +43,7 @@ export default function AddSocialModal({
   );
 
   return createPortal(
-    <div className="fixed inset-0 z-[999] bg-black/40 flex items-center justify-center px-3">
+    <div className="fixed inset-0 z-[9999] bg-black/40 flex items-center justify-center px-3">
       {/* Modal Card */}
       <div className="bg-white w-full sm:max-w-3xl max-h-[90vh] rounded-2xl p-4 sm:p-6 shadow-xl flex flex-col overflow-hidden">
 

@@ -548,7 +548,7 @@ function MeetingCTA({ meeting, theme, shapeClass }: any) {
 }
 
 /* ================= PRODUCTS ================= */
-function Products({
+export function Products({
   title,
   items,
   theme,
@@ -592,7 +592,7 @@ function Products({
               {showPrice && (
                 <p
                   className="text-xs mt-1 font-medium"
-                  style={{ color: theme.button_text }}
+                  style={{ color: theme.card_text }}
                 >
                   ₹{p.price}
                 </p>

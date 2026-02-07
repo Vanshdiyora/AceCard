@@ -4,7 +4,7 @@ export function normalizeProfile(api: any) {
   const cfg = api.configuration ?? {};
 
   return {
-     role: api.role ?? "manager",
+    role: api.role ?? "manager",
     /* ================= PROFILE ================= */
     profile: {
       avatar_url: cfg.profile.avatar_url,
@@ -61,7 +61,8 @@ export function normalizeProfile(api: any) {
       use_custom_font: Boolean(cfg.layout?.use_custom_font),
       profile_width: Number(cfg.layout?.profile_width) || 2,
       button_style: Number(cfg.layout?.button_style) || 1,
-
+      profile_radius: Number(cfg.layout?.profile_radius) || 16,
+      fade_color: cfg.layout?.fade_color,
     },
 
 
@@ -74,6 +75,7 @@ export function normalizeProfile(api: any) {
       button_color: cfg.theme?.button_color ?? "#251F31",
       card_text: cfg.theme?.card_text ?? "#9F9F9F",
       button_text: cfg.theme?.button_text ?? "#B79A8A",
+      image_text_color: cfg.theme?.image_text_color ?? "#000000",
     },
 
     /* ================= BANNER ================= */
@@ -171,7 +173,7 @@ const normalizeYoutube = (api: any) => {
   return {
     locked: Boolean(y.locked),
     lock_mode: y.lock_mode ?? undefined,
-
+    section_title: y?.section_title ?? "Video Gallery",
     items: Array.isArray(y.items)
       ? y.items.map((v: any, i: number) => ({
         id: v.id,
@@ -188,7 +190,7 @@ const normalizeLinksFiles = (api: any) => {
   return {
     locked: Boolean(lf.locked),
     lock_mode: lf.lock_mode ?? undefined,
-
+    section_title: lf?.section_title ?? "Links and Files",
     items: Array.isArray(lf.items)
       ? lf.items.map((l: any, i: number) => ({
         id: l.id,
@@ -249,20 +251,38 @@ export function denormalizeProfile(
   baseApi: any
 ) {
   return {
-    ...baseApi, // keep username, ids, meta, etc
+    ...baseApi,
     role: cfg.role,
+
     avatar_url: cfg.profile.avatar_url,
-    cover_url: cfg.cover.cover_url,
     description: cfg.profile.description,
     custom_job_role: cfg.profile.custom_job_role,
 
     configuration: {
       ...baseApi.configuration,
+
+      /* ================= PROFILE ================= */
       profile: {
         ...baseApi.configuration?.profile,
-        ...cfg.profile, // 🔥 live value always wins
+        ...cfg.profile,
       },
 
+      /* ================= COVER ================= */
+      cover: {
+        locked: cfg.cover.locked,
+        lock_mode: cfg.cover.lock_mode,
+        cover_url: cfg.cover.cover_url,
+      },
+
+      /* ================= CONTACT ================= */
+      contact: {
+        locked: cfg.contact.locked,
+        lock_mode: cfg.contact.lock_mode,
+        connect_title: cfg.contact.connect_title,
+        contact_title: cfg.contact.contact_title,
+      },
+
+      /* ================= LAYOUT ================= */
       layout: {
         locked: cfg.layout.locked,
         lock_mode: cfg.layout.lock_mode,
@@ -278,77 +298,84 @@ export function denormalizeProfile(
         direction: cfg.layout.direction,
 
         background_image: cfg.layout.background_image,
-        background_video: cfg.layout.background_video, // 👈 NEW
-        profile_width: cfg.layout.profile_width,
-        button_style: cfg.layout.button_style,
+        background_video: cfg.layout.background_video,
+        background_color: cfg.layout.background_color,
 
         custom_font: cfg.layout.custom_font,
         use_custom_font: cfg.layout.use_custom_font,
+
+        profile_width: cfg.layout.profile_width,
+        profile_radius: cfg.layout.profile_radius,
+        button_style: cfg.layout.button_style,
+
+        fade_color: cfg.layout.fade_color,
       },
 
-      cover: {
-        locked: cfg.cover.locked,
-        lock_mode: cfg.cover.lock_mode,
-        cover_url: cfg.cover.cover_url,
-      },
-      contact: {
-        locked: Boolean(cfg.contact?.locked),
-        lock_mode: cfg.contact?.lock_mode ?? undefined,
-
-        connect_title: cfg.contact?.connect_title || "Connect",
-        contact_title: cfg.contact?.contact_title || "Save Contact",
-      },
-
+      /* ================= THEME ================= */
       theme: {
         locked: cfg.theme.locked,
         lock_mode: cfg.theme.lock_mode,
+
         card_background: cfg.theme.card_background,
         button_color: cfg.theme.button_color,
         card_text: cfg.theme.card_text,
         button_text: cfg.theme.button_text,
+        image_text_color: cfg.theme.image_text_color,
       },
 
+      /* ================= BANNER ================= */
       banner: {
         locked: cfg.banner.locked,
         lock_mode: cfg.banner.lock_mode,
+
         enabled: cfg.banner.enabled,
         image_url: cfg.banner.image_url,
         cta_text: cfg.banner.cta_text,
         cta_url: cfg.banner.cta_url,
       },
 
+      /* ================= MEETING ================= */
       meeting: {
         locked: cfg.meeting.locked,
         lock_mode: cfg.meeting.lock_mode,
+
         enabled: cfg.meeting.enabled,
         type: cfg.meeting.type,
         meeting_url: cfg.meeting.meeting_url,
         button_text: cfg.meeting.button_text,
       },
 
+      /* ================= SOCIAL LINKS ================= */
       social_links: {
+        locked: cfg.social_links.locked,
+        lock_mode: cfg.social_links.lock_mode,
         items: cfg.social_links.items,
       },
 
+      /* ================= PRODUCTS ================= */
       products: {
         locked: cfg.products.locked,
         lock_mode: cfg.products.lock_mode,
+
         toggle_price: cfg.products.toggle_price,
         section_title: cfg.products.section_title,
+
         items: cfg.products.items.map((p: any) => ({
           id: p.id,
           name: p.name,
           price: p.price,
-          image_url: p.image_url || p.product_img_url,
+          image_url: p.image_url,
           rank: p.rank,
           enabled: p.enabled,
         })),
       },
 
-
+      /* ================= YOUTUBE ================= */
       youtube: {
         locked: cfg.youtube.locked,
         lock_mode: cfg.youtube.lock_mode,
+        section_title: cfg.youtube.section_title,
+
         items: cfg.youtube.items.map((v: any) => ({
           id: v.id,
           url: v.url,
@@ -357,20 +384,23 @@ export function denormalizeProfile(
         })),
       },
 
+      /* ================= LINKS & FILES ================= */
       links_files: {
         locked: cfg.links_files.locked,
         lock_mode: cfg.links_files.lock_mode,
+        section_title: cfg.links_files.section_title,
+
         items: cfg.links_files.items.map((l: any) => ({
           id: l.id,
           type: l.type,
           title: l.title,
           url: l.url,
-          file_url: l.file_url,
-          file_type: l.file_type,
           rank: l.rank,
           enabled: l.enabled,
         })),
       },
+
+      /* ================= PHOTO GALLERY ================= */
       photo_gallery: {
         locked: cfg.photo_gallery.locked,
         lock_mode: cfg.photo_gallery.lock_mode,
@@ -386,23 +416,28 @@ export function denormalizeProfile(
           enabled: p.enabled,
         })),
       },
+
+      /* ================= VIDEO GALLERY ================= */
       video_gallery: {
         locked: cfg.video_gallery.locked,
         lock_mode: cfg.video_gallery.lock_mode,
         section_title: cfg.video_gallery.section_title,
+
         items: cfg.video_gallery.items.map((v: any) => ({
+          id: v.id,
           title: v.title,
           description: v.description,
-          link: v.link,
           video_url: v.video_url,
           rank: v.rank,
           enabled: v.enabled,
         })),
       },
 
+      /* ================= SECTIONS ================= */
       sections: {
         locked: cfg.sections.locked,
         lock_mode: cfg.sections.lock_mode,
+
         items: cfg.sections.items.map((s: any) => ({
           id: s.id,
           type: s.type,
