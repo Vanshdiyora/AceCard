@@ -201,17 +201,25 @@ export default function PaymentsPage() {
             <PageFilters
                 searchPlaceholder="Search vendors..."
                 onSearch={(v) => {
-                    setSearch(v);
-                    setPage(1);
+                    const value = v.trim();
+                    setSearch((prev) => {
+                        if (prev === value) return prev; // 🛑 prevent reset
+                        setPage(1);
+                        return value;
+                    });
                 }}
+
                 filters={[
                     {
-                        key: "sort",
+                        key: "sort",        
                         placeholder: "Sort by",
                         value: sort,
                         onChange: (v) => {
-                            setSort(v as "recent" | "name");
-                            setPage(1);
+                            setSort((prev) => {
+                                if (prev === v) return prev;
+                                setPage(1);
+                                return v as "recent" | "name";
+                            });
                         },
                         options: [
                             { label: "Recent", value: "recent" },
@@ -226,7 +234,7 @@ export default function PaymentsPage() {
                     columns={columns}
                     data={finalList}
                     loading={loading}
-                    page={meta?.page ?? page}
+                    page={page}
                     totalPages={meta?.total_pages ?? 1}
                     onPageChange={setPage}
                     emptyText="No payment records found"
@@ -234,6 +242,7 @@ export default function PaymentsPage() {
                         navigate(`/super/vendors/${v.vendor_id}`)
                     }
                 />
+
             </div>
 
             {/* -------------------- UPDATE SEATS MODAL -------------------- */}

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import {
-  MoreVertical,
+  SlidersHorizontal,
   CheckCircle,
   Users,
   IndianRupee,
@@ -81,7 +81,7 @@ export default function PaymentsRowActionsDropdown({
           setOpen((v) => !v);
         }}
       >
-        <MoreVertical size={16} />
+        <SlidersHorizontal size={18} className="text-gray-600" />
       </button>
 
       {open &&
