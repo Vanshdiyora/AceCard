@@ -7,7 +7,7 @@ export interface VendorItem {
   vendor_poc_name: string;
   primary_phone: string;
   primary_email: string;
-
+  avatar?: string;
   secondary_phone?: string;
   secondary_email?: string;
 

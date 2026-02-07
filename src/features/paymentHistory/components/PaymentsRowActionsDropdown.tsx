@@ -6,19 +6,22 @@ import {
   Users,
   IndianRupee,
   Archive,
+  AlertCircle,
 } from "lucide-react";
 
 type Props = {
   onPaid: () => void;
+  onMarkUnpaid?: () => void; // ✅ NEW (optional for safety)
   onEditSeats: () => void;
   onEditPrice: () => void;
   onArchive: () => void;
 };
 
-const DROPDOWN_HEIGHT = 180; // px (safe estimate)
+const DROPDOWN_HEIGHT = 220; // ⬆ increased for new action
 
 export default function PaymentsRowActionsDropdown({
   onPaid,
+  onMarkUnpaid,
   onEditSeats,
   onEditPrice,
   onArchive,
@@ -47,7 +50,7 @@ export default function PaymentsRowActionsDropdown({
     setPlacement(shouldOpenTop ? "top" : "bottom");
 
     setPos({
-      left: rect.right - 200, // align right
+      left: rect.right - 200,
       top: shouldOpenTop
         ? rect.top - DROPDOWN_HEIGHT + 30
         : rect.bottom + 6,
@@ -96,6 +99,7 @@ export default function PaymentsRowActionsDropdown({
             }}
             className="w-48 rounded-xl border bg-white shadow-lg overflow-hidden text-sm"
           >
+            {/* MARK PAID */}
             <button
               className="w-full px-4 py-2 flex items-center gap-2 hover:bg-gray-50"
               onClick={() => {
@@ -107,6 +111,23 @@ export default function PaymentsRowActionsDropdown({
               Mark as Paid
             </button>
 
+            {/* MARK UNPAID */}
+            {onMarkUnpaid && (
+              <button
+                className="w-full px-4 py-2 flex items-center gap-2 text-orange-600 hover:bg-orange-50"
+                onClick={() => {
+                  onMarkUnpaid();
+                  setOpen(false);
+                }}
+              >
+                <AlertCircle size={16} />
+                Mark as Unpaid
+              </button>
+            )}
+
+            <div className="h-px bg-gray-100" />
+
+            {/* EDIT SEATS */}
             <button
               className="w-full px-4 py-2 flex items-center gap-2 hover:bg-gray-50"
               onClick={() => {
@@ -118,6 +139,7 @@ export default function PaymentsRowActionsDropdown({
               Edit Seats
             </button>
 
+            {/* EDIT PRICE */}
             <button
               className="w-full px-4 py-2 flex items-center gap-2 hover:bg-gray-50"
               onClick={() => {
@@ -131,6 +153,7 @@ export default function PaymentsRowActionsDropdown({
 
             <div className="h-px bg-gray-100" />
 
+            {/* ARCHIVE */}
             <button
               className="w-full px-4 py-2 flex items-center gap-2 text-red-600 hover:bg-red-50"
               onClick={() => {

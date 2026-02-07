@@ -33,6 +33,32 @@ function getErrorMessage(err: unknown): string {
   return "Something went wrong";
 }
 
+function getInitials(name: string) {
+  return name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+}
+
+function getAvatarColor(seed: string) {
+  const colors = [
+    "bg-purple-100 text-purple-700",
+    "bg-blue-100 text-blue-700",
+    "bg-green-100 text-green-700",
+    "bg-orange-100 text-orange-700",
+    "bg-pink-100 text-pink-700",
+  ];
+
+  let hash = 0;
+  for (let i = 0; i < seed.length; i++) {
+    hash = seed.charCodeAt(i) + ((hash << 5) - hash);
+  }
+
+  return colors[Math.abs(hash) % colors.length];
+}
+
 export default function VendorsPage() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
@@ -118,7 +144,41 @@ export default function VendorsPage() {
   };
 
   const columns: Column<VendorItem>[] = [
-    { header: "Vendor Name", accessor: "legal_name", width: "2fr" },
+    {
+      header: "Vendor",
+      width: "2.8fr",
+      render: (v) => (
+        <div className="flex items-center gap-3 min-w-0">
+          {/* Avatar */}
+          {v.avatar ? (
+            <img
+              src={v.avatar}
+              alt={v.legal_name}
+              className="w-9 h-9 rounded-full object-cover border"
+            />
+          ) : (
+            <div
+              className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-semibold ${getAvatarColor(
+                v.legal_name
+              )}`}
+            >
+              {getInitials(v.legal_name)}
+            </div>
+          )}
+
+          {/* Name + email */}
+          <div className="min-w-0">
+            <div className="font-medium truncate">
+              {v.legal_name}
+            </div>
+            <div className="text-xs text-gray-400 truncate">
+              {v.primary_email}
+            </div>
+          </div>
+        </div>
+      ),
+    },
+
     { header: "Vendor Email", accessor: "primary_email", width: "2fr" },
     { header: "Vendor Phone", accessor: "primary_phone", width: "1.5fr" },
     { header: "POC Name", accessor: "vendor_poc_name", width: "1.5fr" },

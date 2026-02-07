@@ -9,10 +9,9 @@ interface VendorsState {
   vendors: VendorItem[];
   meta: VendorMeta | null;
   stats: VendorStat[];
- searchResults: VendorItem[];
+  searchResults: VendorItem[];
   searchMeta: VendorMeta | null;
   searchLoading: boolean;
-  
 
   loading: boolean;
   seatsUpdating: boolean; // 👈 add
@@ -375,7 +374,7 @@ const vendorsSlice = createSlice({
         state.error = action.payload;
       })
       /* SEARCH VENDORS */
-     .addCase(searchVendors.pending, (state) => {
+      .addCase(searchVendors.pending, (state) => {
         state.searchLoading = true;
         state.error = undefined;
       })
