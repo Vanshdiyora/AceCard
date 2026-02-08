@@ -22,7 +22,7 @@ export default function ProductLeadsTable({ productId }: Props) {
 
   const leads = useAppSelector((s) => s.products.productLeads);
   const loading = useAppSelector((s) => s.products.productLeadsLoading);
-console.log(leads)
+
   useEffect(() => {
     dispatch(fetchProductLeads(productId));
   }, [dispatch, productId]);

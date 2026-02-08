@@ -89,6 +89,9 @@ export interface LeadProduct {
   price?: number;
 }
 
+export type SortBy = "recent" | "name" | "deal_amount";
+export type SortOrder = "asc" | "desc";
+
 
 export type LeadStage =
   | "new"

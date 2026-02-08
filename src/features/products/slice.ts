@@ -10,11 +10,23 @@ const extractApiError = (err: unknown, fallback: string): string =>
   (err as ApiError)?.response?.data?.message ||
   (err as Error)?.message ||
   fallback;
+type SortBy = "recent" | "name" | "deal_amount";
+type SortOrder = "asc" | "desc";
 
 /* ---------------- THUNKS ---------------- */
 export const fetchProducts = createAsyncThunk<
   ProductListResponse,
-  { page?: number; page_size?: number; search?: string; status?: "active" | "archived"; mode?: FetchMode },
+  {
+    page?: number;
+    page_size?: number;
+    search?: string;
+    status?: "active" | "archived";
+    mode?: FetchMode;
+
+    // 👇 ADD THESE
+    sort_by?: SortBy;
+    sort_order?: SortOrder;
+  },
   { rejectValue: string }
 >("products/fetchProducts", async (args, { rejectWithValue }) => {
   try {
@@ -23,6 +35,22 @@ export const fetchProducts = createAsyncThunk<
     return rejectWithValue(extractApiError(err, "Failed to fetch products"));
   }
 });
+
+export const bulkImportProducts = createAsyncThunk<
+  { count: number; status: "success" | "failed" },
+  File,
+  { rejectValue: string }
+>("products/bulkImport", async (file, { rejectWithValue }) => {
+  try {
+    return await ProductsAPI.bulkImportProducts(file);
+  } catch (err) {
+    return rejectWithValue(
+      extractApiError(err, "Failed to import products")
+    );
+  }
+});
+
+
 type LeadRow = {
   id: number;
   lead_name: string;
@@ -37,18 +65,23 @@ export const fetchProductLeads = createAsyncThunk<
   { rejectValue: string }
 >("products/fetchProductLeads", async (productId, { rejectWithValue }) => {
   try {
-    const res = await ProductsAPI.getProductLeads(productId);
+  const res = await ProductsAPI.getProductLeads(productId);
 
-    // 🔑 FIX: ensure array
-    const list = Array.isArray(res) ? res : [res];
+// ✅ If backend returns null → treat as empty list
+if (!Array.isArray(res)) {
+  return [];
+}
 
-    return list.map((l: any) => ({
-      id: l.lead_id,
-      lead_name: l.Lead_Name,
-      campaign_name: l.Campaign_name || undefined,
-      owner_name: l.Sales_person || undefined,
-      manager_name: l.Manager_name || undefined,
-    }));
+return res
+  .filter((l) => l && typeof l === "object" && l.lead_id)
+  .map((l: any) => ({
+    id: l.lead_id,
+    lead_name: l.Lead_Name ?? "",
+    campaign_name: l.Campaign_name ?? undefined,
+    owner_name: l.Sales_person ?? undefined,
+    manager_name: l.Manager_name ?? undefined,
+  }));
+
   } catch (err) {
     console.error("fetchProductLeads error", err);
     return rejectWithValue("Failed to fetch product leads");
@@ -332,6 +365,17 @@ const productsSlice = createSlice({
       .addCase(fetchProductLeads.rejected, (state, action) => {
         state.productLeadsLoading = false;
         state.error = action.payload ?? "Failed to load product leads";
+      })
+      .addCase(bulkImportProducts.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(bulkImportProducts.fulfilled, (state) => {
+        state.loading = false;
+      })
+      .addCase(bulkImportProducts.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload ?? "Bulk import failed";
       });
   },
 });

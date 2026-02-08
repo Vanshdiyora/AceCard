@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import type { Campaign, CampaignState, CampaignListResponse, CampaignStatus } from "./types";
+import type { Campaign, CampaignState, CampaignListResponse, CampaignStatus, SortBy, SortOrder } from "./types";
 import { CampaignService } from "./services/campaign.service";
 
 /* ---------------------------------------
@@ -15,16 +15,32 @@ const extractApiError = (err: unknown, fallback: string): string =>
 /* ---------------------------------------
    THUNKS
 ---------------------------------------- */
-
 export const fetchCampaigns = createAsyncThunk<
   CampaignListResponse,
-  { page?: number; page_size?: number; search?: string; status?: CampaignStatus },
+  {
+    page?: number;
+    page_size?: number;
+    search?: string;
+    status?: CampaignStatus;
+    sort_by?: SortBy;
+    sort_order?: SortOrder;
+  },
   { rejectValue: string }
 >(
   "campaigns/fetchAll",
-  async ({ page = 1, page_size = 10, search, status }, { rejectWithValue }) => {
+  async (
+    { page = 1, page_size = 10, search, status, sort_by, sort_order },
+    { rejectWithValue }
+  ) => {
     try {
-      return await CampaignService.getAll({ page, page_size, search, status });
+      return await CampaignService.getAll({
+        page,
+        page_size,
+        search,
+        status,
+        sort_by,
+        sort_order,
+      });
     } catch (err) {
       return rejectWithValue(extractApiError(err, "Failed to fetch campaigns"));
     }

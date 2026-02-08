@@ -12,7 +12,7 @@ import ChartSkeleton from "../../../common/components/skeleton/ChartSkeleton";
 import ActivitySkeleton from "../../../common/components/skeleton/ActivitySkeleton";
 import ErrorAlert from "../../../common/ui/ErrorAlert";
 import StatCard from "../../../common/components/cards/StatCard";
-
+import { formatINRCompact } from "../../teams/components/details/TeamMemberAnalyticsTab";
 import PipelineAreaChart from "../../../common/components/cards/PipelineAreaChart";
 
 /* -----------------------------------------------------
@@ -41,7 +41,7 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
           <StatCard
             title="Pipeline Generated"
-            value={`₹${data.pipeline.value}`}
+            value={`₹${formatINRCompact(data.pipeline.value)}`}
             change={data.pipeline.percentage}
             positive={data.pipeline.percentage >= 0}
             icon={<TrendingUp size={18} />}

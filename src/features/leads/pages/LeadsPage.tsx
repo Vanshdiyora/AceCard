@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../../app/hooks";
 
@@ -24,9 +24,7 @@ import { downloadLeadExampleCsv } from "../utils/downloadLeadExampleCsv";
 
 import ImportLeadsModal from "../components/ImportLeadsModal";
 
-import type { Lead, LeadStage } from "../types";
-
-type SortType = "recent" | "name_asc" | "pipeline_desc";
+import type { Lead, LeadStage, SortBy, SortOrder } from "../types";
 
 export default function LeadsPage() {
   const dispatch = useAppDispatch();
@@ -39,7 +37,8 @@ export default function LeadsPage() {
 
   const [activeTab, setActiveTab] = useState<"all" | LeadStage>("all");
   const [search, setSearch] = useState("");
-  const [sort, setSort] = useState<SortType>("recent");
+  const [sortBy, setSortBy] = useState<SortBy>("recent");
+  const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
 
   const [page, setPage] = useState(1);
   const pageSize = 10;
@@ -91,14 +90,18 @@ export default function LeadsPage() {
         pageSize,
         search,
         stage: activeTab !== "all" ? activeTab : undefined,
+
+        sort_by: sortBy,
+        sort_order: sortOrder,
       })
     );
-  }, [dispatch, page, pageSize, search, activeTab]);
+  }, [dispatch, page, pageSize, search, activeTab, sortBy, sortOrder]);
 
   /* ---------- Reset page on filter ---------- */
   useEffect(() => {
     setPage(1);
-  }, [search, activeTab]);
+  }, [search, activeTab, sortBy, sortOrder]);
+
 
   /* ---------- Columns ---------- */
   const columns: Column<Lead>[] = [
@@ -121,21 +124,8 @@ export default function LeadsPage() {
   ];
 
   /* ---------- Sorting ---------- */
-  const finalLeads = useMemo(() => {
-    const list = [...leads];
-    switch (sort) {
-      case "name_asc":
-        return list.sort((a, b) => a.lead_name.localeCompare(b.lead_name));
-      case "pipeline_desc":
-        return list.sort((a, b) => (b.deal_amount || 0) - (a.deal_amount || 0));
-      default:
-        return list.sort(
-          (a, b) =>
-            new Date(b.updated_at).getTime() -
-            new Date(a.updated_at).getTime()
-        );
-    }
-  }, [leads, sort]);
+  const finalLeads = leads;
+
 
   /* ---------- Export ---------- */
   const handleExport = async () => {
@@ -243,19 +233,32 @@ export default function LeadsPage() {
         onSearch={setSearch}
         filters={[
           {
-            key: "sort",
+            key: "sort_by",
+            title: "SORT BY",
             placeholder: "Sort by",
-            value: sort,
-            onChange: (v) => setSort(v as SortType),
+            value: sortBy,
+            onChange: (v) => setSortBy(v as SortBy),
             options: [
               { label: "Recent", value: "recent" },
-              { label: "Name A-Z", value: "name_asc" },
-              { label: "Pipeline High → Low", value: "pipeline_desc" },
+              { label: "Name", value: "name" },
+              { label: "Deal Amount", value: "deal_amount" },
+            ],
+          },
+          {
+            key: "sort_order",
+            title: "ORDER",
+            placeholder: "Order",
+            value: sortOrder,
+            onChange: (v) => setSortOrder(v as SortOrder),
+            options: [
+              { label: "Ascending", value: "asc" },
+              { label: "Descending", value: "desc" },
             ],
           },
         ]}
-       onExport={handleExport}
-  disableExport={loading || !meta || meta.total_count === 0}
+
+        onExport={handleExport}
+        disableExport={loading || !meta || meta.total_count === 0}
         onImport={() => setImportOpen(true)}
       />
       <div className="mt-6" />

@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../../app/hooks";
 import { fetchCampaigns } from "../slice";
@@ -10,6 +10,7 @@ import CreateCampaignModal from "../components/CreateCampaignModal";
 import ErrorAlert from "../../../common/ui/ErrorAlert";
 import type { Campaign, CampaignStatus } from "../types";
 import { CampaignService } from "../services/campaign.service";
+import type { SortBy, SortOrder } from "../types";
 
 const tabs: TabItem[] = [
   { label: "All", value: "all" },
@@ -39,7 +40,9 @@ export default function CampaignsPage() {
 
   const [activeTab, setActiveTab] = useState<"all" | CampaignStatus>("all");
   const [search, setSearch] = useState("");
-  const [sort, setSort] = useState<"recent" | "name_asc" | "pipeline_desc">("recent");
+  const [sortBy, setSortBy] = useState<SortBy>("recent");
+  const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
+
   const [openCreate, setOpenCreate] = useState(false);
 
   useEffect(() => {
@@ -69,52 +72,24 @@ export default function CampaignsPage() {
 
   /* -------- Fetch -------- */
   useEffect(() => {
-    const params: any = { page, page_size: pageSize };
-
-    if (search) params.search = search;
-    if (activeTab !== "all") params.status = activeTab;
-
-    dispatch(fetchCampaigns(params));
-  }, [dispatch, page, pageSize, search, activeTab]);
+    dispatch(
+      fetchCampaigns({
+        page,
+        page_size: pageSize,
+        search: search || undefined,
+        status: activeTab !== "all" ? activeTab : undefined,
+        sort_by: sortBy,
+        sort_order: sortOrder,
+      })
+    );
+  }, [dispatch, page, pageSize, search, activeTab, sortBy, sortOrder]);
 
   useEffect(() => {
     setPage(1);
-  }, [search, activeTab]);
-
-  const sortFilter = useMemo(() => {
-    return [
-      {
-        key: "sort",
-        placeholder: "Sort",
-        value: sort,
-        onChange: (v: string) => setSort(v as any),
-        options: [
-          { label: "Recent", value: "recent" },
-          { label: "Name A–Z", value: "name_asc" },
-          { label: "Pipeline High–Low", value: "pipeline_desc" },
-        ],
-      },
-    ];
-  }, [sort]);
+  }, [search, activeTab, sortBy, sortOrder]);
 
   /* -------- Sorting -------- */
-  const finalData = useMemo(() => {
-    const list = [...items];
-
-    switch (sort) {
-      case "name_asc":
-        return list.sort((a, b) => a.name.localeCompare(b.name));
-      case "pipeline_desc":
-        return list.sort((a, b) => (b.pipeline_value || 0) - (a.pipeline_value || 0));
-      default:
-        return list.sort(
-          (a, b) =>
-            new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
-        );
-    }
-  }, [items, sort]);
-
-
+  const finalData = items;
 
   /* -------- Table Columns -------- */
   const columns: Column<Campaign>[] = [
@@ -181,7 +156,31 @@ export default function CampaignsPage() {
           onTabChange={(v) => setActiveTab(v as CampaignStatus | "all")}
           searchPlaceholder="Search campaigns..."
           onSearch={setSearch}
-          filters={sortFilter}
+          filters={[
+            {
+              key: "sort_by",
+              title: "SORT BY",
+              placeholder: "Sort by",
+              value: sortBy,
+              onChange: (v) => setSortBy(v as SortBy),
+              options: [
+                { label: "Recent", value: "recent" },
+                { label: "Name", value: "name" },
+                { label: "Pipeline Value", value: "pipeline_value" },
+              ],
+            },
+            {
+              key: "sort_order",
+              title: "ORDER",
+              placeholder: "Order",
+              value: sortOrder,
+              onChange: (v) => setSortOrder(v as SortOrder),
+              options: [
+                { label: "Ascending", value: "asc" },
+                { label: "Descending", value: "desc" },
+              ],
+            },
+          ]}
           onExport={handleExportCampaigns}
           disableExport={loading || !meta || meta.total_count === 0}
         />

@@ -7,6 +7,7 @@ import {
   ResponsiveContainer,
   CartesianGrid,
 } from "recharts";
+import { formatAxis } from "../../../features/teams/components/details/TeamMemberAnalyticsTab";
 
 /* -----------------------------------------------------
    TYPES
@@ -171,6 +172,7 @@ export default function PipelineAreaChart({
             tick={{ fill: "#9ca3af", fontSize: 12 }}
             axisLine={false}
             tickLine={false}
+            tickFormatter={formatAxis}
           />
 
           <Tooltip />
