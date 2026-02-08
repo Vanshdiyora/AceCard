@@ -40,6 +40,7 @@ const resolveTheme = (theme: any) => ({
   buttonBg: theme.button_color || "#A5A6AB",
   text: theme.card_text || "#EA3636",
   buttonText: theme.button_text || "#5F29F5",
+  imageText: theme.image_text_color, 
 });
 
 
@@ -158,7 +159,7 @@ export default function MobileWebsite({
     products,
     sections,
     photo_gallery,
-    video_gallery,
+    // video_gallery,
   } = config;
 
 
@@ -239,18 +240,19 @@ export default function MobileWebsite({
           />
 
         );
-      case "video_gallery":
-        return video_gallery?.items?.length ? (
-          <VideoGallery
-            title={video_gallery.section_title}
-            items={sortByRank(video_gallery.items)}
-            theme={theme}
-          />
-        ) : null;
+      // case "video_gallery":
+      //   return video_gallery?.items?.length ? (
+      //     <VideoGallery
+      //       title={video_gallery.section_title}
+      //       items={sortByRank(video_gallery.items)}
+      //       theme={theme}
+      //     />
+      //   ) : null;
 
       case "youtube":
         return (
           <YouTube
+            title={youtube.section_title}
             items={sortByRank(youtube.items)}
             theme={theme}
           />
@@ -271,6 +273,7 @@ export default function MobileWebsite({
       case "links_files":
         return (
           <Links
+            title={links_files.section_title}
             items={sortByRank(links_files.items)}
             theme={theme}
           />
@@ -418,38 +421,38 @@ export default function MobileWebsite({
   //       console.error("❌ Local font failed", err);
   //     });
   // }, []);  // empty dependency for local test only
-const isAnyModalOpen = open || !!activePhoto;
-useEffect(() => {
-  if (!isAnyModalOpen) {
-    document.body.style.overflow = "";
-    document.body.style.position = "";
-    document.body.style.width = "";
-    return;
-  }
+  const isAnyModalOpen = open || !!activePhoto;
+  useEffect(() => {
+    if (!isAnyModalOpen) {
+      document.body.style.overflow = "";
+      document.body.style.position = "";
+      document.body.style.width = "";
+      return;
+    }
 
-  // lock body (iOS-safe)
-  const scrollY = window.scrollY;
+    // lock body (iOS-safe)
+    const scrollY = window.scrollY;
 
-  document.body.style.position = "fixed";
-  document.body.style.top = `-${scrollY}px`;
-  document.body.style.left = "0";
-  document.body.style.right = "0";
-  document.body.style.width = "100%";
-  document.body.style.overflow = "hidden";
+    document.body.style.position = "fixed";
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.left = "0";
+    document.body.style.right = "0";
+    document.body.style.width = "100%";
+    document.body.style.overflow = "hidden";
 
-  return () => {
-    const y = document.body.style.top;
+    return () => {
+      const y = document.body.style.top;
 
-    document.body.style.position = "";
-    document.body.style.top = "";
-    document.body.style.left = "";
-    document.body.style.right = "";
-    document.body.style.width = "";
-    document.body.style.overflow = "";
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.left = "";
+      document.body.style.right = "";
+      document.body.style.width = "";
+      document.body.style.overflow = "";
 
-    window.scrollTo(0, parseInt(y || "0") * -1);
-  };
-}, [isAnyModalOpen]);
+      window.scrollTo(0, parseInt(y || "0") * -1);
+    };
+  }, [isAnyModalOpen]);
 
   return (
     <div
@@ -584,7 +587,7 @@ export function Products({
             <div className="absolute bottom-3 left-3 right-3">
               <h3
                 className="text-sm font-semibold leading-tight line-clamp-2"
-                style={{ color: theme.card_text }}
+                style={{ color: theme.image_text_color }}
               >
                 {p.name}
               </h3>
@@ -592,7 +595,7 @@ export function Products({
               {showPrice && (
                 <p
                   className="text-xs mt-1 font-medium"
-                  style={{ color: theme.card_text }}
+                  style={{ color: theme.image_text_color }}
                 >
                   ₹{p.price}
                 </p>
@@ -607,7 +610,8 @@ export function Products({
 
 /* ================= YOUTUBE ================= */
 import { useRef } from "react";
-function YouTube({ items, theme }: any) {
+// import { link } from "fs";
+function YouTube({ title, items, theme }: any) {
   if (!items?.length) return null;
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -640,7 +644,7 @@ function YouTube({ items, theme }: any) {
   };
 
   return (
-    <Section title="Videos" theme={theme}>
+    <Section title={title} theme={theme}>
       {/* Carousel */}
       <div
         ref={containerRef}
@@ -742,13 +746,13 @@ function Social({ items, theme, shapeClass }: any) {
 
 /* ================= LINKS ================= */
 
-function Links({ items, theme }: any) {
+function Links({ title, items, theme }: any) {
   if (!items?.length) return null;
 
   const t = resolveTheme(theme)
 
   return (
-    <Section title="Links & Files" theme={theme}>
+    <Section title={title} theme={theme}>
       <div className="flex flex-col gap-4">
         {items.map((l: any) => (
           <a
@@ -920,7 +924,7 @@ function PhotoGallery({ title, items, theme, onOpen }: any) {
                   <div className="absolute bottom-2 left-2 right-2">
                     <p
                       className="text-xs font-semibold leading-tight line-clamp-2"
-                      style={{ color: t.text }}
+                      style={{ color: t.imageText }}
                     >
                       {p.title}
                     </p>
@@ -1011,75 +1015,75 @@ function PhotoModal({
 }
 
 
-function VideoGallery({ title, items, theme }: any) {
-  const t = resolveTheme(theme);
-  const isYouTube = (url?: string) =>
-    !!url && /youtube\.com|youtu\.be/.test(url);
+// function VideoGallery({ title, items, theme }: any) {
+//   const t = resolveTheme(theme);
+//   const isYouTube = (url?: string) =>
+//     !!url && /youtube\.com|youtu\.be/.test(url);
 
-  const isDirectVideo = (url?: string) =>
-    !!url && /\.(mp4|webm|ogg)$/i.test(url);
+//   const isDirectVideo = (url?: string) =>
+//     !!url && /\.(mp4|webm|ogg)$/i.test(url);
 
-  return (
-    <Section title={title || "Video Gallery"} theme={theme}>
-      <div className="flex gap-4 overflow-x-auto pb-3 snap-x snap-mandatory">
-        {items.map((v: any, i: number) => {
-          const id = getYouTubeId(v.video_url);
-          if (!id) return null;
+//   return (
+//     <Section title={title || "Video Gallery"} theme={theme}>
+//       <div className="flex gap-4 overflow-x-auto pb-3 snap-x snap-mandatory">
+//         {items.map((v: any, i: number) => {
+//           const id = getYouTubeId(v.video_url);
+//           if (!id) return null;
 
-          return (
-            <div
-              key={i}
-              className="min-w-[220px] h-48 snap-start rounded-2xl overflow-hidden shadow-lg flex flex-col"
-              style={{ backgroundColor: t.cardBg }}
-            >
-              {/* VIDEO */}
-              <div className="w-full h-[140px] bg-black">
-                {isYouTube(v.video_url) ? (
-                  <iframe
-                    src={`https://www.youtube.com/embed/${getYouTubeId(v.video_url)}`}
-                    className="w-full h-full"
-                    frameBorder="0"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                  />
-                ) : isDirectVideo(v.video_url) ? (
-                  <video
-                    src={v.video_url}
-                    controls
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-white text-sm">
-                    Video preview not available
-                  </div>
-                )}
-              </div>
+//           return (
+//             <div
+//               key={i}
+//               className="min-w-[220px] h-48 snap-start rounded-2xl overflow-hidden shadow-lg flex flex-col"
+//               style={{ backgroundColor: t.cardBg }}
+//             >
+//               {/* VIDEO */}
+//               <div className="w-full h-[140px] bg-black">
+//                 {isYouTube(v.video_url) ? (
+//                   <iframe
+//                     src={`https://www.youtube.com/embed/${getYouTubeId(v.video_url)}`}
+//                     className="w-full h-full"
+//                     frameBorder="0"
+//                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+//                     allowFullScreen
+//                   />
+//                 ) : isDirectVideo(v.video_url) ? (
+//                   <video
+//                     src={v.video_url}
+//                     controls
+//                     className="w-full h-full object-cover"
+//                   />
+//                 ) : (
+//                   <div className="w-full h-full flex items-center justify-center text-white text-sm">
+//                     Video preview not available
+//                   </div>
+//                 )}
+//               </div>
 
-              {/* INFO */}
-              <div className="px-3 py-1 space-y-1">
-                <h4
-                  className="text-sm font-semibold line-clamp-1"
-                  style={{ color: t.text }}
-                >
-                  {v.title}
-                </h4>
+//               {/* INFO */}
+//               <div className="px-3 py-1 space-y-1">
+//                 <h4
+//                   className="text-sm font-semibold line-clamp-1"
+//                   style={{ color: t.text }}
+//                 >
+//                   {v.title}
+//                 </h4>
 
-                {v.description && (
-                  <p
-                    className="text-xs opacity-80 line-clamp-2"
-                    style={{ color: t.text }}
-                  >
-                    {v.description}
-                  </p>
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </Section>
-  );
-}
+//                 {v.description && (
+//                   <p
+//                     className="text-xs opacity-80 line-clamp-2"
+//                     style={{ color: t.text }}
+//                   >
+//                     {v.description}
+//                   </p>
+//                 )}
+//               </div>
+//             </div>
+//           );
+//         })}
+//       </div>
+//     </Section>
+//   );
+// }
 
 
 function BackgroundVideo({ src }: { src?: string }) {

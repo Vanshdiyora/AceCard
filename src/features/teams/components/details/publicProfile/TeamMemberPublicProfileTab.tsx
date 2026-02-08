@@ -31,8 +31,16 @@ const THEME_COLOR_KEYS = [
   "button_color",
   "card_text",
   "button_text",
+  "image_text_color",
 ] as const;
 
+const THEME_COLOR_LABELS: Record<typeof THEME_COLOR_KEYS[number], string> = {
+  card_background: "Card background",
+  button_color: "Button color",
+  card_text: "Card text",
+  button_text: "Button text",
+  image_text_color: "Image text",
+};
 
 /* ================= TYPES ================= */
 export type LockMode = "global" | "individual";
@@ -290,6 +298,12 @@ export default function TeamMemberPublicProfileTab({
   }
 
   /* ================= INIT ================= */
+  function extractYoutubeId(url: string) {
+    if (!url) return "";
+    const match =
+      url.match(/(?:youtube\.com\/.*v=|youtu\.be\/)([^&]+)/);
+    return match?.[1] ?? "";
+  }
 
   useEffect(() => {
     dispatch(fetchProducts({ page: 1, page_size: 10, mode: "paginate" }))
@@ -762,7 +776,6 @@ export default function TeamMemberPublicProfileTab({
             </div>
           )}
 
-
           {/* COVER UPLOAD (only when layout = 3) */}
           {config.layout.profile_type === 3 && (
             <div className="mt-6 space-y-3">
@@ -845,8 +858,7 @@ export default function TeamMemberPublicProfileTab({
               }
             />
           </div>
-
-
+          
           {config.layout.use_custom_font && (
             <div className="mt-4">
               <label className="text-sm font-medium block mb-2">
@@ -893,7 +905,6 @@ export default function TeamMemberPublicProfileTab({
               )}
             </div>
           )}
-
 
           {/* ALIGNMENT */}
           <div className="mt-8 border-t pt-6">
@@ -1016,7 +1027,7 @@ export default function TeamMemberPublicProfileTab({
             </div>
 
             <p className="text-xs text-gray-400 mt-1">
-              Recommended: 6 – 8 px
+              Recommended: 6 - 8 px
             </p>
           </div>
 
@@ -1029,8 +1040,8 @@ export default function TeamMemberPublicProfileTab({
               <div className="flex items-center gap-3 w-1/2">
                 <input
                   type="number"
-                  min={0}
-                  max={200}
+                  min={40}
+                  max={80}
                   step={1}
                   value={
                     config.layout.profile_radius === 0
@@ -1064,11 +1075,10 @@ export default function TeamMemberPublicProfileTab({
               </div>
 
               <p className="text-xs text-gray-400 mt-1">
-                50% creates a circular avatar
+                Recommended: 60 - 70 px
               </p>
             </div>
           </div>
-
 
           {/* BACKGROUND TYPE */}
           <div className="mt-6">
@@ -1462,7 +1472,7 @@ export default function TeamMemberPublicProfileTab({
           {THEME_COLOR_KEYS.map((k) => (
             <ColorPickerField
               key={k}
-              label={k.replace("_", " ")}
+              label={THEME_COLOR_LABELS[k]}
               value={config.theme[k]}
               disabled={isReadOnly(config.theme)}
               onChange={(val: string) =>
@@ -1472,6 +1482,7 @@ export default function TeamMemberPublicProfileTab({
                 })
               }
             />
+
           ))}
         </div>
       </Card>
@@ -1980,15 +1991,15 @@ export default function TeamMemberPublicProfileTab({
         {/* SECTION LABEL — stays OUTSIDE modal */}
         <div
           className={`space-y-1 ${isReadOnly(config.youtube)
-              ? "opacity-60 pointer-events-none"
-              : ""
+            ? "opacity-60 pointer-events-none"
+            : ""
             }`}
         >
           <p className="text-xs uppercase tracking-wide text-gray-500">
             Section label
           </p>
           <Input
-            value={config.youtube.section_title}
+            value={config.youtube.section_title || "Video Gallery"}
             disabled={isReadOnly(config.youtube)}
             placeholder="Section title"
             onChange={(v) =>
@@ -1996,11 +2007,12 @@ export default function TeamMemberPublicProfileTab({
                 ...config,
                 youtube: {
                   ...config.youtube,
-                  section_title: v,
+                  section_title: v.trim() === "" ? "Video Gallery" : v,
                 },
               })
             }
           />
+
         </div>
 
         {/* OPEN MODAL BUTTON — SAME STYLE */}
@@ -2024,31 +2036,40 @@ export default function TeamMemberPublicProfileTab({
           </button>
         </div>
 
-        {/* OPTIONAL PREVIEW (minimal) */}
+        {/* PREVIEW — EMBED LOOK, NON-PLAYABLE */}
         {config.youtube.items?.length > 0 && (
           <div
             className={`mt-4 ${isReadOnly(config.youtube)
-                ? "opacity-60 pointer-events-none"
-                : ""
+              ? "opacity-60 pointer-events-none"
+              : ""
               }`}
           >
             <div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
               {config.youtube.items
                 .filter((v) => v.enabled)
                 .sort((a, b) => a.rank - b.rank)
-                .map((item, idx) => (
-                  <div
-                    key={idx}
-                    className="flex-shrink-0 w-[160px] rounded-lg border p-2"
-                  >
-                    <p className="text-xs font-medium truncate">
-                      {item.title || "Video"}
-                    </p>
-                    <p className="text-[11px] text-gray-500 truncate">
-                      {item.url}
-                    </p>
-                  </div>
-                ))}
+                .map((item, idx) => {
+                  const videoId = extractYoutubeId(item.url);
+
+                  return (
+                    <div
+                      key={idx}
+                      className="flex-shrink-0 w-[220px]"
+                    >
+                      <div className="relative aspect-video rounded-lg overflow-hidden border bg-black">
+                        {/* EMBED (non-interactive) */}
+                        <iframe
+                          src={`https://www.youtube.com/embed/${videoId}?controls=0&autoplay=0&mute=1&playsinline=1`}
+                          className="absolute inset-0 w-full h-full pointer-events-none"
+                          allow="accelerometer; encrypted-media; gyroscope; picture-in-picture"
+                        />
+
+                        {/* Optional overlay for polish */}
+                        <div className="absolute inset-0 bg-black/10" />
+                      </div>
+                    </div>
+                  );
+                })}
             </div>
           </div>
         )}
@@ -2083,7 +2104,6 @@ export default function TeamMemberPublicProfileTab({
           )}
         </CommonModal>
       </Card>
-
 
       <Card title="Meeting Button" desc="Book a call / meeting link">
         {showLockable && (
@@ -2120,19 +2140,48 @@ export default function TeamMemberPublicProfileTab({
           />
         )}
 
-        {/* OPEN MODAL BUTTON */}
+        {/* SECTION LABEL — stays OUTSIDE modal */}
+        <div
+          className={`space-y-1 ${isReadOnly(config.links_files)
+            ? "opacity-60 pointer-events-none"
+            : ""
+            }`}
+        >
+          <p className="text-xs uppercase tracking-wide text-gray-500">
+            Section label
+          </p>
+          <Input
+            value={config.links_files.section_title || "Links and Files"}
+            disabled={isReadOnly(config.links_files)}
+            placeholder="Section title"
+            onChange={(v) =>
+              update({
+                ...config,
+                links_files: {
+                  ...config.links_files,
+                  section_title: v.trim() === "" ? "Links and Files" : v,
+                },
+              })
+            }
+          />
+        </div>
+
+        {/* OPEN MODAL BUTTON — SAME STYLE */}
         <div className="mt-4">
           <button
             type="button"
             disabled={isReadOnly(config.links_files)}
             onClick={() => {
               // ✅ clone current state into draft
-              setDraftLinksFiles(
-                structuredClone(config.links_files)
-              );
+              setDraftLinksFiles(structuredClone(config.links_files));
               setLinksFilesModalOpen(true);
             }}
-            className="px-4 py-2 rounded-lg bg-purple-600 text-white text-sm hover:opacity-90 disabled:opacity-50"
+            className="
+        px-4 py-2 rounded-lg
+        bg-purple-600 text-white text-sm
+        hover:opacity-90
+        disabled:opacity-50
+      "
           >
             Add / Manage Links & Files
           </button>
@@ -2142,6 +2191,7 @@ export default function TeamMemberPublicProfileTab({
         <CommonModal
           open={linksFilesModalOpen}
           title="Links & Files"
+          description="Add or manage your external links and files"
           onClose={() => setLinksFilesModalOpen(false)}
           onConfirm={() => {
             if (!draftLinksFiles) return;
@@ -2319,7 +2369,7 @@ export function Toggle({
   );
 }
 
-function ColorPickerField({
+export function ColorPickerField({
   label,
   value,
   onChange,
@@ -2653,7 +2703,7 @@ export function Switch({
   );
 }
 
-function FontDropdown({
+export function FontDropdown({
   value,
   useCustom,
   onChange,

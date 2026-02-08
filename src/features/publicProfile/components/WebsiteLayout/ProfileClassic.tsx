@@ -23,15 +23,29 @@ export function ProfileClassic({
   layout,
 }: any) {
   const t = resolveTheme(theme);
+
+  /* ================= AVATAR LOGIC ================= */
+  const sizeBase = layout?.profile_radius ?? 40;
+
+  // Avatar size derived ONLY from profile_radius
+  const avatarSize = Math.min(
+    Math.max(sizeBase * 2, 48),
+    140
+  );
+
+  const ring = Number(layout?.profile_width || 6);
+  const BORDER_RADIUS = 100; // rounded-xl
+
   const align =
     ALIGN_MAP[(layout?.card_alignment as CardAlign) || "center"];
-  const ring = Number(layout?.profile_width || 6);
+
   return (
     <div>
       <div
         className="relative h-[220px] rounded-2xl overflow-hidden"
         style={{ backgroundColor: t.cardBg }}
       >
+        {/* ================= COVER ================= */}
         {cover?.cover_url ? (
           <img
             src={cover.cover_url}
@@ -39,43 +53,64 @@ export function ProfileClassic({
             alt="Cover"
           />
         ) : (
-          <div className="h-full flex items-center justify-center text-xs text-gray-400"
-           style={{ backgroundColor: t.cardBg }}>
-            
-          </div>
+          <div
+            className="h-full flex items-center justify-center text-xs text-gray-400"
+            style={{ backgroundColor: t.cardBg }}
+          />
         )}
 
+        {/* ================= FADE ================= */}
         {layout?.is_fade && (
           <div
             className="absolute bottom-0 left-0 right-0 h-20"
             style={{
-              background: `linear-gradient(to top, ${t.cardBg} 0%, rgba(0,0,0,0) 100%)`,
+              background: `linear-gradient(
+                to top,
+                ${layout.fade_color || t.cardBg} 0%,
+                rgba(0,0,0,0) 100%
+              )`,
             }}
           />
         )}
 
+        {/* ================= CONTENT ================= */}
         <div className={`absolute bottom-3 flex flex-col ${align}`}>
+          {/* Avatar */}
           <div
-            className="rounded-full flex items-center justify-center"
+            className="flex items-center justify-center"
             style={{
               backgroundColor: "#9ca3af",
-              padding: `${ring}px`,
+              padding: ring,
+              borderRadius: BORDER_RADIUS, // 👈 fixed rounded-xl
             }}
           >
             <div
-              className="rounded-full"
-              style={{ backgroundColor: t.buttonBg }}
+              style={{
+                backgroundColor: t.buttonBg,
+                borderRadius: BORDER_RADIUS, // 👈 fixed rounded-xl
+              }}
             >
               {profile?.avatar_url ? (
                 <img
                   src={profile.avatar_url}
-                  className="w-20 h-20 rounded-full object-cover"
                   alt="Avatar"
+                  style={{
+                    width: avatarSize,
+                    height: avatarSize,
+                    objectFit: "cover",
+                    borderRadius: "100%", // 👈 always circular
+                  }}
                 />
               ) : (
                 <div
-                  className="w-20 h-20 rounded-full flex items-center justify-center text-xs font-semibold"
-                  style={{ backgroundColor: t.cardBg, color: t.text }}
+                  className="flex items-center justify-center text-xs font-semibold"
+                  style={{
+                    width: avatarSize,
+                    height: avatarSize,
+                    backgroundColor: t.cardBg,
+                    color: t.text,
+                    borderRadius: "100%", // 👈 always circular
+                  }}
                 >
                   {user?.name?.[0] || "?"}
                 </div>
@@ -88,7 +123,10 @@ export function ProfileClassic({
           </h2>
 
           <p className="text-xs opacity-90" style={{ color: t.text }}>
-            {formatRole(profile.custom_job_role || user?.job_title || user?.role)} at {user?.vendor_name}
+            {formatRole(
+              profile.custom_job_role || user?.job_title || user?.role
+            )}{" "}
+            at {user?.vendor_name}
           </p>
         </div>
       </div>

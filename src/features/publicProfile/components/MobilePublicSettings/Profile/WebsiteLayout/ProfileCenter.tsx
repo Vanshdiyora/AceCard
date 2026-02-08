@@ -16,10 +16,23 @@ export function ProfileCenter({
   theme,
   user,
   layout,
-  onProfileChange, // 👈 NEW
+  onProfileChange,
 }: any) {
   const t = resolveTheme(theme);
 
+  /* ================= AVATAR SIZE LOGIC ================= */
+  const sizeBase = layout?.profile_radius ?? 40;
+
+  // avatar size derived ONLY from profile_radius
+  const avatarSize = Math.min(
+    Math.max(sizeBase * 2, 48), // min
+    160                        // max
+  );
+
+  const ring = layout?.profile_width ?? 6;
+  const BORDER_RADIUS = 999; // always circular outer ring
+
+  /* ================= ALIGNMENT ================= */
   const align =
     layout?.card_alignment === "left"
       ? "items-start text-left"
@@ -36,6 +49,7 @@ export function ProfileCenter({
 
   const [cropFile, setCropFile] = useState<File | null>(null);
 
+  /* ================= UPLOAD HANDLER ================= */
   const uploadCropped = async (blob: Blob) => {
     const file = new File([blob], "avatar.jpg", { type: "image/jpeg" });
     const res = await uploadImage(file);
@@ -52,38 +66,64 @@ export function ProfileCenter({
   return (
     <div className="flex justify-center mt-6">
       <div
-        className={`w-full max-w-[300px] rounded-3xl px-6 pt-10 pb-6 flex flex-col ${align}`}
+        className={`w-full max-w-[300px] px-6 pt-10 pb-6 flex flex-col ${align}`}
       >
-        {/* Avatar */}
+        {/* ================= AVATAR ================= */}
         <div className={`w-full flex ${avatarAlign} relative`}>
+          {/* Outer ring */}
           <div
-            className="rounded-full flex items-center justify-center transition-all duration-300"
+            className="flex items-center justify-center transition-all duration-300"
             style={{
               backgroundColor: "#9ca3af",
-              padding: `${layout?.profile_width || 6}px`,
+              padding: ring,
+              borderRadius: BORDER_RADIUS,
             }}
           >
+            {/* Inner background */}
             <div
-              className="rounded-full relative"
-              style={{ backgroundColor: t.buttonBg }}
+              className="relative"
+              style={{
+                backgroundColor: t.buttonBg,
+                borderRadius: BORDER_RADIUS,
+              }}
             >
               {profile?.avatar_url ? (
                 <img
                   src={profile.avatar_url}
-                  className="w-20 h-20 rounded-full object-cover"
                   alt="Avatar"
+                  style={{
+                    width: avatarSize,
+                    height: avatarSize,
+                    objectFit: "cover",
+                    borderRadius: "100%", // always circle
+                    transition: "width 150ms ease, height 150ms ease",
+                  }}
                 />
               ) : (
                 <div
-                  className="w-20 h-20 rounded-full flex items-center justify-center text-xs font-semibold"
-                  style={{ backgroundColor: t.cardBg, color: t.text }}
+                  className="flex items-center justify-center text-xs font-semibold"
+                  style={{
+                    width: avatarSize,
+                    height: avatarSize,
+                    backgroundColor: t.cardBg,
+                    color: t.text,
+                    borderRadius: "100%", // always circle
+                    transition: "width 150ms ease, height 150ms ease",
+                  }}
                 >
                   {user?.name?.[0] || "?"}
                 </div>
               )}
 
-              {/* 📸 FLOATING CAMERA ICON */}
-              <label className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-orange-500 text-white p-2.5 rounded-full shadow-lg cursor-pointer hover:scale-105 transition">
+              {/* 📸 CAMERA BUTTON */}
+              <label
+                className="
+                  absolute -bottom-3 left-1/2 -translate-x-1/2
+                  bg-orange-500 text-white p-2.5 rounded-full
+                  shadow-lg cursor-pointer
+                  hover:scale-105 transition
+                "
+              >
                 📷
                 <input
                   type="file"
@@ -98,16 +138,19 @@ export function ProfileCenter({
           </div>
         </div>
 
-        {/* Name */}
+        {/* ================= TEXT ================= */}
         <h2 className="mt-3 text-base font-semibold" style={{ color: t.text }}>
           {user?.name}
         </h2>
 
-        {/* Role */}
         <p className="text-xs opacity-90" style={{ color: t.text }}>
-          {formatRole(profile.custom_job_role || user?.job_title || user?.role)} at {user?.vendor_name}
+          {formatRole(
+            profile.custom_job_role || user?.job_title || user?.role
+          )}{" "}
+          at {user?.vendor_name}
         </p>
 
+        {/* ================= CROP MODAL ================= */}
         {cropFile && (
           <AvatarCropModal
             file={cropFile}

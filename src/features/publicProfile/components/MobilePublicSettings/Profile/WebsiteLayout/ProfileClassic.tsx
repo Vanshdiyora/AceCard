@@ -29,15 +29,26 @@ export function ProfileClassic({
   onProfileChange,
 }: any) {
   const t = resolveTheme(theme);
+
   const align =
     ALIGN_MAP[(layout?.card_alignment as CardAlign) || "center"];
-  const ring = Number(layout?.profile_width || 6);
+
+  /* ================= AVATAR SIZE LOGIC ================= */
+  const sizeBase = layout?.profile_radius ?? 40;
+
+  const avatarSize = Math.min(
+    Math.max(sizeBase * 2, 48),
+    160
+  );
+
+  const ring = Number(layout?.profile_width ?? 6);
+  const BORDER_RADIUS = 999; // always circular
 
   const [cropFile, setCropFile] = useState<File | null>(null);
   const [isCoverCropping, setIsCoverCropping] = useState(false);
   const coverFileRef = useRef<File | null>(null);
 
-  /* ---------- AVATAR ---------- */
+  /* ================= AVATAR UPLOAD ================= */
   const uploadAvatar = async (blob: Blob) => {
     const file = new File([blob], "avatar.jpg", { type: "image/jpeg" });
     const res = await uploadImage(file);
@@ -51,7 +62,7 @@ export function ProfileClassic({
     setCropFile(null);
   };
 
-  /* ---------- COVER ---------- */
+  /* ================= COVER UPLOAD ================= */
   const openCoverPicker = () => {
     const el = document.getElementById("coverInput") as HTMLInputElement;
     el?.click();
@@ -65,7 +76,7 @@ export function ProfileClassic({
     onProfileChange((prev: any) => ({
       ...prev,
       cover: { ...prev.cover, cover_url: url },
-      profile: { ...prev.profile }, // keep ref change
+      profile: { ...prev.profile },
     }));
 
     setIsCoverCropping(false);
@@ -77,7 +88,7 @@ export function ProfileClassic({
         className="relative h-[220px] rounded-2xl overflow-hidden"
         style={{ backgroundColor: t.cardBg }}
       >
-        {/* COVER */}
+        {/* ================= COVER ================= */}
         {cover?.cover_url ? (
           <img
             src={cover.cover_url}
@@ -85,81 +96,106 @@ export function ProfileClassic({
             alt="Cover"
           />
         ) : (
-          <div className="h-full flex items-center justify-center text-xs text-gray-400 bg-gray-100">
-           
-          </div>
+          <div className="h-full bg-gray-100" />
         )}
 
-        {/* FLOATING BUTTON */}
-        {cover.locked?? 
-        <button
-        onClick={openCoverPicker}
-        className="absolute top-3 left-3 z-30 h-10 w-10 rounded-full shadow
-        flex items-center justify-center transition hover:scale-105
-        bg-orange-500 text-white"
-        title="Change cover"
-        >
-          <Image size={18} />
-          <input
-            id="coverInput"
-            type="file"
-            hidden
-            accept="image/*"
-            onChange={(e) => {
-              if (e.target.files?.[0]) {
-                coverFileRef.current = e.target.files[0];
-                setIsCoverCropping(true);
-              }
-            }}
+        {/* COVER EDIT BUTTON */}
+        {!cover?.locked && (
+          <button
+            onClick={openCoverPicker}
+            className="
+              absolute top-3 left-3 z-30
+              h-10 w-10 rounded-full shadow
+              flex items-center justify-center
+              transition hover:scale-105
+              bg-orange-500 text-white
+            "
+            title="Change cover"
+          >
+            <Image size={18} />
+            <input
+              id="coverInput"
+              type="file"
+              hidden
+              accept="image/*"
+              onChange={(e) => {
+                if (e.target.files?.[0]) {
+                  coverFileRef.current = e.target.files[0];
+                  setIsCoverCropping(true);
+                }
+              }}
             />
-        </button>
-          }
+          </button>
+        )}
 
-        {/* VISUAL OVERLAY */}
+        {/* DARK OVERLAY */}
         <div className="absolute inset-0 bg-black/40 pointer-events-none" />
 
+        {/* FADE */}
         {layout?.is_fade && (
           <div
             className="absolute bottom-0 left-0 right-0 h-20"
             style={{
-              background: `linear-gradient(to top, ${t.cardBg} 0%, rgba(0,0,0,0) 100%)`,
+              background: `linear-gradient(to top, ${layout.fade_color} 0%, rgba(0,0,0,0) 100%)`,
             }}
           />
         )}
 
-        {/* AVATAR + TEXT */}
+        {/* ================= AVATAR + TEXT ================= */}
         <div className={`absolute bottom-3 flex flex-col ${align}`}>
+          {/* Avatar ring */}
           <div
-            className="rounded-full flex items-center justify-center transition-all duration-300 relative"
+            className="flex items-center justify-center transition-all duration-300 relative"
             style={{
               backgroundColor: "#9ca3af",
-              padding: `${ring}px`,
+              padding: ring,
+              borderRadius: BORDER_RADIUS,
             }}
           >
+            {/* Inner */}
             <div
-              className="rounded-full relative"
-              style={{ backgroundColor: t.buttonBg }}
+              className="relative"
+              style={{
+                backgroundColor: t.buttonBg,
+                borderRadius: BORDER_RADIUS,
+              }}
             >
               {profile?.avatar_url ? (
                 <img
                   src={profile.avatar_url}
-                  className="w-20 h-20 rounded-full object-cover"
                   alt="Avatar"
+                  style={{
+                    width: avatarSize,
+                    height: avatarSize,
+                    objectFit: "cover",
+                    borderRadius: "100%",
+                    transition: "width 150ms ease, height 150ms ease",
+                  }}
                 />
               ) : (
                 <div
-                  className="w-20 h-20 rounded-full flex items-center justify-center text-xs font-semibold"
-                  style={{ backgroundColor: t.cardBg, color: t.text }}
+                  className="flex items-center justify-center text-xs font-semibold"
+                  style={{
+                    width: avatarSize,
+                    height: avatarSize,
+                    backgroundColor: t.cardBg,
+                    color: t.text,
+                    borderRadius: "100%",
+                  }}
                 >
                   {user?.name?.[0] || "?"}
                 </div>
               )}
 
-              {/* AVATAR BUTTON */}
+              {/* AVATAR EDIT BUTTON */}
               <label
-                className="absolute -bottom-3 left-1/2 -translate-x-1/2 h-10 w-10 rounded-full shadow-lg
-    flex items-center justify-center cursor-pointer transition hover:scale-105
-    bg-orange-500 text-white"
+                className="
+                  absolute -bottom-3 left-1/2 -translate-x-1/2
+                  h-10 w-10 rounded-full shadow-lg
+                  flex items-center justify-center
+                  cursor-pointer transition hover:scale-105
+                  bg-orange-500 text-white
+                "
                 title="Change avatar"
               >
                 <Camera size={18} />
@@ -172,7 +208,6 @@ export function ProfileClassic({
                   }
                 />
               </label>
-
             </div>
           </div>
 
@@ -181,11 +216,14 @@ export function ProfileClassic({
           </h2>
 
           <p className="text-xs opacity-90" style={{ color: t.text }}>
-            {formatRole(profile.custom_job_role || user?.job_title || user?.role)} at {user?.vendor_name}
+            {formatRole(
+              profile.custom_job_role || user?.job_title || user?.role
+            )}{" "}
+            at {user?.vendor_name}
           </p>
         </div>
 
-        {/* MODALS */}
+        {/* ================= MODALS ================= */}
         {cropFile && (
           <AvatarCropModal
             file={cropFile}

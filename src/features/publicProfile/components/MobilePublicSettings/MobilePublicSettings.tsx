@@ -16,7 +16,7 @@ import {
 import { ProfileLayoutModal } from "./Profile/ProfileLayoutModal";
 import { ProfileLayoutEditor } from "./Profile/ProfileLayoutEditor";
 import { uploadImage } from "../../services/publicProfile.api";
-import { VideoGalleryEditModal } from "./VideoGallery/VideoGallery";
+// import { VideoGalleryEditModal } from "./VideoGallery/VideoGallery";
 import { useAppDispatch, useAppSelector } from "../../../../app/hooks";
 import { savePublicProfile } from "../../slice";
 import { FiPhone, FiGlobe } from "react-icons/fi";
@@ -312,28 +312,29 @@ export default function MobilePublicSettings({
         );
       }
 
-      case "video_gallery": {
-        const vg = draft.video_gallery;
-        return (
-          <VideoGallery
-            title={vg?.section_title}
-            items={sortByRank(vg?.items || [])}  // 👈 pass empty array
-            theme={draft.theme}
-            editable={!draft.video_gallery?.locked}
-            galleryValue={vg}
-            onGalleryChange={(v: any) =>
-              setDraft((prev: any) => ({
-                ...prev,
-                video_gallery: v,
-              }))
-            }
-          />
-        );
-      }
+      // case "video_gallery": {
+      //   const vg = draft.video_gallery;
+      //   return (
+      //     <VideoGallery
+      //       title={vg?.section_title}
+      //       items={sortByRank(vg?.items || [])}  // 👈 pass empty array
+      //       theme={draft.theme}
+      //       editable={!draft.video_gallery?.locked}
+      //       galleryValue={vg}
+      //       onGalleryChange={(v: any) =>
+      //         setDraft((prev: any) => ({
+      //           ...prev,
+      //           video_gallery: v,
+      //         }))
+      //       }
+      //     />
+      //   );
+      // }
 
       case "youtube":
         return (
           <YouTube
+            title={draft.youtube?.section_title}
             items={sortByRank(draft.youtube?.items || [])}
             theme={draft.theme}
             editable={!draft.youtube?.locked}
@@ -366,18 +367,21 @@ export default function MobilePublicSettings({
       case "links_files":
         return (
           <Links
+            title={draft.links_files?.section_title}
             items={draft.links_files?.items || []}
             theme={draft.theme}
             editable={!draft.links_files?.locked} // 👈 only if NOT locked
-            onChange={(next: any) =>
+            onChange={(next: { section_title: string; items: any[] }) =>
               setDraft((prev: any) => ({
                 ...prev,
                 links_files: {
                   ...prev.links_files,
-                  items: next,
+                  section_title: next.section_title, // ✅ SAVE TITLE
+                  items: next.items,                 // ✅ SAVE ITEMS
                 },
               }))
             }
+
           />
         );
 
@@ -650,6 +654,31 @@ export default function MobilePublicSettings({
         <h3 className="text-lg font-semibold">
           Manage YouTube Videos
         </h3>
+        {/* SECTION TITLE */}
+        <div className="space-y-1">
+          <p className="text-xs uppercase tracking-wide text-gray-500">
+            Section title
+          </p>
+
+          <input
+            type="text"
+            value={youtubeDraft?.section_title || "Video Gallery"}
+            placeholder="Video Gallery"
+            onChange={(e) =>
+              setYoutubeDraft((prev: any) => ({
+                ...prev,
+                section_title:
+                  e.target.value.trim() === ""
+                    ? "Video Gallery"
+                    : e.target.value,
+              }))
+            }
+            className="
+      w-full rounded-lg border px-3 py-2 text-sm
+      focus:outline-none focus:ring-2 focus:ring-purple-500
+    "
+          />
+        </div>
 
         {/* ADD */}
         <button
@@ -1016,11 +1045,13 @@ const YoutubeEmbed = React.memo(({ id }: { id: string }) => (
 ));
 
 function YouTube({
+  title,
   items,
   theme,
   onEdit,
   editable = true, // 👈 new
 }: {
+  title: string;
   items: any[];
   theme: any;
   onEdit: (item: any) => void;
@@ -1047,7 +1078,7 @@ function YouTube({
   };
 
   return (
-    <Section title="Videos" theme={theme}>
+    <Section title={title} theme={theme}>
       {/* CAROUSEL */}
       <div
         ref={ref}
@@ -1068,40 +1099,40 @@ function YouTube({
         }}
         className="flex overflow-x-auto snap-x snap-mandatory no-scrollbar cursor-grab active:cursor-grabbing select-none"
       >
-      {valid.map((v, i) => {
-  const id = getYouTubeId(v.url);
+        {valid.map((v, i) => {
+          const id = getYouTubeId(v.url);
 
-  return (
-    <div
-      key={v.id}
-      className="relative min-w-full h-48 snap-center px-1"
-    >
-      {/* ROUND EDIT ICON */}
-      {editable && (
-        <button
-          onClick={() => onEdit(v)}
-          className="absolute top-2 right-0 z-20 h-8 w-8 rounded-full shadow
+          return (
+            <div
+              key={v.id}
+              className="relative min-w-full h-48 snap-center px-1"
+            >
+              {/* ROUND EDIT ICON */}
+              {editable && (
+                <button
+                  onClick={() => onEdit(v)}
+                  className="absolute top-2 right-0 z-20 h-8 w-8 rounded-full shadow
             flex items-center justify-center transition hover:scale-105
             bg-orange-500 text-white"
-          title="Edit"
-        >
-          <Pencil size={14} />
-        </button>
-      )}
+                  title="Edit"
+                >
+                  <Pencil size={14} />
+                </button>
+              )}
 
-      <div className="w-full h-full rounded-2xl overflow-hidden shadow-md bg-black/5">
-        {i === active && id ? (
-          <YoutubeEmbed id={id} />
-        ) : (
-          // Lightweight placeholder instead of iframe
-          <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm">
-            Video {i + 1}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-})}
+              <div className="w-full h-full rounded-2xl overflow-hidden shadow-md bg-black/5">
+                {i === active && id ? (
+                  <YoutubeEmbed id={id} />
+                ) : (
+                  // Lightweight placeholder instead of iframe
+                  <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm">
+                    Video {i + 1}
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
 
       </div>
 
@@ -1441,117 +1472,116 @@ function PhotoModal({
   );
 }
 
-function VideoGallery({
-  title,
-  items,
-  theme,
-  editable = false,
-  galleryValue,
-  onGalleryChange,
-}: any) {
-  const t = resolveTheme(theme);
-  const [open, setOpen] = useState(false);
+// function VideoGallery({
+//   title,
+//   items,
+//   theme,
+//   editable = false,
+//   galleryValue,
+//   onGalleryChange,
+// }: any) {
+//   const t = resolveTheme(theme);
+//   const [open, setOpen] = useState(false);
 
-  const isYouTube = (url?: string) =>
-    !!url && /youtube\.com|youtu\.be/.test(url);
+//   const isYouTube = (url?: string) =>
+//     !!url && /youtube\.com|youtu\.be/.test(url);
 
-  const isDirectVideo = (url?: string) =>
-    !!url && /\.(mp4|webm|ogg)$/i.test(url);
+//   const isDirectVideo = (url?: string) =>
+//     !!url && /\.(mp4|webm|ogg)$/i.test(url);
 
-  return (
-    <Section title={title || "Video Gallery"} theme={theme}>
-      <div className="relative">
-        {/* FLOATING EDIT ICON */}
-        {editable && (
-          <button
-            onClick={() => setOpen(true)}
-            className="absolute -top-4 -right-0 z-20 h-9 w-9 rounded-full shadow-lg
-                     flex items-center justify-center
-                     bg-orange-500 
-                     text-white hover:scale-110 active:scale-95"
-          >
-            <Pencil size={14} />
-          </button>
-        )}
+//   return (
+//     <Section title={title || "Video Gallery"} theme={theme}>
+//       <div className="relative">
+//         {/* FLOATING EDIT ICON */}
+//         {editable && (
+//           <button
+//             onClick={() => setOpen(true)}
+//             className="absolute -top-4 -right-0 z-20 h-9 w-9 rounded-full shadow-lg
+//                      flex items-center justify-center
+//                      bg-orange-500 
+//                      text-white hover:scale-110 active:scale-95"
+//           >
+//             <Pencil size={14} />
+//           </button>
+//         )}
 
-        {/* EMPTY STATE */}
-        {!items?.length ? (
-          <div className="w-full py-10 text-center rounded-2xl">
-            <p className="text-sm opacity-70" style={{ color: t.text }}>
-              No videos added yet
-            </p>
-          </div>
-        ) : (
-          <div className="flex gap-4 overflow-x-auto pb-3 snap-x snap-mandatory">
-            {items.map((v: any, i: number) => {
-              const id = getYouTubeId(v.video_url);
-              if (!id || !v.enabled) return null;
+//         {/* EMPTY STATE */}
+//         {!items?.length ? (
+//           <div className="w-full py-10 text-center rounded-2xl">
+//             <p className="text-sm opacity-70" style={{ color: t.text }}>
+//               No videos added yet
+//             </p>
+//           </div>
+//         ) : (
+//           <div className="flex gap-4 overflow-x-auto pb-3 snap-x snap-mandatory">
+//             {items.map((v: any, i: number) => {
+//               const id = getYouTubeId(v.video_url);
+//               if (!id || !v.enabled) return null;
 
-              return (
-                <div
-                  key={i}
-                  className="min-w-[220px] h-48 snap-start rounded-2xl overflow-hidden shadow-lg flex flex-col"
-                  style={{ backgroundColor: t.cardBg }}
-                >
-                  {/* VIDEO */}
-                  <div className="w-full h-[140px] bg-black">
-                    {isYouTube(v.video_url) ? (
-                      <iframe
-                        src={`https://www.youtube-nocookie.com/embed/${id}`}
-                        className="w-full h-full"
-                        frameBorder="0"
-                        allowFullScreen
-                      />
-                    ) : isDirectVideo(v.video_url) ? (
-                      <video
-                        src={v.video_url}
-                        controls
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-white text-sm">
-                        Video preview not available
-                      </div>
-                    )}
-                  </div>
+//               return (
+//                 <div
+//                   key={i}
+//                   className="min-w-[220px] h-48 snap-start rounded-2xl overflow-hidden shadow-lg flex flex-col"
+//                   style={{ backgroundColor: t.cardBg }}
+//                 >
+//                   {/* VIDEO */}
+//                   <div className="w-full h-[140px] bg-black">
+//                     {isYouTube(v.video_url) ? (
+//                       <iframe
+//                         src={`https://www.youtube-nocookie.com/embed/${id}`}
+//                         className="w-full h-full"
+//                         frameBorder="0"
+//                         allowFullScreen
+//                       />
+//                     ) : isDirectVideo(v.video_url) ? (
+//                       <video
+//                         src={v.video_url}
+//                         controls
+//                         className="w-full h-full object-cover"
+//                       />
+//                     ) : (
+//                       <div className="w-full h-full flex items-center justify-center text-white text-sm">
+//                         Video preview not available
+//                       </div>
+//                     )}
+//                   </div>
 
-                  {/* INFO */}
-                  <div className="px-3 py-1 space-y-1">
-                    <h4
-                      className="text-sm font-semibold line-clamp-1"
-                      style={{ color: t.text }}
-                    >
-                      {v.title}
-                    </h4>
+//                   {/* INFO */}
+//                   <div className="px-3 py-1 space-y-1">
+//                     <h4
+//                       className="text-sm font-semibold line-clamp-1"
+//                       style={{ color: t.text }}
+//                     >
+//                       {v.title}
+//                     </h4>
 
-                    {v.description && (
-                      <p
-                        className="text-xs opacity-80 line-clamp-2"
-                        style={{ color: t.text }}
-                      >
-                        {v.description}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
+//                     {v.description && (
+//                       <p
+//                         className="text-xs opacity-80 line-clamp-2"
+//                         style={{ color: t.text }}
+//                       >
+//                         {v.description}
+//                       </p>
+//                     )}
+//                   </div>
+//                 </div>
+//               );
+//             })}
+//           </div>
+//         )}
 
-        {/* MODAL */}
-        <VideoGalleryEditModal
-          open={open}
-          value={galleryValue}
-          disabled={false}
-          onClose={() => setOpen(false)}
-          onSave={(v: any) => onGalleryChange(v)}
-        />
-      </div>
-    </Section>
-  );
-}
-
+//         {/* MODAL */}
+//         <VideoGalleryEditModal
+//           open={open}
+//           value={galleryValue}
+//           disabled={false}
+//           onClose={() => setOpen(false)}
+//           onSave={(v: any) => onGalleryChange(v)}
+//         />
+//       </div>
+//     </Section>
+//   );
+// }
 
 function BackgroundVideo({ src }: { src?: string }) {
   if (!src) return null;

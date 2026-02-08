@@ -65,7 +65,7 @@ export function ProfileSplit({
             <div
               className="absolute bottom-0 left-0 right-0 h-16"
               style={{
-                background: `linear-gradient(to top, ${t.cardBg} 0%, rgba(0,0,0,0) 100%)`,
+                background: `linear-gradient(to top, ${layout.fade_color} 0%, rgba(0,0,0,0) 100%)`,
               }}
             />
           )}

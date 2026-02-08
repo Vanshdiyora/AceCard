@@ -61,7 +61,7 @@ export function normalizeProfile(api: any) {
       use_custom_font: Boolean(cfg.layout?.use_custom_font),
       profile_width: Number(cfg.layout?.profile_width) || 2,
       button_style: Number(cfg.layout?.button_style) || 1,
-      profile_radius: Number(cfg.layout?.profile_radius) || 16,
+      profile_radius: Number(cfg.layout?.profile_radius) || 40,
       fade_color: cfg.layout?.fade_color,
     },
 
