@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAppSelector, useAppDispatch } from "../../../app/hooks";
-import { fetchProducts, createProduct, updateProduct } from "../slice";
+import { fetchProducts, createProduct, updateProduct, bulkImportProducts } from "../slice";
 import ProductFormModal from "../components/ProductFormModal";
 import ProductImportModal from "../components/ProductImportModal";
 import PageHeader from "../../../common/components/layout/PageHeader";
@@ -14,7 +14,6 @@ import BlockingLoader from "../../../common/ui/BlockingLoader";
 import ResultModal from "../../../common/ui/ResultModal";
 import { downloadCSV } from "../../../common/components/helper/DownloadCsv";
 import { ProductsAPI } from "../services/products.service";
-import { parseCSV } from "../../../common/utils/parseCsv";
 import { AvatarCell } from "../../../common/components/table/DataTable";
 type SortBy = "recent" | "name" | "deal_amount";
 type SortOrder = "asc" | "desc";
@@ -141,41 +140,15 @@ export default function ProductsPage() {
     try {
       setBlocking(true);
 
-      const rows = await parseCSV(file);
-
-      let success = 0;
-      let failed = 0;
-
-      for (let i = 0; i < rows.length; i++) {
-        const row = rows[i];
-
-        // REQUIRED fields
-        if (!row.Name || !row.Category || !row.Price) {
-          failed++;
-          continue;
-        }
-
-        try {
-          await ProductsAPI.createProduct({
-            name: row.Name,
-            category: row.Category,
-            price: Number(row.Price),
-            status: (row.Status as "active" | "archived") ?? "active",
-            description: row.Description ?? "",
-          });
-          success++;
-        } catch {
-          failed++;
-        }
-      }
+      const res = await dispatch(bulkImportProducts(file)).unwrap();
 
       setResult({
         open: true,
-        success: failed === 0,
+        success: res.status === "success",
         message:
-          failed === 0
-            ? `${success} products imported successfully`
-            : `${success} imported, ${failed} failed`,
+          res.status === "success"
+            ? `${res.count} products imported successfully`
+            : "Product import failed",
       });
 
       setImportOpen(false);
@@ -187,12 +160,13 @@ export default function ProductsPage() {
       setResult({
         open: true,
         success: false,
-        message: err?.toString() ?? "Import failed",
+        message: err ?? "Import failed",
       });
     } finally {
       setBlocking(false);
     }
   };
+
 
   /* -------- Final data -------- */
   const finalProducts = products;
@@ -273,7 +247,7 @@ export default function ProductsPage() {
         onSearch={setSearch}
         filters={[
           {
-            title:"SORT BY",
+            title: "SORT BY",
             key: "sort_by",
             placeholder: "Sort by",
             value: sortBy,
@@ -285,7 +259,7 @@ export default function ProductsPage() {
             ],
           },
           {
-            title:"ORDER",
+            title: "ORDER",
             key: "sort_order",
             placeholder: "Order",
             value: sortOrder,
