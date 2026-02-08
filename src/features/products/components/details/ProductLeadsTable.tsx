@@ -1,10 +1,7 @@
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useEffect, useMemo } from "react";
 import { useAppDispatch, useAppSelector } from "../../../../app/hooks";
-
-import { fetchLeads } from "../../../leads/slice";
-import { fetchTeam } from "../../../teams/slice";
-import { fetchCampaigns } from "../../../campaigns/slice";
+import { fetchProductLeads } from "../../../products/slice";
 import DataTable, { type Column } from "../../../../common/components/table/DataTable";
 
 type Props = {
@@ -23,48 +20,12 @@ export default function ProductLeadsTable({ productId }: Props) {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
 
-  const leads = useAppSelector((s) => s.leads?.leads ?? []);
-  const leadsLoading = useAppSelector((s) => s.leads?.loading ?? false);
-
-  const members = useAppSelector((s) => s.team?.members ?? []);
-  const membersLoading = useAppSelector((s) => s.team?.loading ?? false);
-
-  const campaigns = useAppSelector((s) => s.campaigns?.items ?? []);
-  const campaignsLoading = useAppSelector((s) => s.campaigns?.loading ?? false);
-
+  const leads = useAppSelector((s) => s.products.productLeads);
+  const loading = useAppSelector((s) => s.products.productLeadsLoading);
+console.log(leads)
   useEffect(() => {
-    if (!leadsLoading && leads.length === 0) {
-      dispatch(fetchLeads({ page: 1, pageSize: 10 }));
-    }
-
-    if (!membersLoading && members.length === 0) {
-      dispatch(fetchTeam());
-    }
-
-    if (!campaignsLoading && campaigns.length === 0) {
-      dispatch(fetchCampaigns({ page: 1, page_size: 10 }));
-    }
-  }, [dispatch]); // intentionally only on mount
-
-  const rows: LeadRow[] = useMemo(() => {
-    return leads
-      .filter((l) =>
-        l.products?.some((p) => p.product_id === productId) // ✅ FIX
-      )
-      .map((l) => {
-        const owner = members.find((m) => m.id === l.assigned_rep_id);
-        const campaign = campaigns.find((c) => c.id === l.campaign_id);
-        const manager = members.find((m) => m.id === campaign?.manager_id);
-
-        return {
-          id: l.id,
-          lead_name: l.lead_name,
-          campaign_name: campaign?.name,
-          owner_name: owner?.name,
-          manager_name: manager?.name,
-        };
-      });
-  }, [leads, members, campaigns, productId]);
+    dispatch(fetchProductLeads(productId));
+  }, [dispatch, productId]);
 
   const columns: Column<LeadRow>[] = [
     { header: "Lead Name", accessor: "lead_name" },
@@ -79,15 +40,13 @@ export default function ProductLeadsTable({ productId }: Props) {
         <h3 className="text-base font-semibold">Associated Leads</h3>
       </div>
 
-      <div>
-        <DataTable<LeadRow>
-          columns={columns}
-          data={rows}
-          loading={leadsLoading || membersLoading || campaignsLoading}
-          emptyText="No leads associated with this product."
-          onRowClick={(row) => navigate(`/admin/leads/${row.id}`)}
-        />
-      </div>
+      <DataTable<LeadRow>
+        columns={columns}
+        data={leads}
+        loading={loading}
+        emptyText="No leads associated with this product."
+        onRowClick={(row) => navigate(`/admin/leads/${row.id}`)}
+      />
     </div>
   );
 }

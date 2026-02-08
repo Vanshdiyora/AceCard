@@ -66,5 +66,12 @@ async unarchiveProduct(id: number): Promise<Product> {
   const res = await axiosClient.post(`/vendor/products/${id}/unarchive`);
   return res.data;
 },
+/* -------- GET LEADS BY PRODUCT -------- */
+async getProductLeads(productId: number): Promise<any[]> {
+  const res = await axiosClient.get(
+    `/vendor/products/${productId}/lead-details`
+  );
+  return res.data;
+},
 
 };
