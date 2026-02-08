@@ -134,7 +134,7 @@ export function ProfileLayoutEditor({
     uploadCustomFont,
     uploadImage,
 }: any) {
-    console.log(config)
+
     return (
         <div
             className={`space-y-6 ${isLayoutLocked ? "opacity-60 pointer-events-none" : ""
