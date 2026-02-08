@@ -20,6 +20,26 @@ import {
 } from "lucide-react";
 
 /* ================= ICON COLOR MAP ================= */
+export function formatINRCompact(value: number) {
+  if (value >= 1_00_00_000) {
+    return `${(value / 1_00_00_000).toFixed(1)}Cr`;
+  }
+  if (value >= 1_00_000) {
+    return `${(value / 1_00_000).toFixed(1)}L`;
+  }
+  if (value >= 1_000) {
+    return `${(value / 1_000).toFixed(1)}K`;
+  }
+  return `${value}`;
+}
+
+export const formatAxis = (value: number): string => {
+  if (value >= 1_00_00_000) return `${(value / 1_00_00_000).toFixed(1)}Cr`;
+  if (value >= 1_00_000) return `${(value / 1_00_000).toFixed(1)}L`;
+  if (value >= 1_000) return `${(value / 1_000).toFixed(1)}K`;
+  return value.toString(); // ✅ string
+};
+
 
 const iconColors = {
   green: {
@@ -109,7 +129,7 @@ export default function TeamMemberAnalyticsTab({
 
         <Kpi
           title="Pipeline Value"
-          value={`₹${a.pipeline_value}`}
+          value={`₹${formatINRCompact(a.pipeline_value)}`}
           icon={<TrendingUp size={22} />}
           color="green"
         />
@@ -159,11 +179,10 @@ export default function TeamMemberAnalyticsTab({
                       setPeriod(p as any);
                       setOpen(false);
                     }}
-                    className={`w-full text-left px-4 py-2 text-sm hover:bg-purple-50 transition ${
-                      period === p
+                    className={`w-full text-left px-4 py-2 text-sm hover:bg-purple-50 transition ${period === p
                         ? "text-purple-600 font-medium"
                         : "text-gray-600"
-                    }`}
+                      }`}
                   >
                     {p.charAt(0).toUpperCase() + p.slice(1)}
                   </button>
@@ -183,7 +202,7 @@ export default function TeamMemberAnalyticsTab({
             </defs>
 
             <XAxis dataKey="label" />
-            <YAxis />
+           <YAxis tickFormatter={formatAxis} />
             <Tooltip />
             <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
 
@@ -208,7 +227,7 @@ export default function TeamMemberAnalyticsTab({
           <ResponsiveContainer width="100%" height={260}>
             <BarChart data={a.campaign_contribution}>
               <XAxis dataKey="campaign_name" />
-              <YAxis />
+                         <YAxis tickFormatter={formatAxis} />
               <Tooltip />
               <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
               <Bar
@@ -238,24 +257,31 @@ function Kpi({
   color: IconColor;
 }) {
   const c = iconColors[color];
-
   return (
-    <div className="relative h-[120px] rounded-2xl p-5 shadow-lg hover:shadow-xl transition bg-gradient-to-br from-slate-50 to-white">
-      <div className="flex h-full justify-between items-stretch">
+    <div className="relative h-[120px] rounded-2xl p-5 shadow-lg hover:shadow-xl transition bg-gradient-to-br from-slate-50 to-white overflow-hidden">
+      <div className="flex h-full justify-between items-stretch gap-4">
+
         {/* LEFT */}
-        <div className="flex flex-col justify-between">
-          <p className="text-sm text-gray-500 leading-tight max-w-[90px]">
+        <div className="flex flex-col justify-between min-w-0">
+          <p className="text-sm text-gray-500 leading-tight">
             {title}
           </p>
 
-          <p className="text-4xl font-bold text-gray-900">
+          <p
+            className="
+    font-bold text-gray-900 leading-none
+    text-[clamp(1.25rem,3.5vw,2.25rem)]
+    whitespace-nowrap
+  "
+          >
             {value}
           </p>
+
         </div>
 
         {/* ICON */}
         <div
-          className={`flex items-center justify-center w-12 h-12 rounded-xl shadow-sm 
+          className={`flex-shrink-0 flex items-center justify-center w-12 h-12 rounded-xl shadow-sm 
           ${c.bg} ${c.border}`}
         >
           <span className={c.text}>{icon}</span>

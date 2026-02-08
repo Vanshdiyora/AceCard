@@ -10,11 +10,23 @@ const extractApiError = (err: unknown, fallback: string): string =>
   (err as ApiError)?.response?.data?.message ||
   (err as Error)?.message ||
   fallback;
+type SortBy = "recent" | "name" | "deal_amount";
+type SortOrder = "asc" | "desc";
 
 /* ---------------- THUNKS ---------------- */
 export const fetchProducts = createAsyncThunk<
   ProductListResponse,
-  { page?: number; page_size?: number; search?: string; status?: "active" | "archived"; mode?: FetchMode },
+  {
+    page?: number;
+    page_size?: number;
+    search?: string;
+    status?: "active" | "archived";
+    mode?: FetchMode;
+
+    // 👇 ADD THESE
+    sort_by?: SortBy;
+    sort_order?: SortOrder;
+  },
   { rejectValue: string }
 >("products/fetchProducts", async (args, { rejectWithValue }) => {
   try {
@@ -23,6 +35,7 @@ export const fetchProducts = createAsyncThunk<
     return rejectWithValue(extractApiError(err, "Failed to fetch products"));
   }
 });
+
 type LeadRow = {
   id: number;
   lead_name: string;

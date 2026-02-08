@@ -2,7 +2,9 @@ import axiosClient from "../../../services/axiosClient";
 import type {
   Campaign,
   CampaignListResponse,
-  CampaignStatus
+  CampaignStatus,
+  SortBy,
+  SortOrder
 } from "../types";
 import type { PaginationParams } from "../../../common/types";
 
@@ -10,8 +12,13 @@ const BASE = "/vendor/campaigns";
 
 export const CampaignService = {
   // existing
- getAll(
-  params: PaginationParams & { search?: string; status?: CampaignStatus } = {
+getAll(
+  params: PaginationParams & {
+    search?: string;
+    status?: CampaignStatus;
+    sort_by?: SortBy;
+    sort_order?: SortOrder;
+  } = {
     page: 1,
     page_size: 10,
   }

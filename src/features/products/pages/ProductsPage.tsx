@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAppSelector, useAppDispatch } from "../../../app/hooks";
 import { fetchProducts, createProduct, updateProduct } from "../slice";
@@ -16,7 +16,9 @@ import { downloadCSV } from "../../../common/components/helper/DownloadCsv";
 import { ProductsAPI } from "../services/products.service";
 import { parseCSV } from "../../../common/utils/parseCsv";
 import { AvatarCell } from "../../../common/components/table/DataTable";
-type SortBy = "recent" | "name" | "price";
+type SortBy = "recent" | "name" | "deal_amount";
+type SortOrder = "asc" | "desc";
+
 type StatusFilter = "all" | "active" | "archived";
 
 export default function ProductsPage() {
@@ -36,6 +38,7 @@ export default function ProductsPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [sortBy, setSortBy] = useState<SortBy>("recent");
+  const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
 
   const [page, setPage] = useState(1);
   const pageSize = meta?.page_size ?? 10;
@@ -54,13 +57,18 @@ export default function ProductsPage() {
       page,
       page_size: pageSize,
       mode: "paginate",
+
+      // 👇 SORT PARAMS
+      sort_by: sortBy,
+      sort_order: sortOrder,
     };
 
     if (search) params.search = search;
     if (statusFilter !== "all") params.status = statusFilter;
 
     dispatch(fetchProducts(params));
-  }, [dispatch, page, pageSize, search, statusFilter]);
+  }, [dispatch, page, pageSize, search, statusFilter, sortBy, sortOrder]);
+
 
   /* -------- Reset page -------- */
   useEffect(() => {
@@ -187,20 +195,7 @@ export default function ProductsPage() {
   };
 
   /* -------- Final data -------- */
-  const finalProducts = useMemo(() => {
-    let list = [...products];
-
-    if (sortBy === "name") list.sort((a, b) => a.name.localeCompare(b.name));
-    else if (sortBy === "price") list.sort((a, b) => a.price - b.price);
-    else
-      list.sort(
-        (a, b) =>
-          new Date(b.created_at).getTime() -
-          new Date(a.created_at).getTime()
-      );
-
-    return list;
-  }, [products, sortBy]);
+  const finalProducts = products;
 
   /* -------- Columns -------- */
   const columns: Column<Product>[] = [
@@ -278,14 +273,26 @@ export default function ProductsPage() {
         onSearch={setSearch}
         filters={[
           {
-            key: "sort",
+            title:"SORT BY",
+            key: "sort_by",
             placeholder: "Sort by",
             value: sortBy,
             onChange: (v) => setSortBy(v as SortBy),
             options: [
               { label: "Recent", value: "recent" },
-              { label: "Name A–Z", value: "name" },
-              { label: "Price", value: "price" },
+              { label: "Name", value: "name" },
+              { label: "Deal Amount", value: "deal_amount" },
+            ],
+          },
+          {
+            title:"ORDER",
+            key: "sort_order",
+            placeholder: "Order",
+            value: sortOrder,
+            onChange: (v) => setSortOrder(v as SortOrder),
+            options: [
+              { label: "Ascending", value: "asc" },
+              { label: "Descending", value: "desc" },
             ],
           },
         ]}
@@ -293,6 +300,7 @@ export default function ProductsPage() {
         onImport={() => setImportOpen(true)}
         disableExport={finalProducts.length === 0}
       />
+
 
       <div className="mt-6">
         <DataTable

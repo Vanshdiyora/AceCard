@@ -8,7 +8,9 @@ import type {
   LeadNote,
   TimelineItem,
   Meeting,
-  LeadStage
+  LeadStage,
+  SortBy,
+  SortOrder
 } from "./types";
 import { LeadsService } from "./services/leads.service";
 
@@ -55,13 +57,48 @@ const initialState: LeadsState = {
 
 export const fetchLeads = createAsyncThunk<
   LeadsApiResponse,
-  { page?: number; pageSize?: number; team_member_id?:number; memberId?: number; search?: string; stage?: LeadStage },
+  {
+    page?: number;
+    pageSize?: number;
+    team_member_id?: number;
+    memberId?: number;
+    search?: string;
+    stage?: LeadStage;
+
+    // 👇 ADD
+    sort_by?: SortBy;
+    sort_order?: SortOrder;
+  },
   { rejectValue: string }
 >(
   "leads/fetch",
-  async ({ page = 1, pageSize = 10, memberId, team_member_id, search, stage }, { rejectWithValue }) => {
+  async (
+    {
+      page = 1,
+      pageSize = 10,
+      memberId,
+      team_member_id,
+      search,
+      stage,
+
+      // 👇 ADD
+      sort_by,
+      sort_order,
+    },
+    { rejectWithValue }
+  ) => {
     try {
-      const res = await LeadsService.getLeads(page, pageSize, team_member_id, memberId, search, stage);
+      const res = await LeadsService.getLeads(
+        page,
+        pageSize,
+        team_member_id,
+        memberId,
+        search,
+        stage,
+        sort_by,
+        sort_order
+      );
+
       return {
         data: Array.isArray(res.data) ? res.data : [],
         meta: res.meta,

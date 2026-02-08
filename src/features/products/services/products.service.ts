@@ -4,11 +4,18 @@ import type {
   ProductListResponse,
 } from "../types";
 import type { PaginationParams } from "../../../common/types";
+type SortBy = "recent" | "name" | "deal_amount";
+type SortOrder = "asc" | "desc";
 
 export const ProductsAPI = {
   /* -------- GET ALL PRODUCTS -------- */
 async getAll(
-  params: PaginationParams & { search?: string,status?: "active" | "archived";} = { page: 1, page_size: 10 }
+  params: PaginationParams & {
+    search?: string;
+    status?: "active" | "archived";
+    sort_by?: SortBy;
+    sort_order?: SortOrder;
+  } = { page: 1, page_size: 10 }
 ): Promise<ProductListResponse> {
   const res = await axiosClient.get("/vendor/products", { params });
   return res.data;

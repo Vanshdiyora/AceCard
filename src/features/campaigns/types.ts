@@ -16,6 +16,9 @@ export interface CampaignProduct {
   price: number;
 }
 
+export type SortBy = "recent" | "name" | "pipeline_value";
+export type SortOrder = "asc" | "desc";
+
 export interface CampaignSalesperson {
   id: number;
   name: string;
