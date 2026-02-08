@@ -3,8 +3,6 @@ import { createPortal } from "react-dom";
 import {
   SlidersHorizontal,
   CheckCircle,
-  Users,
-  IndianRupee,
   Archive,
   AlertCircle,
 } from "lucide-react";
@@ -12,8 +10,6 @@ import {
 type Props = {
   onPaid: () => void;
   onMarkUnpaid?: () => void; // ✅ NEW (optional for safety)
-  onEditSeats: () => void;
-  onEditPrice: () => void;
   onArchive: () => void;
 };
 
@@ -22,8 +18,6 @@ const DROPDOWN_HEIGHT = 220; // ⬆ increased for new action
 export default function PaymentsRowActionsDropdown({
   onPaid,
   onMarkUnpaid,
-  onEditSeats,
-  onEditPrice,
   onArchive,
 }: Props) {
   const [open, setOpen] = useState(false);
@@ -124,34 +118,6 @@ export default function PaymentsRowActionsDropdown({
                 Mark as Unpaid
               </button>
             )}
-
-            <div className="h-px bg-gray-100" />
-
-            {/* EDIT SEATS */}
-            <button
-              className="w-full px-4 py-2 flex items-center gap-2 hover:bg-gray-50"
-              onClick={() => {
-                onEditSeats();
-                setOpen(false);
-              }}
-            >
-              <Users size={16} className="text-gray-600" />
-              Edit Seats
-            </button>
-
-            {/* EDIT PRICE */}
-            <button
-              className="w-full px-4 py-2 flex items-center gap-2 hover:bg-gray-50"
-              onClick={() => {
-                onEditPrice();
-                setOpen(false);
-              }}
-            >
-              <IndianRupee size={16} className="text-gray-600" />
-              Edit Price / Seat
-            </button>
-
-            <div className="h-px bg-gray-100" />
 
             {/* ARCHIVE */}
             <button

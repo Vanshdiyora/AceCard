@@ -24,7 +24,7 @@ const downloadQR = async (username: string) => {
 };
 
 type TeamRow = {
-  name:string;
+  name: string;
   role: string
   username: string;
 };
@@ -57,41 +57,41 @@ export default function VendorTeamPage() {
     return teamActivity.map((t) => ({
       name: t.name,
       role: t.role,
-      username:t.username,
+      username: t.username,
     }));
   }, [teamActivity]);
 
-const columns: Column<TeamRow>[] = [
-  { header: "Name", accessor: "name", width: "1fr" },
-  { header: "Role", accessor: "role", width: "1fr" },
-  {
-    header: "",
-    width: "120px",
-    align:"center",
-    render: (row) => (
-      <button
-        onClick={(e) => {
-          e.stopPropagation(); // prevent row click
-          downloadQR(row.username);
-        }}
-        className="px-3 py-1 text-xs rounded bg-purple-600 text-white hover:bg-indigo-700"
-      >
-        Download QR
-      </button>
-    ),
-  },
-];
+  const columns: Column<TeamRow>[] = [
+    { header: "Name", accessor: "name", width: "1fr" },
+    { header: "Role", accessor: "role", width: "1fr" },
+    {
+      header: "",
+      width: "120px",
+      align: "center",
+      render: (row) => (
+        <button
+          onClick={(e) => {
+            e.stopPropagation(); // prevent row click
+            downloadQR(row.username);
+          }}
+          className="px-3 py-1 text-xs rounded bg-purple-600 text-white hover:bg-indigo-700"
+        >
+          Download QR
+        </button>
+      ),
+    },
+  ];
 
 
   return (
     <div className="p-6">
-       <button
+      <button
         onClick={() => navigate(-1)}
         className="flex items-center gap-2 text-xs text-gray-400 hover:text-gray-700"
       >
         <ArrowLeft size={14} /> Back
       </button>
-      <div className="mt-3"/>
+      <div className="mt-3" />
       <PageHeader
         title="Vendor Team"
         description="Team members linked to this vendor"
@@ -102,9 +102,13 @@ const columns: Column<TeamRow>[] = [
       <PageFilters
         searchPlaceholder="Search team by username..."
         onSearch={(v) => {
-          setSearch(v);
-          setPage(1);
+          setSearch((prev) => {
+            if (prev === v) return prev; // 👈 prevents reset
+            setPage(1);
+            return v;
+          });
         }}
+
       />
 
       <div className="mt-6">
@@ -112,11 +116,12 @@ const columns: Column<TeamRow>[] = [
           columns={columns}
           data={rows}
           loading={teamLoading}
-          page={teamMeta?.page ?? page}
+          page={page}                    // ✅ use local state only
           totalPages={teamMeta?.total_pages ?? 1}
           onPageChange={setPage}
           emptyText="No team members found"
         />
+
       </div>
     </div>
   );

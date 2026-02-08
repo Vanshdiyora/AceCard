@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../../app/hooks";
 import { useNavigate } from "react-router-dom";
-
+import MarkPaidOptionsModal from "../components/MarkPaidOptionsModal";
 import {
   fetchPayments,
   archiveVendor,
@@ -83,6 +83,7 @@ export default function PaymentsPage() {
 
   const [seatsVendor, setSeatsVendor] =
     useState<VendorPayment | null>(null);
+  const [paidFlowOpen, setPaidFlowOpen] = useState(false);
 
   const [selectedVendor, setSelectedVendor] =
     useState<VendorPayment | null>(null);
@@ -139,26 +140,20 @@ export default function PaymentsPage() {
       render: (v) => (
         <div onClick={(e) => e.stopPropagation()}>
           <PaymentsRowActionsDropdown
-            onPaid={() =>
-              showResult(true, "Payment marked as paid.")
-            }
+            onPaid={() => {
+              setSelectedVendor(v);
+              setPaidFlowOpen(true);
+            }}
             onMarkUnpaid={() => {
               setUnpaidVendor(v);
               setUnpaidOpen(true);
-            }}
-            onEditSeats={() => {
-              setSeatsVendor(v);
-              setSeatsOpen(true);
-            }}
-            onEditPrice={() => {
-              setSelectedVendor(v);
-              setPriceOpen(true);
             }}
             onArchive={() => {
               setArchiveVendorTarget(v);
               setArchiveOpen(true);
             }}
           />
+
         </div>
       ),
     },
@@ -285,6 +280,40 @@ export default function PaymentsPage() {
         }}
       />
 
+      <MarkPaidOptionsModal
+        open={paidFlowOpen}
+        vendor={selectedVendor}
+        onClose={() => {
+          setPaidFlowOpen(false);
+          setSelectedVendor(null);
+        }}
+        onConfirmPaid={async (payload: any) => {
+          if (!selectedVendor) return;
+
+          try {
+            setProcessing(true);
+
+            await dispatch(
+              updateSubscription({
+                vendor_id: selectedVendor.vendor_id,
+                payment_terms: selectedVendor.payment_terms,
+                seats: payload.seats,
+                price_per_card: payload.price_per_card,
+                payment_amount_total: payload.payment_amount_total,
+              })
+            ).unwrap();
+
+            showResult(true, "Payment marked as paid successfully.");
+          } catch (err) {
+            showResult(false, getErrorMessage(err));
+          } finally {
+            setProcessing(false);
+            setPaidFlowOpen(false);
+            setSelectedVendor(null);
+          }
+        }}
+      />
+
       {/* -------------------- UPDATE PRICE -------------------- */}
       <UpdatePricePerSeatModal
         vendor={selectedVendor}
@@ -307,42 +336,42 @@ export default function PaymentsPage() {
         }}
       />
 
-{/* -------------------- MARK UNPAID CONFIRMATION -------------------- */}
-<UnpaidConfirmationModal
-  open={unpaidOpen}
-  vendorName={unpaidVendor?.vendor_name}
-  loading={processing}
-  onCancel={() => {
-    setUnpaidOpen(false);
-    setUnpaidVendor(null);
-  }}
-  onConfirm={async () => {
-    if (!unpaidVendor) return;
+      {/* -------------------- MARK UNPAID CONFIRMATION -------------------- */}
+      <UnpaidConfirmationModal
+        open={unpaidOpen}
+        vendorName={unpaidVendor?.vendor_name}
+        loading={processing}
+        onCancel={() => {
+          setUnpaidOpen(false);
+          setUnpaidVendor(null);
+        }}
+        onConfirm={async () => {
+          if (!unpaidVendor) return;
 
-    try {
-      setProcessing(true);
+          try {
+            setProcessing(true);
 
-      // optimistic UI
-      dispatch(
-        markUnpaidLocal({ vendor_id: unpaidVendor.vendor_id })
-      );
+            // optimistic UI
+            dispatch(
+              markUnpaidLocal({ vendor_id: unpaidVendor.vendor_id })
+            );
 
-      await dispatch(
-        markVendorUnpaid({ vendor_id: unpaidVendor.vendor_id })
-      ).unwrap();
+            await dispatch(
+              markVendorUnpaid({ vendor_id: unpaidVendor.vendor_id })
+            ).unwrap();
 
-      // ✅ AUTO OPEN ARCHIVE CONFIRMATION
-      setArchiveVendorTarget(unpaidVendor);
-      setArchiveOpen(true);
-    } catch (err) {
-      showResult(false, getErrorMessage(err));
-    } finally {
-      setProcessing(false);
-      setUnpaidOpen(false);
-      setUnpaidVendor(null);
-    }
-  }}
-/>
+            // ✅ AUTO OPEN ARCHIVE CONFIRMATION
+            setArchiveVendorTarget(unpaidVendor);
+            setArchiveOpen(true);
+          } catch (err) {
+            showResult(false, getErrorMessage(err));
+          } finally {
+            setProcessing(false);
+            setUnpaidOpen(false);
+            setUnpaidVendor(null);
+          }
+        }}
+      />
 
       {/* -------------------- ARCHIVE -------------------- */}
       <ArchiveConfirmationModal

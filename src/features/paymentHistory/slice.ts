@@ -8,7 +8,6 @@ import type {
   PaymentsState,
   UpdateSubscriptionPayload,
   PaymentsQuery,
-  VendorPayment,
   MarkUnpaidPayload,
 } from "./types";
 
@@ -20,9 +19,9 @@ import {
   markVendorUnpaidApi,
 } from "./services/paymentsApi";
 
-/* ----------------------------- THUNKS ----------------------------- */
+/* ============================= THUNKS ============================= */
 
-/* FETCH PAYMENTS (PAGINATED + SORT + FILTER) */
+/* FETCH PAYMENTS */
 export const fetchPayments = createAsyncThunk(
   "payments/fetch",
   async (params: PaymentsQuery, { rejectWithValue }) => {
@@ -36,12 +35,14 @@ export const fetchPayments = createAsyncThunk(
   }
 );
 
-/* UPDATE SUBSCRIPTION */
+/* UPDATE SUBSCRIPTION
+   🔑 API returns only { message }, so we return payload */
 export const updateSubscription = createAsyncThunk(
   "payments/update",
   async (payload: UpdateSubscriptionPayload, { rejectWithValue }) => {
     try {
-      return await updateVendorSubscriptionApi(payload);
+      await updateVendorSubscriptionApi(payload);
+      return payload; // ✅ return payload for local update
     } catch (err: any) {
       return rejectWithValue(
         err?.response?.data?.message || "Failed to update subscription"
@@ -78,7 +79,7 @@ export const archiveVendor = createAsyncThunk(
   }
 );
 
-/* MARK VENDOR AS UNPAID */
+/* MARK UNPAID */
 export const markVendorUnpaid = createAsyncThunk(
   "payments/mark-unpaid",
   async (payload: MarkUnpaidPayload, { rejectWithValue }) => {
@@ -92,7 +93,7 @@ export const markVendorUnpaid = createAsyncThunk(
   }
 );
 
-/* ----------------------------- STATE ----------------------------- */
+/* ============================= STATE ============================= */
 
 const initialState: PaymentsState = {
   list: [],
@@ -102,24 +103,14 @@ const initialState: PaymentsState = {
   meta: null,
 };
 
-/* ----------------------------- HELPERS ----------------------------- */
-
-const replacePayment = (
-  list: VendorPayment[],
-  updated: VendorPayment
-) =>
-  list.map((item) =>
-    item.vendor_id === updated.vendor_id ? updated : item
-  );
-
-/* ----------------------------- SLICE ----------------------------- */
+/* ============================= SLICE ============================= */
 
 const paymentsSlice = createSlice({
   name: "payments",
   initialState,
 
   reducers: {
-    /* LOCAL SEATS UPDATE */
+    /* LOCAL SEATS UPDATE (optimistic) */
     updateSeatsLocal: (
       state,
       action: PayloadAction<{ vendor_id: number; seats: number }>
@@ -135,7 +126,7 @@ const paymentsSlice = createSlice({
       }
     },
 
-    /* LOCAL PRICE UPDATE */
+    /* LOCAL PRICE UPDATE (optimistic) */
     updatePriceLocal: (
       state,
       action: PayloadAction<{ vendor_id: number; price_per_card: number }>
@@ -151,7 +142,7 @@ const paymentsSlice = createSlice({
       }
     },
 
-    /* LOCAL UNPAID (OPTIMISTIC UI) */
+    /* LOCAL UNPAID (optimistic) */
     markUnpaidLocal: (
       state,
       action: PayloadAction<{ vendor_id: number }>
@@ -189,10 +180,8 @@ const paymentsSlice = createSlice({
       })
       .addCase(fetchPaymentHistory.fulfilled, (state, action) => {
         state.loading = false;
-
         const { data, meta } = action.payload;
 
-        // 👇 append instead of replace
         if (meta.page === 1) {
           state.history = data;
         } else {
@@ -206,24 +195,44 @@ const paymentsSlice = createSlice({
         state.error = action.payload as string;
       })
 
-      /* UPDATE SUBSCRIPTION */
+      /* UPDATE SUBSCRIPTION (LOCAL APPLY) */
       .addCase(updateSubscription.fulfilled, (state, action) => {
-        state.list = replacePayment(state.list, action.payload);
+        const item = state.list.find(
+          v => v.vendor_id === action.payload.vendor_id
+        );
+
+        if (item) {
+          item.seats = action.payload.seats;
+          item.price_per_card = action.payload.price_per_card;
+          item.payment_amount_total =
+            action.payload.payment_amount_total;
+
+          // ✅ mark paid as part of flow
+          item.status = "PAID";
+        }
       })
 
-      /* ARCHIVE VENDOR */
+      /* ARCHIVE VENDOR (API RETURNS UPDATED OBJECT) */
       .addCase(archiveVendor.fulfilled, (state, action) => {
-        state.list = replacePayment(state.list, action.payload);
+        state.list = state.list.map(v =>
+          v.vendor_id === action.payload.vendor_id
+            ? action.payload
+            : v
+        );
       })
 
-      /* MARK UNPAID */
+      /* MARK UNPAID (API RETURNS UPDATED OBJECT) */
       .addCase(markVendorUnpaid.fulfilled, (state, action) => {
-        state.list = replacePayment(state.list, action.payload);
+        state.list = state.list.map(v =>
+          v.vendor_id === action.payload.vendor_id
+            ? action.payload
+            : v
+        );
       });
   },
 });
 
-/* ----------------------------- EXPORTS ----------------------------- */
+/* ============================= EXPORTS ============================= */
 
 export const {
   updateSeatsLocal,
