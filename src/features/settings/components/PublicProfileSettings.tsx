@@ -33,12 +33,15 @@ export default function PublicProfileSettings() {
   }, [data]);
 
   return (
-    <div className="flex gap-6 h-[calc(100vh-120px)] overflow-hidden">
+    <div className="pt-6 px-6 grid grid-cols-1 gap-6 h-[calc(100vh-64px)] transition-[grid-template-columns] duration-500 ease-in-out grid-cols-[420px_1fr]  lg:grid-cols-[720px_1fr] overflow-hidden">
 
       {/* RIGHT — Fixed Preview */}
-      <div className="hidden lg:flex justify-center items-start h-full overflow-hidden">
+      <div className="origin-top scale-[0.6] xl:scale-[0.7] flex items-center justify-center">
 
-        <div className="w-[330px] max-h-full aspect-[9/19.5] bg-black rounded-[2.5rem] p-2">
+        <div className="w-[390px] h-[780px]
+                rounded-[44px]
+                bg-white
+                p-[10px]">
           <div className="h-full bg-white rounded-[2rem] overflow-hidden flex flex-col">
             {loading || !liveConfig ? (
               <div className="h-full flex items-center justify-center text-gray-400">
@@ -54,7 +57,7 @@ export default function PublicProfileSettings() {
       </div>
 
       {/* LEFT — Scrollable Editor */}
-      <div className="flex-1 min-w-[480px] h-full overflow-y-auto overscroll-contain pr-2">
+      <div className="h-[75%] rounded-2xl overflow-hidden overflow-y-auto overscroll-contain transition-all duration-500 ease-in-out order-2 lg:order-1 bg-white shadow">
 
         <TeamMemberPublicProfileTab
           key={username}
