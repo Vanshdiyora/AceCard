@@ -1416,31 +1416,64 @@ function PhotoModal({
 
   return (
     <div
-      className="absolute inset-0 z-[9999] bg-black/70 flex justify-center pt-4 px-4 pointer-events-auto"
+      className="fixed inset-0 z-[9999] flex items-center justify-center px-4"
+      style={{ backgroundColor: "rgba(0,0,0,0.6)" }}
       onClick={onClose}
     >
-
-
-      {/* MOBILE FRAME */}
       <div
-        className="relative w-full max-w-[390px] bg-white rounded-3xl shadow-2xl animate-fadeIn
-             max-h-[85%] self-start"
+        className="relative w-full max-w-[390px] rounded-2xl overflow-hidden
+          animate-fadeIn max-h-[85vh]"
+        style={{
+          backgroundColor: t.cardBg,
+          boxShadow: "0 25px 60px rgba(0,0,0,0.35)",
+        }}
         onClick={(e) => e.stopPropagation()}
       >
+        {/* CLOSE ICON */}
+        <button
+          onClick={onClose}
+          aria-label="Close"
+          className="absolute top-3 right-3 z-10 h-8 w-8 rounded-full
+            flex items-center justify-center transition-opacity hover:opacity-80"
+          style={{
+            color: t.text,
+            backgroundColor: t.cardBg,
+            opacity: 0.8,
+          }}
+        >
+          ✕
+        </button>
 
-        <img
-          src={item.img_url}
-          alt={item.title}
-          className="w-full h-64 object-cover"
-        />
+        {/* IMAGE */}
+        <div className="relative">
+          <img
+            src={item.img_url}
+            alt={item.title}
+            className="w-full h-64 object-cover"
+          />
+          <div
+            className="absolute inset-0"
+            style={{
+              background:
+                "linear-gradient(to bottom, transparent 55%, rgba(0,0,0,0.45))",
+            }}
+          />
+        </div>
 
-        <div className="p-4 space-y-3">
-          <h3 className="text-lg font-semibold" style={{ color: t.text }}>
+        {/* CONTENT */}
+        <div className="p-5 space-y-4 overflow-y-auto">
+          <h3
+            className="text-lg font-semibold tracking-tight"
+            style={{ color: t.text }}
+          >
             {item.title}
           </h3>
 
           {item.description && (
-            <p className="text-sm opacity-80" style={{ color: t.text }}>
+            <p
+              className="text-sm leading-relaxed"
+              style={{ color: t.text, opacity: 0.7 }}
+            >
               {item.description}
             </p>
           )}
@@ -1450,7 +1483,8 @@ function PhotoModal({
               href={item.link}
               target="_blank"
               rel="noopener noreferrer"
-              className="block text-center py-2 rounded-xl text-sm font-semibold shadow-md transition"
+              className="block w-full text-center py-2.5 rounded-xl text-sm font-semibold
+                transition-all active:scale-95 hover:opacity-90"
               style={{
                 backgroundColor: t.buttonBg,
                 color: t.buttonText,
@@ -1459,13 +1493,6 @@ function PhotoModal({
               Open Link
             </a>
           )}
-
-          <button
-            onClick={onClose}
-            className="w-full text-xs text-gray-400 mt-2"
-          >
-            Close
-          </button>
         </div>
       </div>
     </div>
