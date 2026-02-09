@@ -29,6 +29,24 @@ interface Item {
   enabled: boolean;
 }
 
+/* ================= VALIDATION ================= */
+
+function isLinkFileRowComplete(item?: Item) {
+  if (!item) return true;
+
+  if (!item.title || item.title.trim() === "") return false;
+
+  if (item.type === "link") {
+    return Boolean(item.url && item.url.trim());
+  }
+
+  if (item.type === "file") {
+    return Boolean(item.file_url && item.file_url.trim());
+  }
+
+  return true;
+}
+
 /* ================= MAIN ================= */
 
 export default function LinksFilesSection({
@@ -41,6 +59,7 @@ export default function LinksFilesSection({
   disabled?: boolean;
 }) {
   const items = [...value.items].sort((a, b) => a.rank - b.rank);
+  const [error, setError] = useState<string | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -49,7 +68,7 @@ export default function LinksFilesSection({
 
   const [dragging, setDragging] = useState(false);
 
-  // 🔒 lock page scroll while dragging
+  /* 🔒 lock page scroll while dragging */
   useEffect(() => {
     if (!dragging) return;
     const prev = document.body.style.overflow;
@@ -59,8 +78,20 @@ export default function LinksFilesSection({
     };
   }, [dragging]);
 
+  /* ================= ADD ================= */
+
   const addItem = () => {
     if (disabled) return;
+
+    const last = items[items.length - 1];
+
+    if (!isLinkFileRowComplete(last)) {
+      setError("Please complete the previous row before adding a new one.");
+      return;
+    }
+
+    setError(null);
+
     onChange({
       ...value,
       items: [
@@ -79,11 +110,17 @@ export default function LinksFilesSection({
     });
   };
 
+  /* ================= REMOVE ================= */
+
   const removeItem = (id: string) => {
     if (disabled) return;
+
+    setError(null);
+
     const next = items
       .filter((i) => i.id !== id)
       .map((i, idx) => ({ ...i, rank: idx + 1 }));
+
     onChange({ ...value, items: next });
   };
 
@@ -94,16 +131,21 @@ export default function LinksFilesSection({
         <button
           onClick={addItem}
           disabled={disabled}
-          className={`w-full px-4 py-3 sm:py-2 rounded text-white text-sm ${
-            disabled
+          className={`w-full px-4 py-3 sm:py-2 rounded text-white text-sm ${disabled
               ? "bg-gray-400 cursor-not-allowed"
-              : "bg-purple-600"
-          }`}
+              : "bg-purple-600 hover:opacity-90"
+            }`}
         >
           + Add Link / File
         </button>
       </div>
-
+      
+      {/* ERROR */}
+      {error && (
+        <p className="text-sm text-red-600">
+          {error}
+        </p>
+      )}
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
@@ -144,11 +186,10 @@ export default function LinksFilesSection({
                 <button
                   onClick={() => removeItem(item.id)}
                   disabled={disabled}
-                  className={`hidden md:flex absolute top-2 right-2 font-bold ${
-                    disabled
+                  className={`hidden md:flex absolute top-2 right-2 font-bold ${disabled
                       ? "text-gray-300 cursor-not-allowed"
                       : "text-red-500 hover:text-red-700"
-                  }`}
+                    }`}
                 >
                   ✕
                 </button>
@@ -163,22 +204,23 @@ export default function LinksFilesSection({
                     <CustomSelect
                       disabled={disabled}
                       value={item.type}
-                      onChange={(v) =>
+                      onChange={(v) => {
+                        setError(null);
                         onChange({
                           ...value,
                           items: items.map((i) =>
                             i.id === item.id
                               ? {
-                                  ...i,
-                                  type: v,
-                                  url: v === "link" ? i.url : "",
-                                  file_url: v === "file" ? i.file_url : "",
-                                  file_type: v === "file" ? i.file_type : "",
-                                }
+                                ...i,
+                                type: v,
+                                url: v === "link" ? i.url : "",
+                                file_url: v === "file" ? i.file_url : "",
+                                file_type: v === "file" ? i.file_type : "",
+                              }
                               : i
                           ),
-                        })
-                      }
+                        });
+                      }}
                     />
                   </div>
 
@@ -192,7 +234,8 @@ export default function LinksFilesSection({
                       value={item.title}
                       placeholder="e.g. Website"
                       className="border rounded p-3 text-sm w-full"
-                      onChange={(e) =>
+                      onChange={(e) => {
+                        setError(null);
                         onChange({
                           ...value,
                           items: items.map((i) =>
@@ -200,8 +243,8 @@ export default function LinksFilesSection({
                               ? { ...i, title: e.target.value }
                               : i
                           ),
-                        })
-                      }
+                        });
+                      }}
                     />
                   </div>
 
@@ -216,7 +259,8 @@ export default function LinksFilesSection({
                         value={item.url}
                         placeholder="https://example.com"
                         className="border rounded p-3 text-sm w-full"
-                        onChange={(e) =>
+                        onChange={(e) => {
+                          setError(null);
                           onChange({
                             ...value,
                             items: items.map((i) =>
@@ -224,37 +268,36 @@ export default function LinksFilesSection({
                                 ? { ...i, url: e.target.value }
                                 : i
                             ),
-                          })
-                        }
+                          });
+                        }}
                       />
                     </div>
                   )}
 
-                  {/* FILE FIELDS */}
+                  {/* FILE URL */}
                   {item.type === "file" && (
-                    <>
-                      <div className="md:col-span-4">
-                        <label className="block text-xs font-semibold text-gray-500 mb-1">
-                          File URL
-                        </label>
-                        <input
-                          disabled={disabled}
-                          value={item.file_url}
-                          placeholder="https://file.pdf"
-                          className="border rounded p-3 text-sm w-full"
-                          onChange={(e) =>
-                            onChange({
-                              ...value,
-                              items: items.map((i) =>
-                                i.id === item.id
-                                  ? { ...i, file_url: e.target.value }
-                                  : i
-                              ),
-                            })
-                          }
-                        />
-                      </div>
-                    </>
+                    <div className="md:col-span-4">
+                      <label className="block text-xs font-semibold text-gray-500 mb-1">
+                        File URL
+                      </label>
+                      <input
+                        disabled={disabled}
+                        value={item.file_url}
+                        placeholder="https://file.pdf"
+                        className="border rounded p-3 text-sm w-full"
+                        onChange={(e) => {
+                          setError(null);
+                          onChange({
+                            ...value,
+                            items: items.map((i) =>
+                              i.id === item.id
+                                ? { ...i, file_url: e.target.value }
+                                : i
+                            ),
+                          });
+                        }}
+                      />
+                    </div>
                   )}
                 </div>
               </SortableItem>
@@ -300,11 +343,10 @@ function SortableItem({
           <button
             onClick={onRemove}
             disabled={disabled}
-            className={`md:hidden font-bold ${
-              disabled
+            className={`md:hidden font-bold ${disabled
                 ? "text-gray-300 cursor-not-allowed"
                 : "text-red-500 hover:text-red-700"
-            }`}
+              }`}
           >
             ✕
           </button>
@@ -342,11 +384,10 @@ function CustomSelect({
         type="button"
         disabled={disabled}
         onClick={() => !disabled && setOpen((v) => !v)}
-        className={`w-full border rounded p-3 text-sm flex justify-between items-center ${
-          disabled
+        className={`w-full border rounded p-3 text-sm flex justify-between items-center ${disabled
             ? "bg-gray-100 text-gray-400 cursor-not-allowed"
             : "bg-white hover:bg-gray-50"
-        }`}
+          }`}
       >
         <span>{current?.label}</span>
         <span className="text-xs">▾</span>
@@ -362,11 +403,10 @@ function CustomSelect({
                 onChange(o.value);
                 setOpen(false);
               }}
-              className={`w-full text-left px-3 py-2 text-sm hover:bg-indigo-50 ${
-                value === o.value
+              className={`w-full text-left px-3 py-2 text-sm hover:bg-indigo-50 ${value === o.value
                   ? "bg-indigo-100 font-semibold"
                   : ""
-              }`}
+                }`}
             >
               {o.label}
             </button>

@@ -9,6 +9,8 @@ import {
   arrayMove,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { useState } from "react";
+import { isYoutubeRowComplete } from "../TeamMemberPublicProfileTab";
 
 type Item = {
   id: string;
@@ -27,9 +29,20 @@ export default function YoutubeSection({
   disabled?: boolean;
 }) {
   const sorted = [...items].sort((a, b) => a.rank - b.rank);
+  const [error, setError] = useState<string | null>(null);
 
   const add = () => {
     if (disabled) return;
+
+    const last = sorted[sorted.length - 1];
+
+    if (!isYoutubeRowComplete(last)) {
+      setError("Please complete the previous video before adding a new one.");
+      return;
+    }
+
+    setError(null);
+
     onChange([
       ...sorted,
       {
@@ -48,8 +61,16 @@ export default function YoutubeSection({
 
   const update = (id: string, patch: Partial<Item>) => {
     if (disabled) return;
+
+    // clear error as soon as user starts fixing it
+    if (patch.url !== undefined) {
+      setError(null);
+    }
+
     onChange(
-      sorted.map((i) => (i.id === id ? { ...i, ...patch } : i))
+      sorted.map((i) =>
+        i.id === id ? { ...i, ...patch } : i
+      )
     );
   };
 
@@ -89,13 +110,17 @@ export default function YoutubeSection({
           ))}
         </SortableContext>
       </DndContext>
+      {error && (
+        <p className="text-sm text-red-600">
+          {error}
+        </p>
+      )}
 
       <button
         onClick={add}
         disabled={disabled}
-        className={`px-3 py-2 rounded text-white ${
-          disabled ? "bg-gray-400 cursor-not-allowed" : "bg-purple-600"
-        }`}
+        className={`px-3 py-2 rounded text-white ${disabled ? "bg-gray-400 cursor-not-allowed" : "bg-purple-600"
+          }`}
       >
         + Add Video
       </button>
@@ -126,16 +151,14 @@ function Row({
         transform: CSS.Transform.toString(transform),
         transition,
       }}
-      className={`flex items-center gap-2 bg-white border rounded-lg p-2 ${
-        disabled ? "opacity-60" : ""
-      }`}
+      className={`flex items-center gap-2 bg-white border rounded-lg p-2 ${disabled ? "opacity-60" : ""
+        }`}
     >
       <span
         {...(!disabled ? attributes : {})}
         {...(!disabled ? listeners : {})}
-        className={`${
-          disabled ? "text-gray-300" : "cursor-grab"
-        }`}
+        className={`${disabled ? "text-gray-300" : "cursor-grab"
+          }`}
       >
         ☰
       </span>
@@ -162,11 +185,10 @@ function Row({
       <button
         onClick={() => onRemove(item.id)}
         disabled={disabled}
-        className={`${
-          disabled
-            ? "text-gray-300 cursor-not-allowed"
-            : "text-red-500"
-        }`}
+        className={`${disabled
+          ? "text-gray-300 cursor-not-allowed"
+          : "text-red-500"
+          }`}
       >
         ✕
       </button>

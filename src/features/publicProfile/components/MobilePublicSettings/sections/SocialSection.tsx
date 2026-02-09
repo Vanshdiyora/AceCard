@@ -16,6 +16,8 @@ import {
 } from "react-icons/si";
 import { FiPhone, FiGlobe } from "react-icons/fi";
 
+/* ================= ICON MAP ================= */
+
 const ICONS: Record<string, any> = {
   instagram: SiInstagram,
   linkedin: SiLinkedin,
@@ -42,24 +44,41 @@ const ALL_SOCIALS = [
   { id: "website", label: "Website" },
 ];
 
-export default function SocialSection({ items = [], onChange, locked }: any) {
+/* ================= VALIDATION ================= */
+
+export function hasEmptySocialLink(items: any[]) {
+  return items.some(
+    (i) => i.enabled === true && (!i.url || i.url.trim() === "")
+  );
+}
+
+/* ================= MAIN ================= */
+
+export default function SocialSection({
+  items = [],
+  onChange,
+  locked,
+}: any) {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [formOpen, setFormOpen] = useState(false);
-  const isAnyOpen = pickerOpen || formOpen;
 
   const enabled = items.filter((i: any) => i.enabled === true);
+  const isAnyOpen = pickerOpen || formOpen;
 
-  // Toggle enabled instead of add/remove
+  /* ================= MUTATIONS ================= */
+
   const toggle = (s: any) => {
     if (locked) return;
 
     onChange((prev: any[]) => {
-      const index = prev.findIndex((i) => i.id === s.id);
-      if (index !== -1) {
-        return prev.map((i, idx) =>
-          idx === index ? { ...i, enabled: !i.enabled } : i
+      const idx = prev.findIndex((i) => i.id === s.id);
+
+      if (idx !== -1) {
+        return prev.map((i, index) =>
+          index === idx ? { ...i, enabled: !i.enabled } : i
         );
       }
+
       return [...prev, { ...s, url: "", enabled: true }];
     });
   };
@@ -74,41 +93,26 @@ export default function SocialSection({ items = [], onChange, locked }: any) {
     onChange((prev: any[]) => prev.filter((i) => i.id !== id));
   };
 
-  // lock background scroll when picker is open
+  /* ================= LOCK SCROLL ================= */
+
   useEffect(() => {
     if (!isAnyOpen) {
-      document.body.style.overflow = "";
-      document.body.style.position = "";
-      document.body.style.top = "";
-      document.body.style.left = "";
-      document.body.style.right = "";
-      document.body.style.width = "";
+      document.body.style.cssText = "";
       return;
     }
 
-    const scrollY = window.scrollY;
+    const y = window.scrollY;
 
     document.body.style.position = "fixed";
-    document.body.style.top = `-${scrollY}px`;
-    document.body.style.left = "0";
-    document.body.style.right = "0";
+    document.body.style.top = `-${y}px`;
     document.body.style.width = "100%";
     document.body.style.overflow = "hidden";
 
     return () => {
-      const y = document.body.style.top;
-
-      document.body.style.position = "";
-      document.body.style.top = "";
-      document.body.style.left = "";
-      document.body.style.right = "";
-      document.body.style.width = "";
-      document.body.style.overflow = "";
-
-      window.scrollTo(0, parseInt(y || "0") * -1);
+      document.body.style.cssText = "";
+      window.scrollTo(0, y);
     };
   }, [isAnyOpen]);
-
 
   return (
     <>
@@ -120,29 +124,29 @@ export default function SocialSection({ items = [], onChange, locked }: any) {
           setFormOpen(false);
           setPickerOpen(true);
         }}
-        className={`mt-3 px-4 py-2 rounded-lg text-sm font-semibold ${locked
+        className={`mt-3 px-4 py-2 rounded-lg text-sm font-semibold ${
+          locked
             ? "bg-gray-300 text-gray-500 cursor-not-allowed"
             : "bg-purple-600 text-white"
-          }`}
+        }`}
       >
         + Add Social
       </button>
 
-      {/* STEP 1: PICKER */}
+      {/* STEP 1 — PICK SOCIAL */}
       <AddSocialModal
         open={pickerOpen}
         all={ALL_SOCIALS}
         selected={items}
         onToggle={toggle}
-        onCancel={() => setPickerOpen(false)}      // 👈 cancel only
-        onContinue={() => {                        // 👈 done / next
+        onCancel={() => setPickerOpen(false)}
+        onContinue={() => {
           setPickerOpen(false);
           if (enabled.length > 0) setFormOpen(true);
         }}
       />
 
-
-      {/* STEP 2: LINK FORM */}
+      {/* STEP 2 — ADD LINKS */}
       <SocialLinksModal
         open={formOpen}
         items={enabled}
@@ -154,6 +158,8 @@ export default function SocialSection({ items = [], onChange, locked }: any) {
   );
 }
 
+/* ================= LINKS MODAL ================= */
+
 function SocialLinksModal({
   open,
   items,
@@ -161,13 +167,33 @@ function SocialLinksModal({
   onUpdate,
   onRemove,
 }: any) {
+  const [error, setError] = useState<string | null>(null);
+
   if (!open) return null;
+
+  const handleDone = () => {
+    if (hasEmptySocialLink(items)) {
+      setError("Please fill in all social links before saving.");
+      return;
+    }
+
+    setError(null);
+    onClose();
+  };
 
   return createPortal(
     <div className="fixed inset-0 z-[999] bg-black/40 flex items-center justify-center px-3">
       <div className="bg-white w-full max-w-md rounded-2xl p-4 shadow-xl max-h-[85vh] flex flex-col">
 
-        <h3 className="text-base font-semibold mb-3">Add your links</h3>
+        <h3 className="text-base font-semibold mb-3">
+          Add your links
+        </h3>
+
+        {error && (
+          <p className="text-sm text-red-600 mb-2">
+            {error}
+          </p>
+        )}
 
         <div className="flex-1 overflow-y-auto space-y-3">
           {items.map((s: any) => {
@@ -178,7 +204,7 @@ function SocialLinksModal({
                 key={s.id}
                 className="flex items-center gap-3 p-3 rounded-xl border bg-white shadow-sm"
               >
-                <div className="h-10 w-10 rounded-xl bg-gray-900 flex items-center justify-center text-white shadow">
+                <div className="h-10 w-10 rounded-xl bg-gray-900 flex items-center justify-center text-white">
                   <Icon size={18} />
                 </div>
 
@@ -186,11 +212,17 @@ function SocialLinksModal({
                   className="flex-1 rounded-lg border px-3 py-2 text-sm"
                   placeholder={`Enter ${s.label} link`}
                   value={s.url}
-                  onChange={(e) => onUpdate(s.id, e.target.value)}
+                  onChange={(e) => {
+                    setError(null);
+                    onUpdate(s.id, e.target.value);
+                  }}
                 />
 
                 <button
-                  onClick={() => onRemove(s.id)}
+                  onClick={() => {
+                    setError(null);
+                    onRemove(s.id);
+                  }}
                   className="text-red-500 hover:text-red-700"
                 >
                   <Trash2 size={18} />
@@ -201,8 +233,8 @@ function SocialLinksModal({
         </div>
 
         <button
-          onClick={onClose}
-          className="mt-4 w-full py-3 rounded-xl bg-purple-600 text-white font-semibold"
+          onClick={handleDone}
+          className="mt-4 w-full py-3 rounded-xl bg-purple-600 text-white font-semibold hover:opacity-90"
         >
           Done
         </button>

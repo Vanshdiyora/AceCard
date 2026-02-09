@@ -673,10 +673,7 @@ export default function MobilePublicSettings({
                     : e.target.value,
               }))
             }
-            className="
-      w-full rounded-lg border px-3 py-2 text-sm
-      focus:outline-none focus:ring-2 focus:ring-purple-500
-    "
+            className="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
           />
         </div>
 
@@ -1202,7 +1199,6 @@ function Social({ items, theme, shapeClass }: any) {
     </div>
   );
 }
-
 
 function useIsMobile(breakpoint = 768) {
   const [isMobile, setIsMobile] = useState(

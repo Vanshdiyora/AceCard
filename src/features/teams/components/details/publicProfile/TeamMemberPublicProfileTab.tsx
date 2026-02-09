@@ -42,6 +42,63 @@ const THEME_COLOR_LABELS: Record<typeof THEME_COLOR_KEYS[number], string> = {
   image_text_color: "Image text",
 };
 
+type Validator<T> = (item: T) => boolean;
+
+export function canAddNewRow<T>(
+  items: T[],
+  isComplete: Validator<T>
+) {
+  if (!items || items.length === 0) return true;
+
+  const last = items[items.length - 1];
+  return isComplete(last);
+}
+function extractYoutubeId(url: string) {
+  if (!url) return "";
+  const match =
+    url.match(/(?:youtube\.com\/.*v=|youtu\.be\/)([^&]+)/);
+  return match?.[1] ?? "";
+}
+
+export function isYoutubeRowComplete(item: any) {
+  if (!item) return false;
+
+  // required fields
+  if (!item.url || item.url.trim() === "") return false;
+
+  // must be a valid youtube link
+  return Boolean(extractYoutubeId(item.url));
+}
+
+export function isPhotoRowComplete(item?: any) {
+  if (!item) return true; // allow first row
+  if (!item.title || item.title.trim() === "") return false;
+  // if (!item.img_url || item.img_url.trim() === "") return false;
+  return true;
+}
+
+export function isLinkFileRowComplete(item?: any) {
+  if (!item) return true;
+
+  if (!item.title || item.title.trim() === "") return false;
+
+  if (item.type === "link") {
+    return Boolean(item.url && item.url.trim());
+  }
+
+  if (item.type === "file") {
+    return Boolean(item.file_url && item.file_url.trim());
+  }
+
+  return true;
+}
+function hasInvalidSocialLinks(items: any[] = []) {
+  return items.some(
+    (i) => i.enabled === true && (!i.url || i.url.trim() === "")
+  );
+}
+
+
 /* ================= TYPES ================= */
 export type LockMode = "global" | "individual";
 
@@ -254,6 +311,7 @@ export default function TeamMemberPublicProfileTab({
     useState<PublicProfileConfig["social_links"] | null>(null);
   const [youtubeModalOpen, setYoutubeModalOpen] = useState(false);
   const [draftYoutube, setDraftYoutube] = useState<PublicProfileConfig["youtube"] | null>(null);
+  const [socialError, setSocialError] = useState<string | null>(null);
 
 
   /* ---------- Options cache ---------- */
@@ -298,12 +356,7 @@ export default function TeamMemberPublicProfileTab({
   }
 
   /* ================= INIT ================= */
-  function extractYoutubeId(url: string) {
-    if (!url) return "";
-    const match =
-      url.match(/(?:youtube\.com\/.*v=|youtu\.be\/)([^&]+)/);
-    return match?.[1] ?? "";
-  }
+
 
   useEffect(() => {
     dispatch(fetchProducts({ page: 1, page_size: 10, mode: "paginate" }))
@@ -858,7 +911,7 @@ export default function TeamMemberPublicProfileTab({
               }
             />
           </div>
-          
+
           {config.layout.use_custom_font && (
             <div className="mt-4">
               <label className="text-sm font-medium block mb-2">
@@ -1434,24 +1487,41 @@ export default function TeamMemberPublicProfileTab({
           onConfirm={() => {
             if (!draftSocialLinks) return;
 
+            if (hasInvalidSocialLinks(draftSocialLinks.items)) {
+              setSocialError("Please fill all social links before saving.");
+              return; // ❌ BLOCK SAVE
+            }
+
+            setSocialError(null);
+
             update({
               ...config,
               social_links: draftSocialLinks,
             });
+
             setSocialModalOpen(false);
           }}
+
         >
           {draftSocialLinks && (
             <SocialSection
               items={draftSocialLinks.items}
-              onChange={(items: any[]) =>
+              onChange={(items: any[]) => {
+                setSocialError(null); // 👈 clear error on typing
                 setDraftSocialLinks({
                   ...draftSocialLinks,
                   items,
-                })
-              }
+                });
+              }}
+
             />
           )}
+          {socialError && (
+            <p className="text-sm text-red-600 mb-2">
+              {socialError}
+            </p>
+          )}
+
         </CommonModal>
       </Card>
 
