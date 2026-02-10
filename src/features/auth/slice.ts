@@ -27,10 +27,10 @@ interface AuthState {
   hydrated: boolean;
 }
 
-interface LoginResponse {
-  token: string;
-  subdomain?: string;
-}
+// interface LoginResponse {
+//   token: string;
+//   subdomain?: string;
+// }
 
 /* -----------------------------------------------------
    Helpers
@@ -62,14 +62,15 @@ function decodeToken(token: string | null): { user: JwtPayload | null; role: str
    Initial State
 ----------------------------------------------------- */
 
-const savedToken = getCookie("token");
-const decoded = decodeToken(savedToken);
+// const savedToken = getCookie("token");
+// const savedSubdomain = getCookie("subdomain");
+// const decoded = decodeToken(savedToken);
 
 const initialState: AuthState = {
-  token: savedToken,
-  user: decoded.user,
-  role: decoded.role,
-  subdomain: decoded.subdomain,
+  token: null,
+  user: null,
+  role: null,
+  subdomain: null,
   resetToken: null,
   loading: false,
   error: null,
@@ -80,6 +81,25 @@ const initialState: AuthState = {
 /* -----------------------------------------------------
    Thunks
 ----------------------------------------------------- */
+
+export const hydrateAuth = createAsyncThunk(
+  "auth/hydrate",
+  async () => {
+    const token = getCookie("token");
+    const subdomain = getCookie("subdomain");
+
+    if (!token) return null;
+
+    const decoded = decodeToken(token);
+    return {
+      token,
+      subdomain: decoded.subdomain || subdomain || null,
+      user: decoded.user,
+      role: decoded.role,
+    };
+  }
+);
+
 
 export const login = createAsyncThunk(
   "auth/login",
@@ -138,10 +158,13 @@ const authSlice = createSlice({
       state.token = null;
       state.user = null;
       state.role = null;
+      state.subdomain = null;
       state.resetToken = null;
       state.loading = false;
       state.error = null;
+
       eraseCookie("token");
+      eraseCookie("subdomain");
     },
     markHydrated(state) {
       state.hydrated = true;
@@ -158,23 +181,47 @@ const authSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
+      .addCase(hydrateAuth.fulfilled, (state, action) => {
+        if (!action.payload) {
+          state.hydrated = true;
+          return;
+        }
 
+        state.token = action.payload.token;
+        state.subdomain = action.payload.subdomain;
+        state.user = action.payload.user;
+        state.role = action.payload.role;
+        state.hydrated = true;
+      })
       /* Login */
       .addCase(login.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(login.fulfilled, (state, action: PayloadAction<LoginResponse>) => {
-        state.loading = false;
-        state.token = action.payload.token;
-        state.subdomain = action.payload.subdomain || null;
+      .addCase(login.fulfilled, (state, action) => {
+        // 🔥 clear EVERYTHING first
+        state.token = null;
+        state.user = null;
+        state.role = null;
+        state.subdomain = null;
+        eraseCookie("subdomain");
 
+        state.loading = false;
+
+        state.token = action.payload.token;
         setCookie("token", action.payload.token);
 
+        if (action.payload.subdomain) {
+          state.subdomain = action.payload.subdomain;
+          setCookie("subdomain", action.payload.subdomain);
+        }
+
         const decoded = decodeToken(action.payload.token);
+        console.log(decoded)
         state.user = decoded.user;
         state.role = decoded.role;
       })
+
       .addCase(login.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;

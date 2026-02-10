@@ -8,6 +8,7 @@ import {
   fetchAccountProfile,
   resetSettings,
 } from "../../../features/settings/slice";
+import { eraseCookie } from "../../../utils/cookieUtils";
 
 type TopbarProps = {
   type: "admin" | "super_admin";
@@ -93,12 +94,14 @@ export default function Topbar({ type }: TopbarProps) {
     setOpen(false);
     requestAnimationFrame(() => {
       dispatch(logout());
+eraseCookie("token");
+eraseCookie("subdomain");
+
       dispatch(resetSettings());
-      navigate("/login", { replace: true });
+      window.location.href = "/login";
     });
   };
-
-
+  
   const Dropdown = (
     <div
       className="absolute right-0 top-full mt-2 bg-white border shadow-xl rounded-lg w-44 z-50 origin-top-right"

@@ -3,7 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../../app/hooks";
 import { login } from "../slice";
 import BlockerLoader from "../../../common/ui/BlockingLoader";
-
+import { logout } from "../slice";
+import { eraseCookie,  } from "../../../utils/cookieUtils";
 export default function LoginPage() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
@@ -11,44 +12,64 @@ export default function LoginPage() {
   const getRedirectUrl = (subdomain: string | null, route = "") => {
     const { protocol, hostname, port } = window.location;
 
-    // ▲ VERCEL PREVIEW / PROD DOMAINS
+    // Vercel preview / prod
     if (hostname.endsWith(".vercel.app")) {
       return `${protocol}//${hostname}/${route}`;
     }
 
-    // 🌍 CUSTOM DOMAIN (e.g. zomato.com)
     const parts = hostname.split(".");
-    const baseDomain =
-      parts.length > 2 ? parts.slice(1).join(".") : hostname;
+
+    let baseDomain = hostname;
+
+    // localhost handling
+    if (hostname.endsWith("localhost")) {
+      baseDomain = "localhost";
+    }
+    // normal domains (remove existing subdomain)
+    else if (parts.length > 2) {
+      baseDomain = parts.slice(1).join(".");
+    }
+
+    // no subdomain case
+    if (!subdomain) {
+      return `${protocol}//${baseDomain}${port ? `:${port}` : ""}/${route}`;
+    }
 
     return `${protocol}//${subdomain}.${baseDomain}${port ? `:${port}` : ""}/${route}`;
   };
 
-
-  const { loading, error, role, token, subdomain } = useAppSelector((s) => s.auth);
-
+const { loading, error, role, token, subdomain, hydrated } =
+  useAppSelector((s) => s.auth);
   const [form, setForm] = useState({ email: "", password: "" });
   const [show, setShow] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
 
-  const submit = async () => {
-    if (!form.email || !form.password) {
-      setLocalError("Email and password are required");
-      return;
-    }
-    setLocalError(null);
-    await dispatch(login(form));
-  };
+const submit = async () => {
+  if (!form.email || !form.password) {
+    setLocalError("Email and password are required");
+    return;
+  }
+
+  // 🔥 remove cross-subdomain identity
+  dispatch(logout());
+  eraseCookie("token");
+  eraseCookie("subdomain");
+
+  await dispatch(login(form));
+};
+
 
   useEffect(() => {
-    if (!token || !role) return; // ⛔ wait until auth is ready
+      if (!hydrated) return;
+    if (!token || !role) return;
 
     let redirectUrl = "";
 
     if (role === "manager" || role === "vendor_admin") {
       redirectUrl = getRedirectUrl(subdomain, "admin");
     } else if (role === "super_admin") {
-      redirectUrl = "super";
+      navigate("/super", { replace: true });
+      return;
     } else if (role === "sales_rep") {
       redirectUrl = getRedirectUrl(subdomain, "profile-settings");
     } else {
@@ -56,9 +77,12 @@ export default function LoginPage() {
       return;
     }
 
-    // 🔥 full page redirect (required for subdomains)
-    window.location.href = redirectUrl;
-  }, [token, role, navigate]);
+    // ✅ Avoid redirect loop
+    if (window.location.href !== redirectUrl) {
+      window.location.href = redirectUrl;
+    }
+  }, [hydrated, token, role, subdomain]);
+
 
   return (
     <>

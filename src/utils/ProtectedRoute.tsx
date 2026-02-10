@@ -1,28 +1,64 @@
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { useAppSelector } from "../app/hooks";
 import type { ReactNode } from "react";
+import { isOnSubdomain, redirectToSubdomain } from "./subDomain";
 
 interface ProtectedRouteProps {
   children: ReactNode;
   superOnly?: boolean;
   adminOnly?: boolean;
+  requireSubdomain?: boolean;
 }
 
 export default function ProtectedRoute({
   children,
   superOnly = false,
   adminOnly = false,
+  requireSubdomain = false,
 }: ProtectedRouteProps) {
-  const { token, role, loading } = useAppSelector((s) => s.auth);
-  
-  if (loading) return null; // ⬅ wait for auth resolution
+  // ✅ ALL hooks must be at the top, no conditions
+  const location = useLocation();
+  const { token, role, loading, subdomain, hydrated } = useAppSelector(
+    (s) => s.auth
+  );
 
-  if (!token) return <Navigate to="/login" replace />;
+  // ✅ SAFE early exits (after hooks)
+  if (!hydrated || loading) {
+    return null;
+  }
 
-  if (superOnly && role !== "super_admin") return <Navigate to="/admin" replace />;
+  // 🔐 Not logged in
+  if (!token) {
+    return <Navigate to="/login" replace />;
+  }
 
-  if (adminOnly && (role === "sales_rep" || role === "super_admin"))
+  // 👑 Super admin only
+  if (superOnly && role !== "super_admin") {
+    return <Navigate to="/admin" replace />;
+  }
+
+  // 🚫 Admin pages blocked for sales_rep & super_admin
+  if (adminOnly && (role === "sales_rep" || role === "super_admin")) {
     return <Navigate to="/unauthorized" replace />;
+  }
+
+  // 🚨 Enforce subdomain for tenant users
+  if (
+    requireSubdomain &&
+    (role === "manager" || role === "vendor_admin" || role === "sales_rep")
+  ) {
+    if (!subdomain) {
+      return <Navigate to="/unauthorized" replace />;
+    }
+
+    if (!isOnSubdomain()) {
+      const fullPath =
+        location.pathname + location.search + location.hash;
+
+      redirectToSubdomain(subdomain, fullPath);
+      return null;
+    }
+  }
 
   return <>{children}</>;
 }

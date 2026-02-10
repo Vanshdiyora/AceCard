@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import ProtectedRoute from "./utils/ProtectedRoute";
-import RootRedirect from "./utils/RootRedirect";
+// import RootRedirect from "./utils/RootRedirect";
 
 import LoginPage from "./features/auth/pages/LoginPage";
 import SuperAdminLayout from "./portals/superadmin/layout/SuperAdminLayout";
@@ -11,11 +11,13 @@ import ForgotPasswordPage from "./features/auth/pages/ForgotPasswordPage";
 import VerifyOtpPage from "./features/auth/pages/VerifyOtpPage";
 import ResetPasswordPage from "./features/auth/pages/ResetPasswordPage";
 import IntegrationCallback from "./features/settings/pages/IntegrationCallback";
+
 // SUPER ADMIN PAGES
 import { SupportAdmin, VendorsPage } from "./features";
 import LeadDetailsPage from "./features/leads/pages/LeadDetailsPage";
 import VendorTeamActivityPage from "./features/vendors/pages/VendorTeamPage";
 import PaymentsPage from "./features/paymentHistory/pages/PaymentsPage";
+
 // ADMIN PAGES
 import {
   SupportPage,
@@ -30,37 +32,50 @@ import {
   ProductDetailsPage,
   VendorDetailsPage,
   NotificationsPage,
-  NotificationVendorPage
+  NotificationVendorPage,
 } from "./features/index";
+
 import PublicProfilePage from "./features/publicProfile/pages/PublicProfilePage";
 import ProfileSettingsPage from "./features/settings/pages/ProfileSettingsPage";
+import { useEffect } from "react";
+import { useAppDispatch } from "./app/hooks";
+import { hydrateAuth } from "./features/auth/slice";
 
 export default function App() {
+    const dispatch = useAppDispatch();
+
+  useEffect(() => {
+    dispatch(hydrateAuth());
+  }, [dispatch]);
+
   return (
     <BrowserRouter>
       <Routes>
         {/* ROOT */}
-        <Route path="/" element={<RootRedirect />} />
+        <Route path="/" element={<LoginPage />} />
 
-        {/* LOGIN */}
+        {/* AUTH / PUBLIC */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/unauthorized" element={<UnauthorizedPage />} />
         <Route path="/not-found" element={<PageNotFound />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/verify-otp" element={<VerifyOtpPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
+
         {/* PUBLIC PROFILE */}
         <Route path="/profile/:username" element={<PublicProfilePage />} />
+
+        {/* PROFILE SETTINGS (TENANT → SUBDOMAIN ONLY) */}
         <Route
           path="/profile-settings"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute requireSubdomain>
               <ProfileSettingsPage />
             </ProtectedRoute>
           }
         />
 
-        {/* SUPER ADMIN ROUTES */}
+        {/* SUPER ADMIN ROUTES (BASE DOMAIN ONLY) */}
         <Route
           path="/super/*"
           element={
@@ -79,11 +94,11 @@ export default function App() {
           <Route path="*" element={<Navigate to="/not-found" replace />} />
         </Route>
 
-        {/* ADMIN ROUTES */}
+        {/* ADMIN ROUTES (TENANT → SUBDOMAIN ONLY) */}
         <Route
           path="/admin/*"
           element={
-            <ProtectedRoute adminOnly>
+            <ProtectedRoute adminOnly requireSubdomain> {/* 🔥 */}
               <AdminLayout />
             </ProtectedRoute>
           }
@@ -102,13 +117,12 @@ export default function App() {
           <Route path="notifications" element={<NotificationVendorPage />} />
           <Route path="*" element={<Navigate to="/not-found" replace />} />
         </Route>
+
+        {/* INTEGRATIONS CALLBACK (INTENTIONALLY UNPROTECTED) */}
         <Route
           path="/integrations/:provider/callback"
           element={<IntegrationCallback />}
         />
-
-        {/* GLOBAL FALLBACK */}
-        {/* <Route path="*" element={<Navigate to="/not-found" replace />} /> */}
       </Routes>
     </BrowserRouter>
   );
