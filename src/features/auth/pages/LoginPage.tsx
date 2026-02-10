@@ -8,7 +8,27 @@ export default function LoginPage() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
 
-  const { loading, error, role, token } = useAppSelector((s) => s.auth);
+const getRedirectUrl = (subdomain: string|null, route?: string) => {
+  const { protocol, hostname, port } = window.location;
+
+  const isLocalhost =
+    hostname === "localhost" || hostname.endsWith(".localhost");
+
+  // 🧪 LOCALHOST → normal routing
+  if (isLocalhost) {
+    return `/${route}`;
+  }
+
+  // 🌍 PRODUCTION → subdomain routing
+  const parts = hostname.split(".");
+  const baseDomain =
+    parts.length > 2 ? parts.slice(1).join(".") : hostname;
+
+  return `${protocol}//${subdomain}.${baseDomain}${port ? `:${port}` : ""}/${route}`;
+};
+
+
+  const { loading, error, role, token, subdomain } = useAppSelector((s) => s.auth);
 
   const [form, setForm] = useState({ email: "", password: "" });
   const [show, setShow] = useState(false);
@@ -24,12 +44,23 @@ export default function LoginPage() {
   };
 
   useEffect(() => {
-    if (!token || !role) return;
+    if (!token || !role) return; // ⛔ wait until auth is ready
 
-    if (role === "manager" || role === "vendor_admin") navigate("/admin");
-    else if (role === "super_admin") navigate("/super");
-    else if (role === "sales_rep") navigate(`/profile-settings`);
-    else navigate("/unauthorized");
+    let redirectUrl = "";
+
+    if (role === "manager" || role === "vendor_admin") {
+      redirectUrl = getRedirectUrl(subdomain, "admin");
+    } else if (role === "super_admin") {
+      redirectUrl = "super";
+    } else if (role === "sales_rep") {
+      redirectUrl = getRedirectUrl(subdomain, "profile-settings");
+    } else {
+      navigate("/unauthorized");
+      return;
+    }
+
+    // 🔥 full page redirect (required for subdomains)
+    window.location.href = redirectUrl;
   }, [token, role, navigate]);
 
   return (
@@ -38,7 +69,7 @@ export default function LoginPage() {
 
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-purple-100 px-4 sm:px-6">
         <div className="w-full max-w-md sm:max-w-lg bg-white rounded-2xl shadow-lg p-6 sm:p-8 space-y-5">
-          
+
           {/* HEADER */}
           <div className="text-center space-y-1">
             <h2 className="text-xl sm:text-2xl font-semibold text-gray-800">
