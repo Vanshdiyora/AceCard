@@ -28,7 +28,7 @@ export default function Sidebar({ type }: SidebarProps) {
     { label: "Team", path: `${adminBase}/team`, icon: "/sidebar/team.png" },
     { label: "Products", path: `${adminBase}/products`, icon: "/sidebar/products.png" },
     { label: "Support", path: `${adminBase}/support`, icon: "/sidebar/support.png" },
-    { label: "Notifications", path: `${adminBase}/notifications`, icon: IoNotifications }, 
+    { label: "Notifications", path: `${adminBase}/notifications`, icon: IoNotifications },
     { label: "Settings", path: `${adminBase}/settings`, icon: "/sidebar/settings.png" },
   ];
 
@@ -36,8 +36,8 @@ export default function Sidebar({ type }: SidebarProps) {
     { label: "Vendors", path: `${superBase}/vendors`, icon: "/sidebar/vendors.png" },
     { label: "Tickets & Support", path: `${superBase}/support`, icon: "/sidebar/support.png" },
     // { label: "System Settings", path: `${superBase}/system-settings`, icon: "/sidebar/settings.png" },
-    { label: "Notifications", path: `${superBase}/notifications`,  icon: IoNotifications },
-      { label: "Payments", path: `${superBase}/payments`, icon: CreditCard },
+    { label: "Notifications", path: `${superBase}/notifications`, icon: IoNotifications },
+    { label: "Payments", path: `${superBase}/payments`, icon: CreditCard },
 
   ];
 
@@ -54,12 +54,12 @@ export default function Sidebar({ type }: SidebarProps) {
 
       <ul className="space-y-2">
         {menu.map((item) => {
-          const isRoot = item.path === adminBase || item.path === superBase;
+          const currentPath = location.pathname.replace(/\/$/, "");
 
-          const isActive = isRoot
-            ? location.pathname === item.path
-            : location.pathname === item.path ||
-            location.pathname.startsWith(item.path + "/");
+          const isActive =
+            currentPath === item.path ||
+            currentPath.startsWith(item.path + "/");
+
 
           const isHovered = hovered === item.path;
 
