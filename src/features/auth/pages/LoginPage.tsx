@@ -8,24 +8,21 @@ export default function LoginPage() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
 
-const getRedirectUrl = (subdomain: string|null, route?: string) => {
-  const { protocol, hostname, port } = window.location;
+  const getRedirectUrl = (subdomain: string | null, route = "") => {
+    const { protocol, hostname, port } = window.location;
 
-  const isLocalhost =
-    hostname === "localhost" || hostname.endsWith(".localhost");
+    // ▲ VERCEL PREVIEW / PROD DOMAINS
+    if (hostname.endsWith(".vercel.app")) {
+      return `${protocol}//${subdomain}.${hostname}/${route}`;
+    }
 
-  // 🧪 LOCALHOST → normal routing
-  if (isLocalhost) {
-    return `/${route}`;
-  }
+    // 🌍 CUSTOM DOMAIN (e.g. zomato.com)
+    const parts = hostname.split(".");
+    const baseDomain =
+      parts.length > 2 ? parts.slice(1).join(".") : hostname;
 
-  // 🌍 PRODUCTION → subdomain routing
-  const parts = hostname.split(".");
-  const baseDomain =
-    parts.length > 2 ? parts.slice(1).join(".") : hostname;
-
-  return `${protocol}//${subdomain}.${baseDomain}${port ? `:${port}` : ""}/${route}`;
-};
+    return `${protocol}//${subdomain}.${baseDomain}${port ? `:${port}` : ""}/${route}`;
+  };
 
 
   const { loading, error, role, token, subdomain } = useAppSelector((s) => s.auth);
