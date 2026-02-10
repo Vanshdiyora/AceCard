@@ -1,7 +1,7 @@
 import axios from "axios";
 import { eraseCookie, getCookie } from "../utils/cookieUtils";
 
-const BASE_URL = (import.meta as any).env?.VITE_API_BASE_URL;
+const BASE_URL = "https://api.theacecard.co";
 
 const axiosClient = axios.create({
   baseURL: BASE_URL,
@@ -41,6 +41,7 @@ axiosClient.interceptors.response.use(
     if (shouldLogout) {
       // 🔥 Clear auth cookie
       eraseCookie("token");
+      eraseCookie("subdomain")
 
       // 🔁 Prevent redirect loop
       if (!window.location.pathname.includes("/login")) {
