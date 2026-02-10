@@ -13,7 +13,13 @@ export default function LoginPage() {
 
     // ▲ VERCEL PREVIEW / PROD DOMAINS
     if (hostname.endsWith(".vercel.app")) {
-      return `${protocol}//${subdomain}.${hostname}/${route}`;
+      if(subdomain){
+
+        return `${protocol}//${subdomain}.${hostname}/${route}`;
+      }
+      else{
+        return `${protocol}//${hostname}/${route}`;
+      }
     }
 
     // 🌍 CUSTOM DOMAIN (e.g. zomato.com)
