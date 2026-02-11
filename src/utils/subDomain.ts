@@ -1,17 +1,18 @@
 export function getBaseDomain() {
   const host = window.location.hostname;
 
-  // ✅ localhost & *.localhost
-  if (host === "localhost" || host.endsWith(".localhost")) {
-    return "localhost";
+  if (
+    host === "localhost" ||
+    host.endsWith(".localhost") ||
+    host.endsWith("vercel.app")
+  ) {
+    return host; // 🚀 no base extraction for vercel
   }
 
-  // local test domain (*.test)
   if (host.endsWith(".test")) {
     return host.split(".").slice(-2).join(".");
   }
 
-  // production
   if (host.endsWith("theacecard.co")) {
     return "theacecard.co";
   }
@@ -22,10 +23,19 @@ export function getBaseDomain() {
 
 
 export function isOnSubdomain() {
-  return window.location.hostname !== getBaseDomain();
+  const host = window.location.hostname;
+
+  if (host.endsWith("vercel.app")) return false; // 🚀 force disable
+
+  return host !== getBaseDomain();
 }
 
+
 export function redirectToSubdomain(subdomain: string, path: string) {
+  const host = window.location.hostname;
+
+  if (host.endsWith("vercel.app")) return; // 🚀 no redirect on preview
+
   const { protocol, port } = window.location;
   const base = getBaseDomain();
   const url = `${protocol}//${subdomain}.${base}${port ? `:${port}` : ""}${path}`;
@@ -34,6 +44,7 @@ export function redirectToSubdomain(subdomain: string, path: string) {
     window.location.href = url;
   }
 }
+
 
 export function getSubdomainFromHost(): string | null {
   const host = window.location.hostname;

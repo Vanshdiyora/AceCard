@@ -60,7 +60,6 @@ export default function Sidebar({ type }: SidebarProps) {
             currentPath === item.path ||
             currentPath.startsWith(item.path + "/");
 
-
           const isHovered = hovered === item.path;
 
           return (

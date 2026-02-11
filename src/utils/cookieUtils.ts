@@ -6,6 +6,7 @@ export function setCookie(name: string, value: string, days = 7) {
 
   const isProd = host.endsWith("theacecard.co");
   const isTest = host.endsWith(".test");
+  // const isVercel = host.endsWith("vercel.app");
 
   const parts = [
     `${name}=${encodeURIComponent(value)}`,
@@ -13,7 +14,6 @@ export function setCookie(name: string, value: string, days = 7) {
     "path=/",
   ];
 
-  // ✅ real domains only
   if (isProd) {
     parts.push("domain=.theacecard.co");
     parts.push("SameSite=None");
@@ -22,6 +22,7 @@ export function setCookie(name: string, value: string, days = 7) {
     parts.push("domain=.theacecard.test");
     parts.push("SameSite=Lax");
   }
+  // 🚀 Vercel → no domain attribute (host-only cookie)
 
   document.cookie = parts.join("; ");
 }
