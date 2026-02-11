@@ -21,6 +21,7 @@ export default function ProtectedRoute({
   const { token, role, loading, subdomain, hydrated } = useAppSelector(
     (s) => s.auth
   );
+  const isVercel = window.location.hostname.endsWith("vercel.app");
 
   // ✅ SAFE early exits (after hooks)
   if (!hydrated || loading) {
@@ -45,8 +46,10 @@ export default function ProtectedRoute({
   // 🚨 Enforce subdomain for tenant users
   if (
     requireSubdomain &&
+    !isVercel && // 🔥 ADD THIS
     (role === "manager" || role === "vendor_admin" || role === "sales_rep")
   ) {
+
     if (!subdomain) {
       return <Navigate to="/unauthorized" replace />;
     }
