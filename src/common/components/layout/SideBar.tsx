@@ -57,8 +57,9 @@ export default function Sidebar({ type }: SidebarProps) {
           const currentPath = location.pathname.replace(/\/$/, "");
 
           const isActive =
-            currentPath === item.path ||
-            currentPath.startsWith(item.path + "/");
+            item.path === adminBase || item.path === superBase
+              ? currentPath === item.path
+              : currentPath.startsWith(item.path);
 
           const isHovered = hovered === item.path;
 
