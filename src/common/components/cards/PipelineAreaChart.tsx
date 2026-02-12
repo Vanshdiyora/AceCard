@@ -8,6 +8,7 @@ import {
   CartesianGrid,
 } from "recharts";
 import { formatAxis } from "../../../features/teams/components/details/TeamMemberAnalyticsTab";
+import { formatRupees } from "../../utils/ruppeeFormater";
 
 /* -----------------------------------------------------
    TYPES
@@ -177,7 +178,7 @@ export default function PipelineAreaChart({
 
           <Tooltip
             formatter={(value: number | undefined) => [
-              `₹${(value ?? 0).toLocaleString()}`,
+              `${(formatRupees(value) ?? 0).toLocaleString()}`,
               "Amount",
             ]}
             contentStyle={{

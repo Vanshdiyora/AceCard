@@ -52,6 +52,11 @@ export type FieldType =
 export type Option = {
   label: string;
   value: string;
+  color?: {
+    bg: string;
+    text: string;
+    border: string;
+  };
 };
 
 export type CustomField = {

@@ -185,7 +185,7 @@ export default function TeamMemberDetailsPage() {
 
     if (!custom) return base;
 
-    return `${base} (${custom})`;
+    return `${custom} (${base})`;
   }, [member, displayRole]);
 
   /* ---------------- LOADING STATES ---------------- */
@@ -347,7 +347,7 @@ export default function TeamMemberDetailsPage() {
 
           status={{
             label: member.status,
-            variant: member.status === "active" ? "active" : "suspended",
+            // variant: member.status === "active" ? "active" : "suspended",
           }}
           actions={
             <>
@@ -481,7 +481,7 @@ export default function TeamMemberDetailsPage() {
         <div className="relative h-full flex items-start justify-center px-4 mt-8">
           
           {/* Optional label (helps hierarchy a LOT) */}
-          <div className="absolute -top-8 text-xs text-gray-400 tracking-wide border border-[#D5d5d5] rounded-xl px-2 py-1">
+          <div className="absolute -top-8 text-xs text-gray-400 bg-gray-50 tracking-wide border border-[#D5d5d5] rounded-xl px-2 py-1">
             <a href={`${window.location.origin}/profile/${member.username}`} target="_blank" rel="noopener noreferrer">
               Live Preview
             </a>
@@ -551,7 +551,6 @@ export default function TeamMemberDetailsPage() {
             dispatch(loadProfileViewByUsername({ username: member.username }));
           }
         }}
-
       />
 
 

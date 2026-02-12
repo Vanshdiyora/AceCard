@@ -23,6 +23,16 @@ const tabs: TabItem[] = [
   { label: "Expired", value: "expired" },
 ];
 
+const STATUS_STYLES: Record<string, string> = {
+  planned: "bg-blue-100 text-blue-700 border-blue-200",
+  draft: "bg-gray-100 text-gray-700 border-gray-200",
+  active: "bg-green-100 text-green-700 border-green-200",
+  paused: "bg-yellow-100 text-yellow-700 border-yellow-200",
+  archived: "bg-purple-100 text-purple-700 border-purple-200",
+  completed: "bg-emerald-100 text-emerald-700 border-emerald-200",
+  expired: "bg-red-100 text-red-700 border-red-200",
+};
+
 
 export default function CampaignsPage() {
   const dispatch = useAppDispatch();
@@ -94,7 +104,24 @@ export default function CampaignsPage() {
   /* -------- Table Columns -------- */
   const columns: Column<Campaign>[] = [
     { header: "Campaign", render: (c) => c.name },
-    { header: "Status", render: (c) => c.status },
+    {
+      header: "Status",
+      render: (c) => {
+        const style =
+          STATUS_STYLES[c.status] ||
+          "bg-gray-100 text-gray-700 border-gray-200";
+
+        return (
+          <div className="flex items-center">
+            <span
+              className={`inline-flex items-center px-3 py-1 text-xs font-medium rounded-full border whitespace-nowrap ${style}`}
+            >
+              {c.status.charAt(0).toUpperCase() + c.status.slice(1)}
+            </span>
+          </div>
+        );
+      },
+    },
     { header: "Budget", render: (c) => `₹${c.budget}` },
     { header: "Leads", render: (c) => c.leads_generated },
     { header: "Pipeline", render: (c) => `₹${c.pipeline_value}` },
@@ -164,7 +191,8 @@ export default function CampaignsPage() {
               value: sortBy,
               onChange: (v) => setSortBy(v as SortBy),
               options: [
-                { label: "Recent", value: "recent" },
+                { label: "Created At", value: "recent" },
+                { label: "Updated At", value: "updated_at" },
                 { label: "Name", value: "name" },
                 { label: "Pipeline Value", value: "pipeline_value" },
               ],

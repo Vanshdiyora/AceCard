@@ -1,3 +1,4 @@
+import { formatRupees } from "../../../common/utils/ruppeeFormater";
 import type { TopPerformer } from "../types";
 import { useNavigate } from "react-router-dom";
 
@@ -59,7 +60,7 @@ export default function QuickStatsCard({ topPerformers }: Props) {
                 {/* Revenue */}
                 <div className="flex justify-center">
                   <span className="px-3 py-1 rounded-full bg-green-100 text-green-700 text-xs font-semibold">
-                    ${p.revenue}
+                    {formatRupees(p.revenue)}
                   </span>
                 </div>
 

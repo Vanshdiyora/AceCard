@@ -48,6 +48,22 @@ export default function SearchableSelect({
     o.label.toLowerCase().includes(query.toLowerCase())
   );
 
+  /* ---------- CLOSE ON SCROLL / RESIZE ---------- */
+useEffect(() => {
+  if (!open) return;
+
+  const handleClose = () => setOpen(false);
+
+  window.addEventListener("scroll", handleClose, true); // capture scroll everywhere
+  window.addEventListener("resize", handleClose);
+
+  return () => {
+    window.removeEventListener("scroll", handleClose, true);
+    window.removeEventListener("resize", handleClose);
+  };
+}, [open]);
+
+
   /* ---------- CLOSE ON OUTSIDE CLICK ---------- */
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -131,11 +147,25 @@ export default function SearchableSelect({
               .map((o) => (
                 <span
                   key={o.value}
-                  className="bg-purple-100 text-purple-700 px-2 py-0.5 rounded text-xs mr-1"
+                  className="flex items-center gap-1 bg-purple-100 text-purple-700 px-2 py-0.5 rounded text-xs mr-1"
                 >
                   {o.label}
+
+                  {/* ❌ Remove Icon */}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation(); // prevent dropdown toggle
+                      const updated = value.filter((v: any) => v !== o.value);
+                      onChange(updated);
+                    }}
+                    className="ml-1 text-purple-500 hover:text-red-500 font-bold"
+                  >
+                    ×
+                  </button>
                 </span>
               ))}
+
 
           {/* SINGLE VALUE */}
           {!multiple && value != null && !hideValues && (
@@ -146,13 +176,12 @@ export default function SearchableSelect({
 
           {/* PLACEHOLDER */}
           <span
-            className={`text-gray-600 ${
-              hideValues ||
-              (multiple && (!Array.isArray(value) || value.length === 0)) ||
-              (!multiple && value == null)
+            className={`text-gray-600 ${hideValues ||
+                (multiple && (!Array.isArray(value) || value.length === 0)) ||
+                (!multiple && value == null)
                 ? "opacity-100"
                 : "opacity-0"
-            }`}
+              }`}
           >
             {placeholder}
           </span>

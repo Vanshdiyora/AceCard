@@ -29,9 +29,9 @@ export default function TeamMemberOverviewTab({
   const displayRole = useMemo(() => {
     switch (member.role) {
       case "sales_rep":
-        return "Sales Person";
+        return `${member.custom_job_role} (Sales Person)`;
       case "manager":
-        return "Manager";
+        return `${member.custom_job_role} (Manager)`;
       case "vendor_admin":
         return "Vendor Admin";
       default:

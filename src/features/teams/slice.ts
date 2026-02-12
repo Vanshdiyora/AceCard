@@ -95,7 +95,7 @@ export const fetchMemberAnalytics = createAsyncThunk(
     {
       id,
       pipeline_period,
-    }: { id: number; pipeline_period: "week" | "month" | "year" },
+    }: { id: number; pipeline_period: "day" | "week" | "month" | "year" },
     { rejectWithValue }
   ) => {
     try {
@@ -288,15 +288,15 @@ const teamSlice = createSlice({
         state.members.unshift(action.payload);
       })
 
-     .addCase(updateMember.fulfilled, (state, action) => {
-  const idx = state.members.findIndex((m) => m.id === action.payload.id);
-  if (idx !== -1) {
-    state.members[idx] = normalizeMember({
-      ...state.members[idx],
-      ...action.payload,
-    });
-  }
-})
+      .addCase(updateMember.fulfilled, (state, action) => {
+        const idx = state.members.findIndex((m) => m.id === action.payload.id);
+        if (idx !== -1) {
+          state.members[idx] = normalizeMember({
+            ...state.members[idx],
+            ...action.payload,
+          });
+        }
+      })
       .addCase(updatePermissions.fulfilled, (state, action) => {
         const idx = state.members.findIndex((m) => m.id === action.payload.id);
         if (idx !== -1) {
@@ -309,15 +309,15 @@ const teamSlice = createSlice({
         state.members = state.members.filter((m) => m.id !== action.payload);
       })
       .addCase(fetchMemberAnalytics.pending, (state) => {
-  state.analyticsLoading = true;
-})
-.addCase(fetchMemberAnalytics.fulfilled, (state, action) => {
-  state.analyticsLoading = false;
-  state.analytics = action.payload;
-})
-.addCase(fetchMemberAnalytics.rejected, (state) => {
-  state.analyticsLoading = false;
-});
+        state.analyticsLoading = true;
+      })
+      .addCase(fetchMemberAnalytics.fulfilled, (state, action) => {
+        state.analyticsLoading = false;
+        state.analytics = action.payload;
+      })
+      .addCase(fetchMemberAnalytics.rejected, (state) => {
+        state.analyticsLoading = false;
+      });
 
   },
 });

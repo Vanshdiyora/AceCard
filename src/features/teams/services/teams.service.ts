@@ -81,14 +81,14 @@ export const teamService = {
     const res = await axios.post("/vendor/leads/transfer", payload);
     return res.data;
   },
-async getMemberAnalytics(
-  id: number,
-  pipeline_period: "week" | "month" | "year" = "month"
-) {
-  const res = await axios.get(`${BASE_URL}/${id}`, {
-    params: { pipeline_period },
-  });
-  return res.data;
-},
+  async getMemberAnalytics(
+    id: number,
+    pipeline_period: "day" | "week" | "month" | "year" = "month"
+  ) {
+    const res = await axios.get(`${BASE_URL}/${id}`, {
+      params: { pipeline_period },
+    });
+    return res.data;
+  },
 
 };

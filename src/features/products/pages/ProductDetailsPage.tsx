@@ -176,7 +176,6 @@ export default function ProductDetailsPage() {
         // }
         status={{
           label: product!.status,
-          variant: isArchived ? "archived" : "active",
         }}
         actions={
           <>

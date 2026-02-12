@@ -2,8 +2,6 @@ import { useEffect, useState, useRef } from "react";
 import { useAppDispatch, useAppSelector } from "../../../../app/hooks";
 import { fetchMemberAnalytics } from "../../slice";
 import {
-  AreaChart,
-  Area,
   XAxis,
   YAxis,
   Tooltip,
@@ -12,12 +10,14 @@ import {
   BarChart,
   Bar,
 } from "recharts";
+import PipelineAreaChart from "../../../../common/components/cards/PipelineAreaChart";
 import {
   Users,
   Clock,
   TrendingUp,
   MousePointerClick,
 } from "lucide-react";
+import { formatRupees } from "../../../../common/utils/ruppeeFormater";
 
 /* ================= ICON COLOR MAP ================= */
 export function formatINRCompact(value: number) {
@@ -96,7 +96,7 @@ export default function TeamMemberAnalyticsTab({
     dispatch(
       fetchMemberAnalytics({
         id: memberId,
-        pipeline_period: period === "day" ? "week" : period,
+        pipeline_period: period === "day" ? "day" : period,
       })
     );
   }, [memberId, period, dispatch]);
@@ -180,8 +180,8 @@ export default function TeamMemberAnalyticsTab({
                       setOpen(false);
                     }}
                     className={`w-full text-left px-4 py-2 text-sm hover:bg-purple-50 transition ${period === p
-                        ? "text-purple-600 font-medium"
-                        : "text-gray-600"
+                      ? "text-purple-600 font-medium"
+                      : "text-gray-600"
                       }`}
                   >
                     {p.charAt(0).toUpperCase() + p.slice(1)}
@@ -192,29 +192,12 @@ export default function TeamMemberAnalyticsTab({
           </div>
         </div>
 
-        <ResponsiveContainer width="100%" height={260}>
-          <AreaChart data={a.pipeline_graph}>
-            <defs>
-              <linearGradient id="pipe" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#8b5cf6" stopOpacity={0.35} />
-                <stop offset="100%" stopColor="#8b5cf6" stopOpacity={0} />
-              </linearGradient>
-            </defs>
+        <PipelineAreaChart
+          data={a.pipeline_graph}
+          period={period}  // or "day" | "week" | "month" | "year"
+          color="#8b5cf6"
+        />
 
-            <XAxis dataKey="label" />
-           <YAxis tickFormatter={formatAxis} />
-            <Tooltip />
-            <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-
-            <Area
-              type="monotone"
-              dataKey="value"
-              stroke="#8b5cf6"
-              fill="url(#pipe)"
-              strokeWidth={2}
-            />
-          </AreaChart>
-        </ResponsiveContainer>
       </div>
 
       {/* CAMPAIGN */}
@@ -227,8 +210,18 @@ export default function TeamMemberAnalyticsTab({
           <ResponsiveContainer width="100%" height={260}>
             <BarChart data={a.campaign_contribution}>
               <XAxis dataKey="campaign_name" />
-                         <YAxis tickFormatter={formatAxis} />
-              <Tooltip />
+              <YAxis tickFormatter={formatAxis} />
+              <Tooltip
+                formatter={(value: number | undefined) => [
+                  `${(formatRupees(value) ?? 0).toLocaleString()}`,
+                  "Amount",
+                ]}
+                contentStyle={{
+                  borderRadius: "12px",
+                  border: "1px solid #e5e7eb",
+                }}
+              />
+
               <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
               <Bar
                 dataKey="value"

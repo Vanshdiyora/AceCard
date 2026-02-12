@@ -47,16 +47,16 @@ export default function LeadConfiguration() {
     dispatch(fetchLeadConfig());
   }, [dispatch]);
 
-useEffect(() => {
-  if (!data) return;
+  useEffect(() => {
+    if (!data) return;
 
-  const existingCustom = data.customFields || [];
+    const existingCustom = data.customFields || [];
 
-  const hasStage = existingCustom.some((f) => f.fieldId === "stage");
+    const hasStage = existingCustom.some((f) => f.fieldId === "stage");
 
-  const withStage = hasStage
-    ? existingCustom
-    : [
+    const withStage = hasStage
+      ? existingCustom
+      : [
         {
           fieldId: "stage",
           label: "Stage",
@@ -68,13 +68,21 @@ useEffect(() => {
         ...existingCustom,
       ];
 
-  setStandardFields((prev) =>
-    Object.keys(prev).length ? prev : data.standardFields || {}
-  );
+    setStandardFields((prev) =>
+      Object.keys(prev).length ? prev : data.standardFields || {}
+    );
 
-  setCustomFields((prev) => (prev.length ? prev : withStage));
-}, [data]);
+    setCustomFields((prev) => (prev.length ? prev : withStage));
+  }, [data]);
 
+  const STAGE_COLORS = [
+    { bg: "bg-blue-100", text: "text-blue-700", border: "border-blue-300" },
+    { bg: "bg-green-100", text: "text-green-700", border: "border-green-300" },
+    { bg: "bg-yellow-100", text: "text-yellow-700", border: "border-yellow-300" },
+    { bg: "bg-purple-100", text: "text-purple-700", border: "border-purple-300" },
+    { bg: "bg-pink-100", text: "text-pink-700", border: "border-pink-300" },
+    { bg: "bg-orange-100", text: "text-orange-700", border: "border-orange-300" },
+  ];
 
   /* ---------------- Handlers ---------------- */
 
@@ -137,6 +145,7 @@ useEffect(() => {
               {
                 label: newStage,
                 value: newStage.toLowerCase().replace(/\s+/g, "_"),
+                color: STAGE_COLORS[0], // default first color
               },
             ],
           }
@@ -146,6 +155,7 @@ useEffect(() => {
 
     setNewStage("");
   };
+
 
   const removeStage = (value: string) => {
     setCustomFields((prev) =>
@@ -300,21 +310,67 @@ useEffect(() => {
           <section>
             <h3 className="text-sm font-medium mb-3">Lead Stages</h3>
 
-            <div className="space-y-2 mb-3">
+            <div className="space-y-3 mb-3">
               {stages.map((stage) => (
                 <div
                   key={stage.value}
-                  className="flex items-center justify-between px-4 py-2 rounded-xl border bg-gray-50"
+                  className={`px-4 py-3 rounded-xl border`}
                 >
-                  <span className="font-medium text-gray-700">
-                    {stage.label}
-                  </span>
-                  <button
-                    className="text-red-500 text-sm"
-                    onClick={() => removeStage(stage.value)}
-                  >
-                    Remove
-                  </button>
+                  <div className="flex items-center justify-between gap-6">
+
+                    {/* LEFT: Label */}
+                    <div className="w-40 shrink-0">
+                      <span
+                        className={`font-medium text-gray-700`}
+                      >
+                        {stage.label}
+                      </span>
+                    </div>
+
+                    {/* CENTER: Color Selector */}
+                    <div className="flex gap-2 flex-1 justify-center">
+                      {STAGE_COLORS.map((color, index) => (
+                        <button
+                          key={index}
+                          type="button"
+                          onClick={() =>
+                            setCustomFields((prev) =>
+                              prev.map((f) =>
+                                f.fieldId === "stage"
+                                  ? {
+                                    ...f,
+                                    options: f.options?.map((o) =>
+                                      o.value === stage.value
+                                        ? { ...o, color }
+                                        : o
+                                    ),
+                                  }
+                                  : f
+                              )
+                            )
+                          }
+                          className={`w-5 h-5 rounded-full border-2 transition
+                ${color.bg}
+                ${stage.color?.bg === color.bg
+                              ? "ring-2 ring-offset-1 ring-gray-500"
+                              : "border-transparent"
+                            }
+              `}
+                        />
+                      ))}
+                    </div>
+
+                    {/* RIGHT: Remove Button */}
+                    <div className="w-20 text-right shrink-0">
+                      <button
+                        className="text-red-500 text-sm"
+                        onClick={() => removeStage(stage.value)}
+                      >
+                        Remove
+                      </button>
+                    </div>
+
+                  </div>
                 </div>
               ))}
             </div>

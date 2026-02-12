@@ -8,7 +8,6 @@ import {
   CheckCircle2,
   MessageSquare,
   MessageSquareMore,
-  Folder,
 } from "lucide-react";
 import PageHeader from "../../../common/components/layout/PageHeader";
 import BrandLoader from "../../../common/ui/BrandLoader";
@@ -18,6 +17,33 @@ import ResultModal from "../../../common/ui/ResultModal";
 import { getCookie } from "../../../utils/cookieUtils";
 
 /* ---------------- Skeleton ---------------- */
+
+function getPaginationRange(current: number, total: number) {
+  const delta = 1; // how many pages around current
+  const range: (number | string)[] = [];
+  const left = Math.max(2, current - delta);
+  const right = Math.min(total - 1, current + delta);
+
+  range.push(1);
+
+  if (left > 2) {
+    range.push("...");
+  }
+
+  for (let i = left; i <= right; i++) {
+    range.push(i);
+  }
+
+  if (right < total - 1) {
+    range.push("...");
+  }
+
+  if (total > 1) {
+    range.push(total);
+  }
+
+  return range;
+}
 
 function StatsSkeleton() {
   return (
@@ -70,6 +96,14 @@ export default function SupportPage() {
   const [resultOpen, setResultOpen] = useState(false);
   const [resultSuccess, setResultSuccess] = useState(true);
   const [resultMessage, setResultMessage] = useState("");
+  const [page, setPage] = useState(1);
+  const pageSize = 10; // tickets per page
+  const totalPages = Math.ceil(tickets.length / pageSize);
+
+  const paginatedTickets = tickets.slice(
+    (page - 1) * pageSize,
+    page * pageSize
+  );
 
   const showResult = (success: boolean, message: string) => {
     setResultSuccess(success);
@@ -116,11 +150,9 @@ export default function SupportPage() {
   };
 
   const icons: any = {
-    technical: <AlertCircle size={20} className="text-gray-500" />,
-    billing: <Folder size={20} className="text-gray-500" />,
-    feature_request: <CheckCircle2 size={20} className="text-gray-500" />,
-    general: <MessageSquare size={20} className="text-gray-500" />,
-    others: <Clock size={20} className="text-gray-500" />,
+    open: <AlertCircle size={20} className="text-gray-500" />,
+    pending: <Clock size={18} className="text-blue-500" />,
+    closed: <CheckCircle2 size={18} className="text-green-600" />,
   };
 
 
@@ -162,7 +194,8 @@ export default function SupportPage() {
             </div>
           ) : (
             <div className="space-y-5">
-              {tickets.map((t: any) => {
+              {paginatedTickets.map((t: any) => {
+
                 const hasReplies = t.replies && t.replies.length > 0;
                 const isExpanded = expandedTicket === t.id;
 
@@ -174,7 +207,7 @@ export default function SupportPage() {
                     {/* HEADER */}
                     <div className="flex justify-between items-start">
                       <div className="flex gap-4">
-                        <div className="mt-1">{icons[t.category]}</div>
+                        <div className="mt-1">{icons[t.status]}</div>
 
                         <div className="space-y-1">
                           <div className="flex items-center gap-3 text-xs">
@@ -242,8 +275,8 @@ export default function SupportPage() {
                     {/* EXPANDED – MESSAGES */}
                     <div
                       className={`overflow-hidden transition-all duration-300 ${isExpanded
-                          ? "max-h-[520px] opacity-100 mt-5"
-                          : "max-h-0 opacity-0"
+                        ? "max-h-[520px] opacity-100 mt-5"
+                        : "max-h-0 opacity-0"
                         }`}
                     >
                       <div className="pt-4 border-t">
@@ -267,6 +300,59 @@ export default function SupportPage() {
                   </div>
                 );
               })}
+
+              {tickets.length > pageSize && (
+                <div className="flex items-center justify-center gap-2 border rounded-2xl px-4 py-3">
+
+                  {/* PREV */}
+                  <button
+                    disabled={page === 1}
+                    onClick={() => setPage((p) => p - 1)}
+                    className={`px-3 py-1.5 rounded-lg text-sm font-medium transition
+        ${page === 1
+                        ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                        : "bg-gray-100 hover:bg-gray-200"
+                      }`}
+                  >
+                    Prev
+                  </button>
+
+                  {/* PAGE NUMBERS */}
+                  {getPaginationRange(page, totalPages).map((p, idx) =>
+                    p === "..." ? (
+                      <span key={idx} className="px-2 text-gray-400 text-sm">
+                        ...
+                      </span>
+                    ) : (
+                      <button
+                        key={p}
+                        onClick={() => setPage(p as number)}
+                        className={`w-9 h-9 rounded-lg text-sm font-medium transition
+            ${p === page
+                            ? "bg-purple-600 text-white shadow-sm"
+                            : "bg-gray-100 hover:bg-gray-200"
+                          }`}
+                      >
+                        {p}
+                      </button>
+                    )
+                  )}
+
+                  {/* NEXT */}
+                  <button
+                    disabled={page === totalPages}
+                    onClick={() => setPage((p) => p + 1)}
+                    className={`px-3 py-1.5 rounded-lg text-sm font-medium transition
+        ${page === totalPages
+                        ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                        : "bg-gray-100 hover:bg-gray-200"
+                      }`}
+                  >
+                    Next
+                  </button>
+                </div>
+              )}
+
             </div>
           )}
         </div>

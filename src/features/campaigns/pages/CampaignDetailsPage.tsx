@@ -8,7 +8,7 @@ import {
   archiveCampaign,
   duplicateCampaign,
 } from "../slice";
-
+import { BudgetProgressBar } from "../components/BudgetProgressBar";
 import EditCampaignModal from "../components/EditCampaignModal";
 import CampaignOverviewTab from "../components/details/CampaignOverviewTab";
 import CampaignSalespersonsTab from "../components/details/CampaignSalespersonsTab";
@@ -22,15 +22,6 @@ import ResultModal from "../../../common/ui/ResultModal";
 import DetailPageHeader from "../../../common/components/layout/DetailPageHeader";
 
 const TABS = ["overview", "salespersons", "products"] as const;
-
-const statusVariantMap: Record<string, "active" | "inactive" | "archived" | "suspended"> = {
-  active: "active",
-  planned: "inactive",
-  completed: "archived",
-  expired: "archived",
-  archived: "archived",
-  suspended: "suspended",
-};
 
 export default function CampaignDetailsPage() {
   const { id } = useParams<{ id: string }>();
@@ -111,7 +102,13 @@ export default function CampaignDetailsPage() {
   const isReadOnly =
     campaign.status === "archived" ||
     campaign.status === "expired";
-    // campaign.status === "completed";
+  // campaign.status === "completed";
+  const totalDealAmount =
+    campaign.assigned_reps?.reduce(
+      (sum, rep) => sum + (rep.total_deal_amount || 0),
+      0
+    ) ?? 0;
+
 
   const handleArchive = async () => {
     try {
@@ -154,39 +151,48 @@ export default function CampaignDetailsPage() {
         title={campaign.name}
         subtitle={campaign.description || "No description provided"}
         status={{
-          label: campaign.status,
-          variant: statusVariantMap[campaign.status] ?? "inactive",
-        }}
+  label: campaign.status,
+}}
         actions={
-          <div className="flex gap-3">
-            <button
-              disabled={isReadOnly || processing}
-              onClick={() => setOpenEdit(true)}
-              className={`px-4 py-2 rounded-xl border flex items-center gap-2 text-sm ${isReadOnly ? "opacity-50 cursor-not-allowed" : "hover:bg-purple-50"
-                }`}
-            >
-              <Edit size={16} /> Edit
-            </button>
+          <div className="flex items-center gap-6">
 
-            {campaign.status === "archived" ? (
+            {/* ✅ Budget Progress */}
+            <BudgetProgressBar
+              used={totalDealAmount}
+              total={campaign.budget ?? 0}
+            />
+
+            {/* Existing Buttons */}
+            <div className="flex gap-3">
               <button
-                disabled={processing}
-                onClick={() => setConfirmOpen("duplicate")}
-                className={`px-4 py-2 rounded-xl border flex items-center gap-2 text-sm ${processing ? "opacity-50 cursor-not-allowed" : "hover:bg-green-50"
+                disabled={isReadOnly || processing}
+                onClick={() => setOpenEdit(true)}
+                className={`px-4 py-2 rounded-xl border flex items-center gap-2 text-sm ${isReadOnly ? "opacity-50 cursor-not-allowed" : "hover:bg-purple-50"
                   }`}
               >
-                <Copy size={16} /> Duplicate
+                <Edit size={16} /> Edit
               </button>
-            ) : (
-              <button
-                disabled={processing || isReadOnly}
-                onClick={() => setConfirmOpen("archive")}
-                className={`px-4 py-2 rounded-xl bg-red-50 text-red-600 flex items-center gap-2 text-sm ${isReadOnly ? "opacity-50 cursor-not-allowed" : "hover:bg-red-100"
-                  }`}
-              >
-                <Trash2 size={16} /> Archive
-              </button>
-            )}
+
+              {campaign.status === "archived" ? (
+                <button
+                  disabled={processing}
+                  onClick={() => setConfirmOpen("duplicate")}
+                  className={`px-4 py-2 rounded-xl border flex items-center gap-2 text-sm ${processing ? "opacity-50 cursor-not-allowed" : "hover:bg-green-50"
+                    }`}
+                >
+                  <Copy size={16} /> Duplicate
+                </button>
+              ) : (
+                <button
+                  disabled={processing || isReadOnly}
+                  onClick={() => setConfirmOpen("archive")}
+                  className={`px-4 py-2 rounded-xl bg-red-50 text-red-600 flex items-center gap-2 text-sm ${isReadOnly ? "opacity-50 cursor-not-allowed" : "hover:bg-red-100"
+                    }`}
+                >
+                  <Trash2 size={16} /> Archive
+                </button>
+              )}
+            </div>
           </div>
         }
       />
@@ -197,8 +203,8 @@ export default function CampaignDetailsPage() {
             key={t}
             onClick={() => setActiveTab(t)}
             className={`relative pb-3 text-sm capitalize transition ${activeTab === t
-                ? "text-purple-600 font-medium"
-                : "text-gray-400 hover:text-gray-600"
+              ? "text-purple-600 font-medium"
+              : "text-gray-400 hover:text-gray-600"
               }`}
           >
             {t}

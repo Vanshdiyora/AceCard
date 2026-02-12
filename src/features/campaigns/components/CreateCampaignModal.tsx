@@ -19,10 +19,13 @@ interface CreateCampaignModalProps {
 }
 
 const STATUS_OPTIONS = [
-  { label: "Yet to Begin", value: "planned" },
-  { label: "Ongoing", value: "active" },
-  { label: "Completed", value: "completed" },
+  { label: "Planned", value: "planned" },
+  { label: "Draft", value: "draft" },
+  { label: "Active", value: "active" },
+  { label: "Paused", value: "paused" },
   { label: "Archived", value: "archived" },
+  { label: "Completed", value: "completed" },
+  { label: "Expired", value: "expired" },
 ];
 
 const EMPTY_FORM = {

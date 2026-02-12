@@ -1,23 +1,26 @@
 import type { ReactNode } from "react";
 
-type StatusVariant = "active" | "inactive" | "archived" | "suspended";
-
+/* ✅ Allow any string status */
 interface DetailPageHeaderProps {
   title: string;
   subtitle?: string;
   status?: {
     label: string;
-    variant: StatusVariant;
   };
   avatar?: ReactNode;
   actions?: ReactNode;
 }
 
-const statusStyles: Record<StatusVariant, string> = {
-  active: "bg-green-100 text-green-700",
-  inactive: "bg-gray-200 text-gray-600",
-  archived: "bg-gray-300 text-gray-700",
-  suspended: "bg-red-100 text-red-600",
+/* ✅ Full status color mapping (same as table) */
+const statusStyles: Record<string, string> = {
+  planned: "bg-blue-100 text-blue-700 border-blue-200",
+  draft: "bg-gray-100 text-gray-700 border-gray-200",
+  active: "bg-green-100 text-green-700 border-green-200",
+  paused: "bg-yellow-100 text-yellow-700 border-yellow-200",
+  archived: "bg-purple-100 text-purple-700 border-purple-200",
+  completed: "bg-emerald-100 text-emerald-700 border-emerald-200",
+  expired: "bg-red-100 text-red-700 border-red-200",
+  suspended: "bg-red-100 text-red-700 border-red-200",
 };
 
 export default function DetailPageHeader({
@@ -29,33 +32,41 @@ export default function DetailPageHeader({
 }: DetailPageHeaderProps) {
   return (
     <div className="bg-white rounded-2xl border p-6 flex items-center justify-between gap-4">
+      
       {/* Left */}
       <div className="flex items-center gap-4 min-w-0">
-        {/* Avatar */}
-        {avatar && (
-          <div className="shrink-0">
-            {avatar}
-          </div>
-        )}
+        
+        {avatar && <div className="shrink-0">{avatar}</div>}
 
-
-        {/* Title block */}
         <div className="min-w-0">
-          <h2 className="text-xl font-semibold leading-tight truncate">{title}</h2>
-          <div className="flex items-center gap-2 mt-1 text-sm text-gray-500">
-            {subtitle && <span className="truncate">{subtitle}</span>}
-            {status && (
-              <span
-                className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusStyles[status.variant]}`}
-              >
-                {status.label}
-              </span>
-            )}
-          </div>
+          <h2 className="text-xl font-semibold leading-tight truncate">
+            {title}
+          </h2>
+
+      <div className="flex items-center gap-3 mt-2">
+  {subtitle && (
+    <span className="text-sm text-gray-600 leading-none">
+      {subtitle}
+    </span>
+  )}
+
+  {status && (
+    <span
+      className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border leading-none ${
+        statusStyles[status.label.toLowerCase()] ||
+        "bg-gray-100 text-gray-700 border-gray-200"
+      }`}
+    >
+      {status.label.charAt(0).toUpperCase() +
+        status.label.slice(1)}
+    </span>
+  )}
+</div>
+
         </div>
       </div>
 
-      {/* Right actions */}
+      {/* Right */}
       {actions && <div className="flex items-center gap-4">{actions}</div>}
     </div>
   );

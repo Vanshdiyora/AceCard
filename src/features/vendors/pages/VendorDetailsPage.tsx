@@ -195,7 +195,6 @@ export default function VendorDetailsPage() {
 
         status={{
           label: vendor.status === "active" ? "Active" : "Archived",
-          variant: vendor.status === "active" ? "active" : "archived",
         }}
         actions={
           <>
