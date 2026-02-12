@@ -80,39 +80,39 @@ export default function ProductDetailsPage() {
   }
 
   const isArchived = product!.status === "archived";
-function ProductAvatar({
-  name,
-  image,
-}: {
-  name: string;
-  image?: string;
-}) {
-  const initials = name
-    .split(" ")
-    .map(n => n[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
+// function ProductAvatar({
+//   name,
+//   image,
+// }: {
+//   name: string;
+//   image?: string;
+// }) {
+//   const initials = name
+//     .split(" ")
+//     .map(n => n[0])
+//     .join("")
+//     .slice(0, 2)
+//     .toUpperCase();
 
-  return (
-    <div className="w-14 h-14 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
-      {image ? (
-        <img
-          src={image}
-          alt={name}
-          className="w-full h-full object-cover"
-          onError={(e) => {
-            (e.currentTarget as HTMLImageElement).style.display = "none";
-          }}
-        />
-      ) : (
-        <span className="text-lg font-semibold text-gray-700">
-          {initials}
-        </span>
-      )}
-    </div>
-  );
-}
+//   return (
+//     <div className="w-14 h-14 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
+//       {image ? (
+//         <img
+//           src={image}
+//           alt={name}
+//           className="w-full h-full object-cover"
+//           onError={(e) => {
+//             (e.currentTarget as HTMLImageElement).style.display = "none";
+//           }}
+//         />
+//       ) : (
+//         <span className="text-lg font-semibold text-gray-700">
+//           {initials}
+//         </span>
+//       )}
+//     </div>
+//   );
+// }
 
   /* ---------- ARCHIVE / ACTIVATE ---------- */
   const handleConfirm = async () => {
@@ -168,12 +168,12 @@ function ProductAvatar({
       <DetailPageHeader
         title={product!.name}
         subtitle="Product"
-        avatar={
-          <ProductAvatar
-            name={product!.name}
-            image={product!.product_img_url}
-          />
-        }
+        // avatar={
+        //   <ProductAvatar
+        //     name={product!.name}
+        //     image={product!.product_img_url}
+        //   />
+        // }
         status={{
           label: product!.status,
           variant: isArchived ? "archived" : "active",

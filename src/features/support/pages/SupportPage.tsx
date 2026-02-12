@@ -284,14 +284,14 @@ export default function SupportPage() {
               <div className="space-y-4 text-sm">
                 <div className="flex justify-between">
                   <span className="flex items-center gap-2 text-gray-600">
-                    <AlertCircle size={18} className="text-blue-500" /> Open
+                    <AlertCircle size={18} className="text-gray-500" /> Open
                   </span>
                   <span className="font-semibold">{openTickets}</span>
                 </div>
 
                 <div className="flex justify-between">
                   <span className="flex items-center gap-2 text-gray-600">
-                    <Clock size={18} className="text-orange-500" /> In Progress
+                    <Clock size={18} className="text-blue-500" /> In Progress
                   </span>
                   <span className="font-semibold">{inProgress}</span>
                 </div>
@@ -302,7 +302,7 @@ export default function SupportPage() {
                       size={18}
                       className="text-green-600"
                     />{" "}
-                    Resolved
+                    Closed
                   </span>
                   <span className="font-semibold">{resolved}</span>
                 </div>

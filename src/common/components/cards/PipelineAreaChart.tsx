@@ -175,7 +175,17 @@ export default function PipelineAreaChart({
             tickFormatter={formatAxis}
           />
 
-          <Tooltip />
+          <Tooltip
+            formatter={(value: number | undefined) => [
+              `₹${(value ?? 0).toLocaleString()}`,
+              "Amount",
+            ]}
+            contentStyle={{
+              borderRadius: "12px",
+              border: "1px solid #e5e7eb",
+            }}
+          />
+
 
           <Area
             type="monotone"

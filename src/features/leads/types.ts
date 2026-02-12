@@ -4,6 +4,8 @@ export interface Lead {
   lead_name: string;
   phone: string;
   email: string;
+  latitude: number;
+  longitude:number;
   company: string;
   assigned_rep_id?: number;
   assigned_rep_name: string;

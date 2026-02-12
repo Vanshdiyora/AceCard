@@ -55,7 +55,7 @@ function TimelineItem({ item }: { item: any }) {
           <span className="text-sm font-semibold text-gray-900">
             {item.title}
           </span>
-          <span className="flex items-center gap-1 text-xs text-gray-400">
+          <span className="flex items-center gap-1 text-sm text-gray-600">
             <Clock size={12} />
             {new Date(item.timestamp).toLocaleString()}
           </span>

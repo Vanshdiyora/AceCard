@@ -41,7 +41,7 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
           <StatCard
             title="Pipeline Generated"
-            value={`₹${formatINRCompact(data.pipeline.value)}`}
+            value={`₹${formatINRCompact(data.pipeline_generated.month)}`}
             change={data.pipeline.percentage}
             positive={data.pipeline.percentage >= 0}
             icon={<TrendingUp size={18} />}

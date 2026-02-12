@@ -71,8 +71,6 @@ export default function Sidebar({ type }: SidebarProps) {
                   ${isHovered && !isActive ? "bg-[#9A8FC2]" : "bg-transparent"}
                 `}
               />
-
-
               <Link
                 to={item.path}
                 onMouseEnter={() => setHovered(item.path)}

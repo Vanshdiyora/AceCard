@@ -71,7 +71,7 @@ const FollowupItem = ({
           <div className="text-sm font-semibold text-gray-900">
             {meeting.title || "Meeting"}
           </div>
-          <div className="text-xs text-gray-400">
+          <div className="text-sm text-gray-600">
             {date.toLocaleDateString("en-IN", {
               weekday: "long",
               day: "2-digit",

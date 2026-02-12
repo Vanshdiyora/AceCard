@@ -4,7 +4,7 @@ import { useAppDispatch, useAppSelector } from "../../../app/hooks";
 import { login } from "../slice";
 import BlockerLoader from "../../../common/ui/BlockingLoader";
 import { logout } from "../slice";
-import { eraseCookie,  } from "../../../utils/cookieUtils";
+import { eraseCookie, } from "../../../utils/cookieUtils";
 export default function LoginPage() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
@@ -22,9 +22,15 @@ export default function LoginPage() {
     let baseDomain = hostname;
 
     // localhost handling
-    if (hostname.endsWith("localhost")) {
-      baseDomain = "localhost";
+    if (
+      hostname === "localhost" ||
+      hostname === "127.0.0.1" ||
+      hostname.endsWith(".localhost")
+    ) {
+      // 🚀 Ignore subdomain completely on localhost
+      return `${protocol}//${hostname}${port ? `:${port}` : ""}/${route}`;
     }
+
     // normal domains (remove existing subdomain)
     else if (parts.length > 2) {
       baseDomain = parts.slice(1).join(".");
@@ -38,29 +44,29 @@ export default function LoginPage() {
     return `${protocol}//${subdomain}.${baseDomain}${port ? `:${port}` : ""}/${route}`;
   };
 
-const { loading, error, role, token, subdomain, hydrated } =
-  useAppSelector((s) => s.auth);
+  const { loading, error, role, token, subdomain, hydrated } =
+    useAppSelector((s) => s.auth);
   const [form, setForm] = useState({ email: "", password: "" });
   const [show, setShow] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
 
-const submit = async () => {
-  if (!form.email || !form.password) {
-    setLocalError("Email and password are required");
-    return;
-  }
+  const submit = async () => {
+    if (!form.email || !form.password) {
+      setLocalError("Email and password are required");
+      return;
+    }
 
-  // 🔥 remove cross-subdomain identity
-  dispatch(logout());
-  eraseCookie("token");
-  eraseCookie("subdomain");
+    // 🔥 remove cross-subdomain identity
+    dispatch(logout());
+    eraseCookie("token");
+    eraseCookie("subdomain");
 
-  await dispatch(login(form));
-};
+    await dispatch(login(form));
+  };
 
 
   useEffect(() => {
-      if (!hydrated) return;
+    if (!hydrated) return;
     if (!token || !role) return;
 
     let redirectUrl = "";

@@ -255,7 +255,7 @@ export default function ProductsPage() {
             options: [
               { label: "Recent", value: "recent" },
               { label: "Name", value: "name" },
-              { label: "Deal Amount", value: "deal_amount" },
+              { label: "Price", value: "deal_amount" },
             ],
           },
           {

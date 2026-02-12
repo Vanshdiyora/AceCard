@@ -25,6 +25,7 @@ import { downloadLeadExampleCsv } from "../utils/downloadLeadExampleCsv";
 import ImportLeadsModal from "../components/ImportLeadsModal";
 
 import type { Lead, LeadStage, SortBy, SortOrder } from "../types";
+import { formatRupees } from "../../../common/utils/ruppeeFormater";
 
 export default function LeadsPage() {
   const dispatch = useAppDispatch();
@@ -108,7 +109,11 @@ export default function LeadsPage() {
     { header: "Name", render: (l) => l.lead_name },
     { header: "Company", render: (l) => l.company ?? "—" },
     { header: "Owner", render: (l) => l.assigned_rep_name ?? "—" },
-    { header: "Deal Amount", render: (l) => l.deal_amount ?? "—" },
+   {
+  header: "Deal Amount",
+  render: (l) =>
+    l.deal_amount ? formatRupees(l.deal_amount) : "—",
+},
     {
       header: "Stage",
       render: (l) => (
@@ -137,7 +142,7 @@ export default function LeadsPage() {
       Name: l.lead_name,
       Company: l.company ?? "",
       Owner: l.assigned_rep_name ?? "",
-      "Deal Amount": l.deal_amount ?? "",
+      "Deal Amount": formatRupees(l.deal_amount) ?? "",
       Stage: l.stage,
       "Updated At": new Date(l.updated_at).toLocaleString(),
     }));
