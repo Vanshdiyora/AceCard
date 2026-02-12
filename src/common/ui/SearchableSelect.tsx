@@ -50,18 +50,27 @@ export default function SearchableSelect({
 
   /* ---------- CLOSE ON SCROLL / RESIZE ---------- */
   useEffect(() => {
-    if (!open) return;
+  if (!open) return;
 
-    const handleClose = () => setOpen(false);
+  const handleScroll = (e: Event) => {
+    const target = e.target as Node;
 
-    window.addEventListener("scroll", handleClose, true); // capture scroll everywhere
-    window.addEventListener("resize", handleClose);
+    // ✅ Ignore scroll inside dropdown
+    if (dropdownRef.current?.contains(target)) {
+      return;
+    }
 
-    return () => {
-      window.removeEventListener("scroll", handleClose, true);
-      window.removeEventListener("resize", handleClose);
-    };
-  }, [open]);
+    setOpen(false);
+  };
+
+  window.addEventListener("scroll", handleScroll, true);
+  window.addEventListener("resize", handleScroll);
+
+  return () => {
+    window.removeEventListener("scroll", handleScroll, true);
+    window.removeEventListener("resize", handleScroll);
+  };
+}, [open]);
 
 
   /* ---------- CLOSE ON OUTSIDE CLICK ---------- */

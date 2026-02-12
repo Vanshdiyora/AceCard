@@ -33,7 +33,7 @@ export default function PublicProfileSettings() {
   }, [data]);
 
   return (
-    <div className="pt-6 px-6 grid grid-cols-1 gap-6 h-[calc(100vh-64px)] transition-[grid-template-columns] duration-500 ease-in-out grid-cols-[420px_1fr]  lg:grid-cols-[720px_1fr] overflow-hidden">
+    <div className="pt-6 px-6 grid grid-cols-1 gap-6 h-[calc(100vh-64px)] transition-[grid-template-columns] duration-500 ease-in-out  lg:grid-cols-[720px_1fr] overflow-hidden">
 
       {/* RIGHT — Fixed Preview */}
       <div className="origin-top scale-[0.6] xl:scale-[0.7] flex items-center justify-center">

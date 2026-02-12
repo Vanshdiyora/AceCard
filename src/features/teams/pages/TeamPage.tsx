@@ -173,7 +173,7 @@ export default function TeamPage() {
               : "bg-red-100 text-red-700"
             }`}
         >
-          {m.status}
+          {m.status.charAt(0).toUpperCase() + m.status.slice(1)}
         </span>
       ),
     },

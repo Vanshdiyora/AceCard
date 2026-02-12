@@ -1,3 +1,4 @@
+import { formatRupees } from "../../../../common/utils/ruppeeFormater";
 import type { Product } from "../../types";
 
 export default function ProductOverviewTab({
@@ -46,7 +47,7 @@ export default function ProductOverviewTab({
       {/* Bottom row: Price + Category */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <OverviewItem label="Price">
-          <span className="text-xl font-medium">₹{product.price}</span>
+          <span className="text-xl font-medium">{formatRupees(product.price)}</span>
         </OverviewItem>
 
         <OverviewItem label="Category">

@@ -224,7 +224,7 @@ export default function SupportPage() {
                             <span
                               className={`px-2 py-0.5 rounded-full ${priorityColors[t.priority]}`}
                             >
-                              {t.priority}
+                              {t.priority.charAt(0).toUpperCase() + t.priority.slice(1)}
                             </span>
                           </div>
 

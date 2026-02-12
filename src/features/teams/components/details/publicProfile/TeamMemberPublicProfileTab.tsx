@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { useAppDispatch, useAppSelector } from "../../../../../app/hooks";
 import { uploadImage } from "../../../../publicProfile/services/publicProfile.api";
 import YoutubeSection from "./sections/YoutubeSection";
+import { useLocation } from "react-router-dom";
 import {
   savePublicProfile,
   savePublicProfileByUsername,
@@ -26,6 +27,7 @@ import PhotoGallerySection from "./sections/PhotoGallerySection";
 import { normalizeApiError } from "../../../../../utils/normalizeApiError";
 import { SOCIAL_ICONS } from "./sections/socialIcons";
 import CommonModal from "./sections/CommonModal";
+import { fetchTeam } from "../../../slice"; // adjust 
 const THEME_COLOR_KEYS = [
   "card_background",
   "button_color",
@@ -284,6 +286,11 @@ export default function TeamMemberPublicProfileTab({
   const { data: publicProfile, loading } = useAppSelector(
     (s) => s.publicProfile
   );
+  const { members } = useAppSelector((s) => s.team);
+  const location = useLocation();
+
+  const showTeamSection = location.pathname === "/admin/settings";
+
   const [formErrors, setFormErrors] = useState<Record<string, string | null>>({});
 
   const { products, loading: productsLoading } = useAppSelector(
@@ -314,10 +321,53 @@ export default function TeamMemberPublicProfileTab({
   const [socialError, setSocialError] = useState<string | null>(null);
 
 
+  /* ---------- Team search state ---------- */
+  const [teamSearch, setTeamSearch] = useState("");
+  const [teamPage, setTeamPage] = useState(1);
+  const [hasNextTeam, setHasNextTeam] = useState(true);
+  const [loadingMoreTeam, setLoadingMoreTeam] = useState(false);
+  const [selectedUsernames, setSelectedUsernames] = useState<string[]>([]);
+
+  console.log(selectedUsernames)
+  const [teamOptions, setTeamOptions] = useState<
+    { label: string; value: string }[]
+  >([]);
+
   /* ---------- Options cache ---------- */
   const [productOptions, setProductOptions] = useState<
     { label: string; value: number }[]
   >([]);
+
+
+  useEffect(() => {
+    dispatch(
+      fetchTeam({
+        page: teamPage,
+        page_size: 10,
+        search: teamSearch || undefined,
+      })
+    );
+  }, [dispatch, teamPage, teamSearch]);
+
+  useEffect(() => {
+    setTeamOptions((prev) => {
+      const map = new Map(prev.map((o) => [o.value, o]));
+
+      members.forEach((m) => {
+        if (!m.username) return;
+
+        map.set(m.username, {
+          label: m.name || m.email || m.username,
+          value: m.username, // ✅ username
+        });
+      });
+
+      return Array.from(map.values());
+    });
+  }, [members]);
+
+
+
 
   const uploadLayoutBackground = async (file: File) => {
     const res = await uploadImage(file);
@@ -555,17 +605,29 @@ export default function TeamMemberPublicProfileTab({
     };
 
     try {
-      if (useSelfApi) {
-        await dispatch(savePublicProfile({ config: payload })).unwrap();
-      } else {
+      const hasTeamUsers =
+        Array.isArray(selectedUsernames) &&
+        selectedUsernames.length > 0;
+
+      // 🔥 ALWAYS use username API if team usernames exist
+      if (!useSelfApi || hasTeamUsers) {
+        const usernamesToUpdate = hasTeamUsers
+          ? selectedUsernames
+          : [publicProfile?.username!];
+
         await dispatch(
           savePublicProfileByUsername({
-            username: publicProfile!.username!,
+            usernames: usernamesToUpdate,
             config: payload,
           })
-
+        ).unwrap();
+      } else {
+        // Self only
+        await dispatch(
+          savePublicProfile({ config: payload })
         ).unwrap();
       }
+
       setResultSuccess(true);
       setResultMessage("Public profile saved successfully.");
       setResultOpen(true);
@@ -583,11 +645,12 @@ export default function TeamMemberPublicProfileTab({
       setResultOpen(true);
     }
 
+
   };
   const role = useAppSelector((s) => s.auth.role);
 
   if (loading || !config)
-    return <p className="text-gray-400">Loading profile config...</p>;
+    return <p className="text-gray-400">Loading...</p>;
   const isReadOnly = (meta?: { locked?: boolean }) =>
     meta?.locked === true && role !== "vendor_admin";
 
@@ -739,14 +802,73 @@ export default function TeamMemberPublicProfileTab({
   /* ================= UI ================= */
   const isLayoutLocked = isReadOnly(config.layout);
 
+  const loadMoreTeams = async () => {
+    if (!hasNextTeam || loadingMoreTeam) return;
+
+    setLoadingMoreTeam(true);
+
+    const r = await dispatch(
+      fetchTeam({
+        page: teamPage + 1,
+        page_size: 10,
+        search: teamSearch || undefined,
+        append: true,
+      })
+    ).unwrap();
+
+
+    setTeamPage((p) => p + 1);
+    setHasNextTeam(Boolean(r.meta?.has_next));
+    setLoadingMoreTeam(false);
+  };
+
+  const teamField: FieldConfig[] = [
+    {
+      name: "team_ids",
+      label: "Select Team Members",
+      type: "search-multiselect",
+      options: teamOptions,
+      onSearch: setTeamSearch,
+      onScrollEnd: loadMoreTeams,
+      showLoader: loadingMoreTeam,
+    },
+  ];
+
+
   return (
-    <div className=" space-y-10 mb-4">
+    <div className="mb-4">
       <ResultModal
         open={resultOpen}
         success={resultSuccess}
         message={resultMessage}
         onClose={() => setResultOpen(false)}
       />
+
+      {/* TEAM SELECT */}
+      {showTeamSection && (
+        <>
+          <div className="pt-6 px-6">
+            <h4 className="text-lg font-medium">
+              Team Members
+            </h4>
+          </div>
+
+          <div className="px-1">
+            <DynamicForm
+              fields={teamField}
+              form={{
+                team_ids: selectedUsernames,
+              }}
+              onChange={(_, usernames: string[]) =>
+                setSelectedUsernames(usernames)
+              } 
+              errors={formErrors}
+              setErrors={setFormErrors}
+            />
+          </div>
+        </>
+      )}
+
 
       <Card title="Card Layout" desc="Choose how your card looks">
         {showLockable && (

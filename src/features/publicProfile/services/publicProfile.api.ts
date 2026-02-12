@@ -26,14 +26,19 @@ export const updatePublicProfile = (config: any) =>
     configuration: config,
   });
 
-  export const updatePublicProfileByUsername = (
-  username: string,
+export const updatePublicProfileByUsername = (
+  usernames: string[] | string,
   config: any
 ) => {
-  return axiosClient.put(`/profile/edit/${username}`, {
+  const usernameParam = Array.isArray(usernames)
+    ? usernames.join(",")
+    : usernames;
+  console.log(usernameParam)
+  return axiosClient.put(`/profile/edit/${usernameParam}`, {
     configuration: config,
   });
 };
+
 
 export const fetchProfileViewByUsername = (
   username: string,

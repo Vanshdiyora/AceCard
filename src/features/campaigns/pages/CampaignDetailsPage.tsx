@@ -100,8 +100,7 @@ export default function CampaignDetailsPage() {
   }
 
   const isReadOnly =
-    campaign.status === "archived" ||
-    campaign.status === "expired";
+    campaign.status === "archived";
   // campaign.status === "completed";
   const totalDealAmount =
     campaign.assigned_reps?.reduce(

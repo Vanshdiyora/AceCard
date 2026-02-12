@@ -15,6 +15,7 @@ import ResultModal from "../../../common/ui/ResultModal";
 import { downloadCSV } from "../../../common/components/helper/DownloadCsv";
 import { ProductsAPI } from "../services/products.service";
 import { AvatarCell } from "../../../common/components/table/DataTable";
+import { formatRupees } from "../../../common/utils/ruppeeFormater";
 type SortBy = "recent" | "name" | "deal_amount";
 type SortOrder = "asc" | "desc";
 
@@ -180,17 +181,18 @@ export default function ProductsPage() {
     },
     { header: "Name", accessor: "name" },
     { header: "Category", accessor: "category" },
-    { header: "Price", render: (p) => `₹${p.price}` },
+    { header: "Price", render: (p) => `${formatRupees(p.price)}` },
     {
       header: "Status",
       render: (p) => (
         <span
           className={`px-2 py-1 rounded text-xs ${p.status === "active"
             ? "bg-green-100 text-green-700"
-            : "bg-gray-200 text-gray-600"
+            : "bg-gray-200 text-gray-700"
             }`}
         >
-          {p.status}
+          {p.status.charAt(0).toUpperCase() + p.status.slice(1)}
+
         </span>
       ),
     },

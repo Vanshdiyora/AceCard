@@ -41,11 +41,11 @@ export const loadPublicProfile = createAsyncThunk(
 export const savePublicProfileByUsername = createAsyncThunk(
   "publicProfile/saveByUsername",
   async (
-    { username, config }: { username: string; config: any },
+    { usernames, config }: { usernames: string[]; config: any },
     { rejectWithValue }
   ) => {
     try {
-      const res = await updatePublicProfileByUsername(username, config);
+      const res = await updatePublicProfileByUsername(usernames, config);
       return res.data;
     } catch (err: any) {
       return rejectWithValue(
@@ -54,6 +54,7 @@ export const savePublicProfileByUsername = createAsyncThunk(
     }
   }
 );
+
 
 export const loadProfileViewByUsername = createAsyncThunk(
   "publicProfile/loadViewByUsername",
