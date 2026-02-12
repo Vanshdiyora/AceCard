@@ -133,34 +133,79 @@ export default function SupportAdmin() {
     setSelectedTicket(ticket);
     setDetailsModal(true);
   };
+  const getIssueTypeStyles = (category?: string) => {
+    const value = category?.toLowerCase();
+
+    switch (value) {
+      case "billing":
+        return "bg-purple-100 text-purple-700";
+
+      case "technical":
+        return "bg-blue-100 text-blue-700";
+
+      case "account":
+        return "bg-green-100 text-green-700";
+
+      case "bug":
+        return "bg-red-100 text-red-700";
+
+      case "feature request":
+        return "bg-orange-100 text-orange-700";
+
+      default:
+        return "bg-gray-100 text-gray-600";
+    }
+  };
+  const priorityColors: any = {
+    high: "bg-red-100 text-red-600",
+    medium: "bg-yellow-100 text-yellow-700",
+    low: "bg-green-100 text-green-700",
+    critical: "bg-red-200 text-red-700",
+  };
 
   const columns: Column<any>[] = [
     { header: "Vendor", render: (t) => t.vendor_name || "—" },
     { header: "Contact", render: (t) => t.vendor_email || "—" },
     {
       header: "Issue Type",
-      render: (t) => (
-        <span className="px-2 py-1 rounded-md bg-gray-100 text-xs">
-          {t.category}
-        </span>
-      ),
+      render: (t) => {
+        const formatted =
+          t.category
+            ?.split("_")
+            .map((word: string) =>
+              word.charAt(0).toUpperCase() + word.slice(1)
+            )
+            .join(" ") || "—";
+
+        return (
+          <span
+            className={`px-2 py-1 rounded-md text-xs font-medium ${getIssueTypeStyles(
+              t.category
+            )}`}
+          >
+            {formatted}
+          </span>
+        );
+      },
     },
+
+
     { header: "Subject", render: (t) => t.subject },
     {
       header: "Priority",
-      render: (t) => (
-        <span
-          className={`px-2 py-1 rounded-md text-xs ${t.priority === "high"
-            ? "bg-red-100 text-red-600"
-            : t.priority === "medium"
-              ? "bg-yellow-100 text-yellow-600"
-              : "bg-blue-100 text-blue-600"
-            }`}
-        >
-          {t.priority}
-        </span>
-      ),
+      render: (t) => {
+        const key = t.priority?.toLowerCase();
+        return (
+          <span
+            className={`px-2 py-1 rounded-md text-xs font-medium ${priorityColors[key] || "bg-gray-100 text-gray-600"
+              }`}
+          >
+            {t.priority?.charAt(0).toUpperCase() + t.priority?.slice(1)}
+          </span>
+        );
+      },
     },
+
     {
       header: "Status",
       render: (t) => (

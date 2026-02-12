@@ -127,12 +127,14 @@ export default function DataTable<T>({
           <div
             key={i}
             onClick={() => onRowClick?.(row)}
-            className="grid bg-white border rounded-2xl px-4 py-3 cursor-pointer hover:bg-gray-50 items-center"
+            className="grid bg-white border rounded-2xl px-4 py-3 hover:bg-gray-50 items-center min-h-[60px]"
             style={{ gridTemplateColumns: gridTemplate, columnGap: "5px" }}
           >
             {columns.map((c, j) => (
-              <div key={j} className="truncate">
-                {c.render ? c.render(row) : String((row as any)[c.accessor!] ?? "—")}
+              <div key={j} className="truncate flex items-center">
+                {c.render
+                  ? c.render(row)
+                  : String((row as any)[c.accessor!] ?? "—")}
               </div>
             ))}
           </div>

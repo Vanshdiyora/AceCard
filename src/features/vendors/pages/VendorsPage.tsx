@@ -188,7 +188,7 @@ export default function VendorsPage() {
     {
       header: "Status",
       render: (v) => (
-        <span className={`px-2 py-1 rounded-full text-xs ${v.status === "active" ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"
+        <span className={`px-2 py-1 rounded text-xs ${v.status === "active" ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-700"
           }`}>
           {v.status === "active" ? "Active" : "Archived"}
         </span>
