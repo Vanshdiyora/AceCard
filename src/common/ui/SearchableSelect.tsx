@@ -49,19 +49,19 @@ export default function SearchableSelect({
   );
 
   /* ---------- CLOSE ON SCROLL / RESIZE ---------- */
-useEffect(() => {
-  if (!open) return;
+  useEffect(() => {
+    if (!open) return;
 
-  const handleClose = () => setOpen(false);
+    const handleClose = () => setOpen(false);
 
-  window.addEventListener("scroll", handleClose, true); // capture scroll everywhere
-  window.addEventListener("resize", handleClose);
+    window.addEventListener("scroll", handleClose, true); // capture scroll everywhere
+    window.addEventListener("resize", handleClose);
 
-  return () => {
-    window.removeEventListener("scroll", handleClose, true);
-    window.removeEventListener("resize", handleClose);
-  };
-}, [open]);
+    return () => {
+      window.removeEventListener("scroll", handleClose, true);
+      window.removeEventListener("resize", handleClose);
+    };
+  }, [open]);
 
 
   /* ---------- CLOSE ON OUTSIDE CLICK ---------- */
@@ -136,56 +136,52 @@ useEffect(() => {
           ${disabled ? "opacity-50" : ""}
         `}
       >
-        <div className="flex items-center w-full min-h-[20px]">
-          {/* MULTI CHIPS */}
-          {multiple &&
-            Array.isArray(value) &&
-            value.length > 0 &&
-            !hideValues &&
-            options
-              .filter((o) => value.includes(o.value))
-              .map((o) => (
-                <span
-                  key={o.value}
-                  className="flex items-center gap-1 bg-purple-100 text-purple-700 px-2 py-0.5 rounded text-xs mr-1"
-                >
-                  {o.label}
+        <div className="flex items-center flex-wrap w-full min-h-[20px] gap-1">
 
-                  {/* ❌ Remove Icon */}
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation(); // prevent dropdown toggle
-                      const updated = value.filter((v: any) => v !== o.value);
-                      onChange(updated);
-                    }}
-                    className="ml-1 text-purple-500 hover:text-red-500 font-bold"
+          {/* MULTIPLE SELECT */}
+          {multiple ? (
+            Array.isArray(value) && value.length > 0 && !hideValues ? (
+              options
+                .filter((o) => value.includes(o.value))
+                .map((o) => (
+                  <span
+                    key={o.value}
+                    className="flex items-center gap-1 bg-purple-100 text-purple-700 px-2 py-0.5 rounded text-xs"
                   >
-                    ×
-                  </button>
-                </span>
-              ))}
-
-
-          {/* SINGLE VALUE */}
-          {!multiple && value != null && !hideValues && (
-            <span className="text-gray-800 truncate">
-              {options.find((o) => o.value === value)?.label || placeholder}
-            </span>
+                    {o.label}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const updated = value.filter((v: any) => v !== o.value);
+                        onChange(updated);
+                      }}
+                      className="ml-1 text-purple-500 hover:text-red-500 font-bold"
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))
+            ) : (
+              <span className="text-gray-400 text-sm">
+                {placeholder}
+              </span>
+            )
+          ) : (
+            /* SINGLE SELECT */
+            value != null && !hideValues ? (
+              <span className="text-gray-800 truncate">
+                {options.find((o) => o.value === value)?.label}
+              </span>
+            ) : (
+              <span className="text-gray-400 text-sm">
+                {placeholder}
+              </span>
+            )
           )}
 
-          {/* PLACEHOLDER */}
-          <span
-            className={`text-gray-600 ${hideValues ||
-                (multiple && (!Array.isArray(value) || value.length === 0)) ||
-                (!multiple && value == null)
-                ? "opacity-100"
-                : "opacity-0"
-              }`}
-          >
-            {placeholder}
-          </span>
         </div>
+
       </div>
 
       {/* ================= DROPDOWN ================= */}

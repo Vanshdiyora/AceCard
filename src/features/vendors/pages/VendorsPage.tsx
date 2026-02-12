@@ -20,6 +20,7 @@ import { useNavigate } from "react-router-dom";
 import { downloadCSV } from "../../../common/components/helper/DownloadCsv";
 import { vendorsService } from "../services/vendors.service";
 import type { VendorItem } from "../types";
+import { User2Icon } from "lucide-react";
 
 function deriveStage(v: VendorItem): string {
   if (v.status === "active") return "On-boarded";
@@ -213,9 +214,69 @@ export default function VendorsPage() {
       ),
     },
   ];
+  const totalVendors = meta?.total_count ?? 0;
+
+  const isAnyModalOpen =
+    addOpen ||
+    editOpen ||
+    seatsOpen ||
+    archiveOpen ||
+    notifyOpen ||
+    unarchiveOpen ||
+    resultOpen;
+
+  const lockScroll = () => {
+    const scrollBarWidth =
+      window.innerWidth - document.documentElement.clientWidth;
+
+    document.documentElement.style.overflow = "hidden";
+    document.body.style.overflow = "hidden";
+    document.body.style.paddingRight = `${scrollBarWidth}px`;
+  };
+
+  const unlockScroll = () => {
+    document.documentElement.style.overflow = "";
+    document.body.style.overflow = "";
+    document.body.style.paddingRight = "";
+  };
+  useEffect(() => {
+
+    if (isAnyModalOpen) {
+      lockScroll();
+    } else {
+      unlockScroll();
+    }
+
+    return () => {
+      unlockScroll();
+    };
+  }, [isAnyModalOpen]);
 
   return (
-    <div className="p-6">
+    <div className="px-6 pb-6">
+      <div className="mb-4">
+        <div className="bg-white rounded-3xl p-6 w-[280px] shadow-sm flex items-center gap-4">
+
+          <div className="w-14 h-14 rounded-2xl bg-green-100 border border-green-300 flex items-center justify-center shrink-0">
+            <User2Icon className="w-6 h-6 text-green-600" />
+          </div>
+
+
+          {/* Text Content */}
+          <div className="flex flex-col justify-center">
+            <p className="text-sm text-gray-500 font-medium">
+              Total Vendors
+            </p>
+
+            <p className="mt-1 text-3xl font-bold text-gray-900 tracking-tight">
+              {totalVendors}
+            </p>
+          </div>
+
+        </div>
+      </div>
+
+
       <PageHeader title="Vendor Management" description="Manage vendor onboarding & verification" addButtonLabel="Add Vendor" onAdd={() => setAddOpen(true)} />
       <ErrorAlert message={fetchError} />
       <BlockingLoader show={processing || seatsUpdating} />
@@ -270,6 +331,7 @@ export default function VendorsPage() {
 
         </>
       )}
+
 
       <PageFilters
         tabs={[

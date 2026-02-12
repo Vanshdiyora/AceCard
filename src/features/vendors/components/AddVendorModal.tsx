@@ -109,6 +109,8 @@ export default function AddVendorModal({
       placeholder: "Select payment terms",
       options: [
         { label: "Monthly", value: "monthly" },
+        { label: "Quarterly", value: "quarterly" },
+        { label: "Semi-Annually ", value: "semiannually" }, 
         { label: "Annually", value: "annually" },
       ],
     },
@@ -142,18 +144,18 @@ export default function AddVendorModal({
       required: true,
       placeholder: "Select subscription end date",
     },
-
     {
       name: "allowed_crm_integrations",
       label: "CRM Systems",
-      type: "multiselect",
-      placeholder: "Select CRM systems (optional)",
+      type: "search-multiselect",   // ✅ CHANGE HERE
+      placeholder: "Search & select CRM systems",
       options: [
         { label: "Zoho", value: "zoho" },
         { label: "HubSpot", value: "hubspot" },
         { label: "Salesforce", value: "salesforce" },
         { label: "Odoo", value: "odoo" },
       ],
+      hideValues: false, // optional
     },
   ];
 
@@ -195,7 +197,7 @@ export default function AddVendorModal({
         allowed_crm_integrations:
           form.allowed_crm_integrations?.length
             ? form.allowed_crm_integrations
-            : ["none"],
+            : [],
       };
 
 

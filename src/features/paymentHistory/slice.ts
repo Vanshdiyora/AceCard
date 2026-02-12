@@ -56,7 +56,12 @@ export const fetchPaymentHistory = createAsyncThunk(
   "payments/history",
   async (vendorId: number, { rejectWithValue }) => {
     try {
-      return await getPaymentHistoryApi(vendorId);
+      const response = await getPaymentHistoryApi(vendorId);
+
+      return {
+        data: Array.isArray(response?.data) ? response.data : [],
+        meta: response?.meta ?? null,
+      };
     } catch (err: any) {
       return rejectWithValue(
         err?.response?.data?.message || "Failed to fetch history"
@@ -180,9 +185,11 @@ const paymentsSlice = createSlice({
       })
       .addCase(fetchPaymentHistory.fulfilled, (state, action) => {
         state.loading = false;
-        const { data, meta } = action.payload;
 
-        if (meta.page === 1) {
+        const data = action.payload.data; // already normalized
+        const meta = action.payload.meta;
+
+        if (!meta || meta.page === 1) {
           state.history = data;
         } else {
           state.history.push(...data);

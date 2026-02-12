@@ -74,6 +74,14 @@ export default function LoginPage() {
     if (role === "manager" || role === "vendor_admin") {
       redirectUrl = getRedirectUrl(subdomain, "admin");
     } else if (role === "super_admin") {
+      const superSubdomain = "superadmin";
+
+      // ✅ store in cookie
+      document.cookie = `subdomain=${superSubdomain}; path=/;`;
+
+      // OR if you use your helper:
+      // setCookie("subdomain", superSubdomain);
+
       navigate("/super", { replace: true });
       return;
     } else if (role === "sales_rep") {

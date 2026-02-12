@@ -160,6 +160,16 @@ export default function VendorDetailsPage() {
   };
 
   /* ------------------------------- render -------------------------------- */
+const formatPaymentTerm = (term?: string) => {
+  const map: Record<string, string> = {
+    monthly: "Monthly",
+    quarterly: "Quarterly",
+    semiannually: "Semi-Annually",
+    annually: "Annually",
+  };
+
+  return term ? map[term.toLowerCase()] || term : "—";
+};
 
   return (
     <div className="p-6">
@@ -176,22 +186,22 @@ export default function VendorDetailsPage() {
         title={vendor.legal_name}
         subtitle={vendor.primary_email}
         avatar={
-  vendor.avatar ? (
-    <img
-      src={vendor.avatar}
-      alt={vendor.legal_name}
-      className="w-12 h-12 rounded-full object-cover border"
-    />
-  ) : (
-    <div
-      className={`w-12 h-12 rounded-full flex items-center justify-center font-semibold ${getAvatarColor(
-        vendor.legal_name
-      )}`}
-    >
-      {getInitials(vendor.legal_name)}
-    </div>
-  )
-}
+          vendor.avatar ? (
+            <img
+              src={vendor.avatar}
+              alt={vendor.legal_name}
+              className="w-12 h-12 rounded-full object-cover border"
+            />
+          ) : (
+            <div
+              className={`w-12 h-12 rounded-full flex items-center justify-center font-semibold ${getAvatarColor(
+                vendor.legal_name
+              )}`}
+            >
+              {getInitials(vendor.legal_name)}
+            </div>
+          )
+        }
 
         status={{
           label: vendor.status === "active" ? "Active" : "Archived",
@@ -242,7 +252,7 @@ export default function VendorDetailsPage() {
           icon={<BadgeIndianRupee size={16} />}
         >
           <Info label="Pricing / Card" value={`₹ ${vendor.pricing_per_card}`} />
-          <Info label="Payment Terms" value={vendor.payment_terms} />
+          <Info label="Payment Terms" value={formatPaymentTerm(vendor.payment_terms)} />
           <Info label="Joined" value={new Date(vendor.created_at).toDateString()} />
           <Info label="Subscription End" value={formatDate(vendor.subscription_end_date)} />
         </Section>
@@ -353,11 +363,10 @@ function Info({ label, value }: any) {
 function StatusBadge({ status }: any) {
   return (
     <span
-      className={`px-2 py-1 rounded-full text-xs ${
-        status === "active"
+      className={`px-2 py-1 rounded-full text-xs ${status === "active"
           ? "bg-green-100 text-green-700"
           : "bg-gray-100 text-gray-600"
-      }`}
+        }`}
     >
       {status}
     </span>
@@ -367,9 +376,8 @@ function StatusBadge({ status }: any) {
 function Tag({ active, label }: any) {
   return (
     <span
-      className={`px-3 py-1 rounded-full text-xs ${
-        active ? "bg-purple-100 text-purple-700" : "bg-gray-100 text-gray-500"
-      }`}
+      className={`px-3 py-1 rounded-full text-xs ${active ? "bg-purple-100 text-purple-700" : "bg-gray-100 text-gray-500"
+        }`}
     >
       {label}
     </span>
@@ -389,11 +397,10 @@ function ActionButton({ icon, label, onClick, danger }: any) {
   return (
     <button
       onClick={onClick}
-      className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl border text-sm ${
-        danger
+      className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl border text-sm ${danger
           ? "border-red-200 text-red-600 hover:bg-red-50"
           : "border-purple-200 text-purple-600 hover:bg-purple-50"
-      }`}
+        }`}
     >
       {icon} {label}
     </button>

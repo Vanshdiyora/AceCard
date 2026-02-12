@@ -75,6 +75,8 @@ export default function EditVendorModal({
       required: true,
       options: [
         { label: "Monthly", value: "monthly" },
+        { label: "Quarterly", value: "quarterly" },
+        { label: "Semi-Annually ", value: "semiannually" }, 
         { label: "Annually", value: "annually" },
       ],
     },
@@ -89,17 +91,18 @@ export default function EditVendorModal({
       type: "date",
       required: true,
     },
-
     {
       name: "allowed_crm_integrations",
       label: "CRM Systems",
-      type: "multiselect",
+      type: "search-multiselect",   // ✅ CHANGE HERE
+      placeholder: "Search & select CRM systems",
       options: [
         { label: "Zoho", value: "zoho" },
         { label: "HubSpot", value: "hubspot" },
         { label: "Salesforce", value: "salesforce" },
         { label: "Odoo", value: "odoo" },
       ],
+      hideValues: false, // optional
     },
   ];
 
@@ -129,15 +132,15 @@ export default function EditVendorModal({
       allowed_crm_integrations:
         form.allowed_crm_integrations?.length
           ? form.allowed_crm_integrations
-          : ["none"],
+          : [],
     };
 
-  const res = await dispatch(updateVendor({ id: vendor.id, data: payload }));
+    const res = await dispatch(updateVendor({ id: vendor.id, data: payload }));
 
-if (updateVendor.fulfilled.match(res)) {
-  onSuccess?.();   // 🔥 tell parent to refetch
-  onClose();
-}
+    if (updateVendor.fulfilled.match(res)) {
+      onSuccess?.();   // 🔥 tell parent to refetch
+      onClose();
+    }
 
   };
 

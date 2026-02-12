@@ -14,7 +14,7 @@ export const markVendorUnpaidApi = async (
 
   const res = await axiosClient.post(
     `/admin/payments/${vendor_id}/unpaid`,
-    body // 👈 completely optional
+    body 
   );
 
   return res.data;

@@ -176,8 +176,22 @@ const authSlice = createSlice({
       const decoded = decodeToken(action.payload.token);
       state.user = decoded.user;
       state.role = decoded.role;
-      state.subdomain = action.payload.subdomain || decoded.subdomain || null;
-    },
+
+      if (decoded.role === "super_admin") {
+        state.subdomain = "superadmin";
+        setCookie("subdomain", "superadmin");
+      } else {
+        const finalSubdomain =
+          action.payload.subdomain || decoded.subdomain || null;
+
+        state.subdomain = finalSubdomain;
+
+        if (finalSubdomain) {
+          setCookie("subdomain", finalSubdomain);
+        }
+      }
+    }
+
   },
   extraReducers: (builder) => {
     builder
@@ -188,9 +202,15 @@ const authSlice = createSlice({
         }
 
         state.token = action.payload.token;
-        state.subdomain = action.payload.subdomain;
         state.user = action.payload.user;
         state.role = action.payload.role;
+
+        if (action.payload.role === "super_admin") {
+          state.subdomain = "superadmin";
+        } else {
+          state.subdomain = action.payload.subdomain;
+        }
+
         state.hydrated = true;
       })
       /* Login */
@@ -211,15 +231,26 @@ const authSlice = createSlice({
         state.token = action.payload.token;
         setCookie("token", action.payload.token);
 
-        if (action.payload.subdomain) {
-          state.subdomain = action.payload.subdomain;
-          setCookie("subdomain", action.payload.subdomain);
-        }
-
         const decoded = decodeToken(action.payload.token);
-        console.log(decoded)
+
         state.user = decoded.user;
         state.role = decoded.role;
+
+        // ✅ SUPER ADMIN FIX
+        if (decoded.role === "super_admin") {
+          state.subdomain = "superadmin";
+          setCookie("subdomain", "superadmin");
+        } else {
+          const finalSubdomain =
+            action.payload.subdomain || decoded.subdomain || null;
+
+          state.subdomain = finalSubdomain;
+
+          if (finalSubdomain) {
+            setCookie("subdomain", finalSubdomain);
+          }
+        }
+
       })
 
       .addCase(login.rejected, (state, action) => {

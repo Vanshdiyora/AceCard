@@ -166,6 +166,7 @@ export default function DynamicForm({
                     )
                   }
                   onBlur={() => handleBlur(field.name)}
+                  min={field.min}
                 />
                 {showError && (
                   <p className="text-xs text-red-500 mt-1">{error}</p>
