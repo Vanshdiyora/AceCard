@@ -50,27 +50,27 @@ export default function SearchableSelect({
 
   /* ---------- CLOSE ON SCROLL / RESIZE ---------- */
   useEffect(() => {
-  if (!open) return;
+    if (!open) return;
 
-  const handleScroll = (e: Event) => {
-    const target = e.target as Node;
+    const handleScroll = (e: Event) => {
+      const target = e.target as Node;
 
-    // ✅ Ignore scroll inside dropdown
-    if (dropdownRef.current?.contains(target)) {
-      return;
-    }
+      // ✅ Ignore scroll inside dropdown
+      if (dropdownRef.current?.contains(target)) {
+        return;
+      }
 
-    setOpen(false);
-  };
+      setOpen(false);
+    };
 
-  window.addEventListener("scroll", handleScroll, true);
-  window.addEventListener("resize", handleScroll);
+    window.addEventListener("scroll", handleScroll, true);
+    window.addEventListener("resize", handleScroll);
 
-  return () => {
-    window.removeEventListener("scroll", handleScroll, true);
-    window.removeEventListener("resize", handleScroll);
-  };
-}, [open]);
+    return () => {
+      window.removeEventListener("scroll", handleScroll, true);
+      window.removeEventListener("resize", handleScroll);
+    };
+  }, [open]);
 
 
   /* ---------- CLOSE ON OUTSIDE CLICK ---------- */
@@ -132,11 +132,12 @@ export default function SearchableSelect({
 
           setPos({
             top: shouldOpenUp
-              ? r.top + window.scrollY
-              : r.bottom + window.scrollY,
-            left: r.left + window.scrollX,
+              ? r.top
+              : r.bottom,
+            left: r.left,
             width: r.width,
           });
+
 
           setOpen((s) => !s);
         }}

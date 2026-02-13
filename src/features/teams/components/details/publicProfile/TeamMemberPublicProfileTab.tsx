@@ -24,7 +24,6 @@ import { AlignLeft, AlignCenter, AlignRight } from "lucide-react";
 import CoverCropModal from "../../../../../common/ui/CoverCropModal";
 import PhotoGallerySection from "./sections/PhotoGallerySection";
 // import VideoGallerySection from "./sections/VideoGallerySection";
-import { normalizeApiError } from "../../../../../utils/normalizeApiError";
 import { SOCIAL_ICONS } from "./sections/socialIcons";
 import CommonModal from "./sections/CommonModal";
 import { fetchTeam } from "../../../slice"; // adjust 
@@ -262,6 +261,23 @@ interface PublicProfileConfig {
   };
 
 }
+function getChangedFields<T extends object>(
+  current: T,
+  original: T
+): Partial<T> {
+  const result: Partial<T> = {};
+
+  Object.keys(current).forEach((key) => {
+    const currVal = (current as any)[key];
+    const origVal = (original as any)[key];
+
+    if (JSON.stringify(currVal) !== JSON.stringify(origVal)) {
+      (result as any)[key] = currVal;
+    }
+  });
+
+  return result;
+}
 
 /* ================= COMPONENT ================= */
 
@@ -282,6 +298,7 @@ export default function TeamMemberPublicProfileTab({
   const [resultMessage, setResultMessage] = useState("");
   const [isCropping, setIsCropping] = useState(false);
   const coverFileRef = useRef<File | null>(null);
+  const [originalConfig, setOriginalConfig] = useState<PublicProfileConfig | null>(null);
 
   const { data: publicProfile, loading } = useAppSelector(
     (s) => s.publicProfile
@@ -339,15 +356,53 @@ export default function TeamMemberPublicProfileTab({
   >([]);
 
 
+  // 📄 PAGE CHANGE EFFECT (APPEND)
   useEffect(() => {
+    if (teamPage === 1) return;
+
     dispatch(
       fetchTeam({
         page: teamPage,
         page_size: 10,
-        search: teamSearch || undefined,
+        search: teamSearch?.trim() || undefined,
+        append: true,
       })
-    );
-  }, [dispatch, teamPage, teamSearch]);
+    )
+      .unwrap()
+      .then((r) => {
+        setHasNextTeam(Boolean(r.meta?.has_next));
+      })
+      .finally(() => {
+        setLoadingMoreTeam(false); // ✅ VERY IMPORTANT
+      });
+  }, [teamPage, dispatch]);
+
+  // 📄 PAGE CHANGE EFFECT
+  useEffect(() => {
+  const delay = setTimeout(() => {
+    setTeamPage(1);
+    setLoadingMoreTeam(true); // optional
+
+    dispatch(
+      fetchTeam({
+        page: 1,
+        page_size: 10,
+        search: teamSearch?.trim() || undefined,
+        append: false,
+      })
+    )
+      .unwrap()
+      .then((r) => {
+        setHasNextTeam(Boolean(r.meta?.has_next));
+      })
+      .finally(() => {
+        setLoadingMoreTeam(false); // ✅ reset here too
+      });
+  }, 400);
+
+  return () => clearTimeout(delay);
+}, [teamSearch, dispatch]);
+
 
   useEffect(() => {
     setTeamOptions((prev) => {
@@ -420,9 +475,27 @@ export default function TeamMemberPublicProfileTab({
     if (publicProfile) {
       const normalized = normalizeProfile(publicProfile) as PublicProfileConfig;
       setConfig(normalized,);
+      setOriginalConfig(structuredClone(normalized));
     }
   }, [publicProfile]);
 
+  const validateBeforeSave = () => {
+    if (!config?.profile.description?.trim()) {
+      setResultSuccess(false);
+      setResultMessage("Profile description is required.");
+      setResultOpen(true);
+      return false;
+    }
+
+    if (hasInvalidSocialLinks(config.social_links.items)) {
+      setResultSuccess(false);
+      setResultMessage("Please fill all enabled social links.");
+      setResultOpen(true);
+      return false;
+    }
+
+    return true;
+  };
 
   /* ================= CACHE OPTIONS ================= */
 
@@ -510,106 +583,26 @@ export default function TeamMemberPublicProfileTab({
   };
 
   const save = async () => {
-    if (!config) return;
+    if (!config || !originalConfig) return;
 
-    const withLock = <T extends { locked: boolean; lock_mode?: LockMode }>(v: T) =>
-      showLockable
-        ? {
-          ...v,
-          locked: v.locked,
-          lock_mode: v.lock_mode ?? "individual",
-        }
-        : { ...v, locked: v.locked };
+    // 1️⃣ Validate first
+    if (!validateBeforeSave()) return;
 
-    const payload = {
-      profile: config.profile,
-      layout: withLock(config.layout),
-      cover: withLock(config.cover),
-      theme: withLock(config.theme),
+    // 2️⃣ Get only changed sections
+    const changedPayload = getChangedFields(config, originalConfig);
 
-      banner: withLock(config.banner),
-      contact: withLock(config.contact),
-      meeting: withLock(config.meeting),
-
-      social_links: showLockable
-        ? {
-          ...withLock(config.social_links),
-          items: config.social_links.items,
-        }
-        : {
-          items: config.social_links.items,
-        },
-
-
-      photo_gallery: withLock(config.photo_gallery),
-      video_gallery: showLockable
-        ? {
-          section_title: config.video_gallery.section_title,
-          items: config.video_gallery.items,
-          locked: config.video_gallery.locked,
-          lock_mode: config.video_gallery.lock_mode,
-        }
-        : {
-          section_title: config.video_gallery.section_title,
-          items: config.video_gallery.items,
-        },
-
-      products: {
-        ...withLock(config.products),
-        items: config.products.items,
-      },
-
-      // youtube: showLockable
-      //   ? { items: config.youtube.items, locked: config.youtube.locked, lock_mode: config.youtube.lock_mode }
-      //   : { items: config.youtube.items },
-
-      // links_files: showLockable
-      //   ? { items: config.links_files.items, locked: config.links_files.locked, lock_mode: config.links_files.lock_mode }
-      //   : { items: config.links_files.items },
-
-      // sections: showLockable
-      //   ? {
-      //     items: config.sections.items,
-      //     locked: config.sections.locked,
-      //     lock_mode: config.sections.lock_mode,
-      //   }
-      //   : {
-      //     items: config.sections.items,
-      //   },
-      youtube: showLockable
-        ? {
-          ...withLock(config.youtube),
-          items: config.youtube.items,
-        }
-        : {
-          items: config.youtube.items,
-        },
-      links_files: showLockable
-        ? {
-          ...withLock(config.links_files),
-          items: config.links_files.items,
-        }
-        : {
-          items: config.links_files.items,
-        },
-
-      sections: showLockable
-        ? {
-          ...withLock(config.sections),
-          items: config.sections.items,
-        }
-        : {
-          items: config.sections.items,
-        },
-
-    };
+    if (Object.keys(changedPayload).length === 0) {
+      setResultSuccess(true);
+      setResultMessage("No changes detected.");
+      setResultOpen(true);
+      return;
+    }
 
     try {
       const hasTeamUsers =
         Array.isArray(selectedUsernames) &&
         selectedUsernames.length > 0;
 
-      // 🔥 ALWAYS use username API if team usernames exist
       if (!useSelfApi || hasTeamUsers) {
         const usernamesToUpdate = hasTeamUsers
           ? selectedUsernames
@@ -618,35 +611,30 @@ export default function TeamMemberPublicProfileTab({
         await dispatch(
           savePublicProfileByUsername({
             usernames: usernamesToUpdate,
-            config: payload,
+            config: changedPayload, // 👈 ONLY CHANGED
           })
         ).unwrap();
       } else {
-        // Self only
         await dispatch(
-          savePublicProfile({ config: payload })
+          savePublicProfile({
+            config: changedPayload, // 👈 ONLY CHANGED
+          })
         ).unwrap();
       }
 
+      setOriginalConfig(structuredClone(config)); // 👈 reset snapshot
+
       setResultSuccess(true);
-      setResultMessage("Public profile saved successfully.");
+      setResultMessage("Public profile updated successfully.");
       setResultOpen(true);
     } catch (err: any) {
-      let msg = "Something went wrong while saving.";
-
-      if (err?.error) msg = err.error;
-      else if (err?.response?.data?.error) msg = err.response.data.error;
-      else if (err?.message) msg = err.message;
-
-      msg = normalizeApiError(msg);
-
+      let msg = err?.message || "Something went wrong.";
       setResultSuccess(false);
       setResultMessage(msg);
       setResultOpen(true);
     }
-
-
   };
+
   const role = useAppSelector((s) => s.auth.role);
 
   if (loading || !config)
@@ -801,25 +789,11 @@ export default function TeamMemberPublicProfileTab({
 
   /* ================= UI ================= */
   const isLayoutLocked = isReadOnly(config.layout);
-
-  const loadMoreTeams = async () => {
+  const loadMoreTeams = () => {
     if (!hasNextTeam || loadingMoreTeam) return;
 
     setLoadingMoreTeam(true);
-
-    const r = await dispatch(
-      fetchTeam({
-        page: teamPage + 1,
-        page_size: 10,
-        search: teamSearch || undefined,
-        append: true,
-      })
-    ).unwrap();
-
-
-    setTeamPage((p) => p + 1);
-    setHasNextTeam(Boolean(r.meta?.has_next));
-    setLoadingMoreTeam(false);
+    setTeamPage((prev) => prev + 1);
   };
 
   const teamField: FieldConfig[] = [
@@ -861,7 +835,7 @@ export default function TeamMemberPublicProfileTab({
               }}
               onChange={(_, usernames: string[]) =>
                 setSelectedUsernames(usernames)
-              } 
+              }
               errors={formErrors}
               setErrors={setFormErrors}
             />

@@ -288,11 +288,13 @@ export default function DynamicForm({
                   options={field.options || []}
                   onChange={(v) => handleChange(field, v)}
                   onSearch={field.onSearch}
+                  onScrollEnd={field.onScrollEnd}   // ✅ ADD THIS
                   loading={field.showLoader}
                   disabled={disabled || field.disabled}
                   placeholder={`Select ${field.label}`}
                   hideValues={field.hideValues ?? field.name === "product_ids"}
                 />
+
 
                 {showError && (
                   <p className="text-xs text-red-500 mt-1">{error}</p>
