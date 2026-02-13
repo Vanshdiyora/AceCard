@@ -20,6 +20,7 @@ import ResultModal from "../../../common/ui/ResultModal";
 import TeamMemberTotalLeadsTab from "../components/details/TeamMemberTotalLeadsTab";
 import TeamMemberAnalyticsTab from "../components/details/TeamMemberAnalyticsTab";
 // import MemberMobileWebsite from "../components/MemberMobileWebsite";
+import { ActionButton } from "../../vendors/pages/VendorDetailsPage";
 import { fetchLeads } from "../../leads/slice"; // adjust path
 import {
   normalizeProfile,
@@ -177,7 +178,7 @@ export default function TeamMemberDetailsPage() {
     );
   }, [publicProfile, livePreviewConfig]);
 
-    const displayRoleWithCustom = useMemo(() => {
+  const displayRoleWithCustom = useMemo(() => {
     if (!member) return "";
 
     const base = displayRole;
@@ -350,64 +351,65 @@ export default function TeamMemberDetailsPage() {
             // variant: member.status === "active" ? "active" : "suspended",
           }}
           actions={
-            <>
-              <button onClick={() => setEditOpen(true)} className="btn-outline">
-                <Edit size={16} /> Edit
-              </button>
+           <div className="flex gap-3">
+  <ActionButton
+    icon={<Edit size={16} />}
+    label="Edit"
+    onClick={() => setEditOpen(true)}
+  />
 
-              <button onClick={() => setPermOpen(true)} className="btn-outline">
-                <Shield size={16} /> Permissions
-              </button>
+  <ActionButton
+    icon={<Shield size={16} />}
+    label="Permissions"
+    onClick={() => setPermOpen(true)}
+  />
 
-              <button
-                onClick={async () => {
-                  if (member.status === "active") {
-                    try {
-                      setProcessing(true);
+  <ActionButton
+    icon={
+      member.status === "active" ? (
+        <UserX size={16} />
+      ) : (
+        <CheckCircle2 size={16} />
+      )
+    }
+    label={member.status === "active" ? "Suspend" : "Activate"}
+    onClick={async () => {
+      if (member.status === "active") {
+        try {
+          setProcessing(true);
 
-                      // 👇 get leads directly from API response
-                      const res = await dispatch(
-                        fetchLeads({
-                          page: 1,
-                          pageSize: 1000000,
-                          memberId: member.id,
-                        })
-                      ).unwrap();
-                      const ids = res.data.map((l: any) => l.id); // 🔴 FIX
+          const res = await dispatch(
+            fetchLeads({
+              page: 1,
+              pageSize: 1000000,
+              memberId: member.id,
+            })
+          ).unwrap();
 
-                      if (ids.length > 0) {
-                        setLeadIds(ids);
-                        setTransferOpen(true); // 👈 modal opens now
-                      } else {
-                        setSuspendMode("suspend");
-                        setConfirmOpen(true);
-                      }
-                    } catch {
-                      showResult(false, "Failed to load leads");
-                    } finally {
-                      setProcessing(false);
-                    }
-                  } else {
-                    setSuspendMode("activate");
-                    setConfirmOpen(true);
-                  }
-                }}
+          const ids = res.data.map((l: any) => l.id);
 
-                className={
-                  member.status === "active" ? "btn-danger" : "btn-success"
-                }
-              >
-                {member.status === "active" ? (
-                  <>
-                    <UserX size={16} /> Suspend
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle2 size={16} /> Activate
-                  </>
-                )}
-              </button>
-            </>
+          if (ids.length > 0) {
+            setLeadIds(ids);
+            setTransferOpen(true);
+          } else {
+            setSuspendMode("suspend");
+            setConfirmOpen(true);
+          }
+        } catch {
+          showResult(false, "Failed to load leads");
+        } finally {
+          setProcessing(false);
+        }
+      } else {
+        setSuspendMode("activate");
+        setConfirmOpen(true);
+      }
+    }}
+    danger={member.status === "active"}
+    disabled={processing}
+  />
+</div>
+
           }
         />)}
 
@@ -479,7 +481,7 @@ export default function TeamMemberDetailsPage() {
       >
         {/* Preview container to visually separate from dashboard */}
         <div className="relative h-full flex items-start justify-center px-4 mt-8">
-          
+
           {/* Optional label (helps hierarchy a LOT) */}
           <div className="absolute -top-8 text-xs text-gray-400 bg-gray-50 tracking-wide border border-[#D5d5d5] rounded-xl px-2 py-1">
             <a href={`${window.location.origin}/profile/${member.username}`} target="_blank" rel="noopener noreferrer">

@@ -44,10 +44,10 @@ export default function DetailPageHeader({
 
       <div className="flex items-center gap-3 mt-2">
   {subtitle && (
-    <span className="text-sm text-gray-600 leading-none">
-      {subtitle}
-    </span>
-  )}
+  <span className="text-sm text-gray-600 leading-none truncate max-w-full block">
+    {subtitle}
+  </span>
+)}
 
   {status && (
     <span

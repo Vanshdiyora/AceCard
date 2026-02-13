@@ -393,7 +393,7 @@ function Metric({ label, value }: any) {
   );
 }
 
-function ActionButton({ icon, label, onClick, danger }: any) {
+export function ActionButton({ icon, label, onClick, danger }: any) {
   return (
     <button
       onClick={onClick}

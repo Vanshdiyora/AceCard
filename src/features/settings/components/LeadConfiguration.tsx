@@ -27,6 +27,7 @@ export default function LeadConfiguration() {
 
 
   const [newStage, setNewStage] = useState("");
+  const [stageError, setStageError] = useState("");
 
   const [fieldLabel, setFieldLabel] = useState("");
   const [type, setType] = useState<FieldType>("text");
@@ -79,8 +80,8 @@ export default function LeadConfiguration() {
     { bg: "bg-blue-100", text: "text-blue-700", border: "border-blue-300" },
     { bg: "bg-green-100", text: "text-green-700", border: "border-green-300" },
     { bg: "bg-yellow-100", text: "text-yellow-700", border: "border-yellow-300" },
-    { bg: "bg-purple-100", text: "text-purple-700", border: "border-purple-300" },
-    { bg: "bg-pink-100", text: "text-pink-700", border: "border-pink-300" },
+    { bg: "bg-gray-100", text: "text-gray-700", border: "border-gray-300" },
+    { bg: "bg-red-100", text: "text-red-700", border: "border-red-300" },
     { bg: "bg-orange-100", text: "text-orange-700", border: "border-orange-300" },
   ];
 
@@ -133,7 +134,12 @@ export default function LeadConfiguration() {
   };
 
   const addStage = () => {
-    if (!newStage.trim() || !stageField) return;
+    if (!newStage.trim()) {
+      setStageError("Stage name is required.");
+      return;
+    }
+
+    if (!stageField) return;
 
     setCustomFields((prev) =>
       prev.map((f) =>
@@ -145,7 +151,7 @@ export default function LeadConfiguration() {
               {
                 label: newStage,
                 value: newStage.toLowerCase().replace(/\s+/g, "_"),
-                color: STAGE_COLORS[0], // default first color
+                color: STAGE_COLORS[0],
               },
             ],
           }
@@ -154,8 +160,8 @@ export default function LeadConfiguration() {
     );
 
     setNewStage("");
+    setStageError(""); // clear error after success
   };
-
 
   const removeStage = (value: string) => {
     setCustomFields((prev) =>
@@ -375,19 +381,31 @@ export default function LeadConfiguration() {
               ))}
             </div>
 
-            <div className="flex gap-2">
-              <input
-                className="border rounded px-3 py-2 flex-1"
-                placeholder="New stage"
-                value={newStage}
-                onChange={(e) => setNewStage(e.target.value)}
-              />
-              <button
-                className="px-4 py-2 bg-gray-900 text-white rounded"
-                onClick={addStage}
-              >
-                Add
-              </button>
+            <div className="flex flex-col gap-1">
+              <div className="flex gap-2">
+                <input
+                  className={`border rounded px-3 py-2 flex-1 ${stageError ? "border-red-500" : ""
+                    }`}
+                  placeholder="New stage"
+                  value={newStage}
+                  onChange={(e) => {
+                    setNewStage(e.target.value);
+                    if (stageError) setStageError("");
+                  }}
+                />
+                <button
+                  className="px-4 py-2 bg-gray-900 text-white rounded"
+                  onClick={addStage}
+                >
+                  Add
+                </button>
+              </div>
+
+              {stageError && (
+                <span className="text-red-500 text-xs mt-1">
+                  {stageError}
+                </span>
+              )}
             </div>
           </section>
 

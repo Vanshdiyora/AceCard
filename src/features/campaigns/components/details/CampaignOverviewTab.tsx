@@ -1,3 +1,4 @@
+import { formatRupees } from "../../../../common/utils/ruppeeFormater";
 import type { EnrichedCampaign, Campaign } from "../../types";
 
 type Props = {
@@ -17,7 +18,7 @@ export default function CampaignOverviewTab({ campaign }: Props) {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-10 gap-y-6">
         <Info label="Campaign Name" value={campaign.name} />
         <Info label="Owner" value={campaign.manager_name ?? "—"} />
-        <Info label="Budget / Target" value={`₹${campaign.budget}`} />
+        <Info label="Budget / Target" value={`${formatRupees(campaign.budget)}`} />
         <Info label="Start Date" value={formatDate(campaign.start_date)} />
         <Info label="End Date" value={formatDate(campaign.end_date)} />
         <Info label="Campaign ID" value={campaign.id} />
@@ -25,22 +26,30 @@ export default function CampaignOverviewTab({ campaign }: Props) {
 
       {/* Divider */}
       <div className="border-t pt-6 mt-6">
-        <p className="text-sm text-gray-600 leading-relaxed max-w-3xl">
-          {campaign.description || "No description provided."}
-        </p>
+        <div className="min-w-0">
+          <p className="text-sm text-gray-600 leading-relaxed break-words whitespace-pre-wrap">
+            {campaign.description || "No description provided."}
+          </p>
+        </div>
       </div>
+
     </div>
   );
 }
 
 function Info({ label, value }: { label: string; value: string | number }) {
   return (
-    <div className="space-y-1">
-      <div className="text-[11px] uppercase tracking-wide text-gray-400">{label}</div>
-      <div className="text-sm font-medium text-gray-900">{value || "—"}</div>
+    <div className="space-y-1 min-w-0">
+      <div className="text-[11px] uppercase tracking-wide text-gray-400">
+        {label}
+      </div>
+      <div className="text-sm font-medium text-gray-900 break-words whitespace-normal">
+        {value || "—"}
+      </div>
     </div>
   );
 }
+
 
 function StatusPill({ status }: { status: Campaign["status"] }) {
   const map: Record<string, string> = {

@@ -11,6 +11,7 @@ import ErrorAlert from "../../../common/ui/ErrorAlert";
 import type { Campaign, CampaignStatus } from "../types";
 import { CampaignService } from "../services/campaign.service";
 import type { SortBy, SortOrder } from "../types";
+import { formatRupees } from "../../../common/utils/ruppeeFormater";
 
 const tabs: TabItem[] = [
   { label: "All", value: "all" },
@@ -122,9 +123,9 @@ export default function CampaignsPage() {
         );
       },
     },
-    { header: "Budget", render: (c) => `₹${c.budget}` },
+    { header: "Budget", render: (c) => `${formatRupees(c.budget)}` },
     { header: "Leads", render: (c) => c.leads_generated },
-    { header: "Pipeline", render: (c) => `₹${c.pipeline_value}` },
+    { header: "Pipeline", render: (c) => `${formatRupees(c.pipeline_value)}` },
     { header: "Conversion", render: (c) => `${c.conversion_rate}%` },
     { header: "Created", render: (c) => c.created_at.split("T")[0] },
     { header: "Updated", render: (c) => c.updated_at.split("T")[0] },

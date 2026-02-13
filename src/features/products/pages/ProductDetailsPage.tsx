@@ -10,7 +10,7 @@ import {
   archiveProduct,
   unarchiveProduct,
 } from "../slice";
-
+import { ActionButton } from "../../vendors/pages/VendorDetailsPage";
 import ProductOverviewTab from "../components/details/ProductOverviewTab";
 import ProductLeadsTable from "../components/details/ProductLeadsTable";
 import BrandLoader from "../../../common/ui/BrandLoader";
@@ -178,33 +178,28 @@ export default function ProductDetailsPage() {
           label: product!.status,
         }}
         actions={
-          <>
-            <button
-              onClick={() => setEditOpen(true)}
-              className="flex items-center gap-2 px-4 py-2 text-sm border rounded-lg hover:bg-gray-50"
-            >
-              <Edit2 size={16} /> Edit
-            </button>
+          <div className="flex gap-3">
+  <ActionButton
+    icon={<Edit2 size={16} />}
+    label="Edit"
+    onClick={() => setEditOpen(true)}
+  />
 
-            <button
-              onClick={() => setConfirmOpen(true)}
-              disabled={processing}
-              className={`flex items-center gap-2 px-4 py-2 text-sm border rounded-lg disabled:opacity-50 ${isArchived
-                  ? "text-green-600 border-green-200 hover:bg-green-50"
-                  : "text-red-600 border-red-200 hover:bg-red-50"
-                }`}
-            >
-              {isArchived ? (
-                <>
-                  <CheckCircle size={16} /> Activate
-                </>
-              ) : (
-                <>
-                  <Archive size={16} /> Archive
-                </>
-              )}
-            </button>
-          </>
+  <ActionButton
+    icon={
+      isArchived ? (
+        <CheckCircle size={16} />
+      ) : (
+        <Archive size={16} />
+      )
+    }
+    label={isArchived ? "Activate" : "Archive"}
+    onClick={() => setConfirmOpen(true)}
+    danger={!isArchived}
+    disabled={processing}
+  />
+</div>
+
         }
       />
 

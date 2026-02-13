@@ -34,7 +34,7 @@ import {
   NotificationsPage,
   NotificationVendorPage,
 } from "./features/index";
-
+import VicePublicPage from "./features/settings/components/vice/page/VicePublicPage";
 import PublicProfilePage from "./features/publicProfile/pages/PublicProfilePage";
 import ProfileSettingsPage from "./features/settings/pages/ProfileSettingsPage";
 import { useEffect } from "react";
@@ -115,6 +115,7 @@ export default function App() {
           <Route path="settings" element={<SettingsPage />} />
           <Route path="support" element={<SupportPage />} />
           <Route path="notifications" element={<NotificationVendorPage />} />
+          <Route path="settings/viceview" element={<VicePublicPage />} />
           <Route path="*" element={<Navigate to="/not-found" replace />} />
         </Route>
 

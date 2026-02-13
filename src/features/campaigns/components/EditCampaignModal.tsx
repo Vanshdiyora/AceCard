@@ -68,7 +68,7 @@ export default function EditCampaignModal({
     description: c.description ?? "",
     status: c.status,
     budget: c.budget ?? "",
-    manager_id: c.manager_id?.toString() ?? "",
+manager_id: c.manager_id ?? "",
     assigned_reps_ids: c.assigned_reps?.map((r) => r.id) ?? [],
     product_ids: c.products?.map((p) => p.id) ?? [],
     start_date: c.start_date?.split("T")[0] ?? "",

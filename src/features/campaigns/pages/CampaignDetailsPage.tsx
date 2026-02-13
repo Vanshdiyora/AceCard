@@ -20,6 +20,7 @@ import BrandLoader from "../../../common/ui/BrandLoader";
 import BlockingLoader from "../../../common/ui/BlockingLoader";
 import ResultModal from "../../../common/ui/ResultModal";
 import DetailPageHeader from "../../../common/components/layout/DetailPageHeader";
+import { ActionButton } from "../../vendors/pages/VendorDetailsPage";
 
 const TABS = ["overview", "salespersons", "products"] as const;
 
@@ -150,8 +151,8 @@ export default function CampaignDetailsPage() {
         title={campaign.name}
         subtitle={campaign.description || "No description provided"}
         status={{
-  label: campaign.status,
-}}
+          label: campaign.status,
+        }}
         actions={
           <div className="flex items-center gap-6">
 
@@ -163,35 +164,33 @@ export default function CampaignDetailsPage() {
 
             {/* Existing Buttons */}
             <div className="flex gap-3">
-              <button
-                disabled={isReadOnly || processing}
+              <ActionButton
+                icon={<Edit size={16} />}
+                label="Edit"
                 onClick={() => setOpenEdit(true)}
-                className={`px-4 py-2 rounded-xl border flex items-center gap-2 text-sm ${isReadOnly ? "opacity-50 cursor-not-allowed" : "hover:bg-purple-50"
-                  }`}
-              >
-                <Edit size={16} /> Edit
-              </button>
+                danger={false}
+                disabled={isReadOnly || processing}
+              />
 
               {campaign.status === "archived" ? (
-                <button
-                  disabled={processing}
+                <ActionButton
+                  icon={<Copy size={16} />}
+                  label="Duplicate"
                   onClick={() => setConfirmOpen("duplicate")}
-                  className={`px-4 py-2 rounded-xl border flex items-center gap-2 text-sm ${processing ? "opacity-50 cursor-not-allowed" : "hover:bg-green-50"
-                    }`}
-                >
-                  <Copy size={16} /> Duplicate
-                </button>
+                  danger={false}
+                  disabled={processing}
+                />
               ) : (
-                <button
-                  disabled={processing || isReadOnly}
+                <ActionButton
+                  icon={<Trash2 size={16} />}
+                  label="Archive"
                   onClick={() => setConfirmOpen("archive")}
-                  className={`px-4 py-2 rounded-xl bg-red-50 text-red-600 flex items-center gap-2 text-sm ${isReadOnly ? "opacity-50 cursor-not-allowed" : "hover:bg-red-100"
-                    }`}
-                >
-                  <Trash2 size={16} /> Archive
-                </button>
+                  danger
+                  disabled={processing || isReadOnly}
+                />
               )}
             </div>
+
           </div>
         }
       />
