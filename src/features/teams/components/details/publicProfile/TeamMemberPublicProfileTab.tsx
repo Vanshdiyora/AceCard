@@ -2538,7 +2538,7 @@ export function Toggle({
       className={`flex items-center gap-3 ${disabled ? "text-gray-400 cursor-not-allowed" : ""
         }`}
     >
-      <span>{label}</span>
+      <span className="text-xs">{label}</span>
       <input
         type="checkbox"
         checked={value}

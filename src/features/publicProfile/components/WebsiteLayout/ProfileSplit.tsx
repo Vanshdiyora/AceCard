@@ -24,17 +24,21 @@ export function ProfileSplit({
   const t = resolveTheme(theme);
   const align =
     ALIGN_MAP[(layout?.card_alignment as CardAlign) || "center"];
+const avatarUrl =
+  profile.custom_profile
+    ? profile.custom_profile_url || profile.avatar_url
+    : profile.avatar_url;
 
   return (
-    <>
+    <> 
       <div
         className="rounded-2xl overflow-hidden shadow-md"
         style={{ backgroundColor: t.cardBg }}
       >
         <div className="relative h-[180px] w-full flex justify-center">
-          {profile?.avatar_url ? (
+          {avatarUrl ? (
             <img
-              src={profile.avatar_url}
+              src={avatarUrl}
               className="w-full h-full object-cover"
               alt="Avatar"
             />

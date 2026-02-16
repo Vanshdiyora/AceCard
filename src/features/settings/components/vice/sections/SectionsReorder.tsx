@@ -107,7 +107,6 @@ export default function SectionsReorder({
 }
 
 /* ================= ROWS ================= */
-
 function SortableRow({
   s,
   disabled,
@@ -140,7 +139,7 @@ function SortableRow({
           </span>
         )}
 
-        <span className="font-medium capitalize">
+        <span className="font-medium text-sm capitalize">
          {SECTION_LABELS[s.type] || s.type.replace(/_/g, " ")}
 
         </span>

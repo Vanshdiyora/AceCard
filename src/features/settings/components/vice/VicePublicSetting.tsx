@@ -768,7 +768,7 @@ export default function VicePublicSetting({
             setOpen(true);
           }}
 
-          className="flex items-center justify-between gap-2 border rounded-md px-3 py-2 text-sm bg-white w-full"
+          className="flex items-center justify-between gap-2 border rounded-md px-3 py-2 text-sm bg-white w-full h-12"
         >
           {active.label}
           <ChevronDown className="w-4 h-4 text-gray-500" />
@@ -918,352 +918,353 @@ export default function VicePublicSetting({
           />
         )}
 
-        <div className={isLayoutLocked ? "opacity-60 pointer-events-none" : ""}>
+        <div className={isLayoutLocked ? "" : ""}>
 
           {/* LAYOUT TYPE */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-lg">
-            {[1, 2, 3].map((t) => (
-              <button
-                key={t}
-                onClick={() =>
-                  update({
-                    ...config,
-                    layout: { ...config.layout, profile_type: t as any },
-                  })
-                }
-                className={`border rounded-xl p-2 transition ${config.layout.profile_type === t
-                  ? "border-black ring-2 ring-gray-300"
-                  : "border-gray-200"
-                  }`}
-              >
-                <img
-                  src={
-                    t === 1
-                      ? "/profileLayout/profile1.png"
-                      : t === 2
-                        ? "/profileLayout/profile2.png"
-                        : "/profileLayout/profile3.png"
-                  }
-                  className="w-full rounded"
-                />
-                <p className="text-xs text-center mt-2">
-                  {t === 1 && "Profile Picture"}
-                  {t === 2 && "Small Profile"}
-                  {t === 3 && "Cover + Profile"}
-                </p>
-              </button>
-            ))}
-          </div>
+          <div className={isLayoutLocked ? "opacity-60 pointer-events-none" : ""}>
 
-          {/* FADE TOGGLE + COLOR */}
-          {config.layout.profile_type !== 2 && (
-            <div className="mt-5 grid grid-cols-[1fr_auto] items-center gap-4">
-              {/* Fade toggle (LEFT) */}
-              <Switch
-                label="Fade cover"
-                value={config.layout.is_fade}
-                onChange={(v) =>
-                  update({
-                    ...config,
-                    layout: { ...config.layout, is_fade: v },
-                  })
-                }
-              />
-
-              {/* Fade color (RIGHT) */}
-              <ColorPickerField
-                label="Fade color"
-                value={config.layout.fade_color ?? "#000000"}
-                disabled={!config.layout.is_fade}
-                onChange={(val) =>
-                  update({
-                    ...config,
-                    layout: { ...config.layout, fade_color: val },
-                  })
-                }
-              />
-            </div>
-          )}
-
-          {/* COVER UPLOAD (only when layout = 3) */}
-          {config.layout.profile_type === 3 && (
-            <div className="mt-6 space-y-3">
-
-              {/* LOCK CONTROL */}
-              {showLockable && (
-                <LockControl
-                  value={config.cover}
-                  role={config.role}
-                  onChange={(v) =>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-lg">
+              {[1, 2, 3].map((t) => (
+                <button
+                  key={t}
+                  onClick={() =>
                     update({
                       ...config,
-                      cover: { ...config.cover, ...v },
+                      layout: { ...config.layout, profile_type: t as any },
                     })
                   }
-                />
-              )}
+                  className={`border rounded-xl p-2 transition ${config.layout.profile_type === t
+                    ? "border-black ring-2 ring-gray-300"
+                    : "border-gray-200"
+                    }`}
+                >
+                  <div className="aspect-square w-28 mx-auto overflow-hidden rounded-lg bg-gray-50">
+                    <img
+                      src={
+                        t === 1
+                          ? "/profileLayout/profile1.png"
+                          : t === 2
+                            ? "/profileLayout/profile2.png"
+                            : "/profileLayout/profile3.png"
+                      }
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
 
-              <p className="text-sm font-medium text-gray-700">
-                Cover Image
-              </p>
+                  <p className="text-xs text-center mt-2">
+                    {t === 1 && "Profile Picture"}
+                    {t === 2 && "Small Profile"}
+                    {t === 3 && "Cover + Profile"}
+                  </p>
+                </button>
+              ))}
+            </div>
+          </div>
 
-              <div
-                className={`relative h-40 w-full rounded-xl border overflow-hidden bg-gray-50 transition ${isReadOnly(config.cover)
-                  ? "opacity-60 pointer-events-none"
-                  : "hover:shadow-md"
-                  }`}
-              >
-                {config.cover.cover_url ? (
-                  <img
-                    src={config.cover.cover_url}
-                    alt="Cover"
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="h-full flex items-center justify-center text-xs text-gray-400">
-                    No cover image
+          {/* PROFILE + COVER SECTION */}
+          <div className="mt-6 grid grid-cols-1 md:grid-cols-2 items-start">
+
+            {/* PROFILE PHOTO — ALWAYS VISIBLE */}
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <p className="text-sm font-semibold text-gray-800">
+                  Profile Photo
+                </p>
+              </div>
+
+              <ProfileSection
+                profile={config.profile}
+                onChange={(p: ProfileConfig) =>
+                  update({
+                    ...config,
+                    profile: {
+                      ...config.profile,
+                      ...p,
+                    },
+                  })
+                }
+                onCropToggle={onCropToggle}
+              />
+            </div>
+
+            {/* COVER BACKGROUND — ONLY WHEN TYPE 3 */}
+            {config.layout.profile_type === 3 && (
+              <div>
+
+                {/* Lock only for cover */}
+                {showLockable && (
+                  <div className="mb-3">
+                    <LockControl
+                      value={config.cover}
+                      role={config.role}
+                      onChange={(v) =>
+                        update({
+                          ...config,
+                          cover: { ...config.cover, ...v },
+                        })
+                      }
+                    />
                   </div>
                 )}
 
-                {/* HOVER OVERLAY */}
-                {!isReadOnly(config.cover) && (
-                  <label className="absolute inset-0 bg-black/40 text-white flex items-center justify-center opacity-0 hover:opacity-100 cursor-pointer transition">
-                    Change
+                <div className="flex items-center gap-2 mb-3">
+                  <p className="text-sm font-semibold text-gray-800">
+                    Cover Background
+                  </p>
+                </div>
+
+                <div
+                  className={`relative h-40 w-full rounded-xl border border-dashed border-gray-300 bg-gray-50 transition ${isReadOnly(config.cover)
+                    ? "opacity-60 pointer-events-none"
+                    : "hover:bg-gray-100"
+                    }`}
+                >
+                  {config.cover.cover_url ? (
+                    <img
+                      src={config.cover.cover_url}
+                      className="absolute inset-0 w-full h-full object-cover rounded-xl"
+                    />
+                  ) : (
+                    <div className="h-full flex flex-col items-center justify-center text-sm text-gray-500">
+                      <p>Drag file here for upload or</p>
+                      <span className="mt-2 inline-block bg-gray-200 px-4 py-1.5 rounded-full text-xs font-medium">
+                        Select Files
+                      </span>
+                    </div>
+                  )}
+
+                  {!isReadOnly(config.cover) && (
                     <input
                       type="file"
-                      hidden
                       accept="image/*"
+                      className="absolute inset-0 opacity-0 cursor-pointer"
                       onChange={(e) => {
                         if (!e.target.files) return;
                         coverFileRef.current = e.target.files[0];
                         setIsCropping(true);
                       }}
-
                     />
-                  </label>
-                )}
+                  )}
+                </div>
               </div>
-            </div>
-          )}
-
-          {/* FONT PICKER */}
-          <div className="mt-6">
-            <label className="text-sm font-medium mb-2 block">
-              Choose a Font
-            </label>
-
-            <FontDropdown
-              value={config.layout.font}
-              useCustom={config.layout.use_custom_font}
-              onChange={(font, isCustom) =>
-                update({
-                  ...config,
-                  layout: {
-                    ...config.layout,
-                    font,
-                    use_custom_font: isCustom,
-                  },
-                })
-              }
-            />
+            )}
           </div>
 
-          {config.layout.use_custom_font && (
-            <div className="mt-4">
-              <label className="text-sm font-medium block mb-2">
-                Custom Font
+          {/* FADE TOGGLE + COLOR */}
+          <div className={isLayoutLocked ? "opacity-60 pointer-events-none" : ""}>
+            {config.layout.profile_type !== 2 && (
+              <div className="mt-6 space-y-4">
+
+                {/* Fade Toggle */}
+                <Switch
+                  label="Fade cover"
+                  value={config.layout.is_fade}
+                  onChange={(v) =>
+                    update({
+                      ...config,
+                      layout: { ...config.layout, is_fade: v },
+                    })
+                  }
+                />
+
+                {/* Fade Color — Theme Style */}
+                {config.layout.is_fade && (
+                  <ThemeColorRow
+                    label="Fade color"
+                    value={config.layout.fade_color ?? "#000000"}
+                    disabled={!config.layout.is_fade}
+                    onChange={(val: string) =>
+                      update({
+                        ...config,
+                        layout: { ...config.layout, fade_color: val },
+                      })
+                    }
+                  />
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* FONT PICKER */}
+          <div className={isLayoutLocked ? "opacity-60 pointer-events-none" : ""}>
+            <div className="mt-6">
+              <label className="text-sm font-medium mb-2 block">
+                Choose a Font
               </label>
 
-              <label
-                className="
+              <FontDropdown
+                value={config.layout.font}
+                useCustom={config.layout.use_custom_font}
+                onChange={(font, isCustom) =>
+                  update({
+                    ...config,
+                    layout: {
+                      ...config.layout,
+                      font,
+                      use_custom_font: isCustom,
+                    },
+                  })
+                }
+              />
+            </div>
+          </div>
+
+
+          {config.layout.use_custom_font && (
+            <div className={isLayoutLocked ? "opacity-60 pointer-events-none" : ""}>
+              <div className="mt-4">
+                <label className="text-sm font-medium block mb-2">
+                  Custom Font
+                </label>
+
+                <label
+                  className="
         flex cursor-pointer items-center justify-between
         rounded-xl border border-dashed border-gray-300
         px-4 py-4 text-sm
         transition hover:border-gray-400 hover:bg-gray-50
       "
-              >
-                <div>
-                  <p className="font-medium text-gray-700">
-                    Upload font file
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    TTF, OTF, WOFF, WOFF2
-                  </p>
-                </div>
+                >
+                  <div>
+                    <p className="font-medium text-gray-700">
+                      Upload font file
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      TTF, OTF, WOFF, WOFF2
+                    </p>
+                  </div>
 
-                <span className="
+                  <span className="
         rounded-lg bg-black px-3 py-1.5 text-xs font-medium text-white
       ">
-                  Browse
-                </span>
+                    Browse
+                  </span>
 
-                <input
-                  type="file"
-                  hidden
-                  accept=".ttf,.otf,.woff,.woff2"
-                  onChange={(e) =>
-                    e.target.files && uploadCustomFont(e.target.files[0])
-                  }
-                />
-              </label>
+                  <input
+                    type="file"
+                    hidden
+                    accept=".ttf,.otf,.woff,.woff2"
+                    onChange={(e) =>
+                      e.target.files && uploadCustomFont(e.target.files[0])
+                    }
+                  />
+                </label>
 
-              {config.layout.custom_font && (
-                <p className="mt-2 text-xs text-green-600">
-                  ✔ Font uploaded successfully
-                </p>
-              )}
+                {config.layout.custom_font && (
+                  <p className="mt-2 text-xs text-green-600">
+                    ✔ Font uploaded successfully
+                  </p>
+                )}
+              </div>
             </div>
           )}
 
           {/* ALIGNMENT */}
-          <div className="mt-8 border-t pt-6">
-            <h4 className="text-sm font-medium mb-3">
-              Card Layout Alignment
-            </h4>
+          <div className={isLayoutLocked ? "opacity-60 pointer-events-none" : ""}>
+            <div className="mt-8 border-t pt-6">
+              <h4 className="text-sm font-medium mb-3">
+                Card Layout Alignment
+              </h4>
 
-            <div className="grid grid-cols-3 gap-3">
-              {([
-                { id: "left", Icon: AlignLeft },
-                { id: "center", Icon: AlignCenter },
-                { id: "right", Icon: AlignRight },
-              ] as const).map(({ id, Icon }) => (
-                <button
-                  key={id}
-                  onClick={() =>
-                    update({
-                      ...config,
-                      layout: {
-                        ...config.layout,
-                        card_alignment: id,
-                      },
-                    })
-                  }
-                  className={`border rounded-xl py-3 flex items-center justify-center transition ${config.layout.card_alignment === id
-                    ? "border-black bg-gray-50"
-                    : "border-gray-200 hover:bg-gray-50"
-                    }`}
-                >
-                  <Icon className="w-5 h-5" />
-                </button>
-              ))}
-            </div>
-
-          </div>
-
-          {/* BUTTON STYLE */}
-          <div className="mt-8 border-t pt-6">
-            <h4 className="text-sm font-medium mb-3 flex items-center gap-1">
-              Button Style
-              <span className="text-gray-400 cursor-pointer">ⓘ</span>
-            </h4>
-
-            <div className="grid grid-cols-3 gap-4">
-              {[1, 2, 3].map((s) => {
-                const isActive = config.layout.button_style === s;
-
-                const shape =
-                  s === 1
-                    ? ""
-                    : s === 2
-                      ? "rounded-md"
-                      : "rounded-full";
-
-                return (
+              <div className="grid grid-cols-3 gap-3">
+                {([
+                  { id: "left", Icon: AlignLeft },
+                  { id: "center", Icon: AlignCenter },
+                  { id: "right", Icon: AlignRight },
+                ] as const).map(({ id, Icon }) => (
                   <button
-                    key={s}
+                    key={id}
                     onClick={() =>
                       update({
                         ...config,
-                        layout: { ...config.layout, button_style: s },
+                        layout: {
+                          ...config.layout,
+                          card_alignment: id,
+                        },
                       })
                     }
-                    className={`relative h-12 w-full border transition rounded-xl ${isActive
-                      ? "border-black ring-2 ring-gray-300"
-                      : "border-gray-300 hover:border-gray-400"
+                    className={`border rounded-xl py-3 flex items-center justify-center transition ${config.layout.card_alignment === id
+                      ? "border-black bg-gray-50"
+                      : "border-gray-200 hover:bg-gray-50"
                       }`}
                   >
-                    {/* preview button */}
-                    <div
-                      className={`absolute inset-2 ${shape} border border-gray-400 bg-gray-200`}
-                    />
-
+                    <Icon className="w-5 h-5" />
                   </button>
-                );
-              })}
+                ))}
+              </div>
+
+            </div>
+          </div>
+
+          {/* BUTTON STYLE */}
+          <div className={isLayoutLocked ? "opacity-60 pointer-events-none" : ""}>
+            <div className="mt-8 border-t pt-6">
+              <h4 className="text-sm font-medium mb-3 flex items-center gap-1">
+                Button Style
+                <span className="text-gray-400 cursor-pointer">ⓘ</span>
+              </h4>
+
+              <div className="grid grid-cols-3 gap-4">
+                {[1, 2, 3].map((s) => {
+                  const isActive = config.layout.button_style === s;
+
+                  const shape =
+                    s === 1
+                      ? ""
+                      : s === 2
+                        ? "rounded-md"
+                        : "rounded-full";
+
+                  return (
+                    <button
+                      key={s}
+                      onClick={() =>
+                        update({
+                          ...config,
+                          layout: { ...config.layout, button_style: s },
+                        })
+                      }
+                      className={`relative h-12 w-full border transition rounded-xl ${isActive
+                        ? "border-black ring-2 ring-gray-300"
+                        : "border-gray-300 hover:border-gray-400"
+                        }`}
+                    >
+                      {/* preview button */}
+                      <div
+                        className={`absolute inset-2 ${shape} border border-gray-400 bg-gray-200`}
+                      />
+
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
 
           {/* PROFILE WIDTH */}
-          <div className="mt-6">
-            <h4 className="text-sm font-medium mb-3">Avatar Border Thickness</h4>
-
-            <div className="flex items-center gap-3 w-1/2">
-              <input
-                type="number"
-                min={0}
-                max={600}
-                step={1}
-                value={
-                  config.layout.profile_width === 0
-                    ? ""
-                    : config.layout.profile_width
-                }
-                onChange={(e) => {
-                  const val = e.target.value;
-
-                  // allow empty
-                  if (val === "") {
-                    update({
-                      ...config,
-                      layout: { ...config.layout, profile_width: 0 },
-                    });
-                    return;
-                  }
-
-                  update({
-                    ...config,
-                    layout: {
-                      ...config.layout,
-                      profile_width: Number(val),
-                    },
-                  });
-                }}
-                className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                placeholder="e.g. 360"
-              />
-
-              <span className="text-xs text-gray-500">px</span>
-            </div>
-
-            <p className="text-xs text-gray-400 mt-1">
-              Recommended: 6 - 8 px
-            </p>
-          </div>
-
-          {/* Border Radius */}
-          <div className="mt-6">
-
-            <div>
-              <h4 className="text-sm font-medium mb-3">Profile Size</h4>
+          <div className={isLayoutLocked ? "opacity-60 pointer-events-none" : ""}>
+            <div className="mt-6">
+              <h4 className="text-sm font-medium mb-3">Avatar Border Thickness</h4>
 
               <div className="flex items-center gap-3 w-1/2">
                 <input
                   type="number"
-                  min={40}
-                  max={80}
+                  min={0}
+                  max={600}
                   step={1}
                   value={
-                    config.layout.profile_radius === 0
+                    config.layout.profile_width === 0
                       ? ""
-                      : config.layout.profile_radius
+                      : config.layout.profile_width
                   }
                   onChange={(e) => {
                     const val = e.target.value;
 
+                    // allow empty
                     if (val === "") {
                       update({
                         ...config,
-                        layout: { ...config.layout, profile_radius: 0 },
+                        layout: { ...config.layout, profile_width: 0 },
                       });
                       return;
                     }
@@ -1272,130 +1273,118 @@ export default function VicePublicSetting({
                       ...config,
                       layout: {
                         ...config.layout,
-                        profile_radius: Number(val),
+                        profile_width: Number(val),
                       },
                     });
                   }}
                   className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  placeholder="e.g. 50"
+                  placeholder="e.g. 360"
                 />
 
                 <span className="text-xs text-gray-500">px</span>
               </div>
 
               <p className="text-xs text-gray-400 mt-1">
-                Recommended: 60 - 70 px
+                Recommended: 6 - 8 px
               </p>
+            </div>
+          </div>
+
+          {/* Border Radius */}
+          <div className={isLayoutLocked ? "opacity-60 pointer-events-none" : ""}>
+            <div className="mt-6">
+
+              <div>
+                <h4 className="text-sm font-medium mb-3">Profile Size</h4>
+
+                <div className="flex items-center gap-3 w-1/2">
+                  <input
+                    type="number"
+                    min={40}
+                    max={80}
+                    step={1}
+                    value={
+                      config.layout.profile_radius === 0
+                        ? ""
+                        : config.layout.profile_radius
+                    }
+                    onChange={(e) => {
+                      const val = e.target.value;
+
+                      if (val === "") {
+                        update({
+                          ...config,
+                          layout: { ...config.layout, profile_radius: 0 },
+                        });
+                        return;
+                      }
+
+                      update({
+                        ...config,
+                        layout: {
+                          ...config.layout,
+                          profile_radius: Number(val),
+                        },
+                      });
+                    }}
+                    className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    placeholder="e.g. 50"
+                  />
+
+                  <span className="text-xs text-gray-500">px</span>
+                </div>
+
+                <p className="text-xs text-gray-400 mt-1">
+                  Recommended: 60 - 70 px
+                </p>
+              </div>
             </div>
           </div>
 
           {/* BACKGROUND TYPE */}
-          <div className="mt-6">
-            <p className="text-sm font-medium mb-2">Background Type</p>
-
-            <div className="grid grid-cols-3 gap-3">
-              {[
-                "solid",
-                "gradient",
-                "image",
-                "video",
-                "polka",
-                "stripes",
-                "zigzag",
-              ].map((t) => (
-                <button
-                  key={t}
-                  onClick={() =>
-                    update({
-                      ...config,
-                      layout: { ...config.layout, use_background: t as any },
-                    })
-                  }
-                  className={`border rounded-xl py-2 text-sm capitalize transition ${config.layout.use_background === t
-                    ? "border-black bg-gray-50"
-                    : "border-gray-200"
-                    }`}
-                >
-                  {t}
-                </button>
-              ))}
-
-            </div>
-          </div>
-
-          {/* SOLID BACKGROUND */}
-          {config.layout.use_background === "solid" && (
+          <div className={isLayoutLocked ? "opacity-60 pointer-events-none" : ""}>
             <div className="mt-6">
-              <p className="text-sm font-medium">Card Background Color</p>
+              <p className="text-sm font-medium mb-2">Background Type</p>
 
-              <div className="mt-2 w-1/2">
-                <ColorPickerField
-                  label="Color"
-                  value={config.layout.color1 || "#000000"}
-                  onChange={(v) =>
-                    update({
-                      ...config,
-                      layout: { ...config.layout, color1: v },
-                    })
-                  }
-                />
+              <div className="grid grid-cols-3 gap-3">
+                {[
+                  "solid",
+                  "gradient",
+                  "image",
+                  "video",
+                  "polka",
+                  "stripes",
+                  "zigzag",
+                ].map((t) => (
+                  <button
+                    key={t}
+                    onClick={() =>
+                      update({
+                        ...config,
+                        layout: { ...config.layout, use_background: t as any },
+                      })
+                    }
+                    className={`border rounded-xl py-2 text-sm capitalize transition ${config.layout.use_background === t
+                      ? "border-black bg-gray-50"
+                      : "border-gray-200"
+                      }`}
+                  >
+                    {t}
+                  </button>
+                ))}
+
               </div>
             </div>
-          )}
-          {config.layout.use_background === "video" && (
-            <div className="mt-6 space-y-3">
-              <p className="text-sm font-medium">Background Video</p>
 
-              {/* PREVIEW */}
-              {config.layout.background_video && (
-                <video
-                  src={config.layout.background_video}
-                  className="w-full h-40 rounded-lg object-cover"
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                />
-              )}
-
-              {/* UPLOAD */}
-              <label className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-dashed cursor-pointer text-sm hover:bg-gray-50">
-                Upload video
-                <input
-                  type="file"
-                  accept="video/mp4,video/webm"
-                  hidden
-                  onChange={async (e) => {
-                    const file = e.target.files?.[0];
-                    if (!file) return;
-
-                    const res = await uploadImage(file); // reuse existing
-                    const url = res.data.url;
-
-                    update({
-                      ...config,
-                      layout: { ...config.layout, background_video: url },
-                    });
-                  }}
-                />
-              </label>
-
-              <p className="text-xs text-gray-500">
-                MP4 / WebM • Autoplays silently in background
-              </p>
-            </div>
-          )}
-
-          {["polka", "stripes", "zigzag"].includes(
-            config.layout.use_background || ""
-          ) && (
+            {/* SOLID BACKGROUND */}
+            {config.layout.use_background === "solid" && (
               <div className="mt-6">
-                <p className="text-sm font-medium">Pattern Background Color</p>
+                <p className="text-sm font-medium">Card Background Color</p>
 
                 <div className="mt-2 w-1/2">
                   <ColorPickerField
-                    label="Background"
-                    value={config.layout.color1 || "#2f343a"}
+                    label="Color"
+                    value={config.layout.color1 || "#000000"}
                     onChange={(v) =>
                       update({
                         ...config,
@@ -1407,85 +1396,149 @@ export default function VicePublicSetting({
               </div>
             )}
 
+            {config.layout.use_background === "video" && (
+              <div className="mt-6 space-y-3">
+                <p className="text-sm font-medium">Background Video</p>
 
-          {/* Gradient */}
-          {config.layout.use_background === "gradient" && (
-            <div className="mt-6">
-              <p className="text-sm font-medium">Gradient Background</p>
-
-              <div className="grid grid-cols-3 gap-3">
-                <ColorPickerField
-                  label="From"
-                  value={config.layout.color1 || "#7c3aed"}
-                  onChange={(v) =>
-                    update({
-                      ...config,
-                      layout: { ...config.layout, color1: v },
-                    })
-                  }
-                />
-                <ColorPickerField
-                  label="To"
-                  value={config.layout.color2 || "#6366f1"}
-                  onChange={(v) =>
-                    update({
-                      ...config,
-                      layout: { ...config.layout, color2: v },
-                    })
-                  }
-                />
-
-                <GradientDirectionDropdown
-                  value={config.layout.direction}
-                  onChange={(dir) =>
-                    update({
-                      ...config,
-                      layout: { ...config.layout, direction: dir },
-                    })
-                  }
-                />
-              </div>
-            </div>
-          )}
-
-          {/* BG Image */}
-          {config.layout.use_background === "image" && (
-            <div className="mt-6">
-              <p className="text-sm font-medium">Background Image</p>
-
-              <div className="relative h-32 w-full rounded-xl border overflow-hidden bg-gray-50">
-                {config.layout.background_image ? (
-                  <img
-                    src={config.layout.background_image}
-                    className="w-full h-full object-cover"
+                {/* PREVIEW */}
+                {config.layout.background_video && (
+                  <video
+                    src={config.layout.background_video}
+                    className="w-full h-40 rounded-lg object-cover"
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
                   />
-                ) : (
-                  <div className="h-full flex items-center justify-center text-xs text-gray-400">
-                    No background image
-                  </div>
                 )}
 
-                <label className="absolute inset-0 bg-black/40 text-white flex items-center justify-center opacity-0 hover:opacity-100 cursor-pointer transition">
-                  Upload
+                {/* UPLOAD */}
+                <label className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-dashed cursor-pointer text-sm hover:bg-gray-50">
+                  Upload video
                   <input
                     type="file"
+                    accept="video/mp4,video/webm"
                     hidden
-                    accept="image/*"
-                    onChange={(e) =>
-                      e.target.files &&
-                      uploadLayoutBackground(e.target.files[0])
-                    }
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+
+                      const res = await uploadImage(file); // reuse existing
+                      const url = res.data.url;
+
+                      update({
+                        ...config,
+                        layout: { ...config.layout, background_video: url },
+                      });
+                    }}
                   />
                 </label>
-              </div>
-            </div>
-          )}
 
+                <p className="text-xs text-gray-500">
+                  MP4 / WebM • Autoplays silently in background
+                </p>
+              </div>
+            )}
+
+            {["polka", "stripes", "zigzag"].includes(
+              config.layout.use_background || ""
+            ) && (
+                <div className="mt-6">
+                  <p className="text-sm font-medium">Pattern Background Color</p>
+
+                  <div className="mt-2 w-1/2">
+                    <ColorPickerField
+                      label="Background"
+                      value={config.layout.color1 || "#2f343a"}
+                      onChange={(v) =>
+                        update({
+                          ...config,
+                          layout: { ...config.layout, color1: v },
+                        })
+                      }
+                    />
+                  </div>
+                </div>
+              )}
+
+            {/* Gradient */}
+            {config.layout.use_background === "gradient" && (
+              <div className="mt-6">
+                <p className="text-sm font-medium">Gradient Background</p>
+
+                <div className="grid grid-cols-3 gap-3">
+                  <ColorPickerField
+                    label="From"
+                    value={config.layout.color1 || "#7c3aed"}
+                    onChange={(v) =>
+                      update({
+                        ...config,
+                        layout: { ...config.layout, color1: v },
+                      })
+                    }
+                  />
+                  <ColorPickerField
+                    label="To"
+                    value={config.layout.color2 || "#6366f1"}
+                    onChange={(v) =>
+                      update({
+                        ...config,
+                        layout: { ...config.layout, color2: v },
+                      })
+                    }
+                  />
+
+                  <GradientDirectionDropdown
+                    value={config.layout.direction}
+                    onChange={(dir) =>
+                      update({
+                        ...config,
+                        layout: { ...config.layout, direction: dir },
+                      })
+                    }
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* BG Image */}
+            {config.layout.use_background === "image" && (
+              <div className="mt-6">
+                <p className="text-sm font-medium">Background Image</p>
+
+                <div className="relative h-32 w-full rounded-xl border overflow-hidden bg-gray-50">
+                  {config.layout.background_image ? (
+                    <img
+                      src={config.layout.background_image}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="h-full flex items-center justify-center text-xs text-gray-400">
+                      No background image
+                    </div>
+                  )}
+
+                  <label className="absolute inset-0 bg-black/40 text-white flex items-center justify-center opacity-0 hover:opacity-100 cursor-pointer transition">
+                    Upload
+                    <input
+                      type="file"
+                      hidden
+                      accept="image/*"
+                      onChange={(e) =>
+                        e.target.files &&
+                        uploadLayoutBackground(e.target.files[0])
+                      }
+                    />
+                  </label>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
       </Card>
 
-      <Card title="Profile" desc="Basic information shown on the card">
+      {/* <Card title="Profile" desc="Basic information shown on the card">
         <ProfileSection
           profile={config.profile}
           onChange={(p: ProfileConfig) =>
@@ -1499,7 +1552,7 @@ export default function VicePublicSetting({
           }
           onCropToggle={onCropToggle}   // 👈 ADD
         />
-      </Card>
+      </Card> */}
 
       <Card title="About" desc="Short description about yourself">
         <div className="">
@@ -1551,7 +1604,7 @@ export default function VicePublicSetting({
         </div>
 
       </Card>
-      
+
       {/* <Card title="Video Gallery" desc="Manage your videos">
         {showLockable && (
           <LockControl
@@ -2552,8 +2605,8 @@ export function Card({
 }) {
   return (
     <div className="relative z-0 overflow-visible rounded-2xl bg-white/70 p-6 space-y-4">
-      <h3 className="font-semibold text-lg">{title}</h3>
-      <p className="text-sm text-gray-500">{desc}</p>
+      <h3 className="font-semibold text-sm">{title}</h3>
+      <p className="text-xs text-gray-500">{desc}</p>
 
       <div className={scroll ? "max-h-[280px] overflow-visible" : ""}>
         {children}
@@ -2713,9 +2766,9 @@ export function ColorPickerField({
         type="button"
         onClick={openPicker}
         className="
-    w-full rounded-lg border p-4
+    w-full rounded-lg border px-4
     hover:bg-gray-50
-    focus:outline-none focus:ring-2 focus:ring-blue-500
+    focus:outline-none focus:ring-2 focus:ring-blue-500 h-12
   "
       >
         <div className="grid grid-cols-[1fr_32px] items-center">
@@ -2858,7 +2911,6 @@ function ThemeColorRow({
         <span className="text-sm font-medium text-gray-800">
           {label}
         </span>
-        <span className="text-gray-400 text-xs cursor-help">ⓘ</span>
       </div>
 
       {/* COLOR OPTIONS */}
@@ -2968,7 +3020,9 @@ export function LockControl({
     value.locked_by === currentUser;
 
   const isHardLocked =
-    !isOwner && (
+    role !== "vendor_admin" &&     // 🔥 vendor_admin is always editable
+    !isOwner &&
+    (
       (role === "manager" && wasLockedRef.current) ||
       isVendorLock
     );
@@ -3016,7 +3070,7 @@ export function LockControl({
 
         {/* LABEL */}
         <span
-          className={`text-sm transition
+          className={`text-xs transition
             ${isHardLocked
               ? "text-gray-300 cursor-not-allowed"
               : isIndividual
