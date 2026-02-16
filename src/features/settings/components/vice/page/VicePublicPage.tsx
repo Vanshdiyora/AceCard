@@ -61,6 +61,7 @@ export default function VicePublicPage() {
 
         <VicePublicSetting
           key={username}
+          username={username}
           useSelfApi={true}
           showLockable={true}
           onLiveChange={(cfg) => {

@@ -24,7 +24,7 @@ import { AlignLeft, AlignCenter, AlignRight } from "lucide-react";
 import CoverCropModal from "../../../../common/ui/CoverCropModal";
 import PhotoGallerySection from "./sections/PhotoGallerySection";
 // import VideoGallerySection from "./sections/VideoGallerySection";
-import { normalizeApiError } from "../../../../utils/normalizeApiError";
+// import { normalizeApiError } from "../../../../utils/normalizeApiError";
 import { SOCIAL_ICONS } from "./sections/socialIcons";
 import CommonModal from "./sections/CommonModal";
 import { fetchTeam } from "../../../teams/slice"; // adjust 
@@ -106,6 +106,7 @@ export type LockMode = "global" | "individual";
 
 export interface LinksFilesConfig extends LockMeta {
   section_title: string;
+  locked_by: string;
   items: any[];
 }
 
@@ -118,12 +119,14 @@ export type ProfileLayoutType = 1 | 2 | 3;
 
 export interface YoutubeConfig extends LockMeta {
   section_title: string;
+  locked_by: string;
   items: any[];
 }
 
 export interface ContactConfig extends LockMeta {
   connect_title: string;
   contact_title: string;
+  locked_by: string;
 }
 
 export interface LayoutConfig extends LockMeta {
@@ -152,6 +155,7 @@ export interface LayoutConfig extends LockMeta {
   profile_width?: number;
   button_style?: number;
   profile_radius?: number;
+  locked_by: string;
 }
 
 interface ProfileConfig {
@@ -185,6 +189,7 @@ export interface ThemeConfig extends LockMeta {
   card_text: string;
   button_text: string;
   image_text_color: string;
+  locked_by: string;
 }
 
 export interface BannerConfig extends LockMeta {
@@ -192,11 +197,13 @@ export interface BannerConfig extends LockMeta {
   image_url?: string;
   cta_text?: string;
   cta_url?: string;
+  locked_by: string;
 }
 
 export interface ProductsConfig extends LockMeta {
   toggle_price: boolean;
   section_title: string;
+  locked_by: string;
   items: ProductRef[];
 }
 
@@ -206,9 +213,11 @@ export interface MeetingConfig extends LockMeta {
   type: string;
   meeting_url: string;
   button_text: string;
+  locked_by: string;
 }
 export interface CoverConfig extends LockMeta {
   cover_url?: string;
+  locked_by: string;
 }
 
 export interface PhotoGalleryItem {
@@ -222,6 +231,7 @@ export interface PhotoGalleryItem {
 
 export interface PhotoGalleryConfig extends LockMeta {
   section_title: string;
+  locked_by: string;
   items: PhotoGalleryItem[];
 }
 
@@ -237,6 +247,7 @@ interface PublicProfileConfig {
   meeting: MeetingConfig;
 
   social_links: LockMeta & {
+    locked_by: string;
     items: any[];
   };
 
@@ -246,6 +257,7 @@ interface PublicProfileConfig {
   youtube: YoutubeConfig;
   links_files: LinksFilesConfig;
   sections: LockMeta & {
+    locked_by: string;
     items: SectionItem[];
   };
   photo_gallery: PhotoGalleryConfig;
@@ -262,16 +274,35 @@ interface PublicProfileConfig {
   };
 
 }
+function getChangedFields<T extends object>(
+  current: T,
+  original: T
+): Partial<T> {
+  const result: Partial<T> = {};
+
+  Object.keys(current).forEach((key) => {
+    const currVal = (current as any)[key];
+    const origVal = (original as any)[key];
+
+    if (JSON.stringify(currVal) !== JSON.stringify(origVal)) {
+      (result as any)[key] = currVal;
+    }
+  });
+
+  return result;
+}
 
 /* ================= COMPONENT ================= */
 
 export default function VicePublicSetting({
   onLiveChange,
+  username,
   useSelfApi = false,   // 👈 default = admin mode
   showLockable = false,  // 👈 new prop for lockable visibility
   onCropToggle,
 }: {
   onLiveChange?: (cfg: any) => void;
+  username?: string;
   useSelfApi?: boolean;
   showLockable?: boolean;
   onCropToggle?: (open: boolean) => void;
@@ -282,11 +313,12 @@ export default function VicePublicSetting({
   const [resultMessage, setResultMessage] = useState("");
   const [isCropping, setIsCropping] = useState(false);
   const coverFileRef = useRef<File | null>(null);
+  const [originalConfig, setOriginalConfig] = useState<PublicProfileConfig | null>(null);
 
   const { data: publicProfile, loading } = useAppSelector(
     (s) => s.publicProfile
   );
-  const { members } = useAppSelector((s:any) => s.team);
+  const { members } = useAppSelector((s) => s.team);
   const location = useLocation();
 
   const showTeamSection = location.pathname === "/admin/settings";
@@ -328,7 +360,6 @@ export default function VicePublicSetting({
   const [loadingMoreTeam, setLoadingMoreTeam] = useState(false);
   const [selectedUsernames, setSelectedUsernames] = useState<string[]>([]);
 
-  console.log(selectedUsernames)
   const [teamOptions, setTeamOptions] = useState<
     { label: string; value: string }[]
   >([]);
@@ -339,21 +370,59 @@ export default function VicePublicSetting({
   >([]);
 
 
+  // 📄 PAGE CHANGE EFFECT (APPEND)
   useEffect(() => {
+    if (teamPage === 1) return;
+
     dispatch(
       fetchTeam({
         page: teamPage,
         page_size: 10,
-        search: teamSearch || undefined,
+        search: teamSearch?.trim() || undefined,
+        append: true,
       })
-    );
-  }, [dispatch, teamPage, teamSearch]);
+    )
+      .unwrap()
+      .then((r) => {
+        setHasNextTeam(Boolean(r.meta?.has_next));
+      })
+      .finally(() => {
+        setLoadingMoreTeam(false); // ✅ VERY IMPORTANT
+      });
+  }, [teamPage, dispatch]);
+
+  // 📄 PAGE CHANGE EFFECT
+  useEffect(() => {
+    const delay = setTimeout(() => {
+      setTeamPage(1);
+      setLoadingMoreTeam(true); // optional
+
+      dispatch(
+        fetchTeam({
+          page: 1,
+          page_size: 10,
+          search: teamSearch?.trim() || undefined,
+          append: false,
+        })
+      )
+        .unwrap()
+        .then((r) => {
+          setHasNextTeam(Boolean(r.meta?.has_next));
+        })
+        .finally(() => {
+          setLoadingMoreTeam(false); // ✅ reset here too
+        });
+    }, 400);
+
+    return () => clearTimeout(delay);
+  }, [teamSearch, dispatch]);
+
 
   useEffect(() => {
     setTeamOptions((prev) => {
       const map = new Map(prev.map((o) => [o.value, o]));
 
-      members.forEach((m:any) => {
+      members.forEach((m) => {
         if (!m.username) return;
 
         map.set(m.username, {
@@ -420,9 +489,27 @@ export default function VicePublicSetting({
     if (publicProfile) {
       const normalized = normalizeProfile(publicProfile) as PublicProfileConfig;
       setConfig(normalized,);
+      setOriginalConfig(structuredClone(normalized));
     }
   }, [publicProfile]);
 
+  const validateBeforeSave = () => {
+    if (!config?.profile.description?.trim()) {
+      setResultSuccess(false);
+      setResultMessage("Profile description is required.");
+      setResultOpen(true);
+      return false;
+    }
+
+    if (hasInvalidSocialLinks(config.social_links.items)) {
+      setResultSuccess(false);
+      setResultMessage("Please fill all enabled social links.");
+      setResultOpen(true);
+      return false;
+    }
+
+    return true;
+  };
 
   /* ================= CACHE OPTIONS ================= */
 
@@ -510,106 +597,26 @@ export default function VicePublicSetting({
   };
 
   const save = async () => {
-    if (!config) return;
+    if (!config || !originalConfig) return;
 
-    const withLock = <T extends { locked: boolean; lock_mode?: LockMode }>(v: T) =>
-      showLockable
-        ? {
-          ...v,
-          locked: v.locked,
-          lock_mode: v.lock_mode ?? "individual",
-        }
-        : { ...v, locked: v.locked };
+    // 1️⃣ Validate first
+    if (!validateBeforeSave()) return;
 
-    const payload = {
-      profile: config.profile,
-      layout: withLock(config.layout),
-      cover: withLock(config.cover),
-      theme: withLock(config.theme),
+    // 2️⃣ Get only changed sections
+    const changedPayload = getChangedFields(config, originalConfig);
 
-      banner: withLock(config.banner),
-      contact: withLock(config.contact),
-      meeting: withLock(config.meeting),
-
-      social_links: showLockable
-        ? {
-          ...withLock(config.social_links),
-          items: config.social_links.items,
-        }
-        : {
-          items: config.social_links.items,
-        },
-
-
-      photo_gallery: withLock(config.photo_gallery),
-      video_gallery: showLockable
-        ? {
-          section_title: config.video_gallery.section_title,
-          items: config.video_gallery.items,
-          locked: config.video_gallery.locked,
-          lock_mode: config.video_gallery.lock_mode,
-        }
-        : {
-          section_title: config.video_gallery.section_title,
-          items: config.video_gallery.items,
-        },
-
-      products: {
-        ...withLock(config.products),
-        items: config.products.items,
-      },
-
-      // youtube: showLockable
-      //   ? { items: config.youtube.items, locked: config.youtube.locked, lock_mode: config.youtube.lock_mode }
-      //   : { items: config.youtube.items },
-
-      // links_files: showLockable
-      //   ? { items: config.links_files.items, locked: config.links_files.locked, lock_mode: config.links_files.lock_mode }
-      //   : { items: config.links_files.items },
-
-      // sections: showLockable
-      //   ? {
-      //     items: config.sections.items,
-      //     locked: config.sections.locked,
-      //     lock_mode: config.sections.lock_mode,
-      //   }
-      //   : {
-      //     items: config.sections.items,
-      //   },
-      youtube: showLockable
-        ? {
-          ...withLock(config.youtube),
-          items: config.youtube.items,
-        }
-        : {
-          items: config.youtube.items,
-        },
-      links_files: showLockable
-        ? {
-          ...withLock(config.links_files),
-          items: config.links_files.items,
-        }
-        : {
-          items: config.links_files.items,
-        },
-
-      sections: showLockable
-        ? {
-          ...withLock(config.sections),
-          items: config.sections.items,
-        }
-        : {
-          items: config.sections.items,
-        },
-
-    };
+    if (Object.keys(changedPayload).length === 0) {
+      setResultSuccess(true);
+      setResultMessage("No changes detected.");
+      setResultOpen(true);
+      return;
+    }
 
     try {
       const hasTeamUsers =
         Array.isArray(selectedUsernames) &&
         selectedUsernames.length > 0;
 
-      // 🔥 ALWAYS use username API if team usernames exist
       if (!useSelfApi || hasTeamUsers) {
         const usernamesToUpdate = hasTeamUsers
           ? selectedUsernames
@@ -618,35 +625,30 @@ export default function VicePublicSetting({
         await dispatch(
           savePublicProfileByUsername({
             usernames: usernamesToUpdate,
-            config: payload,
+            config: changedPayload, // 👈 ONLY CHANGED
           })
         ).unwrap();
       } else {
-        // Self only
         await dispatch(
-          savePublicProfile({ config: payload })
+          savePublicProfile({
+            config: changedPayload, // 👈 ONLY CHANGED
+          })
         ).unwrap();
       }
 
+      setOriginalConfig(structuredClone(config)); // 👈 reset snapshot
+
       setResultSuccess(true);
-      setResultMessage("Public profile saved successfully.");
+      setResultMessage("Public profile updated successfully.");
       setResultOpen(true);
     } catch (err: any) {
-      let msg = "Something went wrong while saving.";
-
-      if (err?.error) msg = err.error;
-      else if (err?.response?.data?.error) msg = err.response.data.error;
-      else if (err?.message) msg = err.message;
-
-      msg = normalizeApiError(msg);
-
+      let msg = err?.message || "Something went wrong.";
       setResultSuccess(false);
       setResultMessage(msg);
       setResultOpen(true);
     }
-
-
   };
+
   const role = useAppSelector((s) => s.auth.role);
 
   if (loading || !config)
@@ -801,25 +803,11 @@ export default function VicePublicSetting({
 
   /* ================= UI ================= */
   const isLayoutLocked = isReadOnly(config.layout);
-
-  const loadMoreTeams = async () => {
+  const loadMoreTeams = () => {
     if (!hasNextTeam || loadingMoreTeam) return;
 
     setLoadingMoreTeam(true);
-
-    const r = await dispatch(
-      fetchTeam({
-        page: teamPage + 1,
-        page_size: 10,
-        search: teamSearch || undefined,
-        append: true,
-      })
-    ).unwrap();
-
-
-    setTeamPage((p) => p + 1);
-    setHasNextTeam(Boolean(r.meta?.has_next));
-    setLoadingMoreTeam(false);
+    setTeamPage((prev) => prev + 1);
   };
 
   const teamField: FieldConfig[] = [
@@ -861,7 +849,7 @@ export default function VicePublicSetting({
               }}
               onChange={(_, usernames: string[]) =>
                 setSelectedUsernames(usernames)
-              } 
+              }
               errors={formErrors}
               setErrors={setFormErrors}
             />
@@ -875,6 +863,7 @@ export default function VicePublicSetting({
           <LockControl
             value={config.layout}
             role={config.role}
+            currentUser={username}
             onChange={(v) =>
               update({
                 ...config,
@@ -2044,6 +2033,7 @@ export default function VicePublicSetting({
           <LockControl
             value={config.banner}
             role={config.role}
+            currentUser={username}
             onChange={(v) =>
               update({
                 ...config,
@@ -2690,12 +2680,15 @@ export function ColorPickerField({
 export function LockControl({
   value,
   role,
+  currentUser,   // 👈 add this
   onChange,
 }: {
-  value?: LockMeta;
+  value?: LockMeta & { locked_by?: string };
   role?: string;
+  currentUser?: string;   // 👈 logged in username
   onChange: (v: LockMeta) => void;
 }) {
+
   if (!value) return null;
 
   /* ================= STATE ================= */
@@ -2722,9 +2715,25 @@ export function LockControl({
 
   /* ================= HARD LOCK RULE =================
      - vendor_admin → never locked
-     - manager → locked ONLY if it was already locked initially */
+     - manager → locked ONLY if it was already locked initially
+     - vendor_vansh → locked if locked_by contains vendor_vansh
+       BUT editable if locked_by === currentUser
+  */
+
+  const isVendorLock =
+    value.locked &&
+    value.locked_by?.includes("vendor");
+
+  const isOwner =
+    currentUser &&
+    value.locked_by === currentUser;
+
   const isHardLocked =
-    role === "manager" && wasLockedRef.current;
+    !isOwner && (
+      (role === "manager" && wasLockedRef.current) ||
+      isVendorLock
+    );
+
 
   const active =
     modes.find((m) => m.id === currentMode) ?? modes[0];
