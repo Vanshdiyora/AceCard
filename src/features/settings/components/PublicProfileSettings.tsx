@@ -61,12 +61,13 @@ export default function PublicProfileSettings() {
 
         <TeamMemberPublicProfileTab
           key={username}
+          username={username}
           useSelfApi={true}
           showLockable={true}
           onLiveChange={(cfg) => {
             if (!data) return;
             setLiveConfig(denormalizeProfile(cfg, data));
-          }}   // 🔥 connect
+          }}
         />
       </div>
     </div>

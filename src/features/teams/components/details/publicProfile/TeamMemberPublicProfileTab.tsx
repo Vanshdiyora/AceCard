@@ -105,6 +105,7 @@ export type LockMode = "global" | "individual";
 
 export interface LinksFilesConfig extends LockMeta {
   section_title: string;
+  locked_by: string;
   items: any[];
 }
 
@@ -117,12 +118,14 @@ export type ProfileLayoutType = 1 | 2 | 3;
 
 export interface YoutubeConfig extends LockMeta {
   section_title: string;
+  locked_by: string;
   items: any[];
 }
 
 export interface ContactConfig extends LockMeta {
   connect_title: string;
   contact_title: string;
+  locked_by: string;
 }
 
 export interface LayoutConfig extends LockMeta {
@@ -151,6 +154,7 @@ export interface LayoutConfig extends LockMeta {
   profile_width?: number;
   button_style?: number;
   profile_radius?: number;
+  locked_by: string;
 }
 
 interface ProfileConfig {
@@ -184,6 +188,7 @@ export interface ThemeConfig extends LockMeta {
   card_text: string;
   button_text: string;
   image_text_color: string;
+  locked_by: string;
 }
 
 export interface BannerConfig extends LockMeta {
@@ -191,11 +196,13 @@ export interface BannerConfig extends LockMeta {
   image_url?: string;
   cta_text?: string;
   cta_url?: string;
+  locked_by: string;
 }
 
 export interface ProductsConfig extends LockMeta {
   toggle_price: boolean;
   section_title: string;
+  locked_by: string;
   items: ProductRef[];
 }
 
@@ -205,9 +212,11 @@ export interface MeetingConfig extends LockMeta {
   type: string;
   meeting_url: string;
   button_text: string;
+  locked_by: string;
 }
 export interface CoverConfig extends LockMeta {
   cover_url?: string;
+  locked_by: string;
 }
 
 export interface PhotoGalleryItem {
@@ -221,6 +230,7 @@ export interface PhotoGalleryItem {
 
 export interface PhotoGalleryConfig extends LockMeta {
   section_title: string;
+  locked_by: string;
   items: PhotoGalleryItem[];
 }
 
@@ -236,6 +246,7 @@ interface PublicProfileConfig {
   meeting: MeetingConfig;
 
   social_links: LockMeta & {
+    locked_by: string;
     items: any[];
   };
 
@@ -245,6 +256,7 @@ interface PublicProfileConfig {
   youtube: YoutubeConfig;
   links_files: LinksFilesConfig;
   sections: LockMeta & {
+    locked_by: string;
     items: SectionItem[];
   };
   photo_gallery: PhotoGalleryConfig;
@@ -283,11 +295,13 @@ function getChangedFields<T extends object>(
 
 export default function TeamMemberPublicProfileTab({
   onLiveChange,
+  username,
   useSelfApi = false,   // 👈 default = admin mode
   showLockable = false,  // 👈 new prop for lockable visibility
   onCropToggle,
 }: {
   onLiveChange?: (cfg: any) => void;
+  username?: string;
   useSelfApi?: boolean;
   showLockable?: boolean;
   onCropToggle?: (open: boolean) => void;
@@ -345,7 +359,6 @@ export default function TeamMemberPublicProfileTab({
   const [loadingMoreTeam, setLoadingMoreTeam] = useState(false);
   const [selectedUsernames, setSelectedUsernames] = useState<string[]>([]);
 
-  console.log(selectedUsernames)
   const [teamOptions, setTeamOptions] = useState<
     { label: string; value: string }[]
   >([]);
@@ -379,29 +392,29 @@ export default function TeamMemberPublicProfileTab({
 
   // 📄 PAGE CHANGE EFFECT
   useEffect(() => {
-  const delay = setTimeout(() => {
-    setTeamPage(1);
-    setLoadingMoreTeam(true); // optional
+    const delay = setTimeout(() => {
+      setTeamPage(1);
+      setLoadingMoreTeam(true); // optional
 
-    dispatch(
-      fetchTeam({
-        page: 1,
-        page_size: 10,
-        search: teamSearch?.trim() || undefined,
-        append: false,
-      })
-    )
-      .unwrap()
-      .then((r) => {
-        setHasNextTeam(Boolean(r.meta?.has_next));
-      })
-      .finally(() => {
-        setLoadingMoreTeam(false); // ✅ reset here too
-      });
-  }, 400);
+      dispatch(
+        fetchTeam({
+          page: 1,
+          page_size: 10,
+          search: teamSearch?.trim() || undefined,
+          append: false,
+        })
+      )
+        .unwrap()
+        .then((r) => {
+          setHasNextTeam(Boolean(r.meta?.has_next));
+        })
+        .finally(() => {
+          setLoadingMoreTeam(false); // ✅ reset here too
+        });
+    }, 400);
 
-  return () => clearTimeout(delay);
-}, [teamSearch, dispatch]);
+    return () => clearTimeout(delay);
+  }, [teamSearch, dispatch]);
 
 
   useEffect(() => {
@@ -849,6 +862,7 @@ export default function TeamMemberPublicProfileTab({
           <LockControl
             value={config.layout}
             role={config.role}
+            currentUser={username}
             onChange={(v) =>
               update({
                 ...config,
@@ -2018,6 +2032,7 @@ export default function TeamMemberPublicProfileTab({
           <LockControl
             value={config.banner}
             role={config.role}
+            currentUser={username}
             onChange={(v) =>
               update({
                 ...config,
@@ -2664,12 +2679,15 @@ export function ColorPickerField({
 export function LockControl({
   value,
   role,
+  currentUser,   // 👈 add this
   onChange,
 }: {
-  value?: LockMeta;
+  value?: LockMeta & { locked_by?: string };
   role?: string;
+  currentUser?: string;   // 👈 logged in username
   onChange: (v: LockMeta) => void;
 }) {
+
   if (!value) return null;
 
   /* ================= STATE ================= */
@@ -2696,9 +2714,25 @@ export function LockControl({
 
   /* ================= HARD LOCK RULE =================
      - vendor_admin → never locked
-     - manager → locked ONLY if it was already locked initially */
+     - manager → locked ONLY if it was already locked initially
+     - vendor_vansh → locked if locked_by contains vendor_vansh
+       BUT editable if locked_by === currentUser
+  */
+
+  const isVendorLock =
+    value.locked &&
+    value.locked_by?.includes("vendor");
+
+  const isOwner =
+    currentUser &&
+    value.locked_by === currentUser;
+
   const isHardLocked =
-    role === "manager" && wasLockedRef.current;
+    !isOwner && (
+      (role === "manager" && wasLockedRef.current) ||
+      isVendorLock
+    );
+
 
   const active =
     modes.find((m) => m.id === currentMode) ?? modes[0];

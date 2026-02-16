@@ -21,13 +21,14 @@ export function normalizeProfile(api: any) {
     cover: {
       locked: Boolean(cfg.cover?.locked),
       lock_mode: cfg.cover?.lock_mode ?? undefined,
+      locked_by: cfg?.cover?.locked_by ?? "",
       cover_url: cfg.cover?.cover_url ?? "",
     },
 
     contact: {
       locked: Boolean(cfg.contact?.locked),
       lock_mode: cfg.contact?.lock_mode ?? undefined,
-
+      locked_by: cfg?.contact?.locked_by ?? "",
       connect_title: cfg.contact?.connect_title || "Connect",
       contact_title: cfg.contact?.contact_title || "Save Contact",
     },
@@ -36,7 +37,7 @@ export function normalizeProfile(api: any) {
     layout: {
       locked: Boolean(cfg.layout?.locked),
       lock_mode: cfg.layout?.lock_mode ?? undefined,
-
+      locked_by: cfg?.layout?.locked_by ?? "",
       profile_type: cfg.layout?.profile_type ?? 3,
       is_fade: Boolean(cfg.layout?.is_fade),
       font: cfg.layout?.font || "Inter",
@@ -70,7 +71,7 @@ export function normalizeProfile(api: any) {
     theme: {
       locked: Boolean(cfg.theme?.locked),
       lock_mode: cfg.theme?.lock_mode ?? undefined,
-
+      locked_by: cfg?.theme?.locked_by ?? "",
       card_background: cfg.theme?.card_background ?? "#BB3500",
       button_color: cfg.theme?.button_color ?? "#251F31",
       card_text: cfg.theme?.card_text ?? "#9F9F9F",
@@ -82,7 +83,7 @@ export function normalizeProfile(api: any) {
     banner: {
       locked: Boolean(cfg.banner?.locked),
       lock_mode: cfg.banner?.lock_mode ?? undefined,
-
+      locked_by: cfg?.banner?.locked_by ?? "",
       enabled: Boolean(cfg.banner?.enabled),
       image_url: cfg.banner?.image_url ?? "",
       cta_text: cfg.banner?.cta_text ?? "",
@@ -96,7 +97,7 @@ export function normalizeProfile(api: any) {
     social_links: {
       locked: Boolean(cfg.social_links?.locked),
       lock_mode: cfg.social_links?.lock_mode ?? undefined,
-
+      locked_by: cfg?.social_links?.locked_by ?? "",
       items: Array.isArray(cfg.social_links?.items)
         ? cfg.social_links.items
         : [],
@@ -107,7 +108,7 @@ export function normalizeProfile(api: any) {
     products: {
       locked: Boolean(cfg.products?.locked),
       lock_mode: cfg.products?.lock_mode ?? undefined,
-
+      locked_by: cfg?.products?.locked_by ?? "",
       toggle_price: Boolean(cfg.products?.toggle_price),
       section_title: cfg.products?.section_title || "Products",
 
@@ -140,7 +141,7 @@ export function normalizeProfile(api: any) {
     sections: {
       locked: Boolean(cfg.sections?.locked),
       lock_mode: cfg.sections?.lock_mode ?? undefined,
-
+      locked_by: cfg?.sections?.locked_by ?? "",
       items: Array.isArray(cfg.sections?.items)
         ? cfg.sections.items.map((s: any, i: number) => ({
           id: s.id,
@@ -160,7 +161,7 @@ const normalizeMeeting = (api: any) => {
   return {
     locked: Boolean(m.locked),
     lock_mode: m.lock_mode ?? undefined,
-
+    locked_by: m?.locked_by ?? "",
     enabled: Boolean(m.enabled),
     type: m.type ?? "",
     meeting_url: m.meeting_url ?? "",
@@ -173,6 +174,7 @@ const normalizeYoutube = (api: any) => {
   return {
     locked: Boolean(y.locked),
     lock_mode: y.lock_mode ?? undefined,
+    locked_by: y?.locked_by ?? "",
     section_title: y?.section_title ?? "Video Gallery",
     items: Array.isArray(y.items)
       ? y.items.map((v: any, i: number) => ({
@@ -190,6 +192,7 @@ const normalizeLinksFiles = (api: any) => {
   return {
     locked: Boolean(lf.locked),
     lock_mode: lf.lock_mode ?? undefined,
+    locked_by: lf?.locked_by ?? "",
     section_title: lf?.section_title ?? "Links and Files",
     items: Array.isArray(lf.items)
       ? lf.items.map((l: any, i: number) => ({
@@ -209,6 +212,7 @@ const normalizePhotoGallery = (api: any) => {
   return {
     locked: Boolean(g.locked),
     lock_mode: g.lock_mode ?? undefined,
+    locked_by: g?.locked_by ?? "",
     section_title: g?.section_title || "Photo Gallery",
 
     items: Array.isArray(g.items)
@@ -250,6 +254,8 @@ export function denormalizeProfile(
   cfg: ReturnType<typeof normalizeProfile>,
   baseApi: any
 ) {
+  const baseConfig = baseApi.configuration ?? {};
+
   return {
     ...baseApi,
     role: cfg.role,
@@ -259,25 +265,27 @@ export function denormalizeProfile(
     custom_job_role: cfg.profile.custom_job_role,
 
     configuration: {
-      ...baseApi.configuration,
+      ...baseConfig,
 
       /* ================= PROFILE ================= */
       profile: {
-        ...baseApi.configuration?.profile,
+        ...baseConfig.profile,
         ...cfg.profile,
       },
 
       /* ================= COVER ================= */
       cover: {
         locked: cfg.cover.locked,
-        lock_mode: cfg.cover.lock_mode,
+        lock_mode: cfg.cover.lock_mode ?? null,
+        locked_by: cfg.cover.locked_by,
         cover_url: cfg.cover.cover_url,
       },
 
       /* ================= CONTACT ================= */
       contact: {
         locked: cfg.contact.locked,
-        lock_mode: cfg.contact.lock_mode,
+        lock_mode: cfg.contact.lock_mode ?? null,
+        locked_by: cfg.contact.locked_by,
         connect_title: cfg.contact.connect_title,
         contact_title: cfg.contact.contact_title,
       },
@@ -285,7 +293,8 @@ export function denormalizeProfile(
       /* ================= LAYOUT ================= */
       layout: {
         locked: cfg.layout.locked,
-        lock_mode: cfg.layout.lock_mode,
+        lock_mode: cfg.layout.lock_mode ?? null,
+        locked_by: cfg.layout.locked_by,
 
         profile_type: cfg.layout.profile_type,
         is_fade: cfg.layout.is_fade,
@@ -314,7 +323,8 @@ export function denormalizeProfile(
       /* ================= THEME ================= */
       theme: {
         locked: cfg.theme.locked,
-        lock_mode: cfg.theme.lock_mode,
+        lock_mode: cfg.theme.lock_mode ?? null,
+        locked_by: cfg.theme.locked_by,
 
         card_background: cfg.theme.card_background,
         button_color: cfg.theme.button_color,
@@ -326,7 +336,8 @@ export function denormalizeProfile(
       /* ================= BANNER ================= */
       banner: {
         locked: cfg.banner.locked,
-        lock_mode: cfg.banner.lock_mode,
+        lock_mode: cfg.banner.lock_mode ?? null,
+        locked_by: cfg.banner.locked_by,
 
         enabled: cfg.banner.enabled,
         image_url: cfg.banner.image_url,
@@ -337,7 +348,8 @@ export function denormalizeProfile(
       /* ================= MEETING ================= */
       meeting: {
         locked: cfg.meeting.locked,
-        lock_mode: cfg.meeting.lock_mode,
+        lock_mode: cfg.meeting.lock_mode ?? null,
+        locked_by: cfg.meeting.locked_by,
 
         enabled: cfg.meeting.enabled,
         type: cfg.meeting.type,
@@ -348,14 +360,16 @@ export function denormalizeProfile(
       /* ================= SOCIAL LINKS ================= */
       social_links: {
         locked: cfg.social_links.locked,
-        lock_mode: cfg.social_links.lock_mode,
+        lock_mode: cfg.social_links.lock_mode ?? null,
+        locked_by: cfg.social_links.locked_by,
         items: cfg.social_links.items,
       },
 
       /* ================= PRODUCTS ================= */
       products: {
         locked: cfg.products.locked,
-        lock_mode: cfg.products.lock_mode,
+        lock_mode: cfg.products.lock_mode ?? null,
+        locked_by: cfg.products.locked_by,
 
         toggle_price: cfg.products.toggle_price,
         section_title: cfg.products.section_title,
@@ -373,7 +387,8 @@ export function denormalizeProfile(
       /* ================= YOUTUBE ================= */
       youtube: {
         locked: cfg.youtube.locked,
-        lock_mode: cfg.youtube.lock_mode,
+        lock_mode: cfg.youtube.lock_mode ?? null,
+        locked_by: cfg.youtube.locked_by,
         section_title: cfg.youtube.section_title,
 
         items: cfg.youtube.items.map((v: any) => ({
@@ -387,7 +402,8 @@ export function denormalizeProfile(
       /* ================= LINKS & FILES ================= */
       links_files: {
         locked: cfg.links_files.locked,
-        lock_mode: cfg.links_files.lock_mode,
+        lock_mode: cfg.links_files.lock_mode ?? null,
+        locked_by: cfg.links_files.locked_by,
         section_title: cfg.links_files.section_title,
 
         items: cfg.links_files.items.map((l: any) => ({
@@ -403,7 +419,8 @@ export function denormalizeProfile(
       /* ================= PHOTO GALLERY ================= */
       photo_gallery: {
         locked: cfg.photo_gallery.locked,
-        lock_mode: cfg.photo_gallery.lock_mode,
+        lock_mode: cfg.photo_gallery.lock_mode ?? null,
+        locked_by: cfg.photo_gallery.locked_by,
         section_title: cfg.photo_gallery.section_title,
 
         items: cfg.photo_gallery.items.map((p: any) => ({
@@ -420,7 +437,7 @@ export function denormalizeProfile(
       /* ================= VIDEO GALLERY ================= */
       video_gallery: {
         locked: cfg.video_gallery.locked,
-        lock_mode: cfg.video_gallery.lock_mode,
+        lock_mode: cfg.video_gallery.lock_mode ?? null,
         section_title: cfg.video_gallery.section_title,
 
         items: cfg.video_gallery.items.map((v: any) => ({
@@ -436,7 +453,8 @@ export function denormalizeProfile(
       /* ================= SECTIONS ================= */
       sections: {
         locked: cfg.sections.locked,
-        lock_mode: cfg.sections.lock_mode,
+        lock_mode: cfg.sections.lock_mode ?? null,
+        locked_by: cfg.sections.locked_by,
 
         items: cfg.sections.items.map((s: any) => ({
           id: s.id,
