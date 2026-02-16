@@ -97,13 +97,13 @@ const FollowupItem = ({
       </div>
 
       {/* Meta */}
-      <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-xs text-gray-500">
+      <div className="grid grid-cols-1 gap-x-6 gap-y-1 text-sm text-gray-500">
         {meeting.duration_min && (
           <div>⏱ {meeting.duration_min} min</div>
         )}
-        {meeting.location && (
+        {/* {meeting.location && (
           <div>📍 {meeting.location}</div>
-        )}
+        )} */}
         <div>
           🗓 Created on{" "}
           {new Date(meeting.created_at).toLocaleDateString("en-IN")}
@@ -111,11 +111,11 @@ const FollowupItem = ({
       </div>
 
       {/* Notes */}
-      {meeting.notes && (
+      {/* {meeting.notes && (
         <div className="text-xs text-gray-600 pt-1 border-t">
           {meeting.notes}
         </div>
-      )}
+      )} */}
     </div>
   );
 };

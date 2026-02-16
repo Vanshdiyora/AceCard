@@ -483,7 +483,7 @@ export default function TeamMemberDetailsPage() {
         <div className="relative h-full flex items-start justify-center px-4 mt-8">
 
           {/* Optional label (helps hierarchy a LOT) */}
-          <div className="absolute -top-8 text-xs text-gray-400 bg-gray-50 tracking-wide border border-[#D5d5d5] rounded-xl px-2 py-1">
+          <div className="absolute -top-8 text-xs text-gray-400 bg-gray-50 tracking-wide border border-[#D5d5d5] rounded-xl px-2 py-1 shadow-md hover:shadow-lg transition-shadow duration-200">
             <a href={`${window.location.origin}/profile/${member.username}`} target="_blank" rel="noopener noreferrer">
               Live Preview
             </a>

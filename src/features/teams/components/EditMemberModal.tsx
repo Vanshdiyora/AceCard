@@ -13,6 +13,8 @@ export default function EditMemberModal({
   onSuccess, // 👈 NEW
   currentRole,
   managers,
+    managersMeta,
+  loadMoreManagers,
 }: {
   open: boolean;
   member: any;
@@ -21,6 +23,9 @@ export default function EditMemberModal({
   onSuccess?: (updated: any) => void; // 👈 callback
   currentRole: "vendor_admin" | "manager" | "sales_rep";
   managers: { id: number; name: string }[];
+managersMeta?: any;              // ✅ NEW
+loadMoreManagers?: () => void;   // ✅ NEW
+
 }) {
 
   const [form, setForm] = useState<any>(null);
@@ -116,16 +121,21 @@ export default function EditMemberModal({
       : []),
     ...(currentRole === "vendor_admin" && form.role === "sales_rep"
       ? [
-        {
-          name: "manager_id",
-          label: "Manager",
-          type: "select" as const,
-          required: true,
-          options: managers.map((m) => ({
-            label: m.name,
-            value: m.id,
-          })),
-        },
+       {
+  name: "manager_id",
+  label: "Manager",
+  type: "select" as const,
+  required: true,
+  options: managers.map((m) => ({
+    label: m.name,
+    value: m.id,
+  })),
+  hasMore: managersMeta
+    ? managersMeta.page < managersMeta.total_pages
+    : false,
+  onLoadMore: loadMoreManagers,
+}
+
       ]
       : []),
   ];
@@ -163,21 +173,27 @@ export default function EditMemberModal({
   /* ---------- UI ---------- */
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-      <div className="bg-white w-[400px] rounded-xl shadow-lg">
+      <div className="bg-white w-[400px] max-h-[90vh] rounded-xl shadow-lg flex flex-col">
+
+        {/* Header */}
         <div className="p-5 border-b">
           <h2 className="text-xl font-semibold">
             Edit Member
           </h2>
         </div>
 
-        <DynamicForm
-          fields={fields}
-          form={form}
-          onChange={update}
-          errors={errors}
-          setErrors={setErrors}
-        />
+        {/* Scrollable Form Area */}
+        <div className="overflow-y-auto px-5 py-4 flex-1">
+          <DynamicForm
+            fields={fields}
+            form={form}
+            onChange={update}
+            errors={errors}
+            setErrors={setErrors}
+          />
+        </div>
 
+        {/* Footer */}
         <div className="p-4 border-t flex justify-end gap-2">
           <button
             onClick={onClose}
@@ -192,7 +208,9 @@ export default function EditMemberModal({
             Save
           </button>
         </div>
+
       </div>
     </div>
   );
+
 }

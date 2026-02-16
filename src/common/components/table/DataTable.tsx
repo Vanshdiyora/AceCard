@@ -101,7 +101,7 @@ export default function DataTable<T>({
       {/* Header */}
       <div
         className="grid text-xs font-semibold uppercase tracking-wide text-gray-500 px-4 items-center"
-        style={{ gridTemplateColumns: gridTemplate, columnGap: "5px" }}
+        style={{ gridTemplateColumns: gridTemplate, columnGap: "15px" }}
       >
         {columns.map((c, i) => (
           <div key={i} className="py-2 truncate">
@@ -128,7 +128,7 @@ export default function DataTable<T>({
             key={i}
             onClick={() => onRowClick?.(row)}
             className="grid bg-white border rounded-2xl px-4 py-3 hover:bg-gray-50 items-center min-h-[60px]"
-            style={{ gridTemplateColumns: gridTemplate, columnGap: "5px" }}
+            style={{ gridTemplateColumns: gridTemplate, columnGap: "15px" }}
           >
             {columns.map((c, j) => (
               <div key={j} className="truncate flex items-center">

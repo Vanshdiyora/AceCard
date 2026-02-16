@@ -261,17 +261,19 @@ const teamSlice = createSlice({
           state.meta.salesReps = action.payload.meta;
         }
 
-        /* ---------- COMBINED STORAGE (ONLY WHEN NO SEARCH) ---------- */
-        if (!action.meta.arg?.search) {
+        /* ---------- MAIN TABLE STORAGE (ONLY WHEN NO ROLE FILTER) ---------- */
+        if (!role) {
           const ids = new Set(state.members.map(m => m.id));
 
           const newOnes = incoming.filter(m => !ids.has(m.id));
+
           state.members = append
             ? [...state.members, ...newOnes]
             : incoming;
 
           state.meta.members = action.payload.meta;
         }
+
       })
       .addCase(fetchTeam.rejected, (state, action) => {
         state.loading = false;

@@ -47,6 +47,10 @@ export interface FieldConfig {
 
   hideValues?: boolean; // ✅ ADD THIS LINE
   upload?: (file: File) => Promise<string>;
+
+  hasMore?: boolean;          // ✅ ADD
+  onLoadMore?: () => void;    // ✅ ADD
+
 }
 
 
@@ -195,14 +199,15 @@ export default function DynamicForm({
               </>
             )}
 
-            {/* ---------- SELECT ---------- */}
             {field.type === "select" && (
               <>
                 <CustomSelect
                   value={form[field.name]}
                   options={field.options || []}
                   placeholder={`Select ${field.label}`}
-                  disabled={field.disabled}
+                  disabled={disabled || field.disabled}
+                  hasMore={field.hasMore}              // ✅ NEW
+                  onLoadMore={field.onLoadMore}        // ✅ NEW
                   onChange={(v) => handleChange(field, v)}
                 />
 
@@ -211,6 +216,7 @@ export default function DynamicForm({
                 )}
               </>
             )}
+
 
             {/* ---------- MULTISELECT ---------- */}
             {field.type === "multiselect" && (

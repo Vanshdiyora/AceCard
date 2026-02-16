@@ -180,10 +180,10 @@ export default function VendorsPage() {
       ),
     },
 
-    { header: "Vendor Email", accessor: "primary_email", width: "2fr" },
+    // { header: "Vendor Email", accessor: "primary_email", width: "2fr" },
     { header: "Vendor Phone", accessor: "primary_phone", width: "1.5fr" },
     { header: "POC Name", accessor: "vendor_poc_name", width: "1.5fr" },
-    { header: "Vendor GST", width: "1.5fr", render: (v) => v.gst ?? "—" },
+    // { header: "Vendor GST", width: "1.5fr", render: (v) => v.gst ?? "—" },
     { header: "Seats", accessor: "seats_appointed", align: "left", width: "1fr" },
     {
       header: "Status",

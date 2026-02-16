@@ -89,10 +89,36 @@ export default function TeamPage() {
     setResultOpen(true);
   };
 
-  const managers = useMemo(
-    () => members.filter((m) => m.role === "manager"),
-    [members]
-  );
+  const managers = useAppSelector((s) => s.team.managers);
+  const managersMeta = useAppSelector((s) => s.team.meta.managers);
+  useEffect(() => {
+    if (!addOpen && !editOpen) return;
+
+    dispatch(
+      fetchTeam({
+        role: "manager",
+        page: 1,
+        page_size: 10,
+      })
+    );
+  }, [addOpen, editOpen, dispatch]);
+
+  const loadMoreManagers = () => {
+    if (!managersMeta) return;
+
+    const { page, total_pages } = managersMeta;
+
+    if (page >= total_pages) return;
+
+    dispatch(
+      fetchTeam({
+        role: "manager",
+        page: page + 1,
+        page_size: 10,
+        append: true,
+      })
+    );
+  };
 
   /* ======================================================
      ✅ NEW: MEMOIZED QUERY PARAMS (SINGLE SOURCE OF TRUTH)
@@ -154,6 +180,36 @@ export default function TeamPage() {
   useEffect(() => {
     if (searchParams.get("open") === "create") setAddOpen(true);
   }, [searchParams]);
+  /* ======================================================
+     🔒 HARD SCROLL LOCK WHEN MODAL OPEN
+  ====================================================== */
+
+  useEffect(() => {
+    const isModalOpen = addOpen || editOpen || permOpen;
+
+    if (!isModalOpen) {
+      document.body.style.overflow = "";
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.width = "";
+      return;
+    }
+
+    const scrollY = window.scrollY;
+
+    document.body.style.position = "fixed";
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.width = "100%";
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.width = "";
+      document.body.style.overflow = "";
+      window.scrollTo(0, scrollY);
+    };
+  }, [addOpen, editOpen, permOpen]);
 
   /* ======================================================
      TABLE
@@ -169,8 +225,8 @@ export default function TeamPage() {
       render: (m) => (
         <span
           className={`px-2 py-1 rounded text-xs ${m.status === "active"
-              ? "bg-green-100 text-green-700"
-              : "bg-red-100 text-red-700"
+            ? "bg-green-100 text-green-700"
+            : "bg-red-100 text-red-700"
             }`}
         >
           {m.status.charAt(0).toUpperCase() + m.status.slice(1)}
@@ -347,6 +403,8 @@ export default function TeamPage() {
         currentRole={currentRole}
         currentUserId={currentUserId}
         managers={managers}
+        managersMeta={managersMeta}
+        loadMoreManagers={loadMoreManagers}
         onClose={() => {
           setAddOpen(false);
           searchParams.delete("open");
@@ -370,6 +428,8 @@ export default function TeamPage() {
         open={editOpen}
         member={selected}
         currentRole={currentRole}
+        managersMeta={managersMeta}
+        loadMoreManagers={loadMoreManagers}
         managers={managers}
         onClose={() => {
           setEditOpen(false);

@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useAppDispatch, useAppSelector } from "../../../../app/hooks";
 import { fetchLeadNotes } from "../../slice";
 import BrandLoader from "../../../../common/ui/BrandLoader";
+import { Clock } from "lucide-react";
 
 interface Props {
   leadId: number;
@@ -73,7 +74,8 @@ const NoteCard = ({
       <span className="text-sm font-semibold text-gray-900">
         {authorName}
       </span>
-      <span className="text-xs text-gray-400">
+      <span className="flex items-center gap-1 text-sm text-gray-600">
+        <Clock size={12} />
         {time}
       </span>
     </div>

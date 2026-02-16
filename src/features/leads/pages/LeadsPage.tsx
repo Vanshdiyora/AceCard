@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../../app/hooks";
 
@@ -103,24 +103,49 @@ export default function LeadsPage() {
     setPage(1);
   }, [search, activeTab, sortBy, sortOrder]);
 
+  const stageColorMap = useMemo(() => {
+    if (!leadConfig?.customFields) return {};
+
+    const stageField = leadConfig.customFields.find(
+      (f: any) => f.fieldId === "stage"
+    );
+
+    if (!stageField?.options) return {};
+
+    return stageField.options.reduce((acc: any, option: any) => {
+      const key = String(option.value).trim().toLowerCase();
+      acc[key] = option.color;
+      return acc;
+    }, {});
+  }, [leadConfig]);
+
+
 
   /* ---------- Columns ---------- */
   const columns: Column<Lead>[] = [
     { header: "Name", render: (l) => l.lead_name },
     { header: "Company", render: (l) => l.company ?? "—" },
     { header: "Owner", render: (l) => l.assigned_rep_name ?? "—" },
-   {
-  header: "Deal Amount",
-  render: (l) =>
-    l.deal_amount ? formatRupees(l.deal_amount) : "—",
-},
+    {
+      header: "Deal Amount",
+      render: (l) =>
+        l.deal_amount ? formatRupees(l.deal_amount) : "—",
+    },
     {
       header: "Stage",
-      render: (l) => (
-        <span className="px-2 py-1 rounded bg-gray-100 text-xs">
-          {l.stage}
-        </span>
-      ),
+      render: (l) => {
+        const color = stageColorMap[String(l.stage).toLowerCase()];
+        return (
+          <span
+            className={`inline-flex items-center px-3 py-1 text-xs font-medium rounded whitespace-nowrap  ${color
+              ? `${color.bg} ${color.text} ${color.border}`
+              : "bg-gray-100 text-gray-600 border-gray-200"
+              }`}
+          >
+            {l.stage}
+          </span>
+        );
+      },
     },
     {
       header: "Updated",

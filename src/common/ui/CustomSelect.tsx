@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { ChevronDown } from "lucide-react";
 import { createPortal } from "react-dom";
 
@@ -13,6 +13,8 @@ interface CustomSelectProps {
   onChange: (value: any) => void;
   placeholder?: string;
   disabled?: boolean;
+  hasMore?: boolean;              // ✅ for infinite scroll
+  onLoadMore?: () => void;        // ✅ for infinite scroll
 }
 
 export default function CustomSelect({
@@ -21,14 +23,20 @@ export default function CustomSelect({
   onChange,
   placeholder = "Select",
   disabled,
+  hasMore = false,
+  onLoadMore,
 }: CustomSelectProps) {
   const [open, setOpen] = useState(false);
+  const [dropdownStyle, setDropdownStyle] = useState<any>({});
 
   const triggerRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const selected = options.find((o) => o.value === value);
 
+  /* ==============================
+     OUTSIDE CLICK
+  ============================== */
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       const target = e.target as Node;
@@ -36,9 +44,8 @@ export default function CustomSelect({
       if (
         triggerRef.current?.contains(target) ||
         dropdownRef.current?.contains(target)
-      ) {
+      )
         return;
-      }
 
       setOpen(false);
     };
@@ -48,7 +55,66 @@ export default function CustomSelect({
       document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const rect = triggerRef.current?.getBoundingClientRect();
+  /* ==============================
+     VIEWPORT POSITIONING
+  ============================== */
+/* ==============================
+   VIEWPORT POSITIONING (FIXED)
+============================== */
+/* ==============================
+   PERFECT VIEWPORT POSITIONING
+============================== */
+useEffect(() => {
+  if (!open || !triggerRef.current) return;
+
+  const rect = triggerRef.current.getBoundingClientRect();
+  const spaceBelow = window.innerHeight - rect.bottom;
+  const spaceAbove = rect.top;
+
+  const maxHeight = 240;
+
+  // Temporarily set below to measure natural height
+  let calculatedTop = rect.bottom + 4;
+  let calculatedMaxHeight = Math.min(spaceBelow - 8, maxHeight);
+
+  // Wait for next paint so dropdownRef exists
+  requestAnimationFrame(() => {
+    const dropdownHeight =
+      dropdownRef.current?.offsetHeight || maxHeight;
+
+    const shouldOpenUp =
+      spaceBelow < dropdownHeight && spaceAbove > spaceBelow;
+
+    if (shouldOpenUp) {
+      calculatedMaxHeight = Math.min(spaceAbove - 8, maxHeight);
+      calculatedTop = rect.top - dropdownHeight - 4;
+    }
+
+    setDropdownStyle({
+      position: "fixed",
+      left: rect.left,
+      width: rect.width,
+      top: calculatedTop,
+      maxHeight: calculatedMaxHeight,
+      zIndex: 9999,
+    });
+  });
+}, [open, options]);
+
+
+  /* ==============================
+     INFINITE SCROLL
+  ============================== */
+  const handleScroll = useCallback(() => {
+    if (!dropdownRef.current || !hasMore || !onLoadMore) return;
+
+    const { scrollTop, scrollHeight, clientHeight } =
+      dropdownRef.current;
+
+    if (scrollTop + clientHeight >= scrollHeight - 20) {
+      onLoadMore();
+    }
+  }, [hasMore, onLoadMore]);
 
   return (
     <>
@@ -58,16 +124,7 @@ export default function CustomSelect({
           type="button"
           disabled={disabled}
           onClick={() => setOpen((v) => !v)}
-          className="
-            w-full flex items-center justify-between
-            border border-gray-300 rounded-lg
-            px-3 py-2 text-sm
-            bg-white text-left
-            focus:outline-none focus-visible:ring-2
-            focus-visible:ring-purple-500
-            focus-visible:ring-offset-2
-            disabled:bg-gray-100 disabled:cursor-not-allowed
-          "
+          className="w-full flex items-center justify-between border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
         >
           <span className={selected ? "" : "text-gray-400"}>
             {selected?.label || placeholder}
@@ -76,22 +133,14 @@ export default function CustomSelect({
         </button>
       </div>
 
-      {/* Dropdown (PORTAL) */}
+      {/* Dropdown */}
       {open &&
-        rect &&
         createPortal(
           <div
             ref={dropdownRef}
-            className="
-              fixed z-[9999]
-              rounded-lg border bg-white shadow-md
-              max-h-60 overflow-y-auto
-            "
-            style={{
-              top: rect.bottom + 4,
-              left: rect.left,
-              width: rect.width,
-            }}
+            style={dropdownStyle}
+            onScroll={handleScroll}
+            className="rounded-lg border bg-white shadow-md overflow-y-auto"
           >
             {options.map((opt) => (
               <div
@@ -100,19 +149,21 @@ export default function CustomSelect({
                   onChange(opt.value);
                   setOpen(false);
                 }}
-                className={`
-                  px-3 py-2 text-sm cursor-pointer
-                  hover:bg-gray-200
-                  ${
-                    opt.value === value
-                      ? "bg-gray-300 font-medium"
-                      : ""
-                  }
-                `}
+                className={`px-3 py-2 text-sm cursor-pointer hover:bg-gray-200 ${
+                  opt.value === value
+                    ? "bg-gray-300 font-medium"
+                    : ""
+                }`}
               >
                 {opt.label}
               </div>
             ))}
+
+            {hasMore && (
+              <div className="px-3 py-2 text-xs text-gray-400 text-center">
+                Loading more...
+              </div>
+            )}
           </div>,
           document.body
         )}
