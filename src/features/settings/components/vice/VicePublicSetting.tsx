@@ -28,6 +28,7 @@ import PhotoGallerySection from "./sections/PhotoGallerySection";
 import { SOCIAL_ICONS } from "./sections/socialIcons";
 import CommonModal from "./sections/CommonModal";
 import { fetchTeam } from "../../../teams/slice"; // adjust 
+import AddSectionModal from "./sections/AddSectionModal";
 const THEME_COLOR_KEYS = [
   "card_background",
   "button_color",
@@ -351,6 +352,7 @@ export default function VicePublicSetting({
   const [youtubeModalOpen, setYoutubeModalOpen] = useState(false);
   const [draftYoutube, setDraftYoutube] = useState<PublicProfileConfig["youtube"] | null>(null);
   const [socialError, setSocialError] = useState<string | null>(null);
+  const [addSectionOpen, setAddSectionOpen] = useState(false);
 
 
   /* ---------- Team search state ---------- */
@@ -551,6 +553,14 @@ export default function VicePublicSetting({
     }, 400);
     return () => clearTimeout(t);
   }, [productSearch, dispatch]);
+
+  const isSectionEnabled = (type: string) => {
+    console.log("Sections:", config?.sections.items);
+
+    return config?.sections.items?.some(
+      (s) => s.type === type && s.enabled
+    );
+  };
 
   /* ================= LOAD MORE ================= */
   const mergeSelectedProducts = (
@@ -800,6 +810,42 @@ export default function VicePublicSetting({
       </div>
     );
   }
+  const handleAddSection = (type: string) => {
+    const exists = config.sections.items.find(
+      (s) => s.type === type
+    );
+
+    let updated;
+
+    if (exists) {
+      // toggle enable state
+      updated = config.sections.items.map((s) =>
+        s.type === type
+          ? { ...s, enabled: !s.enabled }
+          : s
+      );
+    } else {
+      // add new section
+      updated = [
+        ...config.sections.items,
+        {
+          id: type,
+          type,
+          rank: config.sections.items.length + 1,
+          enabled: true,
+        },
+      ];
+    }
+
+    update({
+      ...config,
+      sections: {
+        ...config.sections,
+        items: updated,
+      },
+    });
+  };
+
 
   /* ================= UI ================= */
   const isLayoutLocked = isReadOnly(config.layout);
@@ -856,7 +902,6 @@ export default function VicePublicSetting({
           </div>
         </>
       )}
-
 
       <Card title="Card Layout" desc="Choose how your card looks">
         {showLockable && (
@@ -1475,167 +1520,6 @@ export default function VicePublicSetting({
         </div>
       </Card>
 
-      <Card title="Contact" desc="Customize contact buttons">
-        {showLockable && (
-          <LockControl
-            value={config.contact}
-            role={config.role}
-            onChange={(v) =>
-              update({ ...config, contact: { ...config.contact, ...v } })
-            }
-          />
-        )}
-
-        <div
-          className={
-            isReadOnly(config.contact)
-              ? "opacity-60 pointer-events-none space-y-2"
-              : "space-y-2"
-          }
-        >
-          {/* CONNECT BUTTON TITLE */}
-          <div className="space-y-1">
-            <p className="text-sm font-medium text-gray-700">
-              Connect Button Text
-            </p>
-            <Input
-              value={config.contact.connect_title}
-              onChange={(v) =>
-                update({
-                  ...config,
-                  contact: { ...config.contact, connect_title: v },
-                })
-              }
-              placeholder="e.g. Connect"
-            />
-          </div>
-
-          {/* SAVE CONTACT BUTTON TITLE */}
-          <div className="space-y-1">
-            <p className="text-sm font-medium text-gray-700">
-              Save Contact Button Text
-            </p>
-            <Input
-              value={config.contact.contact_title}
-              onChange={(v) =>
-                update({
-                  ...config,
-                  contact: { ...config.contact, contact_title: v },
-                })
-              }
-              placeholder="e.g. Save Contact"
-            />
-          </div>
-        </div>
-      </Card>
-
-      <Card title="Social Links" desc="Your public social profiles">
-        {showLockable && (
-          <LockControl
-            value={config.social_links}
-            role={config.role}
-            onChange={(v) =>
-              update({
-                ...config,
-                social_links: { ...config.social_links, ...v },
-              })
-            }
-          />
-        )}
-
-        {/* ICON PREVIEW (enabled only) */}
-        <div
-          className={`flex items-center gap-3 mt-3 ${isReadOnly(config.social_links)
-            ? "opacity-60 pointer-events-none"
-            : ""
-            }`}
-        >
-          {config.social_links.items?.filter((s: any) => s.enabled).length > 0 ? (
-            config.social_links.items
-              .filter((s: any) => s.enabled === true)
-              .map((s: any) => {
-                const Icon = SOCIAL_ICONS[s.id] || SOCIAL_ICONS.website;
-
-                return (
-                  <div
-                    key={s.id}
-                    className="w-10 h-10 rounded-full border bg-white flex items-center justify-center"
-                    title={s.label}
-                  >
-                    <Icon size={18} />
-                  </div>
-                );
-              })
-          ) : (
-            <span className="text-sm text-gray-400">
-              No social links added
-            </span>
-          )}
-        </div>
-
-        {/* OPEN MODAL BUTTON */}
-        <div className="mt-4">
-          <button
-            type="button"
-            disabled={isReadOnly(config.social_links)}
-            onClick={() => {
-              setDraftSocialLinks(
-                structuredClone(config.social_links)
-              );
-              setSocialModalOpen(true);
-            }}
-            className="px-4 py-2 rounded-lg bg-purple-600 text-white text-sm hover:opacity-90 disabled:opacity-50"
-          >
-            Add / Manage Social Links
-          </button>
-        </div>
-
-        {/* MODAL */}
-        <CommonModal
-          open={socialModalOpen}
-          title="Social Links"
-          onClose={() => setSocialModalOpen(false)}
-          onConfirm={() => {
-            if (!draftSocialLinks) return;
-
-            if (hasInvalidSocialLinks(draftSocialLinks.items)) {
-              setSocialError("Please fill all social links before saving.");
-              return; // ❌ BLOCK SAVE
-            }
-
-            setSocialError(null);
-
-            update({
-              ...config,
-              social_links: draftSocialLinks,
-            });
-
-            setSocialModalOpen(false);
-          }}
-
-        >
-          {draftSocialLinks && (
-            <SocialSection
-              items={draftSocialLinks.items}
-              onChange={(items: any[]) => {
-                setSocialError(null); // 👈 clear error on typing
-                setDraftSocialLinks({
-                  ...draftSocialLinks,
-                  items,
-                });
-              }}
-
-            />
-          )}
-          {socialError && (
-            <p className="text-sm text-red-600 mb-2">
-              {socialError}
-            </p>
-          )}
-
-        </CommonModal>
-      </Card>
-
       <Card title="Theme" desc="Colors used across the profile">
         {showLockable && (
           <LockControl
@@ -1649,9 +1533,9 @@ export default function VicePublicSetting({
             }
           />
         )}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-6">
           {THEME_COLOR_KEYS.map((k) => (
-            <ColorPickerField
+            <ThemeColorRow
               key={k}
               label={THEME_COLOR_LABELS[k]}
               value={config.theme[k]}
@@ -1663,353 +1547,11 @@ export default function VicePublicSetting({
                 })
               }
             />
-
           ))}
         </div>
+
       </Card>
-
-      <div className="rounded-2xl bg-[#FBFAFF]">
-
-        {/* HEADER */}
-        <div className="px-6 pt-6">
-          <h3 className="text-xl font-semibold text-gray-900 pb-4">
-            Products
-          </h3>
-          <p className="text-sm text-gray-500">
-            Select which products appear on your public card
-          </p>
-        </div>
-        {showLockable && (
-          <div className="px-6 mt-3">
-            <LockControl
-              value={config.products}
-              role={config.role}
-              onChange={(v) =>
-                update({
-                  ...config,
-                  products: { ...config.products, ...v },
-                })
-              }
-            />
-          </div>
-        )}
-        {/* TOGGLE PRICE VISIBILITY */}
-        <div className="px-6 mt-4">
-          <div
-            className={`flex items-center justify-between rounded-xl border px-4 py-3 bg-white ${isReadOnly(config.products) ? "opacity-60 pointer-events-none" : ""
-              }`}
-          >
-            <div>
-              <p className="text-sm font-medium text-gray-800">
-                Show Product Prices
-              </p>
-              <p className="text-xs text-gray-500">
-                Toggle whether prices appear on the public card
-              </p>
-            </div>
-
-            <Switch
-              label=""   // we already show text on left
-              value={config.products.toggle_price}
-              onChange={(v) =>
-                update({
-                  ...config,
-                  products: {
-                    ...config.products,
-                    toggle_price: v,
-                  },
-                })
-              }
-            />
-          </div>
-        </div>
-
-        {/* SECTION TITLE */}
-        <div className="px-6 mt-4">
-          <div
-            className={`space-y-1 ${isReadOnly(config.products) ? "opacity-60 pointer-events-none" : ""
-              }`}
-          >
-            <p className="text-sm font-medium text-gray-700">
-              Section Title
-            </p>
-            <Input
-              value={config.products.section_title}
-              placeholder="Products"
-              onChange={(v) =>
-                update({
-                  ...config,
-                  products: {
-                    ...config.products,
-                    section_title: v,
-                  },
-                })
-              }
-            />
-          </div>
-        </div>
-
-
-        {/* SELECT */}
-        <div className="px-6 mt-4">
-          <button
-            type="button"
-            disabled={isReadOnly(config.products)}
-            onClick={() => {
-              // clone current products into draft
-              setDraftProducts(config.products.items);
-              setProductModalOpen(true);
-            }}
-            className="px-4 py-2 rounded-lg bg-purple-600 text-white text-sm hover:opacity-90 disabled:opacity-50"
-          >
-            Add / Manage Products
-          </button>
-
-        </div>
-        {/* PRODUCTS PREVIEW (scaled-down carousel) */}
-        {config.products.items?.length > 0 && (
-          <div
-            className={`px-6 mt-4 ${isReadOnly(config.products)
-              ? "opacity-60 pointer-events-none"
-              : ""
-              }`}
-          >
-            <div className="flex gap-3 overflow-x-auto pb-3 snap-x snap-mandatory no-scrollbar">
-              {config.products.items
-                .filter((p) => p.enabled !== false)
-                .sort((a, b) => a.rank - b.rank)
-                .map((p) => (
-                  <div
-                    key={p.id}
-                    className="snap-start flex-shrink-0"
-                  >
-                    <div
-                      className="relative w-[140px] h-[90px] rounded-xl overflow-hidden shadow-sm border"
-                      style={{ backgroundColor: config.theme.card_background }}
-                    >
-                      {/* IMAGE */}
-                      <img
-                        src={p.image_url || p.image_url}
-                        alt={p.name}
-                        className="absolute inset-0 w-full h-full object-cover"
-                      />
-
-                      {/* OVERLAY */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
-
-                      {/* CONTENT */}
-                      <div className="absolute bottom-1.5 left-2 right-2">
-                        <p
-                          className="text-[11px] font-semibold leading-tight line-clamp-2"
-                          style={{ color: config.theme.card_text }}
-                        >
-                          {p.name}
-                        </p>
-
-                        {config.products.toggle_price && (
-                          <p
-                            className="text-[10px] mt-0.5 font-medium"
-                            style={{ color: config.theme.card_text }}
-                          >
-                            ₹{p.price}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-            </div>
-          </div>
-        )}
-
-        <CommonModal
-          open={productModalOpen}
-          title="Manage Products"
-          description="Select and reorder products for your public card"
-          onClose={() => setProductModalOpen(false)}
-          onConfirm={() => {
-            update({
-              ...config,
-              products: {
-                ...config.products,
-                items: draftProducts, // ✅ commit changes
-              },
-            });
-            setProductModalOpen(false);
-          }}
-        >
-          {/* === YOUR EXISTING UI (UNCHANGED) === */}
-          <div className="px-1">
-
-            <DynamicForm
-              fields={productField}
-              form={{
-                product_ids: draftProducts.map((p) => p.id),
-              }}
-              onChange={(_, ids: (string | number)[]) =>
-                setDraftProducts(
-                  mergeSelectedProducts(
-                    ids,
-                    products,
-                    draftProducts
-                  )
-                )
-              }
-              errors={formErrors}
-              setErrors={setFormErrors}
-            />
-          </div>
-
-          <div className="px-1 pb-2 border-t mt-4">
-
-            {draftProducts.length > 0 && (
-              <div className="space-y-3">
-                <ProductsReorder
-                  items={draftProducts}
-                  onChange={setDraftProducts}
-                />
-              </div>
-            )}
-          </div>
-        </CommonModal>
-
-      </div>
-
-      <Card title="Photo Gallery" desc="Manage your gallery images">
-        {showLockable && (
-          <LockControl
-            value={config.photo_gallery}
-            role={config.role}
-            onChange={(v) =>
-              update({
-                ...config,
-                photo_gallery: { ...config.photo_gallery, ...v },
-              })
-            }
-          />
-        )}
-
-        {/* SECTION LABEL — stays OUTSIDE modal */}
-        <div
-          className={`space-y-1 ${isReadOnly(config.photo_gallery)
-            ? "opacity-60 pointer-events-none"
-            : ""
-            }`}
-        >
-          <p className="text-xs uppercase tracking-wide text-gray-500">
-            Section label
-          </p>
-          <Input
-            value={config.photo_gallery.section_title}
-            disabled={isReadOnly(config.photo_gallery)}
-            placeholder="Section title"
-            onChange={(v) =>
-              update({
-                ...config,
-                photo_gallery: {
-                  ...config.photo_gallery,
-                  section_title: v,
-                },
-              })
-            }
-          />
-        </div>
-
-        {/* OPEN MODAL BUTTON */}
-        <div className="mt-4">
-          <button
-            type="button"
-            disabled={isReadOnly(config.photo_gallery)}
-            onClick={() => {
-              // ✅ clone to draft
-              setDraftPhotoGallery(
-                structuredClone(config.photo_gallery)
-              );
-              setPhotoGalleryModalOpen(true);
-            }}
-            className="px-4 py-2 rounded-lg bg-purple-600 text-white text-sm hover:opacity-90 disabled:opacity-50"
-          >
-            Add / Manage Photos
-          </button>
-        </div>
-
-        {/* PREVIEW CAROUSEL */}
-        {config.photo_gallery.items?.length > 0 && (
-          <div
-            className={`mt-4 ${isReadOnly(config.photo_gallery)
-              ? "opacity-60 pointer-events-none"
-              : ""
-              }`}
-          >
-            <div className="flex gap-3 overflow-x-auto pb-3 snap-x snap-mandatory no-scrollbar">
-              {config.photo_gallery.items
-                .filter((i) => i.enabled)
-                .sort((a, b) => a.rank - b.rank)
-                .map((item, idx) => (
-                  <div
-                    key={idx}
-                    className="snap-start flex-shrink-0"
-                  >
-                    <div className="relative w-[140px] h-[100px] rounded-xl overflow-hidden border shadow-sm bg-gray-100">
-                      <img
-                        src={item.img_url}
-                        alt={item.title || "Photo"}
-                        className="w-full h-full object-cover"
-                      />
-
-                      {/* gradient overlay */}
-                      {item.title && (
-                        <>
-                          <div
-                            className="absolute inset-0"
-                            style={{
-                              background:
-                                "linear-gradient(to top, rgba(0,0,0,.55), transparent)",
-                            }}
-                          />
-
-                          {/* title */}
-                          <div className="absolute bottom-1.5 left-2 right-2">
-                            <p className="text-[11px] font-medium text-white leading-tight line-clamp-2">
-                              {item.title}
-                            </p>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                ))}
-            </div>
-          </div>
-        )}
-
-        {/* MODAL */}
-        <CommonModal
-          open={photoGalleryModalOpen}
-          title="Photo Gallery"
-          onClose={() => setPhotoGalleryModalOpen(false)}
-          onConfirm={() => {
-            if (!draftPhotoGallery) return;
-
-            update({
-              ...config,
-              photo_gallery: draftPhotoGallery,
-            });
-            setPhotoGalleryModalOpen(false);
-          }}
-        >
-          {draftPhotoGallery && (
-            <PhotoGallerySection
-              value={draftPhotoGallery}
-              disabled={isReadOnly(config.photo_gallery)}
-              onChange={(v: PhotoGalleryConfig) =>
-                setDraftPhotoGallery(v)
-              }
-            />
-          )}
-        </CommonModal>
-      </Card>
-
+      
       {/* <Card title="Video Gallery" desc="Manage your videos">
         {showLockable && (
           <LockControl
@@ -2028,372 +1570,6 @@ export default function VicePublicSetting({
         />
       </Card> */}
 
-      <Card title="Banner" desc="Top banner CTA section">
-        {showLockable && (
-          <LockControl
-            value={config.banner}
-            role={config.role}
-            currentUser={username}
-            onChange={(v) =>
-              update({
-                ...config,
-                banner: { ...config.banner, ...v },
-              })
-            }
-          />
-        )}
-
-        {/* ENABLE BANNER */}
-        <div
-          className={`flex items-center gap-3 ${isReadOnly(config.banner)
-            ? "opacity-60 pointer-events-none"
-            : ""
-            }`}
-        >
-          <p className="text-sm font-medium text-gray-700">
-            Enable Banner
-          </p>
-
-          <Toggle
-            label=""
-            value={config.banner.enabled}
-            disabled={isReadOnly(config.banner)}
-            onChange={(v: boolean) =>
-              update({
-                ...config,
-                banner: { ...config.banner, enabled: v },
-              })
-            }
-          />
-        </div>
-
-        {/* BANNER IMAGE */}
-        <div
-          className={`space-y-2 mt-6 ${isReadOnly(config.banner)
-            ? "opacity-60 pointer-events-none"
-            : ""
-            }`}
-        >
-          <p className="text-sm font-medium text-gray-700">
-            Banner Image
-          </p>
-
-          <div className="relative h-40 w-full rounded-xl border overflow-hidden bg-gray-50">
-            {config.banner.image_url ? (
-              <img
-                src={config.banner.image_url}
-                alt="Banner"
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="h-full flex items-center justify-center text-gray-400">
-                No banner image
-              </div>
-            )}
-
-            <label className="absolute inset-0 bg-black/40 text-white flex items-center justify-center opacity-0 hover:opacity-100 cursor-pointer transition">
-              Change
-              <input
-                type="file"
-                hidden
-                disabled={isReadOnly(config.banner)}
-                accept="image/*"
-                onChange={(e) =>
-                  e.target.files &&
-                  uploadBannerImage(e.target.files[0])
-                }
-              />
-            </label>
-          </div>
-        </div>
-
-        {/* CTA TEXT */}
-        <div
-          className={`mt-6 ${isReadOnly(config.banner)
-            ? "opacity-60 pointer-events-none"
-            : ""
-            }`}
-        >
-          <p className="text-sm font-medium text-gray-700 mb-1">
-            CTA Button Text
-          </p>
-
-          <Input
-            value={config.banner.cta_text || ""}
-            disabled={isReadOnly(config.banner)}
-            onChange={(v) =>
-              update({
-                ...config,
-                banner: { ...config.banner, cta_text: v },
-              })
-            }
-            placeholder="e.g. Contact Me"
-          />
-        </div>
-
-        {/* CTA LINK */}
-        <div
-          className={`mt-4 ${isReadOnly(config.banner)
-            ? "opacity-60 pointer-events-none"
-            : ""
-            }`}
-        >
-          <p className="text-sm font-medium text-gray-700 mb-1">
-            CTA Button Link
-          </p>
-
-          <Input
-            value={config.banner.cta_url || ""}
-            disabled={isReadOnly(config.banner)}
-            onChange={(v) =>
-              update({
-                ...config,
-                banner: { ...config.banner, cta_url: v },
-              })
-            }
-            placeholder="https://example.com"
-          />
-        </div>
-      </Card>
-
-      <Card title="Videos" desc="Manage your YouTube / video links">
-        {showLockable && (
-          <LockControl
-            value={config.youtube}
-            role={config.role}
-            onChange={(v) =>
-              update({
-                ...config,
-                youtube: { ...config.youtube, ...v },
-              })
-            }
-          />
-        )}
-
-        {/* SECTION LABEL — stays OUTSIDE modal */}
-        <div
-          className={`space-y-1 ${isReadOnly(config.youtube)
-            ? "opacity-60 pointer-events-none"
-            : ""
-            }`}
-        >
-          <p className="text-xs uppercase tracking-wide text-gray-500">
-            Section label
-          </p>
-          <Input
-            value={config.youtube.section_title || "Video Gallery"}
-            disabled={isReadOnly(config.youtube)}
-            placeholder="Section title"
-            onChange={(v) =>
-              update({
-                ...config,
-                youtube: {
-                  ...config.youtube,
-                  section_title: v.trim() === "" ? "Video Gallery" : v,
-                },
-              })
-            }
-          />
-
-        </div>
-
-        {/* OPEN MODAL BUTTON — SAME STYLE */}
-        <div className="mt-4">
-          <button
-            type="button"
-            disabled={isReadOnly(config.youtube)}
-            onClick={() => {
-              // ✅ clone to draft
-              setDraftYoutube(structuredClone(config.youtube));
-              setYoutubeModalOpen(true);
-            }}
-            className="
-        px-4 py-2 rounded-lg
-        bg-purple-600 text-white text-sm
-        hover:opacity-90
-        disabled:opacity-50
-      "
-          >
-            Add / Manage Videos
-          </button>
-        </div>
-
-        {/* PREVIEW — EMBED LOOK, NON-PLAYABLE */}
-        {config.youtube.items?.length > 0 && (
-          <div
-            className={`mt-4 ${isReadOnly(config.youtube)
-              ? "opacity-60 pointer-events-none"
-              : ""
-              }`}
-          >
-            <div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
-              {config.youtube.items
-                .filter((v) => v.enabled)
-                .sort((a, b) => a.rank - b.rank)
-                .map((item, idx) => {
-                  const videoId = extractYoutubeId(item.url);
-
-                  return (
-                    <div
-                      key={idx}
-                      className="flex-shrink-0 w-[220px]"
-                    >
-                      <div className="relative aspect-video rounded-lg overflow-hidden border bg-black">
-                        {/* EMBED (non-interactive) */}
-                        <iframe
-                          src={`https://www.youtube.com/embed/${videoId}?controls=0&autoplay=0&mute=1&playsinline=1`}
-                          className="absolute inset-0 w-full h-full pointer-events-none"
-                          allow="accelerometer; encrypted-media; gyroscope; picture-in-picture"
-                        />
-
-                        {/* Optional overlay for polish */}
-                        <div className="absolute inset-0 bg-black/10" />
-                      </div>
-                    </div>
-                  );
-                })}
-            </div>
-          </div>
-        )}
-
-        {/* MODAL — SAME DRAFT FLOW */}
-        <CommonModal
-          open={youtubeModalOpen}
-          title="Videos"
-          description="Add or manage your YouTube / video links"
-          onClose={() => setYoutubeModalOpen(false)}
-          onConfirm={() => {
-            if (!draftYoutube) return;
-
-            update({
-              ...config,
-              youtube: draftYoutube,
-            });
-            setYoutubeModalOpen(false);
-          }}
-        >
-          {draftYoutube && (
-            <YoutubeSection
-              disabled={isReadOnly(config.youtube)}
-              items={draftYoutube.items}
-              onChange={(items) =>
-                setDraftYoutube({
-                  ...draftYoutube,
-                  items,
-                })
-              }
-            />
-          )}
-        </CommonModal>
-      </Card>
-
-      <Card title="Meeting Button" desc="Book a call / meeting link">
-        {showLockable && (
-          <LockControl
-            value={config.meeting}
-            role={config.role}
-            onChange={(v) =>
-              update({
-                ...config,
-                meeting: { ...config.meeting, ...v },
-              })
-            }
-          />
-
-        )}
-        <MeetingSection
-          disabled={isReadOnly(config.meeting)}
-          value={config.meeting}
-          onChange={(m: any) => update({ ...config, meeting: m })}
-        />
-      </Card>
-
-      <Card title="Links & Files" desc="Add external links or downloadable files">
-        {showLockable && (
-          <LockControl
-            value={config.links_files}
-            role={config.role}
-            onChange={(v) =>
-              update({
-                ...config,
-                links_files: { ...config.links_files, ...v },
-              })
-            }
-          />
-        )}
-
-        {/* SECTION LABEL — stays OUTSIDE modal */}
-        <div
-          className={`space-y-1 ${isReadOnly(config.links_files)
-            ? "opacity-60 pointer-events-none"
-            : ""
-            }`}
-        >
-          <p className="text-xs uppercase tracking-wide text-gray-500">
-            Section label
-          </p>
-          <Input
-            value={config.links_files.section_title || "Links and Files"}
-            disabled={isReadOnly(config.links_files)}
-            placeholder="Section title"
-            onChange={(v) =>
-              update({
-                ...config,
-                links_files: {
-                  ...config.links_files,
-                  section_title: v.trim() === "" ? "Links and Files" : v,
-                },
-              })
-            }
-          />
-        </div>
-
-        {/* OPEN MODAL BUTTON — SAME STYLE */}
-        <div className="mt-4">
-          <button
-            type="button"
-            disabled={isReadOnly(config.links_files)}
-            onClick={() => {
-              // ✅ clone current state into draft
-              setDraftLinksFiles(structuredClone(config.links_files));
-              setLinksFilesModalOpen(true);
-            }}
-            className="
-        px-4 py-2 rounded-lg
-        bg-purple-600 text-white text-sm
-        hover:opacity-90
-        disabled:opacity-50
-      "
-          >
-            Add / Manage Links & Files
-          </button>
-        </div>
-
-        {/* MODAL */}
-        <CommonModal
-          open={linksFilesModalOpen}
-          title="Links & Files"
-          description="Add or manage your external links and files"
-          onClose={() => setLinksFilesModalOpen(false)}
-          onConfirm={() => {
-            if (!draftLinksFiles) return;
-
-            update({
-              ...config,
-              links_files: draftLinksFiles,
-            });
-            setLinksFilesModalOpen(false);
-          }}
-        >
-          {draftLinksFiles && (
-            <LinksFilesSection
-              disabled={isReadOnly(config.links_files)}
-              value={draftLinksFiles}
-              onChange={(v: any) => setDraftLinksFiles(v)}
-            />
-          )}
-        </CommonModal>
-      </Card>
 
       <Card title="Sections" desc="Reorder your public sections">
 
@@ -2409,6 +1585,15 @@ export default function VicePublicSetting({
             }
           />
         )}
+        <div className="mb-4">
+          <button
+            type="button"
+            onClick={() => setAddSectionOpen(true)}
+            className="px-4 py-2 rounded-lg bg-purple-600 text-white text-sm hover:opacity-90"
+          >
+            Add Section
+          </button>
+        </div>
 
         <SectionsReorder
           sections={config.sections.items}
@@ -2422,6 +1607,892 @@ export default function VicePublicSetting({
         />
       </Card>
 
+      {isSectionEnabled("contact") && (
+        <Card title="Contact" desc="Customize contact buttons">
+          {showLockable && (
+            <LockControl
+              value={config.contact}
+              role={config.role}
+              onChange={(v) =>
+                update({ ...config, contact: { ...config.contact, ...v } })
+              }
+            />
+          )}
+
+          <div
+            className={
+              isReadOnly(config.contact)
+                ? "opacity-60 pointer-events-none space-y-2"
+                : "space-y-2"
+            }
+          >
+            {/* CONNECT BUTTON TITLE */}
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-gray-700">
+                Connect Button Text
+              </p>
+              <Input
+                value={config.contact.connect_title}
+                onChange={(v) =>
+                  update({
+                    ...config,
+                    contact: { ...config.contact, connect_title: v },
+                  })
+                }
+                placeholder="e.g. Connect"
+              />
+            </div>
+
+            {/* SAVE CONTACT BUTTON TITLE */}
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-gray-700">
+                Save Contact Button Text
+              </p>
+              <Input
+                value={config.contact.contact_title}
+                onChange={(v) =>
+                  update({
+                    ...config,
+                    contact: { ...config.contact, contact_title: v },
+                  })
+                }
+                placeholder="e.g. Save Contact"
+              />
+            </div>
+          </div>
+        </Card>
+      )}
+
+      {isSectionEnabled("social_links") && (
+        <Card title="Social Links" desc="Your public social profiles">
+          {showLockable && (
+            <LockControl
+              value={config.social_links}
+              role={config.role}
+              onChange={(v) =>
+                update({
+                  ...config,
+                  social_links: { ...config.social_links, ...v },
+                })
+              }
+            />
+          )}
+
+          {/* ICON PREVIEW (enabled only) */}
+          <div
+            className={`flex items-center gap-3 mt-3 ${isReadOnly(config.social_links)
+              ? "opacity-60 pointer-events-none"
+              : ""
+              }`}
+          >
+            {config.social_links.items?.filter((s: any) => s.enabled).length > 0 ? (
+              config.social_links.items
+                .filter((s: any) => s.enabled === true)
+                .map((s: any) => {
+                  const Icon = SOCIAL_ICONS[s.id] || SOCIAL_ICONS.website;
+
+                  return (
+                    <div
+                      key={s.id}
+                      className="w-10 h-10 rounded-full border bg-white flex items-center justify-center"
+                      title={s.label}
+                    >
+                      <Icon size={18} />
+                    </div>
+                  );
+                })
+            ) : (
+              <span className="text-sm text-gray-400">
+                No social links added
+              </span>
+            )}
+          </div>
+
+          {/* OPEN MODAL BUTTON */}
+          <div className="mt-4">
+            <button
+              type="button"
+              disabled={isReadOnly(config.social_links)}
+              onClick={() => {
+                setDraftSocialLinks(
+                  structuredClone(config.social_links)
+                );
+                setSocialModalOpen(true);
+              }}
+              className="px-4 py-2 rounded-lg bg-purple-600 text-white text-sm hover:opacity-90 disabled:opacity-50"
+            >
+              Add / Manage Social Links
+            </button>
+          </div>
+
+          {/* MODAL */}
+          <CommonModal
+            open={socialModalOpen}
+            title="Social Links"
+            onClose={() => setSocialModalOpen(false)}
+            onConfirm={() => {
+              if (!draftSocialLinks) return;
+
+              if (hasInvalidSocialLinks(draftSocialLinks.items)) {
+                setSocialError("Please fill all social links before saving.");
+                return; // ❌ BLOCK SAVE
+              }
+
+              setSocialError(null);
+
+              update({
+                ...config,
+                social_links: draftSocialLinks,
+              });
+
+              setSocialModalOpen(false);
+            }}
+
+          >
+            {draftSocialLinks && (
+              <SocialSection
+                items={draftSocialLinks.items}
+                onChange={(items: any[]) => {
+                  setSocialError(null); // 👈 clear error on typing
+                  setDraftSocialLinks({
+                    ...draftSocialLinks,
+                    items,
+                  });
+                }}
+
+              />
+            )}
+            {socialError && (
+              <p className="text-sm text-red-600 mb-2">
+                {socialError}
+              </p>
+            )}
+
+          </CommonModal>
+        </Card>
+      )}
+
+      {isSectionEnabled("products") && (
+        <div className="rounded-2xl bg-[#FBFAFF]">
+
+          {/* HEADER */}
+          <div className="px-6 pt-6">
+            <h3 className="text-xl font-semibold text-gray-900 pb-4">
+              Products
+            </h3>
+            <p className="text-sm text-gray-500">
+              Select which products appear on your public card
+            </p>
+          </div>
+          {showLockable && (
+            <div className="px-6 mt-3">
+              <LockControl
+                value={config.products}
+                role={config.role}
+                onChange={(v) =>
+                  update({
+                    ...config,
+                    products: { ...config.products, ...v },
+                  })
+                }
+              />
+            </div>
+          )}
+          {/* TOGGLE PRICE VISIBILITY */}
+          <div className="px-6 mt-4">
+            <div
+              className={`flex items-center justify-between rounded-xl border px-4 py-3 bg-white ${isReadOnly(config.products) ? "opacity-60 pointer-events-none" : ""
+                }`}
+            >
+              <div>
+                <p className="text-sm font-medium text-gray-800">
+                  Show Product Prices
+                </p>
+                <p className="text-xs text-gray-500">
+                  Toggle whether prices appear on the public card
+                </p>
+              </div>
+
+              <Switch
+                label=""   // we already show text on left
+                value={config.products.toggle_price}
+                onChange={(v) =>
+                  update({
+                    ...config,
+                    products: {
+                      ...config.products,
+                      toggle_price: v,
+                    },
+                  })
+                }
+              />
+            </div>
+          </div>
+
+          {/* SECTION TITLE */}
+          <div className="px-6 mt-4">
+            <div
+              className={`space-y-1 ${isReadOnly(config.products) ? "opacity-60 pointer-events-none" : ""
+                }`}
+            >
+              <p className="text-sm font-medium text-gray-700">
+                Section Title
+              </p>
+              <Input
+                value={config.products.section_title}
+                placeholder="Products"
+                onChange={(v) =>
+                  update({
+                    ...config,
+                    products: {
+                      ...config.products,
+                      section_title: v,
+                    },
+                  })
+                }
+              />
+            </div>
+          </div>
+
+
+          {/* SELECT */}
+          <div className="px-6 mt-4">
+            <button
+              type="button"
+              disabled={isReadOnly(config.products)}
+              onClick={() => {
+                // clone current products into draft
+                setDraftProducts(config.products.items);
+                setProductModalOpen(true);
+              }}
+              className="px-4 py-2 rounded-lg bg-purple-600 text-white text-sm hover:opacity-90 disabled:opacity-50"
+            >
+              Add / Manage Products
+            </button>
+
+          </div>
+          {/* PRODUCTS PREVIEW (scaled-down carousel) */}
+          {config.products.items?.length > 0 && (
+            <div
+              className={`px-6 mt-4 ${isReadOnly(config.products)
+                ? "opacity-60 pointer-events-none"
+                : ""
+                }`}
+            >
+              <div className="flex gap-3 overflow-x-auto pb-3 snap-x snap-mandatory no-scrollbar">
+                {config.products.items
+                  .filter((p) => p.enabled !== false)
+                  .sort((a, b) => a.rank - b.rank)
+                  .map((p) => (
+                    <div
+                      key={p.id}
+                      className="snap-start flex-shrink-0"
+                    >
+                      <div
+                        className="relative w-[140px] h-[90px] rounded-xl overflow-hidden shadow-sm border"
+                        style={{ backgroundColor: config.theme.card_background }}
+                      >
+                        {/* IMAGE */}
+                        <img
+                          src={p.image_url || p.image_url}
+                          alt={p.name}
+                          className="absolute inset-0 w-full h-full object-cover"
+                        />
+
+                        {/* OVERLAY */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+
+                        {/* CONTENT */}
+                        <div className="absolute bottom-1.5 left-2 right-2">
+                          <p
+                            className="text-[11px] font-semibold leading-tight line-clamp-2"
+                            style={{ color: config.theme.card_text }}
+                          >
+                            {p.name}
+                          </p>
+
+                          {config.products.toggle_price && (
+                            <p
+                              className="text-[10px] mt-0.5 font-medium"
+                              style={{ color: config.theme.card_text }}
+                            >
+                              ₹{p.price}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          )}
+
+          <CommonModal
+            open={productModalOpen}
+            title="Manage Products"
+            description="Select and reorder products for your public card"
+            onClose={() => setProductModalOpen(false)}
+            onConfirm={() => {
+              update({
+                ...config,
+                products: {
+                  ...config.products,
+                  items: draftProducts, // ✅ commit changes
+                },
+              });
+              setProductModalOpen(false);
+            }}
+          >
+            {/* === YOUR EXISTING UI (UNCHANGED) === */}
+            <div className="px-1">
+
+              <DynamicForm
+                fields={productField}
+                form={{
+                  product_ids: draftProducts.map((p) => p.id),
+                }}
+                onChange={(_, ids: (string | number)[]) =>
+                  setDraftProducts(
+                    mergeSelectedProducts(
+                      ids,
+                      products,
+                      draftProducts
+                    )
+                  )
+                }
+                errors={formErrors}
+                setErrors={setFormErrors}
+              />
+            </div>
+
+            <div className="px-1 pb-2 border-t mt-4">
+
+              {draftProducts.length > 0 && (
+                <div className="space-y-3">
+                  <ProductsReorder
+                    items={draftProducts}
+                    onChange={setDraftProducts}
+                  />
+                </div>
+              )}
+            </div>
+          </CommonModal>
+
+        </div>
+      )}
+
+      {isSectionEnabled("photo_gallery") && (
+        <Card title="Photo Gallery" desc="Manage your gallery images">
+          {showLockable && (
+            <LockControl
+              value={config.photo_gallery}
+              role={config.role}
+              onChange={(v) =>
+                update({
+                  ...config,
+                  photo_gallery: { ...config.photo_gallery, ...v },
+                })
+              }
+            />
+          )}
+
+          {/* SECTION LABEL — stays OUTSIDE modal */}
+          <div
+            className={`space-y-1 ${isReadOnly(config.photo_gallery)
+              ? "opacity-60 pointer-events-none"
+              : ""
+              }`}
+          >
+            <p className="text-xs uppercase tracking-wide text-gray-500">
+              Section label
+            </p>
+            <Input
+              value={config.photo_gallery.section_title}
+              disabled={isReadOnly(config.photo_gallery)}
+              placeholder="Section title"
+              onChange={(v) =>
+                update({
+                  ...config,
+                  photo_gallery: {
+                    ...config.photo_gallery,
+                    section_title: v,
+                  },
+                })
+              }
+            />
+          </div>
+
+          {/* OPEN MODAL BUTTON */}
+          <div className="mt-4">
+            <button
+              type="button"
+              disabled={isReadOnly(config.photo_gallery)}
+              onClick={() => {
+                // ✅ clone to draft
+                setDraftPhotoGallery(
+                  structuredClone(config.photo_gallery)
+                );
+                setPhotoGalleryModalOpen(true);
+              }}
+              className="px-4 py-2 rounded-lg bg-purple-600 text-white text-sm hover:opacity-90 disabled:opacity-50"
+            >
+              Add / Manage Photos
+            </button>
+          </div>
+
+          {/* PREVIEW CAROUSEL */}
+          {config.photo_gallery.items?.length > 0 && (
+            <div
+              className={`mt-4 ${isReadOnly(config.photo_gallery)
+                ? "opacity-60 pointer-events-none"
+                : ""
+                }`}
+            >
+              <div className="flex gap-3 overflow-x-auto pb-3 snap-x snap-mandatory no-scrollbar">
+                {config.photo_gallery.items
+                  .filter((i) => i.enabled)
+                  .sort((a, b) => a.rank - b.rank)
+                  .map((item, idx) => (
+                    <div
+                      key={idx}
+                      className="snap-start flex-shrink-0"
+                    >
+                      <div className="relative w-[140px] h-[100px] rounded-xl overflow-hidden border shadow-sm bg-gray-100">
+                        <img
+                          src={item.img_url}
+                          alt={item.title || "Photo"}
+                          className="w-full h-full object-cover"
+                        />
+
+                        {/* gradient overlay */}
+                        {item.title && (
+                          <>
+                            <div
+                              className="absolute inset-0"
+                              style={{
+                                background:
+                                  "linear-gradient(to top, rgba(0,0,0,.55), transparent)",
+                              }}
+                            />
+
+                            {/* title */}
+                            <div className="absolute bottom-1.5 left-2 right-2">
+                              <p className="text-[11px] font-medium text-white leading-tight line-clamp-2">
+                                {item.title}
+                              </p>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          )}
+
+          {/* MODAL */}
+          <CommonModal
+            open={photoGalleryModalOpen}
+            title="Photo Gallery"
+            onClose={() => setPhotoGalleryModalOpen(false)}
+            onConfirm={() => {
+              if (!draftPhotoGallery) return;
+
+              update({
+                ...config,
+                photo_gallery: draftPhotoGallery,
+              });
+              setPhotoGalleryModalOpen(false);
+            }}
+          >
+            {draftPhotoGallery && (
+              <PhotoGallerySection
+                value={draftPhotoGallery}
+                disabled={isReadOnly(config.photo_gallery)}
+                onChange={(v: PhotoGalleryConfig) =>
+                  setDraftPhotoGallery(v)
+                }
+              />
+            )}
+          </CommonModal>
+        </Card>
+      )}
+
+      {isSectionEnabled("banner") && (
+        <Card title="Banner" desc="Top banner CTA section">
+          {showLockable && (
+            <LockControl
+              value={config.banner}
+              role={config.role}
+              currentUser={username}
+              onChange={(v) =>
+                update({
+                  ...config,
+                  banner: { ...config.banner, ...v },
+                })
+              }
+            />
+          )}
+
+          {/* ENABLE BANNER */}
+          <div
+            className={`flex items-center gap-3 ${isReadOnly(config.banner)
+              ? "opacity-60 pointer-events-none"
+              : ""
+              }`}
+          >
+            <p className="text-sm font-medium text-gray-700">
+              Enable Banner
+            </p>
+
+            <Toggle
+              label=""
+              value={config.banner.enabled}
+              disabled={isReadOnly(config.banner)}
+              onChange={(v: boolean) =>
+                update({
+                  ...config,
+                  banner: { ...config.banner, enabled: v },
+                })
+              }
+            />
+          </div>
+
+          {/* BANNER IMAGE */}
+          <div
+            className={`space-y-2 mt-6 ${isReadOnly(config.banner)
+              ? "opacity-60 pointer-events-none"
+              : ""
+              }`}
+          >
+            <p className="text-sm font-medium text-gray-700">
+              Banner Image
+            </p>
+
+            <div className="relative h-40 w-full rounded-xl border overflow-hidden bg-gray-50">
+              {config.banner.image_url ? (
+                <img
+                  src={config.banner.image_url}
+                  alt="Banner"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="h-full flex items-center justify-center text-gray-400">
+                  No banner image
+                </div>
+              )}
+
+              <label className="absolute inset-0 bg-black/40 text-white flex items-center justify-center opacity-0 hover:opacity-100 cursor-pointer transition">
+                Change
+                <input
+                  type="file"
+                  hidden
+                  disabled={isReadOnly(config.banner)}
+                  accept="image/*"
+                  onChange={(e) =>
+                    e.target.files &&
+                    uploadBannerImage(e.target.files[0])
+                  }
+                />
+              </label>
+            </div>
+          </div>
+
+          {/* CTA TEXT */}
+          <div
+            className={`mt-6 ${isReadOnly(config.banner)
+              ? "opacity-60 pointer-events-none"
+              : ""
+              }`}
+          >
+            <p className="text-sm font-medium text-gray-700 mb-1">
+              CTA Button Text
+            </p>
+
+            <Input
+              value={config.banner.cta_text || ""}
+              disabled={isReadOnly(config.banner)}
+              onChange={(v) =>
+                update({
+                  ...config,
+                  banner: { ...config.banner, cta_text: v },
+                })
+              }
+              placeholder="e.g. Contact Me"
+            />
+          </div>
+
+          {/* CTA LINK */}
+          <div
+            className={`mt-4 ${isReadOnly(config.banner)
+              ? "opacity-60 pointer-events-none"
+              : ""
+              }`}
+          >
+            <p className="text-sm font-medium text-gray-700 mb-1">
+              CTA Button Link
+            </p>
+
+            <Input
+              value={config.banner.cta_url || ""}
+              disabled={isReadOnly(config.banner)}
+              onChange={(v) =>
+                update({
+                  ...config,
+                  banner: { ...config.banner, cta_url: v },
+                })
+              }
+              placeholder="https://example.com"
+            />
+          </div>
+        </Card>
+      )}
+
+      {isSectionEnabled("youtube") && (
+        <Card title="Videos" desc="Manage your YouTube / video links">
+          {showLockable && (
+            <LockControl
+              value={config.youtube}
+              role={config.role}
+              onChange={(v) =>
+                update({
+                  ...config,
+                  youtube: { ...config.youtube, ...v },
+                })
+              }
+            />
+          )}
+
+          {/* SECTION LABEL — stays OUTSIDE modal */}
+          <div
+            className={`space-y-1 ${isReadOnly(config.youtube)
+              ? "opacity-60 pointer-events-none"
+              : ""
+              }`}
+          >
+            <p className="text-xs uppercase tracking-wide text-gray-500">
+              Section label
+            </p>
+            <Input
+              value={config.youtube.section_title || "Video Gallery"}
+              disabled={isReadOnly(config.youtube)}
+              placeholder="Section title"
+              onChange={(v) =>
+                update({
+                  ...config,
+                  youtube: {
+                    ...config.youtube,
+                    section_title: v.trim() === "" ? "Video Gallery" : v,
+                  },
+                })
+              }
+            />
+
+          </div>
+
+          {/* OPEN MODAL BUTTON — SAME STYLE */}
+          <div className="mt-4">
+            <button
+              type="button"
+              disabled={isReadOnly(config.youtube)}
+              onClick={() => {
+                // ✅ clone to draft
+                setDraftYoutube(structuredClone(config.youtube));
+                setYoutubeModalOpen(true);
+              }}
+              className="
+        px-4 py-2 rounded-lg
+        bg-purple-600 text-white text-sm
+        hover:opacity-90
+        disabled:opacity-50
+      "
+            >
+              Add / Manage Videos
+            </button>
+          </div>
+
+          {/* PREVIEW — EMBED LOOK, NON-PLAYABLE */}
+          {config.youtube.items?.length > 0 && (
+            <div
+              className={`mt-4 ${isReadOnly(config.youtube)
+                ? "opacity-60 pointer-events-none"
+                : ""
+                }`}
+            >
+              <div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
+                {config.youtube.items
+                  .filter((v) => v.enabled)
+                  .sort((a, b) => a.rank - b.rank)
+                  .map((item, idx) => {
+                    const videoId = extractYoutubeId(item.url);
+
+                    return (
+                      <div
+                        key={idx}
+                        className="flex-shrink-0 w-[220px]"
+                      >
+                        <div className="relative aspect-video rounded-lg overflow-hidden border bg-black">
+                          {/* EMBED (non-interactive) */}
+                          <iframe
+                            src={`https://www.youtube.com/embed/${videoId}?controls=0&autoplay=0&mute=1&playsinline=1`}
+                            className="absolute inset-0 w-full h-full pointer-events-none"
+                            allow="accelerometer; encrypted-media; gyroscope; picture-in-picture"
+                          />
+
+                          {/* Optional overlay for polish */}
+                          <div className="absolute inset-0 bg-black/10" />
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+            </div>
+          )}
+
+          {/* MODAL — SAME DRAFT FLOW */}
+          <CommonModal
+            open={youtubeModalOpen}
+            title="Videos"
+            description="Add or manage your YouTube / video links"
+            onClose={() => setYoutubeModalOpen(false)}
+            onConfirm={() => {
+              if (!draftYoutube) return;
+
+              update({
+                ...config,
+                youtube: draftYoutube,
+              });
+              setYoutubeModalOpen(false);
+            }}
+          >
+            {draftYoutube && (
+              <YoutubeSection
+                disabled={isReadOnly(config.youtube)}
+                items={draftYoutube.items}
+                onChange={(items) =>
+                  setDraftYoutube({
+                    ...draftYoutube,
+                    items,
+                  })
+                }
+              />
+            )}
+          </CommonModal>
+        </Card>
+      )}
+
+      {isSectionEnabled("meeting") && (
+        <Card title="Meeting Button" desc="Book a call / meeting link">
+          {showLockable && (
+            <LockControl
+              value={config.meeting}
+              role={config.role}
+              onChange={(v) =>
+                update({
+                  ...config,
+                  meeting: { ...config.meeting, ...v },
+                })
+              }
+            />
+
+          )}
+          <MeetingSection
+            disabled={isReadOnly(config.meeting)}
+            value={config.meeting}
+            onChange={(m: any) => update({ ...config, meeting: m })}
+          />
+        </Card>
+      )}
+
+      {isSectionEnabled("links_files") && (
+        <Card title="Links & Files" desc="Add external links or downloadable files">
+          {showLockable && (
+            <LockControl
+              value={config.links_files}
+              role={config.role}
+              onChange={(v) =>
+                update({
+                  ...config,
+                  links_files: { ...config.links_files, ...v },
+                })
+              }
+            />
+          )}
+
+          {/* SECTION LABEL — stays OUTSIDE modal */}
+          <div
+            className={`space-y-1 ${isReadOnly(config.links_files)
+              ? "opacity-60 pointer-events-none"
+              : ""
+              }`}
+          >
+            <p className="text-xs uppercase tracking-wide text-gray-500">
+              Section label
+            </p>
+            <Input
+              value={config.links_files.section_title || "Links and Files"}
+              disabled={isReadOnly(config.links_files)}
+              placeholder="Section title"
+              onChange={(v) =>
+                update({
+                  ...config,
+                  links_files: {
+                    ...config.links_files,
+                    section_title: v.trim() === "" ? "Links and Files" : v,
+                  },
+                })
+              }
+            />
+          </div>
+
+          {/* OPEN MODAL BUTTON — SAME STYLE */}
+          <div className="mt-4">
+            <button
+              type="button"
+              disabled={isReadOnly(config.links_files)}
+              onClick={() => {
+                // ✅ clone current state into draft
+                setDraftLinksFiles(structuredClone(config.links_files));
+                setLinksFilesModalOpen(true);
+              }}
+              className="
+        px-4 py-2 rounded-lg
+        bg-purple-600 text-white text-sm
+        hover:opacity-90
+        disabled:opacity-50
+      "
+            >
+              Add / Manage Links & Files
+            </button>
+          </div>
+
+          {/* MODAL */}
+          <CommonModal
+            open={linksFilesModalOpen}
+            title="Links & Files"
+            description="Add or manage your external links and files"
+            onClose={() => setLinksFilesModalOpen(false)}
+            onConfirm={() => {
+              if (!draftLinksFiles) return;
+
+              update({
+                ...config,
+                links_files: draftLinksFiles,
+              });
+              setLinksFilesModalOpen(false);
+            }}
+          >
+            {draftLinksFiles && (
+              <LinksFilesSection
+                disabled={isReadOnly(config.links_files)}
+                value={draftLinksFiles}
+                onChange={(v: any) => setDraftLinksFiles(v)}
+              />
+            )}
+          </CommonModal>
+        </Card>
+      )}
+
       <div className="px-6">
         <button
           onClick={save}
@@ -2430,6 +2501,7 @@ export default function VicePublicSetting({
           Save Public Profile
         </button>
       </div>
+
       {isCropping && coverFileRef.current && (
         <CoverCropModal
           file={coverFileRef.current}
@@ -2451,6 +2523,15 @@ export default function VicePublicSetting({
           }}
         />
       )}
+
+      <AddSectionModal
+        open={addSectionOpen}
+        sections={config.sections.items}
+        onClose={() => setAddSectionOpen(false)}
+        onAdd={(type: string) => {
+          handleAddSection(type);
+        }}
+      />
 
     </div>
   );
@@ -2521,7 +2602,6 @@ export function Input({
     />
   );
 }
-
 
 export function Toggle({
   label,
@@ -2674,6 +2754,165 @@ export function ColorPickerField({
           document.body
         )}
     </>
+  );
+}
+
+function ThemeColorRow({
+  label,
+  value,
+  onChange,
+  disabled,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  disabled?: boolean;
+}) {
+  const PRESET_COLORS = [
+    "#000000",
+    "#F87171",
+    "#FB7185",
+    "#FDBA74",
+    "#FDE68A",
+    "#6EE7B7",
+    "#67E8F9",
+    "#93C5FD",
+    "#C4B5FD",
+  ];
+
+  const [open, setOpen] = useState(false);
+  const btnRef = useRef<HTMLButtonElement | null>(null);
+  const pickerRef = useRef<HTMLDivElement | null>(null);
+  const [pos, setPos] = useState({ top: 0, left: 0 });
+
+  // 🔥 Close on scroll
+  useEffect(() => {
+    if (!open) return;
+
+    const close = () => setOpen(false);
+    window.addEventListener("scroll", close, true);
+    return () => window.removeEventListener("scroll", close, true);
+  }, [open]);
+
+  // 🔥 Close on outside click
+  useEffect(() => {
+    if (!open) return;
+
+    const handleClick = (e: MouseEvent) => {
+      if (
+        btnRef.current?.contains(e.target as Node) ||
+        pickerRef.current?.contains(e.target as Node)
+      ) {
+        return;
+      }
+      setOpen(false);
+    };
+
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [open]);
+
+  const openPicker = () => {
+    if (!btnRef.current) return;
+
+    const rect = btnRef.current.getBoundingClientRect();
+
+    const PICKER_W = 280;
+    const PICKER_H = 300;
+    const GAP = 8;
+
+    let top = rect.bottom + GAP;
+    let left = rect.left;
+
+    const viewportW = window.innerWidth;
+    const viewportH = window.innerHeight;
+
+    // 🔥 If not enough space below → open above
+    if (rect.bottom + PICKER_H + GAP > viewportH) {
+      top = rect.top - PICKER_H - GAP;
+    }
+
+    // 🔥 If still out of viewport (very small screens)
+    if (top < GAP) {
+      top = GAP;
+    }
+
+    // 🔥 Prevent right overflow
+    if (rect.left + PICKER_W > viewportW - GAP) {
+      left = viewportW - PICKER_W - GAP;
+    }
+
+    // 🔥 Prevent left overflow
+    if (left < GAP) {
+      left = GAP;
+    }
+
+    setPos({ top, left });
+    setOpen(true);
+  };
+
+  return (
+    <div className="space-y-2">
+      {/* LABEL */}
+      <div className="flex items-center gap-1">
+        <span className="text-sm font-medium text-gray-800">
+          {label}
+        </span>
+        <span className="text-gray-400 text-xs cursor-help">ⓘ</span>
+      </div>
+
+      {/* COLOR OPTIONS */}
+      <div className="flex items-center gap-3 flex-wrap">
+        {PRESET_COLORS.map((c) => (
+          <button
+            key={c}
+            disabled={disabled}
+            onClick={() => onChange(c)}
+            className={`
+              h-6 w-6 rounded-full border transition
+              ${value === c ? "ring-2 ring-black" : "border-gray-200"}
+              ${disabled ? "opacity-50 cursor-not-allowed" : ""}
+            `}
+            style={{ backgroundColor: c }}
+          />
+        ))}
+
+        {/* CUSTOM PICKER BUTTON */}
+        <button
+          ref={btnRef}
+          disabled={disabled}
+          onClick={openPicker}
+          className={`
+            h-7 w-7 rounded-full border
+            ${disabled ? "opacity-50 cursor-not-allowed" : ""}
+          `}
+          style={{
+            background:
+              "conic-gradient(red, yellow, lime, cyan, blue, magenta, red)",
+          }}
+        />
+      </div>
+
+      {/* PORTAL PICKER */}
+      {open &&
+        createPortal(
+          <div
+            ref={pickerRef}
+            style={{
+              position: "fixed",
+              top: pos.top,
+              left: pos.left,
+              width: 280,
+              zIndex: 10000,
+            }}
+            className="bg-white rounded-xl shadow-xl p-3"
+          >
+            <ProColorPicker value={value} onChange={onChange} />
+          </div>,
+          document.body
+        )}
+
+    </div>
   );
 }
 

@@ -11,6 +11,15 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import type { SectionItem } from "../../../../publicProfile/types";
 
+const HIDDEN_SECTIONS = ["video_gallery"];
+const SECTION_LABELS: Record<string, string> = {
+  youtube: "Videos",
+  links_files: "Links & Files",
+  photo_gallery: "Photo Gallery",
+  social_links: "Social Links",
+  meeting: "Meeting Button",
+};
+
 export default function SectionsReorder({
   sections,
   groupLocked,
@@ -20,17 +29,28 @@ export default function SectionsReorder({
   groupLocked?: boolean;
   onChange: (s: SectionItem[]) => void;
 }) {
-  const fixed = sections.filter((s) => s.type === "profile");
+  // 🔥 Remove hidden sections completely
+  const visibleSections = sections.filter(
+    (s) => !HIDDEN_SECTIONS.includes(s.type)
+  );
 
-  const movable = sections
-    .filter((s) => s.type !== "profile")
+  // ✅ Only enabled sections
+  const fixed = visibleSections.filter(
+    (s) => s.type === "profile" && s.enabled
+  );
+
+  const movable = visibleSections
+    .filter((s) => s.type !== "profile" && s.enabled)
     .sort((a, b) => a.rank - b.rank);
 
   const ordered = [...fixed, ...movable].sort(
     (a, b) => a.rank - b.rank
   );
 
-  const minRank = Math.min(...sections.map((s) => s.rank));
+  const minRank =
+    visibleSections.length > 0
+      ? Math.min(...visibleSections.map((s) => s.rank))
+      : 1;
 
   return (
     <DndContext
@@ -48,6 +68,8 @@ export default function SectionsReorder({
           (s) => s.id === over.id
         );
 
+        if (oldIndex === -1 || newIndex === -1) return;
+
         const reordered = arrayMove(
           movable,
           oldIndex,
@@ -57,9 +79,7 @@ export default function SectionsReorder({
           rank: minRank + fixed.length + i,
         }));
 
-        const next = [...fixed, ...reordered].sort(
-          (a, b) => a.rank - b.rank
-        );
+        const next = [...fixed, ...reordered];
 
         onChange(next);
       }}
@@ -77,15 +97,6 @@ export default function SectionsReorder({
                 key={s.id}
                 s={s}
                 disabled={groupLocked}
-                onToggle={(v) =>
-                  onChange(
-                    sections.map((x) =>
-                      x.id === s.id
-                        ? { ...x, enabled: v }
-                        : x
-                    )
-                  )
-                }
               />
             )
           )}
@@ -99,11 +110,9 @@ export default function SectionsReorder({
 
 function SortableRow({
   s,
-  onToggle,
   disabled,
 }: {
   s: SectionItem;
-  onToggle: (v: boolean) => void;
   disabled?: boolean;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition } =
@@ -130,16 +139,12 @@ function SortableRow({
             ☰
           </span>
         )}
+
         <span className="font-medium capitalize">
-          {s.type.replace("_", " ")}
+         {SECTION_LABELS[s.type] || s.type.replace(/_/g, " ")}
+
         </span>
       </div>
-
-      <Toggle
-        value={s.enabled}
-        onChange={onToggle}
-        disabled={disabled}
-      />
     </div>
   );
 }
@@ -148,36 +153,9 @@ function FixedRow({ s }: { s: SectionItem }) {
   return (
     <div className="flex items-center justify-between bg-gray-100 border rounded-lg p-3 opacity-70">
       <span className="capitalize">
-        {s.type.replace("_", " ")} (fixed)
+        {SECTION_LABELS[s.type] || s.type.replace(/_/g, " ")} (fixed)
+
       </span>
     </div>
-  );
-}
-
-/* ================= TOGGLE ================= */
-
-function Toggle({
-  value,
-  onChange,
-  disabled,
-}: {
-  value: boolean;
-  onChange: (v: boolean) => void;
-  disabled?: boolean;
-}) {
-  return (
-    <label className={`flex items-center gap-2 ${
-      disabled ? "cursor-not-allowed text-gray-400" : "cursor-pointer"
-    }`}>
-      <span className="text-sm">
-        {value ? "On" : "Off"}
-      </span>
-      <input
-        type="checkbox"
-        checked={value}
-        disabled={disabled}
-        onChange={(e) => onChange(e.target.checked)}
-      />
-    </label>
   );
 }
