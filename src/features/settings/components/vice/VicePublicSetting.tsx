@@ -962,10 +962,10 @@ export default function VicePublicSetting({
           </div>
 
           {/* PROFILE + COVER SECTION */}
-          <div className="mt-6 grid grid-cols-1 md:grid-cols-2 items-start">
+          <div className="mt-6 grid grid-cols-1 md:grid-cols-[0.7fr_1fr_1fr] gap-20 max-w-lg items-start">
 
             {/* PROFILE PHOTO — ALWAYS VISIBLE */}
-            <div>
+            <div className="min-w-32">
               <div className="flex items-center gap-2 mb-3">
                 <p className="text-sm font-semibold text-gray-800">
                   Profile Photo
@@ -990,6 +990,11 @@ export default function VicePublicSetting({
             {/* COVER BACKGROUND — ONLY WHEN TYPE 3 */}
             {config.layout.profile_type === 3 && (
               <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <p className="text-sm font-semibold text-gray-800">
+                    Cover Background
+                  </p>
+                </div>
 
                 {/* Lock only for cover */}
                 {showLockable && (
@@ -1007,11 +1012,6 @@ export default function VicePublicSetting({
                   </div>
                 )}
 
-                <div className="flex items-center gap-2 mb-3">
-                  <p className="text-sm font-semibold text-gray-800">
-                    Cover Background
-                  </p>
-                </div>
 
                 <div
                   className={`relative h-40 w-full rounded-xl border border-dashed border-gray-300 bg-gray-50 transition ${isReadOnly(config.cover)
