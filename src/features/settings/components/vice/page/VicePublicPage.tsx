@@ -31,45 +31,88 @@ export default function VicePublicPage() {
     const normalized = normalizeProfile(data);
     setLiveConfig(denormalizeProfile(normalized, data));
   }, [data]);
-
   return (
-    <div className="pt-6 px-6 grid grid-cols-1 gap-6 h-[calc(100vh-64px)] transition-[grid-template-columns] duration-500 ease-in-out  lg:grid-cols-[640px_1fr] overflow-hidden">
+    <div className="pt-6 px-8 h-[calc(100vh-84px)] overflow-hidden">
 
-      {/* RIGHT — Fixed Preview */}
-      <div className="origin-top scale-[0.6] xl:scale-[0.7] flex items-center justify-center">
+      <div className="
+      max-w-[1600px]
+      mx-auto
+      grid
+      grid-cols-1
+      xl:grid-cols-[520px_1fr]
+      gap-16
+      h-full
+    ">
 
-        <div className="w-[390px] h-[780px]
-                rounded-[44px]
-                bg-white
-                p-[10px]">
-          <div className="h-full bg-white rounded-[2rem] overflow-hidden flex flex-col">
-            {loading || !liveConfig ? (
-              <div className="h-full flex items-center justify-center text-gray-400">
-                Loading preview…
+        {/* LEFT — Phone Preview */}
+        <div className="hidden xl:flex items-start justify-center">
+
+          <div className="flex flex-col items-center">
+
+            {/* <button className="px-4 py-2 border rounded-lg text-sm font-semibold">
+              Live Preview
+            </button> */}
+            <div className="text-xs text-gray-400 bg-gray-50 tracking-wide border border-[#D5d5d5] rounded-xl px-4 py-1 mb-4 shadow-md hover:shadow-lg transition-shadow duration-200">
+              <a href={`${window.location.origin}/profile/${username}`} target="_blank" rel="noopener noreferrer">
+                Live Preview
+              </a>
+            </div>
+
+            {/* Phone Wrapper */}
+            <div className="h-[75vh] aspect-[10/19]">
+
+              <div className="
+              w-full h-full
+              bg-white
+              rounded-[20px]
+              shadow-xl
+              ring-1 ring-gray-200
+              overflow-hidden
+            ">
+
+                {loading || !liveConfig ? (
+                  <div className="h-full flex items-center justify-center text-gray-400">
+                    Loading preview…
+                  </div>
+                ) : (
+                  <div className="h-full overflow-y-auto no-scrollbar">
+                    <MobileWebsite data={liveConfig} />
+                  </div>
+                )}
+
               </div>
-            ) : (
-              <div className="flex-1 overflow-y-auto overscroll-contain no-scrollbar">
-                <MobileWebsite data={liveConfig} />
-              </div>
-            )}
+
+            </div>
+
           </div>
+
         </div>
-      </div>
 
-      {/* LEFT — Scrollable Editor */}
-      <div className="h-[75%] rounded-2xl overflow-hidden overflow-y-auto overscroll-contain transition-all duration-500 ease-in-out order-2 lg:order-1 bg-white shadow">
 
-        <VicePublicSetting
-          key={username}
-          username={username}
-          useSelfApi={true}
-          showLockable={true}
-          onLiveChange={(cfg) => {
-            if (!data) return;
-            setLiveConfig(denormalizeProfile(cfg, data));
-          }}   // 🔥 connect
-        />
+        {/* RIGHT — Editor Panel */}
+        <div className="
+        bg-white
+        rounded-2xl
+        shadow-md
+        h-full
+        overflow-y-auto
+      ">
+
+          <VicePublicSetting
+            key={username}
+            username={username}
+            useSelfApi={true}
+            showLockable={true}
+            onLiveChange={(cfg) => {
+              if (!data) return;
+              setLiveConfig(denormalizeProfile(cfg, data));
+            }}
+          />
+
+        </div>
+
       </div>
     </div>
   );
+
 }

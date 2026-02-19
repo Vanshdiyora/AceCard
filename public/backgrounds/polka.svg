@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 270 405">
+    <defs>
+        <pattern id="polka-circle" width="54" height="54" patternUnits="userSpaceOnUse">
+            <circle cx="27" cy="33.75" r="15" fill="#65696F">
+                <animate attributeName="r" calcMode="spline" dur="2s"
+                    keySplines="0.5 0 0.5 1; 0.5 0 0.5 1" keyTimes="0; 0.5; 1"
+                    repeatCount="indefinite" values="15;20;15" />
+            </circle>
+        </pattern>
+        <rect id="polka-brick" width="54" height="67.5" x="0" y="0" fill="url(#polka-circle)" />
+        <use id="polka-row-o" x="-25" y="0" href="#polka-row" />
+        <g id="polka-row">
+            <use href="#polka-brick" />
+            <use x="54" href="#polka-brick" />
+            <use x="108" href="#polka-brick" />
+            <use x="162" href="#polka-brick" />
+            <use x="216" href="#polka-brick" />
+            <use x="266" href="#polka-brick" />
+        </g>
+    </defs>
+    <rect width="100%" height="100%" fill="#3d444b" />
+    <g transform="translate(0 -33.75)">
+        <use href="#polka-row-o" />
+        <use y="67.5" href="#polka-row" />
+        <use y="135" href="#polka-row-o" />
+        <use y="202.5" href="#polka-row" />
+        <use y="270" href="#polka-row-o" />
+        <use y="337.5" href="#polka-row" />
+        <use y="405" href="#polka-row-o" />
+    </g>
+    <script xmlns="" />
+</svg>

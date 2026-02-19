@@ -23,7 +23,8 @@ export interface PublicProfileApi {
   role?: string;
   job_title?: string;
   vendor_name?: string;
-
+  custom_job_role?: string;
+  address?: string;
   configuration?: {
     /* ---------- PROFILE ---------- */
     profile?: {

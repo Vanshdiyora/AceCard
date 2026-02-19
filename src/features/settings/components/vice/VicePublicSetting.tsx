@@ -275,6 +275,7 @@ interface PublicProfileConfig {
   };
 
 }
+
 function getChangedFields<T extends object>(
   current: T,
   original: T
@@ -285,6 +286,15 @@ function getChangedFields<T extends object>(
     const currVal = (current as any)[key];
     const origVal = (original as any)[key];
 
+    // Handle strings safely (important for bio)
+    if (typeof currVal === "string" && typeof origVal === "string") {
+      if (currVal.trim() !== origVal.trim()) {
+        (result as any)[key] = currVal;
+      }
+      return;
+    }
+
+    // Deep compare objects
     if (JSON.stringify(currVal) !== JSON.stringify(origVal)) {
       (result as any)[key] = currVal;
     }
@@ -496,14 +506,14 @@ export default function VicePublicSetting({
   }, [publicProfile]);
 
   const validateBeforeSave = () => {
-    if (!config?.profile.description?.trim()) {
-      setResultSuccess(false);
-      setResultMessage("Profile description is required.");
-      setResultOpen(true);
-      return false;
-    }
+    // if (!config?.profile.description?.trim()) {
+    //   setResultSuccess(false);
+    //   setResultMessage("Profile description is required.");
+    //   setResultOpen(true);
+    //   return false;
+    // }
 
-    if (hasInvalidSocialLinks(config.social_links.items)) {
+    if (hasInvalidSocialLinks(config?.social_links.items)) {
       setResultSuccess(false);
       setResultMessage("Please fill all enabled social links.");
       setResultOpen(true);
@@ -868,7 +878,6 @@ export default function VicePublicSetting({
     },
   ];
 
-
   return (
     <div className="mb-4">
       <ResultModal
@@ -938,7 +947,8 @@ export default function VicePublicSetting({
                     : "border-gray-200"
                     }`}
                 >
-                  <div className="aspect-square w-28 mx-auto overflow-hidden rounded-lg bg-gray-50">
+               <div className="aspect-square w-full max-w-[110px] mx-auto overflow-hidden rounded-lg bg-gray-50">
+
                     <img
                       src={
                         t === 1
@@ -1050,6 +1060,90 @@ export default function VicePublicSetting({
             )}
           </div>
 
+          {/* BASIC INFO (READ ONLY) */}
+          <div className="mt-8 max-w-lg space-y-6">
+
+            {/* BASIC INFO GRID */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+              {/* FULL NAME */}
+              <div className="space-y-1">
+                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                  Full Name
+                </p>
+                <Input
+                  value={publicProfile?.name || ""}
+                  onChange={() => { }}
+                  disabled
+                />
+              </div>
+
+              {/* COMPANY NAME */}
+              <div className="space-y-1">
+                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                  Company Name
+                </p>
+                <Input
+                  value={publicProfile?.vendor_name || ""}
+                  onChange={() => { }}
+                  disabled
+                />
+              </div>
+
+              {/* JOB TITLE / ROLE */}
+              <div className="space-y-1">
+                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                  Job Title / Role
+                </p>
+                <Input
+                  value={
+                    publicProfile?.custom_job_role ||
+                    publicProfile?.role ||
+                    ""
+                  }
+                  onChange={() => { }}
+                  disabled
+                />
+              </div>
+
+              {/* LOCATION */}
+              <div className="space-y-1">
+                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                  Location
+                </p>
+                <Input
+                  value={publicProfile?.address || ""}
+                  onChange={() => { }}
+                  disabled
+                />
+              </div>
+
+            </div>
+
+            {/* BIO — FULL WIDTH & EDITABLE */}
+            <div className="space-y-2">
+              <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                Bio
+              </p>
+
+              <Input
+                textarea
+                value={config.profile.description}
+                placeholder="Describe your work"
+                onChange={(v) =>
+                  update({
+                    ...config,
+                    profile: {
+                      ...config.profile,
+                      description: v,
+                    },
+                  })
+                }
+              />
+            </div>
+
+          </div>
+
           {/* FADE TOGGLE + COLOR */}
           <div className={isLayoutLocked ? "opacity-60 pointer-events-none" : ""}>
             {config.layout.profile_type !== 2 && (
@@ -1085,6 +1179,146 @@ export default function VicePublicSetting({
             )}
           </div>
 
+          {/* ALIGNMENT */}
+          <div className={isLayoutLocked ? "opacity-60 pointer-events-none" : ""}>
+            <div className="mt-8 border-t pt-6">
+              <h4 className="text-sm font-medium mb-3">
+                Card Layout Alignment
+              </h4>
+
+              <div className="grid grid-cols-3 gap-3">
+                {([
+                  { id: "left", Icon: AlignLeft },
+                  { id: "center", Icon: AlignCenter },
+                  { id: "right", Icon: AlignRight },
+                ] as const).map(({ id, Icon }) => (
+                  <button
+                    key={id}
+                    onClick={() =>
+                      update({
+                        ...config,
+                        layout: {
+                          ...config.layout,
+                          card_alignment: id,
+                        },
+                      })
+                    }
+                    className={`border rounded-xl py-3 flex items-center justify-center transition ${config.layout.card_alignment === id
+                      ? "border-black bg-gray-50"
+                      : "border-gray-200 hover:bg-gray-50"
+                      }`}
+                  >
+                    <Icon className="w-5 h-5" />
+                  </button>
+                ))}
+              </div>
+
+            </div>
+          </div>
+
+          {/* AVATAR SETTINGS — ONE LINE */}
+          <div className={isLayoutLocked ? "opacity-60 pointer-events-none" : ""}>
+            <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+
+              {/* Avatar Border Thickness */}
+              <div>
+                <h4 className="text-sm font-medium mb-3">
+                  Avatar Border Thickness
+                </h4>
+
+                <div className="flex items-center gap-3">
+                  <input
+                    type="number"
+                    min={0}
+                    max={600}
+                    step={1}
+                    value={
+                      config.layout.profile_width === 0
+                        ? ""
+                        : config.layout.profile_width
+                    }
+                    onChange={(e) => {
+                      const val = e.target.value;
+
+                      if (val === "") {
+                        update({
+                          ...config,
+                          layout: { ...config.layout, profile_width: 0 },
+                        });
+                        return;
+                      }
+
+                      update({
+                        ...config,
+                        layout: {
+                          ...config.layout,
+                          profile_width: Number(val),
+                        },
+                      });
+                    }}
+                    className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    placeholder="e.g. 6"
+                  />
+
+                  <span className="text-xs text-gray-500">px</span>
+                </div>
+
+                <p className="text-xs text-gray-400 mt-1">
+                  Recommended: 6 - 8 px
+                </p>
+              </div>
+
+              {/* Profile Size */}
+              <div>
+                <h4 className="text-sm font-medium mb-3">
+                  Profile Size
+                </h4>
+
+                <div className="flex items-center gap-3">
+                  <input
+                    type="number"
+                    min={40}
+                    max={80}
+                    step={1}
+                    value={
+                      config.layout.profile_radius === 0
+                        ? ""
+                        : config.layout.profile_radius
+                    }
+                    onChange={(e) => {
+                      const val = e.target.value;
+
+                      if (val === "") {
+                        update({
+                          ...config,
+                          layout: { ...config.layout, profile_radius: 0 },
+                        });
+                        return;
+                      }
+
+                      update({
+                        ...config,
+                        layout: {
+                          ...config.layout,
+                          profile_radius: Number(val),
+                        },
+                      });
+                    }}
+                    className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    placeholder="e.g. 60"
+                  />
+
+                  <span className="text-xs text-gray-500">px</span>
+                </div>
+
+                <p className="text-xs text-gray-400 mt-1">
+                  Recommended: 60 - 70 px
+                </p>
+              </div>
+
+            </div>
+          </div>
+
           {/* FONT PICKER */}
           <div className={isLayoutLocked ? "opacity-60 pointer-events-none" : ""}>
             <div className="mt-6">
@@ -1108,7 +1342,6 @@ export default function VicePublicSetting({
               />
             </div>
           </div>
-
 
           {config.layout.use_custom_font && (
             <div className={isLayoutLocked ? "opacity-60 pointer-events-none" : ""}>
@@ -1152,49 +1385,12 @@ export default function VicePublicSetting({
 
                 {config.layout.custom_font && (
                   <p className="mt-2 text-xs text-green-600">
-                    ✔ Font uploaded successfully
+                    Font uploaded successfully
                   </p>
                 )}
               </div>
             </div>
           )}
-
-          {/* ALIGNMENT */}
-          <div className={isLayoutLocked ? "opacity-60 pointer-events-none" : ""}>
-            <div className="mt-8 border-t pt-6">
-              <h4 className="text-sm font-medium mb-3">
-                Card Layout Alignment
-              </h4>
-
-              <div className="grid grid-cols-3 gap-3">
-                {([
-                  { id: "left", Icon: AlignLeft },
-                  { id: "center", Icon: AlignCenter },
-                  { id: "right", Icon: AlignRight },
-                ] as const).map(({ id, Icon }) => (
-                  <button
-                    key={id}
-                    onClick={() =>
-                      update({
-                        ...config,
-                        layout: {
-                          ...config.layout,
-                          card_alignment: id,
-                        },
-                      })
-                    }
-                    className={`border rounded-xl py-3 flex items-center justify-center transition ${config.layout.card_alignment === id
-                      ? "border-black bg-gray-50"
-                      : "border-gray-200 hover:bg-gray-50"
-                      }`}
-                  >
-                    <Icon className="w-5 h-5" />
-                  </button>
-                ))}
-              </div>
-
-            </div>
-          </div>
 
           {/* BUTTON STYLE */}
           <div className={isLayoutLocked ? "opacity-60 pointer-events-none" : ""}>
@@ -1241,139 +1437,164 @@ export default function VicePublicSetting({
             </div>
           </div>
 
-          {/* PROFILE WIDTH */}
-          <div className={isLayoutLocked ? "opacity-60 pointer-events-none" : ""}>
-            <div className="mt-6">
-              <h4 className="text-sm font-medium mb-3">Avatar Border Thickness</h4>
+          {/* SECTIONS */}
+          <div className="mt-10">
 
-              <div className="flex items-center gap-3 w-1/2">
-                <input
-                  type="number"
-                  min={0}
-                  max={600}
-                  step={1}
-                  value={
-                    config.layout.profile_width === 0
-                      ? ""
-                      : config.layout.profile_width
-                  }
-                  onChange={(e) => {
-                    const val = e.target.value;
-
-                    // allow empty
-                    if (val === "") {
-                      update({
-                        ...config,
-                        layout: { ...config.layout, profile_width: 0 },
-                      });
-                      return;
-                    }
-
-                    update({
-                      ...config,
-                      layout: {
-                        ...config.layout,
-                        profile_width: Number(val),
-                      },
-                    });
-                  }}
-                  className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  placeholder="e.g. 360"
-                />
-
-                <span className="text-xs text-gray-500">px</span>
-              </div>
-
-              <p className="text-xs text-gray-400 mt-1">
-                Recommended: 6 - 8 px
-              </p>
+            {/* TITLE */}
+            <div className="mb-4">
+              <h3 className="text-sm font-semibold text-gray-900">
+                Add Sections to Your Card
+              </h3>
             </div>
-          </div>
 
-          {/* Border Radius */}
-          <div className={isLayoutLocked ? "opacity-60 pointer-events-none" : ""}>
-            <div className="mt-6">
+            {(() => {
+              const visibleSections = config.sections.items.filter(
+                (s) =>
+                  s.enabled &&
+                  !["video_gallery"].includes(s.type)
+              );
 
-              <div>
-                <h4 className="text-sm font-medium mb-3">Profile Size</h4>
+              const hasOnlyProfile =
+                visibleSections.length === 1 &&
+                visibleSections[0].type === "profile";
 
-                <div className="flex items-center gap-3 w-1/2">
-                  <input
-                    type="number"
-                    min={40}
-                    max={80}
-                    step={1}
-                    value={
-                      config.layout.profile_radius === 0
-                        ? ""
-                        : config.layout.profile_radius
-                    }
-                    onChange={(e) => {
-                      const val = e.target.value;
+              const showEmptyState =
+                visibleSections.length === 0 || hasOnlyProfile;
 
-                      if (val === "") {
-                        update({
-                          ...config,
-                          layout: { ...config.layout, profile_radius: 0 },
-                        });
-                        return;
-                      }
+              return showEmptyState ? (
+                /* EMPTY STATE */
+                <div className="border-2 border-dashed border-gray-300 rounded-xl p-16 text-center bg-white">
 
-                      update({
-                        ...config,
-                        layout: {
-                          ...config.layout,
-                          profile_radius: Number(val),
-                        },
-                      });
-                    }}
-                    className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                    placeholder="e.g. 50"
-                  />
+                  <h4 className="text-sm font-semibold text-gray-800">
+                    Customize Your Card With Sections
+                  </h4>
 
-                  <span className="text-xs text-gray-500">px</span>
+                  <p className="text-sm text-gray-500 mt-2">
+                    Click "+ Add Section" to add contact details, social media, videos, and more.
+                  </p>
+
+                  <button
+                    type="button"
+                    onClick={() => setAddSectionOpen(true)}
+                    className="mt-5 px-5 py-2 rounded-full bg-gray-100 hover:bg-gray-200 text-sm font-medium transition"
+                  >
+                    Add Section
+                  </button>
+
                 </div>
+              ) : (
+                <>
+                  {/* ADD BUTTON */}
+                  <div className="mb-4 flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() => setAddSectionOpen(true)}
+                      className="px-4 py-2 rounded-lg bg-purple-600 text-white text-sm hover:opacity-90"
+                    >
+                      + Add Section
+                    </button>
+                  </div>
 
-                <p className="text-xs text-gray-400 mt-1">
-                  Recommended: 60 - 70 px
-                </p>
-              </div>
-            </div>
+                  {/* REORDER */}
+                  <SectionsReorder
+                    sections={config.sections.items}
+                    groupLocked={config.sections.locked}
+                    onChange={(items) =>
+                      update({
+                        ...config,
+                        sections: { ...config.sections, items },
+                      })
+                    }
+                  />
+                </>
+              );
+            })()}
           </div>
 
           {/* BACKGROUND TYPE */}
           <div className={isLayoutLocked ? "opacity-60 pointer-events-none" : ""}>
             <div className="mt-6">
               <p className="text-sm font-medium mb-2">Background Type</p>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-6 mt-4">
 
-              <div className="grid grid-cols-3 gap-3">
                 {[
-                  "solid",
-                  "gradient",
-                  "image",
-                  "video",
-                  "polka",
-                  "stripes",
-                  "zigzag",
-                ].map((t) => (
-                  <button
-                    key={t}
-                    onClick={() =>
-                      update({
-                        ...config,
-                        layout: { ...config.layout, use_background: t as any },
-                      })
-                    }
-                    className={`border rounded-xl py-2 text-sm capitalize transition ${config.layout.use_background === t
-                      ? "border-black bg-gray-50"
-                      : "border-gray-200"
-                      }`}
-                  >
-                    {t}
-                  </button>
-                ))}
+                  { id: "solid", label: "Solid Color" },
+                  { id: "gradient", label: "Gradient" },
+                  { id: "image", label: "Image" },
+                  { id: "video", label: "Video" },
+                  { id: "waves", label: "Waves" },
+                  { id: "polka", label: "Polka Dots" },
+                  { id: "stripes", label: "Stripes" },
+                  { id: "zigzag", label: "Zigzag" },
+                ].map((item) => {
+                  const isActive = config.layout.use_background === item.id;
+
+                  return (
+                    <div key={item.id} className="text-center">
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          update({
+                            ...config,
+                            layout: {
+                              ...config.layout,
+                              use_background: item.id as any,
+                            },
+                          })
+                        }
+                        className={`
+            relative w-full aspect-square rounded-2xl overflow-hidden
+            border-2 transition
+            ${isActive
+                            ? "border-black ring-2 ring-gray-300"
+                            : "border-gray-200 hover:border-gray-400"}
+          `}
+                      >
+
+                        {/* PREVIEW AREA */}
+                        {item.id === "solid" && (
+                          <div className="w-full h-full bg-gray-700" />
+                        )}
+
+                        {item.id === "gradient" && (
+                          <div className="w-full h-full bg-gradient-to-b from-gray-500 to-gray-800" />
+                        )}
+
+                        {item.id === "image" && (
+                          <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400">
+                            🖼
+                          </div>
+                        )}
+
+                        {item.id === "video" && (
+                          <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400">
+                            ▶
+                          </div>
+                        )}
+
+                        {/* SVG BACKGROUNDS */}
+                        {["waves", "polka", "stripes", "zigzag"].includes(item.id) && (
+                          <img
+                            src={`/backgrounds/${item.id}.svg`}   // 👈 use your svg path here
+                            alt={item.label}
+                            className="w-full h-full object-cover"
+                          />
+                        )}
+
+                      </button>
+
+                      {/* LABEL */}
+                      <p className="mt-3 text-sm font-medium text-gray-800">
+                        {item.label}
+                      </p>
+
+                    </div>
+                  );
+                })}
 
               </div>
+
             </div>
 
             {/* SOLID BACKGROUND */}
@@ -1381,17 +1602,19 @@ export default function VicePublicSetting({
               <div className="mt-6">
                 <p className="text-sm font-medium">Card Background Color</p>
 
-                <div className="mt-2 w-1/2">
-                  <ColorPickerField
+                <div className="mt-2">
+                  <ThemeColorRow
                     label="Color"
                     value={config.layout.color1 || "#000000"}
-                    onChange={(v) =>
+                    disabled={isLayoutLocked}
+                    onChange={(val: string) =>
                       update({
                         ...config,
-                        layout: { ...config.layout, color1: v },
+                        layout: { ...config.layout, color1: val },
                       })
                     }
                   />
+
                 </div>
               </div>
             )}
@@ -1440,7 +1663,7 @@ export default function VicePublicSetting({
               </div>
             )}
 
-            {["polka", "stripes", "zigzag"].includes(
+            {["polka", "waves", "stripes", "zigzag"].includes(
               config.layout.use_background || ""
             ) && (
                 <div className="mt-6">
@@ -1464,26 +1687,29 @@ export default function VicePublicSetting({
             {/* Gradient */}
             {config.layout.use_background === "gradient" && (
               <div className="mt-6">
-                <p className="text-sm font-medium">Gradient Background</p>
+                <p className="text-sm font-medium mb-2">Gradient Background</p>
 
-                <div className="grid grid-cols-3 gap-3">
-                  <ColorPickerField
+                <div className="grid grid-cols-1 gap-4">
+                  <ThemeColorRow
                     label="From"
                     value={config.layout.color1 || "#7c3aed"}
-                    onChange={(v) =>
+                    disabled={isLayoutLocked}
+                    onChange={(val: string) =>
                       update({
                         ...config,
-                        layout: { ...config.layout, color1: v },
+                        layout: { ...config.layout, color1: val },
                       })
                     }
                   />
-                  <ColorPickerField
+
+                  <ThemeColorRow
                     label="To"
                     value={config.layout.color2 || "#6366f1"}
-                    onChange={(v) =>
+                    disabled={isLayoutLocked}
+                    onChange={(val: string) =>
                       update({
                         ...config,
-                        layout: { ...config.layout, color2: v },
+                        layout: { ...config.layout, color2: val },
                       })
                     }
                   />
@@ -1498,6 +1724,7 @@ export default function VicePublicSetting({
                     }
                   />
                 </div>
+
               </div>
             )}
 
@@ -1554,24 +1781,7 @@ export default function VicePublicSetting({
         />
       </Card> */}
 
-      <Card title="About" desc="Short description about yourself">
-        <div className="">
-          <Input
-            textarea
-            value={config.profile.description}
-            placeholder="Write a short description about yourself"
-            onChange={(v) =>
-              update({
-                ...config,
-                profile: {
-                  ...config.profile,
-                  description: v,
-                },
-              })
-            }
-          />
-        </div>
-      </Card>
+
 
       <Card title="Theme" desc="Colors used across the profile">
         {showLockable && (
@@ -1624,41 +1834,6 @@ export default function VicePublicSetting({
       </Card> */}
 
 
-      <Card title="Sections" desc="Reorder your public sections">
-
-        {showLockable && (
-          <LockControl
-            value={config.sections}
-            role={config.role}
-            onChange={(v) =>
-              update({
-                ...config,
-                sections: { ...config.sections, ...v },
-              })
-            }
-          />
-        )}
-        <div className="mb-4">
-          <button
-            type="button"
-            onClick={() => setAddSectionOpen(true)}
-            className="px-4 py-2 rounded-lg bg-purple-600 text-white text-sm hover:opacity-90"
-          >
-            Add Section
-          </button>
-        </div>
-
-        <SectionsReorder
-          sections={config.sections.items}
-          groupLocked={config.sections.locked}
-          onChange={(items) =>
-            update({
-              ...config,
-              sections: { ...config.sections, items },
-            })
-          }
-        />
-      </Card>
 
       {isSectionEnabled("contact") && (
         <Card title="Contact" desc="Customize contact buttons">
