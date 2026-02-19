@@ -44,6 +44,10 @@ import {
   arrayMove,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { ZigzagBackground } from "../patterns/ZigzagBackground";
+import { StripeBackground } from "../patterns/StripeBackground";
+import { PolkaBackground } from "../patterns/PolkaBackground";
+import { WaveBackground } from "../patterns/WaveBackground";
 
 /* ================= HELPERS ================= */
 
@@ -444,25 +448,6 @@ export default function MobilePublicSettings({
     }
   };
 
-  const bgClass = (() => {
-    switch (draft.layout?.use_background) {
-      case "polka":
-        return "bg-pattern bg-polka";
-      case "waves":
-        return "bg-pattern bg-waves";
-      case "stripes":
-        return "bg-pattern bg-stripes";
-      case "zigzag":
-        return "bg-pattern bg-zigzag";
-      case "video":
-        return "";
-      default:
-        return "";
-    }
-  })();
-
-
-
   const [editPhotoGallery, setEditPhotoGallery] = useState(false);
   const [youtubeDraft, setYoutubeDraft] = useState<any | null>(null);
   useEffect(() => {
@@ -612,14 +597,36 @@ export default function MobilePublicSettings({
   }, [isAnyModalOpen]);
 
   return (
-    <div
-      className={`relative min-h-screen w-full no-scrollbar overflow-hidden p-4 pb-28 ${bgClass} ${fontClass}`}
-      style={{
-        ...(bgClass
-          ? { ["--pattern-bg" as any]: draft.theme?.background_color || draft.layout?.color1 || "#2f343a" }
-          : resolveBackgroundStyle()),
-      }}
-    >
+ <div
+  className={`absolute w-full min-h-screen overflow-x-hidden p-4 pb-28 ${fontClass}`}
+>
+  
+       {/* BACKGROUND — absolute in preview, fixed on real mobile */}
+       <div
+         className={`fixed inset-0 z-0 pointer-events-none`}
+         style={
+           !["stripes","waves","polka","zigzag","video"].includes(draft.layout?.use_background || "")
+             ? resolveBackgroundStyle()
+             : {}
+         }
+       >
+         {draft.layout?.use_background === "zigzag" && (
+           <ZigzagBackground color={draft.layout?.background_color || "#65696F"} />
+         )}
+         {draft.layout?.use_background === "waves" && (
+           <WaveBackground color={draft.layout?.background_color || "#40474D"} />
+         )}
+         {draft.layout?.use_background === "stripes" && (
+           <StripeBackground color={draft.layout?.background_color || "#65696F"} />
+         )}
+         {draft.layout?.use_background === "polka" && (
+           <PolkaBackground color={draft.layout?.background_color || "#3d444b"} />
+         )}
+         {draft.layout?.use_background === "video" && (
+           <BackgroundVideo src={draft.layout?.background_video} isPreview={false} />
+         )}
+       </div>
+   
       <ConnectModal
         open={open}
         onClose={() => setOpen(false)}
@@ -840,9 +847,6 @@ export default function MobilePublicSettings({
 
       <span className="wave-3 absolute inset-0" />
       <span className="wave-fade" />
-      {draft.layout?.use_background === "video" && (
-        <BackgroundVideo src={draft.layout?.background_video} />
-      )}
       <div className="relative z-10 space-y-6">
 
         {orderedSections.map((s: any) =>
@@ -1605,12 +1609,13 @@ function PhotoModal({
 //     </Section>
 //   );
 // }
-
-function BackgroundVideo({ src }: { src?: string }) {
+function BackgroundVideo({ src, isPreview = false }: { src?: string; isPreview?: boolean }) {
   if (!src) return null;
 
+  const posClass = isPreview ? "absolute" : "fixed";
+
   return (
-    <div className="absolute inset-0 z-0 overflow-hidden">
+    <div className={`${posClass} inset-0 z-0 overflow-hidden`}>
       <video
         src={src}
         autoPlay

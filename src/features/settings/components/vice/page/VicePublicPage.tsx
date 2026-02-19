@@ -92,9 +92,7 @@ export default function VicePublicPage() {
                     Loading preview…
                   </div>
                 ) : (
-                  <div className="h-full overflow-y-auto no-scrollbar">
-                    <MobileWebsite data={liveConfig} />
-                  </div>
+                  <MobileWebsite data={liveConfig} isPreview={true} />
                 )}
 
               </div>

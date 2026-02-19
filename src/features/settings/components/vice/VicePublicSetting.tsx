@@ -29,6 +29,7 @@ import { fetchTeam } from "../../../teams/slice"; // adjust
 import AddSectionModal from "./sections/AddSectionModal";
 import AppModal from "./ui/AppModal";
 import { ShareCardSection } from "./sections/ShareCardSection";
+import { Image, Video } from "lucide-react";
 
 const THEME_COLOR_KEYS = [
   "card_background",
@@ -140,6 +141,7 @@ export interface LayoutConfig extends LockMeta {
 
   // NEW
   background_image?: string;
+  background_color?: string;
   color1?: string;      // gradient start
   color2?: string;      // gradient end
   direction?: string;  // "to-r", "to-b", etc
@@ -567,8 +569,6 @@ export default function VicePublicSetting({
   }, [productSearch, dispatch]);
 
   const isSectionEnabled = (type: string) => {
-    console.log("Sections:", config?.sections.items);
-
     return config?.sections.items?.some(
       (s) => s.type === type && s.enabled
     );
@@ -951,7 +951,7 @@ export default function VicePublicSetting({
               {/* TITLE */}
               <div>
                 <label className="text-sm text-gray-500">
-                  Title (Optional)
+                  Title
                 </label>
                 <input
                   value={item.title || ""}
@@ -1474,10 +1474,13 @@ export default function VicePublicSetting({
                       layout: { ...config.layout, profile_type: t as any },
                     })
                   }
-                  className={`border rounded-xl p-2 transition ${config.layout.profile_type === t
-                    ? "border-black ring-2 ring-gray-300"
-                    : "border-gray-200"
-                    }`}
+                  className={`
+                    border rounded-xl p-2 transition-all duration-200
+                    ${config.layout.profile_type === t
+                      ? "border-black ring-2 ring-gray-300 opacity-100"
+                      : "border-gray-200 opacity-40 hover:opacity-70"
+                    }
+                  `}
                 >
                   <div className="aspect-square w-full max-w-[110px] mx-auto overflow-hidden rounded-lg bg-gray-50">
 
@@ -2125,13 +2128,13 @@ export default function VicePublicSetting({
 
                         {item.id === "image" && (
                           <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400">
-                            🖼
+                            <Image size={28} strokeWidth={1.5} />
                           </div>
                         )}
 
                         {item.id === "video" && (
                           <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400">
-                            ▶
+                            <Video size={28} strokeWidth={1.5} />
                           </div>
                         )}
 
@@ -2167,12 +2170,12 @@ export default function VicePublicSetting({
                 <div className="mt-2">
                   <ThemeColorRow
                     label="Color"
-                    value={config.layout.color1 || "#000000"}
+                    value={config.layout.background_color || "#000000"}
                     disabled={isLayoutLocked}
                     onChange={(val: string) =>
                       update({
                         ...config,
-                        layout: { ...config.layout, color1: val },
+                        layout: { ...config.layout, background_color: val },
                       })
                     }
                   />
@@ -2231,17 +2234,18 @@ export default function VicePublicSetting({
                 <div className="mt-6">
                   <p className="text-sm font-medium">Pattern Background Color</p>
 
-                  <div className="mt-2 w-1/2">
-                    <ColorPickerField
-                      label="Background"
-                      value={config.layout.color1 || "#2f343a"}
-                      onChange={(v) =>
-                        update({
-                          ...config,
-                          layout: { ...config.layout, color1: v },
-                        })
-                      }
-                    />
+                  <div className="mt-2">
+                   <ThemeColorRow
+                    label="Color"
+                    value={config.layout.background_color || "#000000"}
+                    disabled={isLayoutLocked}
+                    onChange={(val: string) =>
+                      update({
+                        ...config,
+                        layout: { ...config.layout, background_color: val },
+                      })
+                    }
+                  />
                   </div>
                 </div>
               )}

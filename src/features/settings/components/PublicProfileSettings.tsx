@@ -8,13 +8,14 @@ import { denormalizeProfile } from "../../publicProfile/utils/normalizeProfile";
 
 export default function PublicProfileSettings() {
   const dispatch = useAppDispatch();
+
   const username = useAppSelector(
     (state) => state.settings.account.data?.username
   );
 
   const { data, loading } = useAppSelector((s) => s.publicProfile);
 
-  // 👇 LOCAL live preview state
+  // Live preview state
   const [liveConfig, setLiveConfig] = useState<any | null>(null);
 
   useEffect(() => {
@@ -23,8 +24,7 @@ export default function PublicProfileSettings() {
     }
   }, [username, dispatch]);
 
-  // 👇 when API loads, seed live preview
-
+  // Seed preview when API loads
   useEffect(() => {
     if (!data) return;
 
@@ -33,32 +33,71 @@ export default function PublicProfileSettings() {
   }, [data]);
 
   return (
-    <div className="pt-6 px-6 grid grid-cols-1 gap-6 h-[calc(100vh-64px)] transition-[grid-template-columns] duration-500 ease-in-out  lg:grid-cols-[720px_1fr] overflow-hidden">
+    <div
+      className="
+        pt-6 px-6
+        grid grid-cols-1 lg:grid-cols-[720px_1fr]
+        gap-6
+        min-h-[calc(100vh-64px)]
+      "
+    >
 
-      {/* RIGHT — Fixed Preview */}
-      <div className="origin-top scale-[0.6] xl:scale-[0.7] flex items-center justify-center">
-
-        <div className="w-[390px] h-[780px]
-                rounded-[44px]
+      {/* left — Mobile Preview */}
+      <div
+        className="
+          hidden lg:flex
+          h-full
+          justify-center
+          items-start
+          pt-6
+        "
+      >
+        <div className="origin-top scale-[0.6] xl:scale-[0.7]">
+          <div
+            className="
+              w-[390px]
+              h-[780px]
+              rounded-[44px]
+              bg-white
+              p-[10px]
+            "
+          >
+            <div
+              className="
+                relative
+                h-full
                 bg-white
-                p-[10px]">
-          <div className="h-full bg-white rounded-[2rem] overflow-hidden flex flex-col">
-            {loading || !liveConfig ? (
-              <div className="h-full flex items-center justify-center text-gray-400">
-                Loading preview…
-              </div>
-            ) : (
-              <div className="flex-1 overflow-y-auto overscroll-contain no-scrollbar">
-                <MobileWebsite data={liveConfig} />
-              </div>
-            )}
+                rounded-[2rem]
+                overflow-hidden
+                flex flex-col
+              "
+            >
+
+              {loading || !liveConfig ? (
+                <div className="h-full flex items-center justify-center text-gray-400">
+                  Loading preview…
+                </div>
+              ) : (
+                <div className="flex-1 overflow-y-auto overscroll-contain no-scrollbar">
+                  <MobileWebsite data={liveConfig} isPreview={true} />
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
 
-      {/* LEFT — Scrollable Editor */}
-      <div className="h-[75%] rounded-2xl overflow-hidden overflow-y-auto overscroll-contain transition-all duration-500 ease-in-out order-2 lg:order-1 bg-white shadow">
-
+      {/* right — Editor Panel */}
+      <div
+        className="
+          h-full
+          rounded-2xl
+          overflow-y-auto
+          overscroll-contain
+          bg-white
+          shadow
+        "
+      >
         <TeamMemberPublicProfileTab
           key={username}
           username={username}
@@ -70,6 +109,8 @@ export default function PublicProfileSettings() {
           }}
         />
       </div>
+
+
     </div>
   );
 }

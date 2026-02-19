@@ -351,64 +351,64 @@ export default function TeamMemberDetailsPage() {
             // variant: member.status === "active" ? "active" : "suspended",
           }}
           actions={
-           <div className="flex gap-3">
-  <ActionButton
-    icon={<Edit size={16} />}
-    label="Edit"
-    onClick={() => setEditOpen(true)}
-  />
+            <div className="flex gap-3">
+              <ActionButton
+                icon={<Edit size={16} />}
+                label="Edit"
+                onClick={() => setEditOpen(true)}
+              />
 
-  <ActionButton
-    icon={<Shield size={16} />}
-    label="Permissions"
-    onClick={() => setPermOpen(true)}
-  />
+              <ActionButton
+                icon={<Shield size={16} />}
+                label="Permissions"
+                onClick={() => setPermOpen(true)}
+              />
 
-  <ActionButton
-    icon={
-      member.status === "active" ? (
-        <UserX size={16} />
-      ) : (
-        <CheckCircle2 size={16} />
-      )
-    }
-    label={member.status === "active" ? "Suspend" : "Activate"}
-    onClick={async () => {
-      if (member.status === "active") {
-        try {
-          setProcessing(true);
+              <ActionButton
+                icon={
+                  member.status === "active" ? (
+                    <UserX size={16} />
+                  ) : (
+                    <CheckCircle2 size={16} />
+                  )
+                }
+                label={member.status === "active" ? "Suspend" : "Activate"}
+                onClick={async () => {
+                  if (member.status === "active") {
+                    try {
+                      setProcessing(true);
 
-          const res = await dispatch(
-            fetchLeads({
-              page: 1,
-              pageSize: 1000000,
-              memberId: member.id,
-            })
-          ).unwrap();
+                      const res = await dispatch(
+                        fetchLeads({
+                          page: 1,
+                          pageSize: 1000000,
+                          memberId: member.id,
+                        })
+                      ).unwrap();
 
-          const ids = res.data.map((l: any) => l.id);
+                      const ids = res.data.map((l: any) => l.id);
 
-          if (ids.length > 0) {
-            setLeadIds(ids);
-            setTransferOpen(true);
-          } else {
-            setSuspendMode("suspend");
-            setConfirmOpen(true);
-          }
-        } catch {
-          showResult(false, "Failed to load leads");
-        } finally {
-          setProcessing(false);
-        }
-      } else {
-        setSuspendMode("activate");
-        setConfirmOpen(true);
-      }
-    }}
-    danger={member.status === "active"}
-    disabled={processing}
-  />
-</div>
+                      if (ids.length > 0) {
+                        setLeadIds(ids);
+                        setTransferOpen(true);
+                      } else {
+                        setSuspendMode("suspend");
+                        setConfirmOpen(true);
+                      }
+                    } catch {
+                      showResult(false, "Failed to load leads");
+                    } finally {
+                      setProcessing(false);
+                    }
+                  } else {
+                    setSuspendMode("activate");
+                    setConfirmOpen(true);
+                  }
+                }}
+                danger={member.status === "active"}
+                disabled={processing}
+              />
+            </div>
 
           }
         />)}
@@ -518,6 +518,7 @@ export default function TeamMemberDetailsPage() {
                   {mergedProfile ? (
                     <PublicMobileWebsite
                       data={mergedProfile}
+                      isPreview={true}
                       scrollRef={phoneScrollRef}
                     />
                   ) : (

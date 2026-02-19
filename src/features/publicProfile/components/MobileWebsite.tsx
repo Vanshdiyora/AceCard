@@ -71,13 +71,15 @@ export const resolveShape = (style?: number) => {
 
 export default function MobileWebsite({
   data,
+  isPreview = false,
 }: {
   data: any;
+    isPreview?: boolean;
   scrollRef?: React.RefObject<HTMLDivElement | null>;
 }) {
   const normalized = normalizeProfile(data);
   const config = normalized;
-
+const bgPositionClass = isPreview ? "absolute" : "fixed";
 
   useEffect(() => {
     if (!data) return;
@@ -308,24 +310,6 @@ export default function MobileWebsite({
         return null;
     }
   };
-  const bgClass = (() => {
-    switch (layout?.use_background) {
-      case "polka":
-        return "bg-pattern bg-polka";
-      case "waves":
-        return "bg-pattern bg-waves";
-      case "stripes":
-        return "bg-pattern bg-stripes";
-      case "zigzag":
-        return "bg-pattern bg-zigzag";
-      case "video":
-        return "";
-      default:
-        return "";
-    }
-  })();
-
-
 
   const resolveBackgroundStyle = () => {
     // IMAGE
@@ -371,7 +355,7 @@ export default function MobileWebsite({
     // SOLID
     return {
       backgroundColor:
-        layout?.color1 || layout?.background_color || "#000",
+        layout?.background_color || "#000",
     };
   };
 
@@ -455,15 +439,37 @@ export default function MobileWebsite({
   }, [isAnyModalOpen]);
 
   return (
-    <div
-      className={`relative h-full w-full no-scrollbar overflow-y-auto p-4 ${bgClass} ${fontClass}`}
+    <div className={`relative w-full ${isPreview ? "h-full" : "min-h-screen"} overflow-x-hidden`}>
 
-      style={{
-        ...(bgClass
-          ? { ["--pattern-bg" as any]: layout?.background_color || layout?.color1 || "#2f343a" }
-          : resolveBackgroundStyle()),
-      }}
+    {/* BACKGROUND — absolute in preview, fixed on real mobile */}
+    <div
+      className={`${bgPositionClass} inset-0 z-0 pointer-events-none`}
+      style={
+        !["stripes","waves","polka","zigzag","video"].includes(layout?.use_background || "")
+          ? resolveBackgroundStyle()
+          : {}
+      }
     >
+      {layout?.use_background === "zigzag" && (
+        <ZigzagBackground color={layout?.background_color || "#65696F"} />
+      )}
+      {layout?.use_background === "waves" && (
+        <WaveBackground color={layout?.background_color || "#40474D"} />
+      )}
+      {layout?.use_background === "stripes" && (
+        <StripeBackground color={layout?.background_color || "#65696F"} />
+      )}
+      {layout?.use_background === "polka" && (
+        <PolkaBackground color={layout?.background_color || "#3d444b"} />
+      )}
+      {layout?.use_background === "video" && (
+        <BackgroundVideo src={layout?.background_video} isPreview={isPreview} />
+      )}
+    </div>
+
+    <div
+      className={`relative h-full w-full no-scrollbar overflow-y-auto p-4 ${fontClass}`}>
+
       <ConnectModal
         open={open}
         onClose={() => setOpen(false)}
@@ -485,9 +491,6 @@ export default function MobileWebsite({
 
       <span className="wave-3 absolute inset-0" />
       <span className="wave-fade" />
-      {layout?.use_background === "video" && (
-        <BackgroundVideo src={layout?.background_video} />
-      )}
       <div className="relative z-10 space-y-6">
 
         {orderedSections.map((s: any) =>
@@ -498,6 +501,7 @@ export default function MobileWebsite({
       </div>
 
     </div>
+</div>
   );
 }
 
@@ -569,52 +573,56 @@ export function Products({
   if (!items?.length) return null;
 
   return (
-  <Section title={title || "Products"} theme={theme}>
-  <div className="w-full overflow-x-auto pb-3 snap-x snap-mandatory">
-    <div className="flex gap-4 w-[240px]">
-      {items.map((p: any) => (
-        <div
-          key={p.id}
-          className="relative min-w-[220px] h-44 rounded-2xl overflow-hidden snap-start shadow-lg transition hover:scale-[1.02] flex-shrink-0"
-          style={{ backgroundColor: theme.card_background }}
-        >
-          <img
-            src={p.image_url || p.product_img_url}
-            alt={p.name}
-            className="absolute inset-0 w-full h-full object-cover"
-          />
-
-          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
-
-          <div className="absolute bottom-3 left-3 right-3">
-            <h3
-              className="text-sm font-semibold leading-tight line-clamp-2"
-              style={{ color: theme.image_text_color }}
+    <Section title={title || "Products"} theme={theme}>
+      <div className="w-full overflow-x-auto pb-3 snap-x snap-mandatory">
+        <div className="flex gap-4 w-[240px]">
+          {items.map((p: any) => (
+            <div
+              key={p.id}
+              className="relative min-w-[220px] h-44 rounded-2xl overflow-hidden snap-start shadow-lg transition hover:scale-[1.02] flex-shrink-0"
+              style={{ backgroundColor: theme.card_background }}
             >
-              {p.name}
-            </h3>
+              <img
+                src={p.image_url || p.product_img_url}
+                alt={p.name}
+                className="absolute inset-0 w-full h-full object-cover"
+              />
 
-            {showPrice && (
-              <p
-                className="text-xs mt-1 font-medium"
-                style={{ color: theme.image_text_color }}
-              >
-                ₹{p.price}
-              </p>
-            )}
-          </div>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+
+              <div className="absolute bottom-3 left-3 right-3">
+                <h3
+                  className="text-sm font-semibold leading-tight line-clamp-2"
+                  style={{ color: theme.image_text_color }}
+                >
+                  {p.name}
+                </h3>
+
+                {showPrice && (
+                  <p
+                    className="text-xs mt-1 font-medium"
+                    style={{ color: theme.image_text_color }}
+                  >
+                    ₹{p.price}
+                  </p>
+                )}
+              </div>
+            </div>
+          ))}
         </div>
-      ))}
-    </div>
-  </div>
-</Section>
+      </div>
+    </Section>
 
   );
 }
 
 /* ================= YOUTUBE ================= */
 import { useRef } from "react";
+import { StripeBackground } from "./patterns/StripeBackground";
+import { WaveBackground } from "./patterns/WaveBackground";
 // import { link } from "fs";
+import { PolkaBackground } from "./patterns/PolkaBackground";
+import { ZigzagBackground } from "./patterns/ZigzagBackground";
 function YouTube({ title, items, theme }: any) {
   if (!items?.length) return null;
 
@@ -890,44 +898,44 @@ function PhotoGallery({ title, items, theme }: any) {
   return (
     <>
       <Section title={title || "Photo Gallery"} theme={theme}>
-  <div className="w-full overflow-x-auto overflow-y-hidden pb-3">
-    <div className="flex gap-4 w-[240px]">
-      {items.map((p: any, i: number) => (
-        <button
-          key={i}
-          className="group text-left flex-shrink-0"
-        >
-          <div className="relative w-[200px] h-44 rounded-2xl overflow-hidden shadow-md">
-            <img
-              src={p.img_url}
-              alt={p.title}
-              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-            />
+        <div className="w-full overflow-x-auto overflow-y-hidden pb-3">
+          <div className="flex gap-4 w-[240px]">
+            {items.map((p: any, i: number) => (
+              <button
+                key={i}
+                className="group text-left flex-shrink-0"
+              >
+                <div className="relative w-[200px] h-44 rounded-2xl overflow-hidden shadow-md">
+                  <img
+                    src={p.img_url}
+                    alt={p.title}
+                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
 
-            <div
-              className="absolute inset-0"
-              style={{
-                background:
-                  "linear-gradient(to top, rgba(0,0,0,.55), transparent)",
-              }}
-            />
+                  <div
+                    className="absolute inset-0"
+                    style={{
+                      background:
+                        "linear-gradient(to top, rgba(0,0,0,.55), transparent)",
+                    }}
+                  />
 
-            {p.title && (
-              <div className="absolute bottom-2 left-2 right-2">
-                <p
-                  className="text-xs font-semibold leading-tight line-clamp-2"
-                  style={{ color: t.imageText }}
-                >
-                  {p.title}
-                </p>
-              </div>
-            )}
+                  {p.title && (
+                    <div className="absolute bottom-2 left-2 right-2">
+                      <p
+                        className="text-xs font-semibold leading-tight line-clamp-2"
+                        style={{ color: t.imageText }}
+                      >
+                        {p.title}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </button>
+            ))}
           </div>
-        </button>
-      ))}
-    </div>
-  </div>
-</Section>
+        </div>
+      </Section>
 
 
     </>
@@ -1108,11 +1116,13 @@ function PhotoModal({
 //   );
 // }
 
-function BackgroundVideo({ src }: { src?: string }) {
+function BackgroundVideo({ src, isPreview = false }: { src?: string; isPreview?: boolean }) {
   if (!src) return null;
 
+  const posClass = isPreview ? "absolute" : "fixed";
+
   return (
-    <div className="absolute inset-0 z-0 overflow-hidden">
+    <div className={`${posClass} inset-0 z-0 overflow-hidden`}>
       <video
         src={src}
         autoPlay

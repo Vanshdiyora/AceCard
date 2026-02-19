@@ -110,9 +110,7 @@ body {
 /* ========== BASE PATTERN ========== */
 .bg-pattern {
   position: relative;
-  overflow: hidden;
-  background-color: var(--pattern-bg, #2f343a);
-  isolation: isolate;          /* 🔥 creates stacking context */
+  background-color: var(--pattern-bg);
 }
 
 .bg-pattern::before {
@@ -120,152 +118,44 @@ body {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  z-index: -1;                 /* 🔥 lock pattern behind */
+
+  background-color: var(--pattern-accent);
+
+  mask-repeat: repeat;
+  -webkit-mask-repeat: repeat;
+
+  mask-size: 120px;
+  -webkit-mask-size: 120px;
+
+  mask-position: center;
+  -webkit-mask-position: center;
 }
 
 
 
-/* ========== POLKA (REAL GROWING DOTS) ========== */
+/* POLKA */
 .bg-polka::before {
-  background-image:
-    radial-gradient(circle,
-      rgba(255,255,255,0.35) 40%,
-      transparent 41%);
-  background-size: 48px 48px;
-  background-position: 0 0;
-
-  animation: polkaFade 2.5s ease-in-out infinite;
-  will-change: opacity;
+  mask-image: url("/backgrounds/polka.svg");
+  -webkit-mask-image: url("/backgrounds/polka.svg");
 }
 
-@keyframes polkaFade {
-  0%   { opacity: 0.22; }
-  50%  { opacity: 0.32; }
-  100% { opacity: 0.22; }
-}
-
-
-/* ========== WAVES HEADER ========== */
-.bg-waves {
-  position: relative;
-  overflow: hidden;
-  background-color: var(--pattern-bg, #2f343a);
-  isolation: isolate;
-}
-
-/* shared wave layers */
-.bg-waves::before,
-.bg-waves::after,
-.bg-waves .wave-3 {
-  content: "";
-  position: absolute;
-  width: 200%;
-  height: 300px;              /* FIXED */
-  left: -50%;
-  bottom: 0;
-  background-image: url("/patterns/wave.png");
-  background-repeat: repeat-x;
-  background-size: 1200px auto;
-  background-position-y: 120px;
-  clip-path: inset(0 0 20px 0);
-  pointer-events: none;
-}
-
-/* layer 1 */
+/* WAVES */
 .bg-waves::before {
-  opacity: 0.25;
-  animation: waveScroll 32s linear infinite;
+  mask-image: url("/backgrounds/waves.svg");
+  -webkit-mask-image: url("/backgrounds/waves.svg");
 }
 
-/* layer 2 (reverse) */
-.bg-waves::after {
-  top: 0px;
-  opacity: 0.28;
-  animation: waveScrollReverse 30s linear infinite;
-}
-
-/* layer 3 */
-.bg-waves .wave-3 {
-  bottom: 36px;
-  opacity: 0.28;
-  animation: waveScroll 37s linear infinite;
-}
-
-/* bottom fade overlay */
-.bg-waves .wave-fade {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  pointer-events: none;
-  background: linear-gradient(
-    to top,
-    var(--card-bg, var(--pattern-bg, #2f343a)) 0%,
-    rgba(0,0,0,0) 55%
-  );
-}
-
-/* animations */
-@keyframes waveScroll {
-  from { background-position-x: 0; }
-  to   { background-position-x: 1200px; }
-}
-
-@keyframes waveScrollReverse {
-  from { background-position-x: 1200px; }
-  to   { background-position-x: 0; }
-}
-
-/* ========== STRIPES (DIAGONAL DRIFT) ========== */
+/* STRIPES */
 .bg-stripes::before {
-  background-image: repeating-linear-gradient(
-    135deg,
-    rgba(0, 0, 0, 0.1) 0px,
-    rgba(0, 0, 0, 0.1) 32px,
-    transparent 32px,
-    transparent 64px
-  );
-  background-size: 200% 200%;
-  animation: stripesDrift 30s linear infinite;
+  mask-image: url("/backgrounds/stripes.svg");
+  -webkit-mask-image: url("/backgrounds/stripes.svg");
 }
 
-@keyframes stripesDrift {
-  from {
-    background-position: 0% 0%;
-  }
-
-  to {
-    background-position: 100% 100%;
-  }
-}
-
-/* ========== ZIGZAG (CHEVRON) ========== */
+/* ZIGZAG */
 .bg-zigzag::before {
-  background:
-    linear-gradient(135deg, rgba(0, 0, 0, 0.08) 25%, transparent 25%) -300px 0/80px 80px,
-    linear-gradient(225deg, rgba(0, 0, 0, 0.08) 25%, transparent 25%) -30px 0/80px 80px,
-    linear-gradient(315deg, rgba(0, 0, 0, 0.08) 25%, transparent 25%) 0px 0/80px 80px,
-    linear-gradient(45deg,  rgba(0, 0, 0, 0.08) 25%, transparent 25%) 0px 0/80px 80px;
-  animation: zigzagScroll 4s linear infinite;
+  mask-image: url("/backgrounds/zigzag.svg");
+  -webkit-mask-image: url("/backgrounds/zigzag.svg");
 }
-
-@keyframes zigzagScroll {
-  from {
-    background-position:
-      -30px 0,
-      -30px 0,
-      0px 0,
-      0px 0;
-  }
-  to {
-    background-position:
-      -30px 160px,
-      -30px 160px,
-      0px 160px,
-      0px 160px;
-  }
-}
-
-
 
 /* ========== VIDEO GRID ========== */
 .bg-video::before {

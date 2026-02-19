@@ -49,28 +49,31 @@ export default function DashboardPage() {
           />
           <StatCard
             title="Total Visits"
-            value={data.card_taps.value}
-            change={data.card_taps.percentage}
+            value={Number(data.card_taps.value)}
+            change={Number(data.card_taps.percentage)}
             positive={data.card_taps.percentage >= 0}
             icon={<MousePointerClick size={18} />}
             color="blue"
           />
+
           <StatCard
             title="Total Leads Generated"
-            value={data.leads_captured.value}
-            change={data.leads_captured.percentage}
+            value={Number(data.leads_captured.value)}
+            change={Number(data.leads_captured.percentage)}
             positive={data.leads_captured.percentage >= 0}
             icon={<Users size={18} />}
             color="purple"
           />
+
           <StatCard
             title="Tap-to-lead-Ratio"
-            value={`${data.tap_lead_ratio.value}%`}
-            change={data.tap_lead_ratio.percentage}
+            value={`${Number(data.tap_lead_ratio.value).toFixed(2)}%`}
+            change={Number(data.tap_lead_ratio.percentage).toFixed(2)}
             positive={data.tap_lead_ratio.percentage >= 0}
             icon={<Percent size={18} />}
             color="orange"
           />
+
         </div>
       ) : null}
 
