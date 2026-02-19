@@ -115,10 +115,15 @@ export default function DynamicForm({
   };
 
   return (
-    <form
-      className={`p-5 space-y-4 overflow-y-auto custom-scrollbar flex-1 ${className}`}
-      noValidate={noValidate}
-    >
+   <form
+  className={`
+    ${!className ? "p-5" : ""}
+    space-y-4 overflow-y-auto custom-scrollbar flex-1
+    ${className || ""}
+  `}
+  noValidate={noValidate}
+>
+
       {fields.map((field) => {
         const error = errors[field.name];
         const showError = touched[field.name] && error;

@@ -28,6 +28,7 @@ import CommonModal from "./sections/CommonModal";
 import { fetchTeam } from "../../../teams/slice"; // adjust 
 import AddSectionModal from "./sections/AddSectionModal";
 import AppModal from "./ui/AppModal";
+import { ShareCardSection } from "./sections/ShareCardSection";
 
 const THEME_COLOR_KEYS = [
   "card_background",
@@ -1135,29 +1136,29 @@ export default function VicePublicSetting({
         {/* PRODUCT SELECT */}
         <div
           className={`${isReadOnly(sectionDraft)
-              ? "opacity-60 pointer-events-none"
-              : ""
+            ? "opacity-60 pointer-events-none"
+            : ""
             }`}
         >
-        <DynamicForm
-  className="p-0"
-  fields={productField}
-  form={{
-    product_ids: sectionDraft.items.map((p: any) => p.id),
-  }}
-  onChange={(_, ids) =>
-    setSectionDraft({
-      ...sectionDraft,
-      items: mergeSelectedProducts(
-        ids,
-        products,
-        sectionDraft.items
-      ),
-    })
-  }
-  errors={formErrors}
-  setErrors={setFormErrors}
-/>
+          <DynamicForm
+            className="p-0"
+            fields={productField}
+            form={{
+              product_ids: sectionDraft.items.map((p: any) => p.id),
+            }}
+            onChange={(_, ids) =>
+              setSectionDraft({
+                ...sectionDraft,
+                items: mergeSelectedProducts(
+                  ids,
+                  products,
+                  sectionDraft.items
+                ),
+              })
+            }
+            errors={formErrors}
+            setErrors={setFormErrors}
+          />
 
         </div>
 
@@ -2802,6 +2803,14 @@ export default function VicePublicSetting({
           </CommonModal>
         </Card>
       )}
+
+      <Card
+        title="Share Your Digital Card"
+        desc="Share your digital card in multiple ways, including links, QR codes, and wallet passes."
+      >
+        <ShareCardSection username={publicProfile?.username} />
+      </Card>
+
 
       <div className="px-6">
         <button

@@ -32,7 +32,7 @@ export default function VicePublicPage() {
     setLiveConfig(denormalizeProfile(normalized, data));
   }, [data]);
   return (
-<div className="pt-6 px-8 h-[calc(100vh-84px)]">
+    <div className="pt-6 px-8 h-[calc(100vh-84px)]">
 
 
 
@@ -75,15 +75,16 @@ export default function VicePublicPage() {
 
 
             {/* Phone Wrapper */}
-            <div className="h-[75vh] aspect-[10/19]">
+            <div className="w-full max-w-[450px] h-[75vh] aspect-[10/19]">
 
-             <div className="
-  w-full h-full
+
+              <div className="
+  w-min-[200px] w-full h-full
   bg-white
   rounded-[20px]
   shadow-xl
   ring-1 ring-gray-200
-  overflow-y-hidden
+  overflow-hidden
 ">
 
                 {loading || !liveConfig ? (
