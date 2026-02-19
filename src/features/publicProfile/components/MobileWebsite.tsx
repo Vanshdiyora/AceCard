@@ -456,7 +456,8 @@ export default function MobileWebsite({
 
   return (
     <div
-      className={`relative min-h-screen w-full no-scrollbar overflow-hidden p-4 ${bgClass} ${fontClass}`}
+      className={`relative h-full w-full no-scrollbar overflow-y-auto p-4 ${bgClass} ${fontClass}`}
+
       style={{
         ...(bgClass
           ? { ["--pattern-bg" as any]: layout?.background_color || layout?.color1 || "#2f343a" }
@@ -568,46 +569,46 @@ export function Products({
   if (!items?.length) return null;
 
   return (
-    <Section title={title || "Products"} theme={theme}>
-      <div className="flex gap-4 overflow-x-auto pb-3 snap-x snap-mandatory">
-        {items.map((p: any) => (
-          <div
-            key={p.id}
-            className="relative min-w-[220px] h-48 rounded-2xl overflow-hidden snap-start shadow-lg transition hover:scale-[1.02]"
-            style={{ backgroundColor: theme.card_background }}
-          >
-            {/* IMAGE */}
-            <img
-              src={p.image_url || p.product_img_url}
-              alt={p.name}
-              className="absolute inset-0 w-full h-full object-cover"
-            />
+  <Section title={title || "Products"} theme={theme}>
+  <div className="w-full overflow-x-auto pb-3 snap-x snap-mandatory">
+    <div className="flex gap-4 w-[240px]">
+      {items.map((p: any) => (
+        <div
+          key={p.id}
+          className="relative min-w-[220px] h-44 rounded-2xl overflow-hidden snap-start shadow-lg transition hover:scale-[1.02] flex-shrink-0"
+          style={{ backgroundColor: theme.card_background }}
+        >
+          <img
+            src={p.image_url || p.product_img_url}
+            alt={p.name}
+            className="absolute inset-0 w-full h-full object-cover"
+          />
 
-            {/* OVERLAY */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
 
-            {/* CONTENT */}
-            <div className="absolute bottom-3 left-3 right-3">
-              <h3
-                className="text-sm font-semibold leading-tight line-clamp-2"
+          <div className="absolute bottom-3 left-3 right-3">
+            <h3
+              className="text-sm font-semibold leading-tight line-clamp-2"
+              style={{ color: theme.image_text_color }}
+            >
+              {p.name}
+            </h3>
+
+            {showPrice && (
+              <p
+                className="text-xs mt-1 font-medium"
                 style={{ color: theme.image_text_color }}
               >
-                {p.name}
-              </h3>
-
-              {showPrice && (
-                <p
-                  className="text-xs mt-1 font-medium"
-                  style={{ color: theme.image_text_color }}
-                >
-                  ₹{p.price}
-                </p>
-              )}
-            </div>
+                ₹{p.price}
+              </p>
+            )}
           </div>
-        ))}
-      </div>
-    </Section>
+        </div>
+      ))}
+    </div>
+  </div>
+</Section>
+
   );
 }
 
@@ -728,16 +729,16 @@ function Social({ items, theme, shapeClass }: any) {
                 color: t.buttonText,
               }}
             >
-              {s.id === "instagram" && <SiInstagram size={32} />}
-              {s.id === "linkedin" && <SiLinkedin size={32} />}
-              {s.id === "youtube" && <SiYoutube size={32} />}
-              {s.id === "twitter" && <SiX size={32} />}
-              {s.id === "facebook" && <SiFacebook size={32} />}
-              {s.id === "whatsapp" && <SiWhatsapp size={32} />}
-              {s.id === "phone" && <FiPhone size={32} />}
-              {s.id === "website" && <FiGlobe size={32} />}
-              {s.id === "snapchat" && <SiSnapchat size={32} />}
-              {s.id === "tiktok" && <SiTiktok size={32} />}
+              {s.id === "instagram" && <SiInstagram size={30} />}
+              {s.id === "linkedin" && <SiLinkedin size={30} />}
+              {s.id === "youtube" && <SiYoutube size={30} />}
+              {s.id === "twitter" && <SiX size={30} />}
+              {s.id === "facebook" && <SiFacebook size={30} />}
+              {s.id === "whatsapp" && <SiWhatsapp size={30} />}
+              {s.id === "phone" && <FiPhone size={30} />}
+              {s.id === "website" && <FiGlobe size={30} />}
+              {s.id === "snapchat" && <SiSnapchat size={30} />}
+              {s.id === "tiktok" && <SiTiktok size={30} />}
 
             </a>
           ))}
@@ -889,55 +890,44 @@ function PhotoGallery({ title, items, theme }: any) {
   return (
     <>
       <Section title={title || "Photo Gallery"} theme={theme}>
-        <div className="flex gap-4 overflow-x-auto pb-3 snap-x snap-mandatory no-scrollbar">
-          {items.map((p: any, i: number) => (
-            <button
-              key={i}
-              // onClick={() => {
-              //   const scroller = document.querySelector(".flex-1.overflow-y-auto");
+  <div className="w-full overflow-x-auto overflow-y-hidden pb-3">
+    <div className="flex gap-4 w-[240px]">
+      {items.map((p: any, i: number) => (
+        <button
+          key={i}
+          className="group text-left flex-shrink-0"
+        >
+          <div className="relative w-[200px] h-44 rounded-2xl overflow-hidden shadow-md">
+            <img
+              src={p.img_url}
+              alt={p.title}
+              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+            />
 
-              //   if (scroller) {
-              //     scroller.scrollTo({ top: 0, behavior: "smooth" });
-              //   }
+            <div
+              className="absolute inset-0"
+              style={{
+                background:
+                  "linear-gradient(to top, rgba(0,0,0,.55), transparent)",
+              }}
+            />
 
-              //   setTimeout(() => {
-              //     onOpen(p);
-              //   }, 80);
-              // }}
-              className="group block text-left snap-start"
-            >
-              <div className="relative min-w-[220px] h-48 rounded-2xl overflow-hidden shadow-md">
-                <img
-                  src={p.img_url}
-                  alt={p.title}
-                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                />
-
-                {/* gradient overlay */}
-                <div
-                  className="absolute inset-0"
-                  style={{
-                    background:
-                      "linear-gradient(to top, rgba(0,0,0,.55), transparent)",
-                  }}
-                />
-
-                {/* title */}
-                {p.title && (
-                  <div className="absolute bottom-2 left-2 right-2">
-                    <p
-                      className="text-xs font-semibold leading-tight line-clamp-2"
-                      style={{ color: t.imageText }}
-                    >
-                      {p.title}
-                    </p>
-                  </div>
-                )}
+            {p.title && (
+              <div className="absolute bottom-2 left-2 right-2">
+                <p
+                  className="text-xs font-semibold leading-tight line-clamp-2"
+                  style={{ color: t.imageText }}
+                >
+                  {p.title}
+                </p>
               </div>
-            </button>
-          ))}
-        </div>
-      </Section>
+            )}
+          </div>
+        </button>
+      ))}
+    </div>
+  </div>
+</Section>
 
 
     </>

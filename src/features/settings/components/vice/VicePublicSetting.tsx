@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useAppDispatch, useAppSelector } from "../../../../app/hooks";
 import { uploadImage } from "../../../publicProfile/services/publicProfile.api";
-import YoutubeSection from "./sections/YoutubeSection";
 import { useLocation } from "react-router-dom";
 import {
   savePublicProfile,
@@ -22,13 +21,14 @@ import { fetchProducts } from "../../../products/slice";
 import ResultModal from "../../../../common/ui/ResultModal";
 import { AlignLeft, AlignCenter, AlignRight } from "lucide-react";
 import CoverCropModal from "../../../../common/ui/CoverCropModal";
-import PhotoGallerySection from "./sections/PhotoGallerySection";
 // import VideoGallerySection from "./sections/VideoGallerySection";
 // import { normalizeApiError } from "../../../../utils/normalizeApiError";
 import { SOCIAL_ICONS } from "./sections/socialIcons";
 import CommonModal from "./sections/CommonModal";
 import { fetchTeam } from "../../../teams/slice"; // adjust 
 import AddSectionModal from "./sections/AddSectionModal";
+import AppModal from "./ui/AppModal";
+
 const THEME_COLOR_KEYS = [
   "card_background",
   "button_color",
@@ -56,6 +56,7 @@ export function canAddNewRow<T>(
   const last = items[items.length - 1];
   return isComplete(last);
 }
+
 function extractYoutubeId(url: string) {
   if (!url) return "";
   const match =
@@ -95,12 +96,12 @@ export function isLinkFileRowComplete(item?: any) {
 
   return true;
 }
+
 function hasInvalidSocialLinks(items: any[] = []) {
   return items.some(
     (i) => i.enabled === true && (!i.url || i.url.trim() === "")
   );
 }
-
 
 /* ================= TYPES ================= */
 export type LockMode = "global" | "individual";
@@ -348,19 +349,12 @@ export default function VicePublicSetting({
   const [hasNextProducts, setHasNextProducts] = useState(true);
   const [loadingMoreProducts, setLoadingMoreProducts] = useState(false);
 
-  const [productModalOpen, setProductModalOpen] = useState(false);
-  const [draftProducts, setDraftProducts] = useState<ProductRef[]>([]);
-  const [photoGalleryModalOpen, setPhotoGalleryModalOpen] = useState(false);
-  const [draftPhotoGallery, setDraftPhotoGallery] =
-    useState<PhotoGalleryConfig | null>(null);
   const [linksFilesModalOpen, setLinksFilesModalOpen] = useState(false);
   const [draftLinksFiles, setDraftLinksFiles] =
     useState<PublicProfileConfig["links_files"] | null>(null);
   const [socialModalOpen, setSocialModalOpen] = useState(false);
   const [draftSocialLinks, setDraftSocialLinks] =
     useState<PublicProfileConfig["social_links"] | null>(null);
-  const [youtubeModalOpen, setYoutubeModalOpen] = useState(false);
-  const [draftYoutube, setDraftYoutube] = useState<PublicProfileConfig["youtube"] | null>(null);
   const [socialError, setSocialError] = useState<string | null>(null);
   const [addSectionOpen, setAddSectionOpen] = useState(false);
 
@@ -371,6 +365,13 @@ export default function VicePublicSetting({
   const [hasNextTeam, setHasNextTeam] = useState(true);
   const [loadingMoreTeam, setLoadingMoreTeam] = useState(false);
   const [selectedUsernames, setSelectedUsernames] = useState<string[]>([]);
+
+  // Modal States
+  const [activeSection, setActiveSection] = useState<string | null>(null);
+  const [sectionDraft, setSectionDraft] = useState<any>(null);
+
+  const [youtubeError, setYoutubeError] = useState<string | null>(null);
+  const [photoError, setPhotoError] = useState<string | null>(null);
 
   const [teamOptions, setTeamOptions] = useState<
     { label: string; value: string }[]
@@ -668,14 +669,6 @@ export default function VicePublicSetting({
       setResultOpen(true);
     }
   };
-
-  const role = useAppSelector((s) => s.auth.role);
-
-  if (loading || !config)
-    return <p className="text-gray-400">Loading...</p>;
-  const isReadOnly = (meta?: { locked?: boolean }) =>
-    meta?.locked === true && role !== "vendor_admin";
-
   /* ================= FIELDS ================= */
 
   const productField: FieldConfig[] = [
@@ -689,6 +682,543 @@ export default function VicePublicSetting({
       showLoader: loadingMoreProducts || productsLoading,
     },
   ];
+  const role = useAppSelector((s) => s.auth.role);
+
+  if (loading || !config)
+    return <p className="text-gray-400">Loading...</p>;
+  const isReadOnly = (meta?: { locked?: boolean }) =>
+    meta?.locked === true && role !== "vendor_admin";
+
+  const SECTION_COMPONENTS: Record<string, React.ReactNode> = {
+    youtube: sectionDraft && (
+      <div className="space-y-6">
+
+        {/* 🔒 LOCK CONTROL */}
+        {showLockable && (
+          <LockControl
+            value={sectionDraft}
+            role={config.role}
+            currentUser={username}
+            onChange={(v) =>
+              setSectionDraft({
+                ...sectionDraft,
+                ...v,
+              })
+            }
+          />
+        )}
+
+        {/* GALLERY TITLE */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium">
+            Gallery Title
+          </label>
+          <input
+            type="text"
+            value={sectionDraft.section_title || ""}
+            disabled={isReadOnly(sectionDraft)}
+            onChange={(e) =>
+              setSectionDraft({
+                ...sectionDraft,
+                section_title: e.target.value,
+              })
+            }
+            className="w-full rounded-full border px-4 py-3"
+            placeholder="Videos Gallery"
+          />
+        </div>
+
+        {/* VIDEO CARDS */}
+        <div
+          className={`space-y-4 ${isReadOnly(sectionDraft)
+            ? "opacity-60 pointer-events-none"
+            : ""
+            }`}
+        >
+          {sectionDraft.items.map((item: any, index: number) => (
+            <div
+              key={item.id}
+              className="bg-gray-50 rounded-2xl p-5 space-y-4"
+            >
+              {/* ACTION ROW */}
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium text-gray-600">
+                  Video {index + 1}
+                </span>
+
+                <button
+                  onClick={() => {
+                    const next = sectionDraft.items.filter(
+                      (i: any) => i.id !== item.id
+                    );
+                    setSectionDraft({
+                      ...sectionDraft,
+                      items: next.map((v: any, i: number) => ({
+                        ...v,
+                        rank: i + 1,
+                      })),
+                    });
+                  }}
+                  className="text-red-500 text-sm"
+                >
+                  Delete
+                </button>
+              </div>
+
+              {/* VIDEO LINK INPUT */}
+              <div>
+                <label className="text-sm text-gray-500">
+                  Video Link
+                </label>
+                <input
+                  value={item.url || ""}
+                  onChange={(e) => {
+                    const next = [...sectionDraft.items];
+                    next[index] = {
+                      ...item,
+                      url: e.target.value,
+                    };
+
+                    setYoutubeError(null);
+
+                    setSectionDraft({
+                      ...sectionDraft,
+                      items: next,
+                    });
+                  }}
+                  className="w-full mt-1 rounded-full border px-4 py-3"
+                  placeholder="https://youtube.com/..."
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* ADD BUTTON */}
+        {!isReadOnly(sectionDraft) && (
+          <>
+            {youtubeError && (
+              <p className="text-sm text-red-600 mt-2">
+                {youtubeError}
+              </p>
+            )}
+            <button
+              onClick={() => {
+                const last =
+                  sectionDraft.items[sectionDraft.items.length - 1];
+
+                if (!last || !last.url?.trim()) {
+                  setYoutubeError(
+                    "Please enter a valid YouTube link before adding another video."
+                  );
+                  return;
+                }
+
+                if (!isYoutubeRowComplete(last)) {
+                  setYoutubeError(
+                    "Please enter a valid YouTube URL."
+                  );
+                  return;
+                }
+
+                setYoutubeError(null);
+
+                setSectionDraft({
+                  ...sectionDraft,
+                  items: [
+                    ...sectionDraft.items,
+                    {
+                      id: crypto.randomUUID(),
+                      title: "",
+                      url: "",
+                      rank: sectionDraft.items.length + 1,
+                      enabled: true,
+                    },
+                  ],
+                });
+              }}
+              className="w-full border rounded-full py-3 text-sm font-medium hover:bg-gray-50"
+            >
+              + Add Another Video
+            </button>
+
+
+          </>
+        )}
+
+      </div>
+    ),
+
+    links_files: sectionDraft && (
+      <LinksFilesSection
+        disabled={false}
+        value={sectionDraft}
+        onChange={(v) => setSectionDraft(v)}
+      />
+    ),
+
+    photo_gallery: sectionDraft && (
+      <div className="space-y-6">
+
+        {/* 🔒 LOCK CONTROL */}
+        {showLockable && (
+          <LockControl
+            value={sectionDraft}
+            role={config.role}
+            currentUser={username}
+            onChange={(v) =>
+              setSectionDraft({
+                ...sectionDraft,
+                ...v,
+              })
+            }
+          />
+        )}
+
+        {/* GALLERY TITLE */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium">
+            Gallery Title
+          </label>
+          <input
+            type="text"
+            value={sectionDraft.section_title || ""}
+            disabled={isReadOnly(sectionDraft)}
+            onChange={(e) =>
+              setSectionDraft({
+                ...sectionDraft,
+                section_title: e.target.value,
+              })
+            }
+            className="w-full rounded-full border px-4 py-3"
+            placeholder="Photo Gallery"
+          />
+        </div>
+
+        {/* PHOTO ITEMS */}
+        <div
+          className={`space-y-6 ${isReadOnly(sectionDraft)
+            ? "opacity-60 pointer-events-none"
+            : ""
+            }`}
+        >
+          {sectionDraft.items.map((item: any, index: number) => (
+            <div
+              key={index}
+              className="bg-gray-50 rounded-2xl p-5 space-y-4"
+            >
+              {/* ACTION ROW */}
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => {
+                    const next = sectionDraft.items.filter(
+                      (_: any, i: number) => i !== index
+                    );
+                    setSectionDraft({
+                      ...sectionDraft,
+                      items: next.map((v: any, i: number) => ({
+                        ...v,
+                        rank: i + 1,
+                      })),
+                    });
+                  }}
+                  className="text-red-500"
+                >
+                  Delete
+                </button>
+              </div>
+
+              {/* IMAGE UPLOAD PREVIEW */}
+              <div className="border-2 border-dashed rounded-xl p-4">
+
+                {item.img_url ? (
+                  <div className="relative w-full aspect-video rounded-xl overflow-hidden">
+                    <img
+                      src={item.img_url}
+                      className="absolute inset-0 w-full h-full object-cover"
+                      alt="Preview"
+                    />
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center aspect-video text-gray-500">
+                    Click to add a photo
+                  </div>
+                )}
+
+              </div>
+
+              {/* TITLE */}
+              <div>
+                <label className="text-sm text-gray-500">
+                  Title (Optional)
+                </label>
+                <input
+                  value={item.title || ""}
+                  onChange={(e) => {
+                    const next = [...sectionDraft.items];
+                    next[index] = {
+                      ...item,
+                      title: e.target.value,
+                    };
+                    setSectionDraft({
+                      ...sectionDraft,
+                      items: next,
+                    });
+                  }}
+                  className="w-full mt-1 rounded-full border px-4 py-3"
+                  placeholder="Enter a title or short description (optional)."
+                />
+              </div>
+
+              {/* URL */}
+              <div>
+                <label className="text-sm text-gray-500">
+                  URL
+                </label>
+                <input
+                  value={item.link || ""}
+                  onChange={(e) => {
+                    const next = [...sectionDraft.items];
+                    next[index] = {
+                      ...item,
+                      link: e.target.value,
+                    };
+                    setSectionDraft({
+                      ...sectionDraft,
+                      items: next,
+                    });
+                  }}
+                  className="w-full mt-1 rounded-full border px-4 py-3"
+                  placeholder="https://example.com"
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* ADD PHOTO */}
+        {!isReadOnly(sectionDraft) && (
+          <>
+            {photoError && (
+              <p className="text-sm text-red-600">
+                {photoError}
+              </p>
+            )}
+
+            <button
+              onClick={() => {
+                const last =
+                  sectionDraft.items[sectionDraft.items.length - 1];
+
+                if (!isPhotoRowComplete(last)) {
+                  setPhotoError(
+                    "Please complete the previous photo before adding another."
+                  );
+                  return;
+                }
+
+                setPhotoError(null);
+
+                setSectionDraft({
+                  ...sectionDraft,
+                  items: [
+                    ...sectionDraft.items,
+                    {
+                      title: "",
+                      description: "",
+                      link: "",
+                      img_url: "",
+                      rank: sectionDraft.items.length + 1,
+                      enabled: true,
+                    },
+                  ],
+                });
+              }}
+              className="w-full border rounded-full py-3 text-sm font-medium hover:bg-gray-50"
+            >
+              + Upload Photo File
+            </button>
+          </>
+        )}
+
+      </div>
+    ),
+
+    social_links: sectionDraft && (
+      <SocialSection
+        items={sectionDraft.items}
+        onChange={(items: any) =>
+          setSectionDraft({
+            ...sectionDraft,
+            items,
+          })
+        }
+      />
+    ),
+
+    meeting: sectionDraft && (
+      <MeetingSection
+        disabled={false}
+        value={sectionDraft}
+        onChange={(v) => setSectionDraft(v)}
+      />
+    ),
+
+    products: sectionDraft && (
+      <div className="space-y-6">
+
+        {/* 🔒 LOCK CONTROL */}
+        {showLockable && (
+          <LockControl
+            value={sectionDraft}
+            role={config.role}
+            currentUser={username}
+            onChange={(v) =>
+              setSectionDraft({
+                ...sectionDraft,
+                ...v,
+              })
+            }
+          />
+        )}
+
+        {/* TOGGLE PRICE */}
+        <div
+          className={`flex items-center justify-between rounded-xl border px-4 py-3 bg-white ${isReadOnly(sectionDraft)
+            ? "opacity-60 pointer-events-none"
+            : ""
+            }`}
+        >
+          <div>
+            <p className="text-sm font-medium text-gray-800">
+              Show Product Prices
+            </p>
+            <p className="text-xs text-gray-500">
+              Toggle whether prices appear on the public card
+            </p>
+          </div>
+
+          <Switch
+            label=""
+            value={sectionDraft.toggle_price}
+            onChange={(v) =>
+              setSectionDraft({
+                ...sectionDraft,
+                toggle_price: v,
+              })
+            }
+          />
+        </div>
+
+        {/* SECTION TITLE */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-gray-700">
+            Section Title
+          </label>
+
+          <input
+            type="text"
+            value={sectionDraft.section_title}
+            disabled={isReadOnly(sectionDraft)}
+            onChange={(e) =>
+              setSectionDraft({
+                ...sectionDraft,
+                section_title: e.target.value,
+              })
+            }
+            className="w-full rounded-xl border px-4 py-3 focus:ring-2 focus:ring-purple-500"
+            placeholder="Products"
+          />
+        </div>
+
+
+        {/* PRODUCT SELECT */}
+        <div
+          className={`${isReadOnly(sectionDraft)
+              ? "opacity-60 pointer-events-none"
+              : ""
+            }`}
+        >
+        <DynamicForm
+  className="p-0"
+  fields={productField}
+  form={{
+    product_ids: sectionDraft.items.map((p: any) => p.id),
+  }}
+  onChange={(_, ids) =>
+    setSectionDraft({
+      ...sectionDraft,
+      items: mergeSelectedProducts(
+        ids,
+        products,
+        sectionDraft.items
+      ),
+    })
+  }
+  errors={formErrors}
+  setErrors={setFormErrors}
+/>
+
+        </div>
+
+        {/* REORDER */}
+        {sectionDraft.items?.length > 0 && (
+          <ProductsReorder
+            items={sectionDraft.items}
+            onChange={(items) =>
+              setSectionDraft({
+                ...sectionDraft,
+                items,
+              })
+            }
+          />
+        )}
+
+      </div>
+    ),
+
+  };
+
+  const SECTION_LABELS: Record<string, string> = {
+    youtube: "Videos",
+    links_files: "Links & Files",
+    photo_gallery: "Photo Gallery",
+    social_links: "Social Links",
+    meeting: "Meeting Button",
+    products: "Products",
+
+  };
+
+  const handleSectionSave = () => {
+    if (!activeSection || !sectionDraft) return;
+
+    if (activeSection === "products") {
+      update({ ...config, products: sectionDraft });
+    }
+
+    if (activeSection === "youtube") {
+      update({ ...config, youtube: sectionDraft });
+    }
+
+    if (activeSection === "links_files") {
+      update({ ...config, links_files: sectionDraft });
+    }
+
+    if (activeSection === "photo_gallery") {
+      update({ ...config, photo_gallery: sectionDraft });
+    }
+
+    if (activeSection === "social_links") {
+      update({ ...config, social_links: sectionDraft });
+    }
+
+    if (activeSection === "meeting") {
+      update({ ...config, meeting: sectionDraft });
+    }
+
+    setActiveSection(null);
+    setSectionDraft(null);
+  };
 
   function GradientDirectionDropdown({
     value,
@@ -714,6 +1244,7 @@ export default function VicePublicSetting({
 
     const active =
       options.find((o) => o.id === value) || options[0];
+
 
     // sync width
     useEffect(() => {
@@ -820,6 +1351,7 @@ export default function VicePublicSetting({
       </div>
     );
   }
+
   const handleAddSection = (type: string) => {
     const exists = config.sections.items.find(
       (s) => s.type === type
@@ -855,7 +1387,6 @@ export default function VicePublicSetting({
       },
     });
   };
-
 
   /* ================= UI ================= */
   const isLayoutLocked = isReadOnly(config.layout);
@@ -947,7 +1478,7 @@ export default function VicePublicSetting({
                     : "border-gray-200"
                     }`}
                 >
-               <div className="aspect-square w-full max-w-[110px] mx-auto overflow-hidden rounded-lg bg-gray-50">
+                  <div className="aspect-square w-full max-w-[110px] mx-auto overflow-hidden rounded-lg bg-gray-50">
 
                     <img
                       src={
@@ -1505,7 +2036,37 @@ export default function VicePublicSetting({
                         sections: { ...config.sections, items },
                       })
                     }
+                    onSectionClick={(type) => {
+                      setActiveSection(type);
+
+                      if (type === "youtube") {
+                        setSectionDraft(structuredClone(config.youtube));
+                      }
+
+                      if (type === "products") {
+                        setSectionDraft(structuredClone(config.products));
+                      }
+
+                      if (type === "links_files") {
+                        setSectionDraft(structuredClone(config.links_files));
+                      }
+
+                      if (type === "photo_gallery") {
+                        setSectionDraft(structuredClone(config.photo_gallery));
+                      }
+
+                      if (type === "social_links") {
+                        setSectionDraft(structuredClone(config.social_links));
+                      }
+
+                      if (type === "meeting") {
+                        setSectionDraft(structuredClone(config.meeting));
+                      }
+                    }}
                   />
+
+
+
                 </>
               );
             })()}
@@ -2000,352 +2561,6 @@ export default function VicePublicSetting({
         </Card>
       )}
 
-      {isSectionEnabled("products") && (
-        <div className="rounded-2xl bg-[#FBFAFF]">
-
-          {/* HEADER */}
-          <div className="px-6 pt-6">
-            <h3 className="text-xl font-semibold text-gray-900 pb-4">
-              Products
-            </h3>
-            <p className="text-sm text-gray-500">
-              Select which products appear on your public card
-            </p>
-          </div>
-          {showLockable && (
-            <div className="px-6 mt-3">
-              <LockControl
-                value={config.products}
-                role={config.role}
-                onChange={(v) =>
-                  update({
-                    ...config,
-                    products: { ...config.products, ...v },
-                  })
-                }
-              />
-            </div>
-          )}
-          {/* TOGGLE PRICE VISIBILITY */}
-          <div className="px-6 mt-4">
-            <div
-              className={`flex items-center justify-between rounded-xl border px-4 py-3 bg-white ${isReadOnly(config.products) ? "opacity-60 pointer-events-none" : ""
-                }`}
-            >
-              <div>
-                <p className="text-sm font-medium text-gray-800">
-                  Show Product Prices
-                </p>
-                <p className="text-xs text-gray-500">
-                  Toggle whether prices appear on the public card
-                </p>
-              </div>
-
-              <Switch
-                label=""   // we already show text on left
-                value={config.products.toggle_price}
-                onChange={(v) =>
-                  update({
-                    ...config,
-                    products: {
-                      ...config.products,
-                      toggle_price: v,
-                    },
-                  })
-                }
-              />
-            </div>
-          </div>
-
-          {/* SECTION TITLE */}
-          <div className="px-6 mt-4">
-            <div
-              className={`space-y-1 ${isReadOnly(config.products) ? "opacity-60 pointer-events-none" : ""
-                }`}
-            >
-              <p className="text-sm font-medium text-gray-700">
-                Section Title
-              </p>
-              <Input
-                value={config.products.section_title}
-                placeholder="Products"
-                onChange={(v) =>
-                  update({
-                    ...config,
-                    products: {
-                      ...config.products,
-                      section_title: v,
-                    },
-                  })
-                }
-              />
-            </div>
-          </div>
-
-
-          {/* SELECT */}
-          <div className="px-6 mt-4">
-            <button
-              type="button"
-              disabled={isReadOnly(config.products)}
-              onClick={() => {
-                // clone current products into draft
-                setDraftProducts(config.products.items);
-                setProductModalOpen(true);
-              }}
-              className="px-4 py-2 rounded-lg bg-purple-600 text-white text-sm hover:opacity-90 disabled:opacity-50"
-            >
-              Add / Manage Products
-            </button>
-
-          </div>
-          {/* PRODUCTS PREVIEW (scaled-down carousel) */}
-          {config.products.items?.length > 0 && (
-            <div
-              className={`px-6 mt-4 ${isReadOnly(config.products)
-                ? "opacity-60 pointer-events-none"
-                : ""
-                }`}
-            >
-              <div className="flex gap-3 overflow-x-auto pb-3 snap-x snap-mandatory no-scrollbar">
-                {config.products.items
-                  .filter((p) => p.enabled !== false)
-                  .sort((a, b) => a.rank - b.rank)
-                  .map((p) => (
-                    <div
-                      key={p.id}
-                      className="snap-start flex-shrink-0"
-                    >
-                      <div
-                        className="relative w-[140px] h-[90px] rounded-xl overflow-hidden shadow-sm border"
-                        style={{ backgroundColor: config.theme.card_background }}
-                      >
-                        {/* IMAGE */}
-                        <img
-                          src={p.image_url || p.image_url}
-                          alt={p.name}
-                          className="absolute inset-0 w-full h-full object-cover"
-                        />
-
-                        {/* OVERLAY */}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
-
-                        {/* CONTENT */}
-                        <div className="absolute bottom-1.5 left-2 right-2">
-                          <p
-                            className="text-[11px] font-semibold leading-tight line-clamp-2"
-                            style={{ color: config.theme.card_text }}
-                          >
-                            {p.name}
-                          </p>
-
-                          {config.products.toggle_price && (
-                            <p
-                              className="text-[10px] mt-0.5 font-medium"
-                              style={{ color: config.theme.card_text }}
-                            >
-                              ₹{p.price}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-              </div>
-            </div>
-          )}
-
-          <CommonModal
-            open={productModalOpen}
-            title="Manage Products"
-            description="Select and reorder products for your public card"
-            onClose={() => setProductModalOpen(false)}
-            onConfirm={() => {
-              update({
-                ...config,
-                products: {
-                  ...config.products,
-                  items: draftProducts, // ✅ commit changes
-                },
-              });
-              setProductModalOpen(false);
-            }}
-          >
-            {/* === YOUR EXISTING UI (UNCHANGED) === */}
-            <div className="px-1">
-
-              <DynamicForm
-                fields={productField}
-                form={{
-                  product_ids: draftProducts.map((p) => p.id),
-                }}
-                onChange={(_, ids: (string | number)[]) =>
-                  setDraftProducts(
-                    mergeSelectedProducts(
-                      ids,
-                      products,
-                      draftProducts
-                    )
-                  )
-                }
-                errors={formErrors}
-                setErrors={setFormErrors}
-              />
-            </div>
-
-            <div className="px-1 pb-2 border-t mt-4">
-
-              {draftProducts.length > 0 && (
-                <div className="space-y-3">
-                  <ProductsReorder
-                    items={draftProducts}
-                    onChange={setDraftProducts}
-                  />
-                </div>
-              )}
-            </div>
-          </CommonModal>
-
-        </div>
-      )}
-
-      {isSectionEnabled("photo_gallery") && (
-        <Card title="Photo Gallery" desc="Manage your gallery images">
-          {showLockable && (
-            <LockControl
-              value={config.photo_gallery}
-              role={config.role}
-              onChange={(v) =>
-                update({
-                  ...config,
-                  photo_gallery: { ...config.photo_gallery, ...v },
-                })
-              }
-            />
-          )}
-
-          {/* SECTION LABEL — stays OUTSIDE modal */}
-          <div
-            className={`space-y-1 ${isReadOnly(config.photo_gallery)
-              ? "opacity-60 pointer-events-none"
-              : ""
-              }`}
-          >
-            <p className="text-xs uppercase tracking-wide text-gray-500">
-              Section label
-            </p>
-            <Input
-              value={config.photo_gallery.section_title}
-              disabled={isReadOnly(config.photo_gallery)}
-              placeholder="Section title"
-              onChange={(v) =>
-                update({
-                  ...config,
-                  photo_gallery: {
-                    ...config.photo_gallery,
-                    section_title: v,
-                  },
-                })
-              }
-            />
-          </div>
-
-          {/* OPEN MODAL BUTTON */}
-          <div className="mt-4">
-            <button
-              type="button"
-              disabled={isReadOnly(config.photo_gallery)}
-              onClick={() => {
-                // ✅ clone to draft
-                setDraftPhotoGallery(
-                  structuredClone(config.photo_gallery)
-                );
-                setPhotoGalleryModalOpen(true);
-              }}
-              className="px-4 py-2 rounded-lg bg-purple-600 text-white text-sm hover:opacity-90 disabled:opacity-50"
-            >
-              Add / Manage Photos
-            </button>
-          </div>
-
-          {/* PREVIEW CAROUSEL */}
-          {config.photo_gallery.items?.length > 0 && (
-            <div
-              className={`mt-4 ${isReadOnly(config.photo_gallery)
-                ? "opacity-60 pointer-events-none"
-                : ""
-                }`}
-            >
-              <div className="flex gap-3 overflow-x-auto pb-3 snap-x snap-mandatory no-scrollbar">
-                {config.photo_gallery.items
-                  .filter((i) => i.enabled)
-                  .sort((a, b) => a.rank - b.rank)
-                  .map((item, idx) => (
-                    <div
-                      key={idx}
-                      className="snap-start flex-shrink-0"
-                    >
-                      <div className="relative w-[140px] h-[100px] rounded-xl overflow-hidden border shadow-sm bg-gray-100">
-                        <img
-                          src={item.img_url}
-                          alt={item.title || "Photo"}
-                          className="w-full h-full object-cover"
-                        />
-
-                        {/* gradient overlay */}
-                        {item.title && (
-                          <>
-                            <div
-                              className="absolute inset-0"
-                              style={{
-                                background:
-                                  "linear-gradient(to top, rgba(0,0,0,.55), transparent)",
-                              }}
-                            />
-
-                            {/* title */}
-                            <div className="absolute bottom-1.5 left-2 right-2">
-                              <p className="text-[11px] font-medium text-white leading-tight line-clamp-2">
-                                {item.title}
-                              </p>
-                            </div>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-              </div>
-            </div>
-          )}
-
-          {/* MODAL */}
-          <CommonModal
-            open={photoGalleryModalOpen}
-            title="Photo Gallery"
-            onClose={() => setPhotoGalleryModalOpen(false)}
-            onConfirm={() => {
-              if (!draftPhotoGallery) return;
-
-              update({
-                ...config,
-                photo_gallery: draftPhotoGallery,
-              });
-              setPhotoGalleryModalOpen(false);
-            }}
-          >
-            {draftPhotoGallery && (
-              <PhotoGallerySection
-                value={draftPhotoGallery}
-                disabled={isReadOnly(config.photo_gallery)}
-                onChange={(v: PhotoGalleryConfig) =>
-                  setDraftPhotoGallery(v)
-                }
-              />
-            )}
-          </CommonModal>
-        </Card>
-      )}
-
       {isSectionEnabled("banner") && (
         <Card title="Banner" desc="Top banner CTA section">
           {showLockable && (
@@ -2473,139 +2688,6 @@ export default function VicePublicSetting({
               placeholder="https://example.com"
             />
           </div>
-        </Card>
-      )}
-
-      {isSectionEnabled("youtube") && (
-        <Card title="Videos" desc="Manage your YouTube / video links">
-          {showLockable && (
-            <LockControl
-              value={config.youtube}
-              role={config.role}
-              onChange={(v) =>
-                update({
-                  ...config,
-                  youtube: { ...config.youtube, ...v },
-                })
-              }
-            />
-          )}
-
-          {/* SECTION LABEL — stays OUTSIDE modal */}
-          <div
-            className={`space-y-1 ${isReadOnly(config.youtube)
-              ? "opacity-60 pointer-events-none"
-              : ""
-              }`}
-          >
-            <p className="text-xs uppercase tracking-wide text-gray-500">
-              Section label
-            </p>
-            <Input
-              value={config.youtube.section_title || "Video Gallery"}
-              disabled={isReadOnly(config.youtube)}
-              placeholder="Section title"
-              onChange={(v) =>
-                update({
-                  ...config,
-                  youtube: {
-                    ...config.youtube,
-                    section_title: v.trim() === "" ? "Video Gallery" : v,
-                  },
-                })
-              }
-            />
-
-          </div>
-
-          {/* OPEN MODAL BUTTON — SAME STYLE */}
-          <div className="mt-4">
-            <button
-              type="button"
-              disabled={isReadOnly(config.youtube)}
-              onClick={() => {
-                // ✅ clone to draft
-                setDraftYoutube(structuredClone(config.youtube));
-                setYoutubeModalOpen(true);
-              }}
-              className="
-        px-4 py-2 rounded-lg
-        bg-purple-600 text-white text-sm
-        hover:opacity-90
-        disabled:opacity-50
-      "
-            >
-              Add / Manage Videos
-            </button>
-          </div>
-
-          {/* PREVIEW — EMBED LOOK, NON-PLAYABLE */}
-          {config.youtube.items?.length > 0 && (
-            <div
-              className={`mt-4 ${isReadOnly(config.youtube)
-                ? "opacity-60 pointer-events-none"
-                : ""
-                }`}
-            >
-              <div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
-                {config.youtube.items
-                  .filter((v) => v.enabled)
-                  .sort((a, b) => a.rank - b.rank)
-                  .map((item, idx) => {
-                    const videoId = extractYoutubeId(item.url);
-
-                    return (
-                      <div
-                        key={idx}
-                        className="flex-shrink-0 w-[220px]"
-                      >
-                        <div className="relative aspect-video rounded-lg overflow-hidden border bg-black">
-                          {/* EMBED (non-interactive) */}
-                          <iframe
-                            src={`https://www.youtube.com/embed/${videoId}?controls=0&autoplay=0&mute=1&playsinline=1`}
-                            className="absolute inset-0 w-full h-full pointer-events-none"
-                            allow="accelerometer; encrypted-media; gyroscope; picture-in-picture"
-                          />
-
-                          {/* Optional overlay for polish */}
-                          <div className="absolute inset-0 bg-black/10" />
-                        </div>
-                      </div>
-                    );
-                  })}
-              </div>
-            </div>
-          )}
-
-          {/* MODAL — SAME DRAFT FLOW */}
-          <CommonModal
-            open={youtubeModalOpen}
-            title="Videos"
-            description="Add or manage your YouTube / video links"
-            onClose={() => setYoutubeModalOpen(false)}
-            onConfirm={() => {
-              if (!draftYoutube) return;
-
-              update({
-                ...config,
-                youtube: draftYoutube,
-              });
-              setYoutubeModalOpen(false);
-            }}
-          >
-            {draftYoutube && (
-              <YoutubeSection
-                disabled={isReadOnly(config.youtube)}
-                items={draftYoutube.items}
-                onChange={(items) =>
-                  setDraftYoutube({
-                    ...draftYoutube,
-                    items,
-                  })
-                }
-              />
-            )}
-          </CommonModal>
         </Card>
       )}
 
@@ -2760,7 +2842,25 @@ export default function VicePublicSetting({
           handleAddSection(type);
         }}
       />
-
+      <AppModal
+        open={!!activeSection}
+        title={
+          activeSection
+            ? SECTION_LABELS[activeSection] ||
+            activeSection.replace(/_/g, " ")
+            : ""
+        }
+        description="Manage section content"
+        size="lg"
+        onClose={() => {
+          setActiveSection(null);
+          setSectionDraft(null);
+        }}
+        onConfirm={handleSectionSave}
+        confirmText="Save Changes"
+      >
+        {activeSection && SECTION_COMPONENTS[activeSection]}
+      </AppModal>
     </div>
   );
 }

@@ -32,7 +32,9 @@ export default function VicePublicPage() {
     setLiveConfig(denormalizeProfile(normalized, data));
   }, [data]);
   return (
-    <div className="pt-6 px-8 h-[calc(100vh-84px)] overflow-hidden">
+<div className="pt-6 px-8 h-[calc(100vh-84px)]">
+
+
 
       <div className="
       max-w-[1600px]
@@ -49,26 +51,40 @@ export default function VicePublicPage() {
 
           <div className="flex flex-col items-center">
 
-            {/* <button className="px-4 py-2 border rounded-lg text-sm font-semibold">
+            <a
+              href={`/profile/${username}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-gray-400 bg-gray-50
+    tracking-wide
+    border border-[#D5D5D5]
+    rounded-xl
+    px-4
+    py-1
+    mb-2
+    shadow-md
+    hover:shadow-lg
+    transition-shadow
+    duration-200
+    inline-block
+  "
+            >
               Live Preview
-            </button> */}
-            <div className="text-xs text-gray-400 bg-gray-50 tracking-wide border border-[#D5d5d5] rounded-xl px-4 py-1 mb-4 shadow-md hover:shadow-lg transition-shadow duration-200">
-              <a href={`${window.location.origin}/profile/${username}`} target="_blank" rel="noopener noreferrer">
-                Live Preview
-              </a>
-            </div>
+            </a>
+
+
 
             {/* Phone Wrapper */}
             <div className="h-[75vh] aspect-[10/19]">
 
-              <div className="
-              w-full h-full
-              bg-white
-              rounded-[20px]
-              shadow-xl
-              ring-1 ring-gray-200
-              overflow-hidden
-            ">
+             <div className="
+  w-full h-full
+  bg-white
+  rounded-[20px]
+  shadow-xl
+  ring-1 ring-gray-200
+  overflow-y-hidden
+">
 
                 {loading || !liveConfig ? (
                   <div className="h-full flex items-center justify-center text-gray-400">

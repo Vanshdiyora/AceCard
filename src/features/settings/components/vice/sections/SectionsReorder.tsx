@@ -24,11 +24,14 @@ export default function SectionsReorder({
   sections,
   groupLocked,
   onChange,
+  onSectionClick,   // 👈 NEW
 }: {
   sections: SectionItem[];
   groupLocked?: boolean;
   onChange: (s: SectionItem[]) => void;
-}) {
+  onSectionClick?: (type: string) => void; // 👈 NEW
+}){
+
   // 🔥 Remove hidden sections completely
   const visibleSections = sections.filter(
     (s) => !HIDDEN_SECTIONS.includes(s.type)
@@ -93,10 +96,11 @@ export default function SectionsReorder({
             s.type === "profile" ? (
               <FixedRow key={s.id} s={s} />
             ) : (
-              <SortableRow
-                key={s.id}
-                s={s}
-                disabled={groupLocked}
+                <SortableRow
+                  key={s.id}
+                  s={s}
+                  disabled={groupLocked}
+                  onClick={() => onSectionClick?.(s.type)}
               />
             )
           )}
@@ -110,12 +114,19 @@ export default function SectionsReorder({
 function SortableRow({
   s,
   disabled,
+  onClick,
 }: {
   s: SectionItem;
   disabled?: boolean;
+  onClick?: () => void;
 }) {
-  const { attributes, listeners, setNodeRef, transform, transition } =
-    useSortable({ id: s.id, disabled });
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+  } = useSortable({ id: s.id, disabled });
 
   return (
     <div
@@ -124,24 +135,28 @@ function SortableRow({
         transform: CSS.Transform.toString(transform),
         transition,
       }}
-      className={`flex items-center justify-between border rounded-lg p-3 shadow-sm ${
-        disabled ? "bg-gray-100 opacity-60" : "bg-white"
-      }`}
+      onClick={() => {
+        if (!disabled && onClick) onClick();
+      }}
+      className={`flex items-center justify-between border rounded-lg p-3 shadow-sm cursor-pointer transition
+        ${disabled ? "bg-gray-100 opacity-60" : "bg-white hover:bg-gray-50"}
+      `}
     >
+      {/* LEFT SIDE */}
       <div className="flex items-center gap-3">
         {!disabled && (
           <span
             className="cursor-grab"
             {...attributes}
             {...listeners}
+            onClick={(e) => e.stopPropagation()}   // 🔥 prevent modal
           >
             ☰
           </span>
         )}
 
         <span className="font-medium text-sm capitalize">
-         {SECTION_LABELS[s.type] || s.type.replace(/_/g, " ")}
-
+          {SECTION_LABELS[s.type] || s.type.replace(/_/g, " ")}
         </span>
       </div>
     </div>

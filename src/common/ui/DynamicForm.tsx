@@ -64,6 +64,7 @@ interface DynamicFormProps {
   >;
   noValidate?: boolean;
   disabled?: boolean;
+  className?: string;
 }
 
 /* ---------- STYLES ---------- */
@@ -83,6 +84,7 @@ export default function DynamicForm({
   setErrors,
   noValidate = false,
   disabled = false,
+   className = "",  
 }: DynamicFormProps) {
   const [touched, setTouched] = useState<Record<string, boolean>>({});
 
@@ -114,7 +116,7 @@ export default function DynamicForm({
 
   return (
     <form
-      className="p-5 space-y-4 overflow-y-auto custom-scrollbar flex-1"
+      className={`p-5 space-y-4 overflow-y-auto custom-scrollbar flex-1 ${className}`}
       noValidate={noValidate}
     >
       {fields.map((field) => {
