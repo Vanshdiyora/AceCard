@@ -40,9 +40,13 @@ import ProfileSettingsPage from "./features/settings/pages/ProfileSettingsPage";
 import { useEffect } from "react";
 import { useAppDispatch } from "./app/hooks";
 import { hydrateAuth } from "./features/auth/slice";
+import SuggestedQuestions from "./features/settings/components/SuggestedQuestions";
+import LeadConfiguration from "./features/settings/components/LeadConfiguration";
+import CRMIntegration from "./features/settings/components/CRMIntegration";
+import AccountSettings from "./features/settings/components/AccountSettings";
 
 export default function App() {
-    const dispatch = useAppDispatch();
+  const dispatch = useAppDispatch();
 
   useEffect(() => {
     dispatch(hydrateAuth());
@@ -112,10 +116,15 @@ export default function App() {
           <Route path="team/:id" element={<TeamMemberDetailsPage />} />
           <Route path="products" element={<ProductsPage />} />
           <Route path="products/:id" element={<ProductDetailsPage />} />
-          <Route path="settings" element={<SettingsPage />} />
+          <Route path="settings" element={<SettingsPage />}>
+            <Route index element={<AccountSettings />} />
+            <Route path="crm" element={<CRMIntegration />} />
+            <Route path="lead" element={<LeadConfiguration />} />
+            <Route path="questions" element={<SuggestedQuestions />} />
+            <Route path="profile-settings" element={<VicePublicPage />} />
+          </Route>
           <Route path="support" element={<SupportPage />} />
           <Route path="notifications" element={<NotificationVendorPage />} />
-          <Route path="settings/viceview" element={<VicePublicPage />} />
           <Route path="*" element={<Navigate to="/not-found" replace />} />
         </Route>
 

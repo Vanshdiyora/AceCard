@@ -11,7 +11,7 @@ const profileItems = [
   { id: "crm", label: "CRM Integration", icon: Share2 },
   { id: "lead", label: "Lead Configuration", icon: ListChecks },
   { id: "questions", label: "Suggested Questions", icon: HelpCircle },
-  { id: "profile", label: "Public Profile Settings", icon: Globe },
+  { id: "profile-settings", label: "Public Profile Settings", icon: Globe },
 ];
 
 
