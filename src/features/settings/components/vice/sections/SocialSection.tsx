@@ -1,5 +1,4 @@
-import AddSocialModal from "./AddSocialModal";
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { Trash2 } from "lucide-react";
 
 // 🔥 Latest official brand icons
@@ -31,7 +30,7 @@ const ICONS: Record<string, any> = {
 };
 
 // ---------------- AVAILABLE SOCIALS ----------------
-const ALL_SOCIALS = [
+export const ALL_SOCIALS = [
   { id: "instagram", label: "Instagram" },
   { id: "linkedin", label: "LinkedIn" },
   { id: "twitter", label: "X (Twitter)" },
@@ -44,29 +43,8 @@ const ALL_SOCIALS = [
   { id: "website", label: "Website" },
 ];
 
-export default function SocialSection({ items = [], onChange }: any) {
-  const [open, setOpen] = useState(false);
-
-  const toggle = (s: any) => {
-    const index = items.findIndex((i: any) => i.id === s.id);
-
-    // If already exists → just toggle enabled
-    if (index !== -1) {
-      onChange(
-        items.map((i: any, idx: number) =>
-          idx === index ? { ...i, enabled: !i.enabled } : i
-        )
-      );
-      return;
-    }
-
-    // If not exists → add new as enabled
-    onChange([...items, { ...s, url: "", enabled: true }]);
-  };
-
-
-
-  const update = (id: string, val: string) => {
+export default function SocialSection({ items = [], onChange, onAddClick }: any) {
+   const update = (id: string, val: string) => {
     onChange(items.map((i: any) => (i.id === id ? { ...i, url: val } : i)));
   };
 
@@ -123,20 +101,12 @@ export default function SocialSection({ items = [], onChange }: any) {
       {/* Add button at bottom */}
       <div className="flex justify-left mt-5">
         <button
-          onClick={() => setOpen(true)}
-          className="px-4 py-2 rounded-lg bg-purple-600 text-white text-sm font-semibold"
-        >
-          + Add Social
-        </button>
+  onClick={onAddClick}
+  className="px-4 py-2 rounded-lg bg-purple-600 text-white text-sm font-semibold"
+>
+  + Add Social
+</button>
       </div>
-
-      <AddSocialModal
-        open={open}
-        all={ALL_SOCIALS}
-        selected={items}
-        onToggle={toggle}
-        onClose={() => setOpen(false)}
-      />
     </>
   );
 }

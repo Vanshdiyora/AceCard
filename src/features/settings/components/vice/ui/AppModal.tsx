@@ -1,6 +1,6 @@
 import { type ReactNode, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { X } from "lucide-react";
+import { X, ArrowLeft } from "lucide-react";
 
 interface AppModalProps {
   open: boolean;
@@ -16,6 +16,8 @@ interface AppModalProps {
   cancelText?: string;
   showFooter?: boolean;
   loading?: boolean;
+  showBack?: boolean;
+  onBack?: () => void;
 }
 
 export default function AppModal({
@@ -30,6 +32,8 @@ export default function AppModal({
   cancelText = "Cancel",
   showFooter = true,
   loading = false,
+  showBack = false,
+  onBack,
 }: AppModalProps) {
   if (!open) return null;
 
@@ -58,15 +62,27 @@ export default function AppModal({
         {(title || description) && (
           <div className="px-6 pt-6 pb-4 border-b">
             <div className="flex items-start justify-between">
-              <div>
-                {title && (
-                  <h3 className="text-lg font-semibold">{title}</h3>
-                )}
-                {description && (
-                  <p className="text-sm text-gray-500 mt-1">
-                    {description}
-                  </p>
-                )}
+              <div className="flex items-center gap-3">
+                <div>
+                  {showBack && (
+                    <button
+                      onClick={onBack}
+                      className="flex items-center gap-2 text-gray-500 hover:text-gray-900 transition"
+                    >
+                      <ArrowLeft size={18} />
+                      <span className="text-sm font-medium">Back</span>
+                    </button>
+                  )}
+
+                  {title && (
+                    <h3 className="text-lg font-semibold">{title}</h3>
+                  )}
+                  {description && (
+                    <p className="text-sm text-gray-500 mt-1">
+                      {description}
+                    </p>
+                  )}
+                </div>
               </div>
 
               <button

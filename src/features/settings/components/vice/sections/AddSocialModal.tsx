@@ -45,7 +45,7 @@ export default function AddSocialModal({
   return createPortal(
     <div className="fixed inset-0 z-[9999] bg-black/40 flex items-center justify-center px-3">
       {/* Modal Card */}
-      <div className="bg-white w-full sm:max-w-3xl max-h-[90vh] rounded-2xl p-4 sm:p-6 shadow-xl flex flex-col overflow-hidden">
+      <div className="bg-white w-full max-w-2xl max-h-[90vh] rounded-2xl p-4 sm:p-6 shadow-xl flex flex-col overflow-hidden">
 
         {/* HEADER */}
         <div className="flex justify-between items-center mb-4 sticky top-0 bg-white z-10 pb-2 border-b">
@@ -69,24 +69,29 @@ export default function AddSocialModal({
                 <button
                   key={s.id}
                   onClick={() => onToggle(s)}
-                  className={`flex items-center justify-between gap-2 px-3 py-3 rounded-xl border transition text-sm
-                  ${
-                    added
+                  className={`flex items-center gap-3 px-4 py-3 rounded-xl border transition text-sm
+  ${added
                       ? "bg-purple-50 border-purple-500 text-purple-700"
                       : "bg-gray-50 border-gray-200 hover:bg-gray-100"
-                  }`}
+                    }`}
                 >
-                  <div className="flex items-center gap-2">
-                    <Icon className="w-5 h-5 shrink-0" />
-                    <span className="truncate">{s.label}</span>
+                  {/* LEFT SIDE */}
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <div className="w-6 h-6 flex items-center justify-center">
+                      <Icon className="w-5 h-5" />
+                    </div>
+
+                    <span className="leading-none">
+                      {s.label}
+                    </span>
                   </div>
 
+                  {/* RIGHT SIDE */}
                   <div
-                    className={`h-7 w-7 flex items-center justify-center rounded-full border shrink-0 ${
-                      added
+                    className={`h-7 w-7 flex items-center justify-center rounded-full border shrink-0 ${added
                         ? "bg-purple-600 border-purple-600 text-white"
                         : "border-gray-300"
-                    }`}
+                      }`}
                   >
                     {added ? <Check size={14} /> : <Plus size={14} />}
                   </div>

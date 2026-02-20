@@ -16,7 +16,7 @@ import { ProColorPicker } from "../../../../common/utils/ColorPicker";
 import DynamicForm, { type FieldConfig } from "../../../../common/ui/DynamicForm";
 import MeetingSection from "./sections/MeetingSections";
 import ProfileSection from "./sections/ProfileSection";
-import SocialSection from "./sections/SocialSection";
+import SocialSection, { ALL_SOCIALS } from "./sections/SocialSection";
 import { fetchProducts } from "../../../products/slice";
 import ResultModal from "../../../../common/ui/ResultModal";
 import { AlignLeft, AlignCenter, AlignRight } from "lucide-react";
@@ -28,6 +28,7 @@ import AddSectionModal from "./sections/AddSectionModal";
 import AppModal from "./ui/AppModal";
 import { ShareCardSection } from "./sections/ShareCardSection";
 import { Image, Video } from "lucide-react";
+import AddSocialModal from "./sections/AddSocialModal";
 
 const THEME_COLOR_KEYS = [
   "card_background",
@@ -352,7 +353,9 @@ export default function VicePublicSetting({
 
   const [socialError, setSocialError] = useState<string | null>(null);
   const [addSectionOpen, setAddSectionOpen] = useState(false);
-
+  const [cameFromAddModal, setCameFromAddModal] = useState(false);
+  const [pendingSection, setPendingSection] = useState<string | null>(null);
+  const [isAddSocialOpen, setIsAddSocialOpen] = useState(false);
 
   /* ---------- Team search state ---------- */
   const [teamSearch, setTeamSearch] = useState("");
@@ -679,6 +682,7 @@ export default function VicePublicSetting({
 
   if (loading || !config)
     return <p className="text-gray-400">Loading...</p>;
+
   const isReadOnly = (meta?: { locked?: boolean }) =>
     meta?.locked === true && role !== "vendor_admin";
 
@@ -1084,7 +1088,6 @@ export default function VicePublicSetting({
     social_links: sectionDraft && (
       <div className="space-y-4">
 
-        {/* 🔒 LOCK CONTROL */}
         {showLockable && (
           <LockControl
             value={sectionDraft}
@@ -1102,21 +1105,23 @@ export default function VicePublicSetting({
         <SocialSection
           items={sectionDraft.items}
           onChange={(items: any) => {
-            setSocialError(null); // ✅ clear error when editing
-
+            setSocialError(null);
             setSectionDraft({
               ...sectionDraft,
               items,
             });
           }}
+          onAddClick={() => {
+            setActiveSection(null);     // 🔥 close section editor
+            setIsAddSocialOpen(true);   // 🔥 open add modal
+          }}
         />
-
-        {/* 🔴 ERROR MESSAGE */}
         {socialError && (
           <p className="text-sm text-red-600">
             {socialError}
           </p>
         )}
+
       </div>
     ),
 
@@ -1428,54 +1433,98 @@ export default function VicePublicSetting({
   };
 
   const handleSectionSave = () => {
-    if (!activeSection || !sectionDraft) return;
+    if (!activeSection || !sectionDraft || !config) return;
+
+    let nextConfig = { ...config };
+
+    /* ================= ENABLE SECTION (ONLY IF FROM ADD FLOW) ================= */
+    if (pendingSection) {
+      const exists = nextConfig.sections.items.find(
+        (s) => s.type === pendingSection
+      );
+
+      let updated;
+
+      if (exists) {
+        updated = nextConfig.sections.items.map((s) =>
+          s.type === pendingSection
+            ? { ...s, enabled: true }
+            : s
+        );
+      } else {
+        updated = [
+          ...nextConfig.sections.items,
+          {
+            id: pendingSection,
+            type: pendingSection,
+            rank: nextConfig.sections.items.length + 1,
+            enabled: true,
+          },
+        ];
+      }
+
+      nextConfig = {
+        ...nextConfig,
+        sections: {
+          ...nextConfig.sections,
+          items: updated,
+        },
+      };
+
+      setPendingSection(null);
+    }
+
+    /* ================= SAVE SECTION CONTENT ================= */
 
     if (activeSection === "products") {
-      update({ ...config, products: sectionDraft });
+      nextConfig = { ...nextConfig, products: sectionDraft };
     }
 
     if (activeSection === "youtube") {
-      update({ ...config, youtube: sectionDraft });
+      nextConfig = { ...nextConfig, youtube: sectionDraft };
     }
 
     if (activeSection === "links_files") {
-      update({ ...config, links_files: sectionDraft });
+      nextConfig = { ...nextConfig, links_files: sectionDraft };
     }
 
     if (activeSection === "photo_gallery") {
-      update({ ...config, photo_gallery: sectionDraft });
+      nextConfig = { ...nextConfig, photo_gallery: sectionDraft };
     }
 
     if (activeSection === "social_links") {
-
       if (hasInvalidSocialLinks(sectionDraft.items)) {
         setSocialError("Please fill all enabled social links before saving.");
-        return; // ❌ stop modal close
+        return;
       }
-
-      update({ ...config, social_links: sectionDraft });
+      nextConfig = { ...nextConfig, social_links: sectionDraft };
     }
 
     if (activeSection === "meeting") {
-      update({ ...config, meeting: sectionDraft });
+      nextConfig = { ...nextConfig, meeting: sectionDraft };
     }
 
     if (activeSection === "contact") {
-      update({ ...config, contact: sectionDraft });
+      nextConfig = { ...nextConfig, contact: sectionDraft };
     }
 
     if (activeSection === "banner") {
-      update({ ...config, banner: sectionDraft });
+      nextConfig = { ...nextConfig, banner: sectionDraft };
     }
 
     if (activeSection === "about") {
-      update({
-        ...config,
+      nextConfig = {
+        ...nextConfig,
         profile: sectionDraft,
-      });
+      };
     }
+
+    /* ================= APPLY UPDATE ================= */
+    update(nextConfig);
+
     setActiveSection(null);
     setSectionDraft(null);
+    setCameFromAddModal(false);
   };
 
   function GradientDirectionDropdown({
@@ -1610,41 +1659,41 @@ export default function VicePublicSetting({
     );
   }
 
-  const handleAddSection = (type: string) => {
-    const exists = config.sections.items.find(
-      (s) => s.type === type
-    );
+  // const handleAddSection = (type: string) => {
+  //   const exists = config.sections.items.find(
+  //     (s) => s.type === type
+  //   );
 
-    let updated;
+  //   let updated;
 
-    if (exists) {
-      // toggle enable state
-      updated = config.sections.items.map((s) =>
-        s.type === type
-          ? { ...s, enabled: !s.enabled }
-          : s
-      );
-    } else {
-      // add new section
-      updated = [
-        ...config.sections.items,
-        {
-          id: type,
-          type,
-          rank: config.sections.items.length + 1,
-          enabled: true,
-        },
-      ];
-    }
+  //   if (exists) {
+  //     // toggle enable state
+  //     updated = config.sections.items.map((s) =>
+  //       s.type === type
+  //         ? { ...s, enabled: !s.enabled }
+  //         : s
+  //     );
+  //   } else {
+  //     // add new section
+  //     updated = [
+  //       ...config.sections.items,
+  //       {
+  //         id: type,
+  //         type,
+  //         rank: config.sections.items.length + 1,
+  //         enabled: true,
+  //       },
+  //     ];
+  //   }
 
-    update({
-      ...config,
-      sections: {
-        ...config.sections,
-        items: updated,
-      },
-    });
-  };
+  //   update({
+  //     ...config,
+  //     sections: {
+  //       ...config.sections,
+  //       items: updated,
+  //     },
+  //   });
+  // };
 
   /* ================= UI ================= */
   const isLayoutLocked = isReadOnly(config.layout);
@@ -1655,6 +1704,29 @@ export default function VicePublicSetting({
     setTeamPage((prev) => prev + 1);
   };
 
+  const openSectionEditor = (type: string) => {
+    setActiveSection(type);
+
+    const sectionMap: Record<string, any> = {
+      meeting: config.meeting,
+      youtube: config.youtube,
+      products: config.products,
+      links_files: config.links_files,
+      photo_gallery: config.photo_gallery,
+      social_links: config.social_links,
+      contact: config.contact,
+      banner: config.banner,
+      about: config.profile,
+    };
+
+    const base = sectionMap[type];
+    if (!base) return;
+
+    setSectionDraft({
+      ...structuredClone(base),
+      items: base?.items ?? [],
+    });
+  };
   const teamField: FieldConfig[] = [
     {
       name: "team_ids",
@@ -2229,128 +2301,128 @@ export default function VicePublicSetting({
           {/* SECTIONS */}
           <div className="mt-10">
 
-  {/* TITLE + LOCK */}
-  <div className="mb-4 space-y-3">
+            {/* TITLE + LOCK */}
+            <div className="mb-4 space-y-3">
 
-  <h3 className="text-sm font-semibold text-gray-900">
-    Add Sections to Your Card
-  </h3>
+              <h3 className="text-sm font-semibold text-gray-900">
+                Add Sections to Your Card
+              </h3>
 
-  {showLockable && (
-    <LockControl
-      value={config.sections}
-      role={config.role}
-      currentUser={username}
-      onChange={(v) =>
-        update({
-          ...config,
-          sections: { ...config.sections, ...v },
-        })
-      }
-    />
-  )}
+              {showLockable && (
+                <LockControl
+                  value={config.sections}
+                  role={config.role}
+                  currentUser={username}
+                  onChange={(v) =>
+                    update({
+                      ...config,
+                      sections: { ...config.sections, ...v },
+                    })
+                  }
+                />
+              )}
 
-</div>
+            </div>
 
-  {(() => {
-    const visibleSections = config.sections.items.filter(
-      (s) =>
-        s.enabled &&
-        !["video_gallery"].includes(s.type)
-    );
+            {(() => {
+              const visibleSections = config.sections.items.filter(
+                (s) =>
+                  s.enabled &&
+                  !["video_gallery"].includes(s.type)
+              );
 
-    const hasOnlyProfile =
-      visibleSections.length === 1 &&
-      visibleSections[0].type === "profile";
+              const hasOnlyProfile =
+                visibleSections.length === 1 &&
+                visibleSections[0].type === "profile";
 
-    const showEmptyState =
-      visibleSections.length === 0 || hasOnlyProfile;
+              const showEmptyState =
+                visibleSections.length === 0 || hasOnlyProfile;
 
-    const sectionsLocked = isReadOnly(config.sections);
+              const sectionsLocked = isReadOnly(config.sections);
 
-    return showEmptyState ? (
-      /* EMPTY STATE */
-      <div
-        className={`border-2 border-dashed border-gray-300 rounded-xl p-16 text-center bg-white transition ${
-          sectionsLocked ? "opacity-60 pointer-events-none" : ""
-        }`}
-      >
-        <h4 className="text-sm font-semibold text-gray-800">
-          Customize Your Card With Sections
-        </h4>
+              return showEmptyState ? (
+                /* EMPTY STATE */
+                <div
+                  className={`border-2 border-dashed border-gray-300 rounded-xl p-16 text-center bg-white transition ${sectionsLocked ? "opacity-60 pointer-events-none" : ""
+                    }`}
+                >
+                  <h4 className="text-sm font-semibold text-gray-800">
+                    Customize Your Card With Sections
+                  </h4>
 
-        <p className="text-sm text-gray-500 mt-2">
-          Click "+ Add Section" to add contact details, social media, videos, and more.
-        </p>
+                  <p className="text-sm text-gray-500 mt-2">
+                    Click "+ Add Section" to add contact details, social media, videos, and more.
+                  </p>
 
-        <button
-          type="button"
-          disabled={sectionsLocked}
-          onClick={() => setAddSectionOpen(true)}
-          className="mt-5 px-5 py-2 rounded-full bg-gray-100 hover:bg-gray-200 text-sm font-medium transition disabled:opacity-50"
-        >
-          Add Section
-        </button>
-      </div>
-    ) : (
-      <>
-        {/* ADD BUTTON */}
-        <div className="mb-4 flex justify-end">
-          <button
-            type="button"
-            disabled={sectionsLocked}
-            onClick={() => setAddSectionOpen(true)}
-            className="px-4 py-2 rounded-lg bg-purple-600 text-white text-sm hover:opacity-90 disabled:opacity-50"
-          >
-            + Add Section
-          </button>
-        </div>
+                  <button
+                    type="button"
+                    disabled={sectionsLocked}
+                    onClick={() => setAddSectionOpen(true)}
+                    className="mt-5 px-5 py-2 rounded-full bg-gray-100 hover:bg-gray-200 text-sm font-medium transition disabled:opacity-50"
+                  >
+                    Add Section
+                  </button>
+                </div>
+              ) : (
+                <>
+                  {/* ADD BUTTON */}
+                  <div className="mb-4 flex justify-end">
+                    <button
+                      type="button"
+                      disabled={sectionsLocked}
+                      onClick={() => setAddSectionOpen(true)}
+                      className="px-4 py-2 rounded-lg bg-purple-600 text-white text-sm hover:opacity-90 disabled:opacity-50"
+                    >
+                      + Add Section
+                    </button>
+                  </div>
 
-        {/* REORDER */}
-        <div className={sectionsLocked ? "opacity-60 pointer-events-none" : ""}>
-          <SectionsReorder
-            sections={config.sections.items}
-            groupLocked={config.sections.locked}
-            onChange={(items) =>{
+                  {/* REORDER */}
+                  <div className={sectionsLocked ? "opacity-60 pointer-events-none" : ""}>
+                    <SectionsReorder
+                      sections={config.sections.items}
+                      groupLocked={config.sections.locked}
+                      onChange={(items) => {
 
-              console.log("SectionsReorder render");
-              update({
-                ...config,
-                sections: { ...config.sections, items },
-              })
-            }
-            }
-            onSectionClick={(type) => {
-              if (sectionsLocked) return;
+                        console.log("SectionsReorder render");
+                        update({
+                          ...config,
+                          sections: { ...config.sections, items },
+                        })
+                      }
+                      }
+                      onSectionClick={(type) => {
+                        if (sectionsLocked) return;
+                        setCameFromAddModal(false);
+                        setPendingSection(null);
+                        setActiveSection(type);
 
-              setActiveSection(type);
+                        const sectionMap: Record<string, any> = {
+                          meeting: config.meeting,
+                          youtube: config.youtube,
+                          products: config.products,
+                          links_files: config.links_files,
+                          photo_gallery: config.photo_gallery,
+                          social_links: config.social_links,
+                          contact: config.contact,
+                          banner: config.banner,
+                          about: config.profile,
+                        };
 
-              const sectionMap: Record<string, any> = {
-                meeting: config.meeting,
-                youtube: config.youtube,
-                products: config.products,
-                links_files: config.links_files,
-                photo_gallery: config.photo_gallery,
-                social_links: config.social_links,
-                contact: config.contact,
-                banner: config.banner,
-                about: config.profile,
-              };
+                        const base = sectionMap[type];
+                        if (!base) return;
 
-              const base = sectionMap[type];
-              if (!base) return;
-
-              setSectionDraft({
-                ...structuredClone(base),
-                items: base?.items ?? [],
-              });
-            }}
-          />
-        </div>
-      </>
-    );
-  })()}
-</div>
+                        setSectionDraft({
+                          ...structuredClone(base),
+                          items: base?.items ?? [],
+                        });
+                      }}
+                    />
+                  </div>
+                </>
+              );
+            })()}
+          </div>
 
           {/* BACKGROUND TYPE */}
           <div className={isLayoutLocked ? "opacity-60 pointer-events-none" : ""}>
@@ -2675,7 +2747,7 @@ export default function VicePublicSetting({
         />
       </Card> */}
 
-     
+
       <Card
         title="Share Your Digital Card"
         desc="Share your digital card in multiple ways, including links, QR codes, and wallet passes."
@@ -2720,7 +2792,40 @@ export default function VicePublicSetting({
         sections={config.sections.items}
         onClose={() => setAddSectionOpen(false)}
         onAdd={(type: string) => {
-          handleAddSection(type);
+          setCameFromAddModal(true);   // ✅ IMPORTANT
+          setAddSectionOpen(false);    // close add modal
+          openSectionEditor(type);     // open editor
+        }}
+        onToggle={(type: string) => {
+          const exists = config.sections.items.find(
+            (s) => s.type === type
+          );
+
+          let updated;
+
+          if (exists) {
+            updated = config.sections.items.map((s) =>
+              s.type === type ? { ...s, enabled: !s.enabled } : s
+            );
+          } else {
+            updated = [
+              ...config.sections.items,
+              {
+                id: type,
+                type,
+                rank: config.sections.items.length + 1,
+                enabled: true,
+              },
+            ];
+          }
+
+          update({
+            ...config,
+            sections: {
+              ...config.sections,
+              items: updated,
+            },
+          });
         }}
       />
       <AppModal
@@ -2732,16 +2837,56 @@ export default function VicePublicSetting({
             : ""
         }
         description="Manage section content"
-        size="lg"
+        size="xl"
         onClose={() => {
           setActiveSection(null);
           setSectionDraft(null);
+          setSocialError(null);   // 🔥 RESET HERE
+
+          if (cameFromAddModal) {
+            setCameFromAddModal(false);
+            setPendingSection(null);
+          }
+        }}
+        showBack={cameFromAddModal}
+        onBack={() => {
+          setActiveSection(null);
+          setSectionDraft(null);
+          setAddSectionOpen(true);
         }}
         onConfirm={handleSectionSave}
         confirmText="Save Changes"
       >
         {activeSection && SECTION_COMPONENTS[activeSection]}
       </AppModal>
+
+      <AddSocialModal
+        open={isAddSocialOpen}
+        all={ALL_SOCIALS}
+        selected={sectionDraft?.items || []}
+        onToggle={(s: any) => {
+          const index = sectionDraft.items.findIndex((i: any) => i.id === s.id);
+
+          let updated;
+
+          if (index !== -1) {
+            updated = sectionDraft.items.map((i: any, idx: number) =>
+              idx === index ? { ...i, enabled: !i.enabled } : i
+            );
+          } else {
+            updated = [...sectionDraft.items, { ...s, url: "", enabled: true }];
+          }
+
+          setSectionDraft({
+            ...sectionDraft,
+            items: updated,
+          });
+        }}
+        onClose={() => {
+          setIsAddSocialOpen(false);
+          setActiveSection("social_links"); // 🔥 reopen section editor
+        }}
+      />
     </div>
   );
 }

@@ -36,20 +36,11 @@ export default function VicePublicPage() {
 
 
 
-      <div className="
-      max-w-[1600px]
-      mx-auto
-      grid
-      grid-cols-1
-      xl:grid-cols-[520px_1fr]
-      gap-16
-      h-full
-    ">
+ <div className="w-full h-full flex"> 
 
         {/* LEFT — Phone Preview */}
-        <div className="hidden xl:flex items-start justify-center">
-
-          <div className="flex flex-col items-center">
+    <div className="hidden xl:flex flex-1 justify-center">
+  <div className="flex flex-col items-center">
 
             <a
               href={`/profile/${username}`}
@@ -75,7 +66,7 @@ export default function VicePublicPage() {
 
 
             {/* Phone Wrapper */}
-            <div className="w-full max-w-[450px] h-[80vh] aspect-[10/19]">
+            <div className="w-full max-w-[400px] h-[80vh] max-h-[600px] aspect-[10/19]">
 
 
               <div className="
@@ -105,14 +96,7 @@ export default function VicePublicPage() {
 
 
         {/* RIGHT — Editor Panel */}
-        <div className="
-        bg-white
-        rounded-2xl
-        shadow-md
-        h-full
-        overflow-y-auto
-      ">
-
+<div className="w-full xl:w-[480px] xl:ml-auto bg-white rounded-2xl shadow-md h-full overflow-y-auto">
           <VicePublicSetting
             key={username}
             username={username}
