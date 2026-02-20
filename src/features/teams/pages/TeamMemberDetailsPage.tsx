@@ -3,7 +3,6 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import { ArrowLeft, Edit, Shield, UserX, CheckCircle2 } from "lucide-react";
 // import { useEffect as usePublicEffect } from "react";
 import PublicMobileWebsite from "../../publicProfile/components/MobileWebsite";
-import TeamMemberPublicProfileTab from "../components/details/publicProfile/TeamMemberPublicProfileTab";
 import { useAppDispatch, useAppSelector } from "../../../app/hooks";
 import { updateMember, fetchMemberById, updatePermissions, transferLeads } from "../slice";
 import EditMemberModal from "../components/EditMemberModal";
@@ -26,6 +25,7 @@ import {
   normalizeProfile,
   denormalizeProfile,
 } from "../../publicProfile/utils/normalizeProfile";
+import VicePublicSetting from "../../settings/components/vice/VicePublicSetting";
 
 const TABS = [
   "overview",
@@ -455,7 +455,7 @@ export default function TeamMemberDetailsPage() {
         {activeTab === "public-profile" && (
           <div className="">
             <div className="h-[95%] overflow-hidden rounded-2xl bg-white overflow-y-auto">
-              <TeamMemberPublicProfileTab
+              <VicePublicSetting
                 key={member.username}
                 onLiveChange={(cfg) => setLivePreviewConfig(cfg)}
                 onCropToggle={setIsCropping}   // 👈 ADD

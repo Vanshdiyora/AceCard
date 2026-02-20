@@ -1507,10 +1507,9 @@ export default function VicePublicSetting({
           </div>
 
           {/* PROFILE + COVER SECTION */}
-          <div className="mt-6 grid grid-cols-1 md:grid-cols-[0.7fr_1fr_1fr] gap-20 max-w-lg items-start">
-
-            {/* PROFILE PHOTO — ALWAYS VISIBLE */}
-            <div className="min-w-32">
+          <div className="mt-6 grid grid-cols-1 md:grid-cols-2 items-start">
+            {/* PROFILE PHOTO */}
+            <div className="max-w-[140px]">
               <div className="flex items-center gap-2 mb-3">
                 <p className="text-sm font-semibold text-gray-800">
                   Profile Photo
@@ -1532,7 +1531,7 @@ export default function VicePublicSetting({
               />
             </div>
 
-            {/* COVER BACKGROUND — ONLY WHEN TYPE 3 */}
+            {/* COVER BACKGROUND */}
             {config.layout.profile_type === 3 && (
               <div>
                 <div className="flex items-center gap-2 mb-3">
@@ -1541,7 +1540,6 @@ export default function VicePublicSetting({
                   </p>
                 </div>
 
-                {/* Lock only for cover */}
                 {showLockable && (
                   <div className="mb-3">
                     <LockControl
@@ -1557,11 +1555,10 @@ export default function VicePublicSetting({
                   </div>
                 )}
 
-
                 <div
                   className={`relative h-40 w-full rounded-xl border border-dashed border-gray-300 bg-gray-50 transition ${isReadOnly(config.cover)
-                    ? "opacity-60 pointer-events-none"
-                    : "hover:bg-gray-100"
+                      ? "opacity-60 pointer-events-none"
+                      : "hover:bg-gray-100"
                     }`}
                 >
                   {config.cover.cover_url ? (
@@ -1570,7 +1567,7 @@ export default function VicePublicSetting({
                       className="absolute inset-0 w-full h-full object-cover rounded-xl"
                     />
                   ) : (
-                    <div className="h-full flex flex-col items-center justify-center text-sm text-gray-500">
+                    <div className="h-full flex flex-col items-center justify-center text-sm text-gray-500 text-center px-4">
                       <p>Drag file here for upload or</p>
                       <span className="mt-2 inline-block bg-gray-200 px-4 py-1.5 rounded-full text-xs font-medium">
                         Select Files
@@ -2235,17 +2232,17 @@ export default function VicePublicSetting({
                   <p className="text-sm font-medium">Pattern Background Color</p>
 
                   <div className="mt-2">
-                   <ThemeColorRow
-                    label="Color"
-                    value={config.layout.background_color || "#000000"}
-                    disabled={isLayoutLocked}
-                    onChange={(val: string) =>
-                      update({
-                        ...config,
-                        layout: { ...config.layout, background_color: val },
-                      })
-                    }
-                  />
+                    <ThemeColorRow
+                      label="Color"
+                      value={config.layout.background_color || "#000000"}
+                      disabled={isLayoutLocked}
+                      onChange={(val: string) =>
+                        update({
+                          ...config,
+                          layout: { ...config.layout, background_color: val },
+                        })
+                      }
+                    />
                   </div>
                 </div>
               )}
