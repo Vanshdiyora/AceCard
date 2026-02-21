@@ -16,7 +16,6 @@ import {
 import { ProfileLayoutModal } from "./Profile/ProfileLayoutModal";
 import { ProfileLayoutEditor } from "./Profile/ProfileLayoutEditor";
 import { uploadImage } from "../../services/publicProfile.api";
-// import { VideoGalleryEditModal } from "./VideoGallery/VideoGallery";
 import { useAppDispatch, useAppSelector } from "../../../../app/hooks";
 import { savePublicProfile } from "../../slice";
 import { FiPhone, FiGlobe } from "react-icons/fi";
@@ -65,17 +64,14 @@ const getYouTubeId = (url?: string) => {
   try {
     const u = new URL(url);
 
-    // youtu.be/VIDEO_ID
     if (u.hostname.includes("youtu.be")) {
       return u.pathname.slice(1);
     }
 
-    // youtube.com/watch?v=VIDEO_ID
     if (u.searchParams.has("v")) {
       return u.searchParams.get("v");
     }
 
-    // youtube.com/embed/VIDEO_ID
     const match = u.pathname.match(/\/embed\/([^/]+)/);
     return match?.[1] ?? null;
   } catch {
@@ -96,18 +92,80 @@ export const resolveShape = (style?: number) => {
     case 3:
       return "rounded-full";
     default:
-      return ""; // style 1 (default)
+      return "";
   }
 };
+
+/* ================= BACKGROUND LAYER (exported for desktop sibling use) ================= */
+export function resolveBackgroundStyleFromLayout(layout: any, theme: any) {
+  if (layout?.use_background === "image" && layout?.background_image) {
+    return {
+      backgroundImage: `url(${layout.background_image})`,
+      backgroundSize: "cover",
+      backgroundPosition: "center",
+      backgroundRepeat: "no-repeat",
+    };
+  }
+  if (["waves", "polka", "stripes", "zigzag", "video"].includes(layout?.use_background || "")) {
+    return {};
+  }
+  if (layout?.use_background === "gradient") {
+    const from = layout?.color1 || "#7c3aed";
+    const to = layout?.color2 || "#6366f1";
+    const validDirections: Record<string, string> = {
+      "to-r": "to right",
+      "to-l": "to left",
+      "to-b": "to bottom",
+      "to-t": "to top",
+    };
+    const dir = validDirections[layout?.direction] || "to right";
+    return { backgroundImage: `linear-gradient(${dir}, ${from}, ${to})` };
+  }
+  return { backgroundColor: layout?.color1 || theme?.background_color || "#000" };
+}
+
+/**
+ * Renders the decorative background.
+ * positionClass = "fixed" on real mobile, "absolute" when used as a sibling
+ * inside the phone mockup (which has overflow-hidden to clip it).
+ */
+export function BackgroundLayer({
+  layout,
+  theme,
+  positionClass = "fixed",
+}: {
+  layout: any;
+  theme: any;
+  positionClass?: "fixed" | "absolute";
+}) {
+  const bg = layout?.use_background || "";
+  const isPattern = ["stripes", "waves", "polka", "zigzag", "video"].includes(bg);
+
+  return (
+    <div
+      className={`${positionClass} inset-0 z-0 pointer-events-none`}
+      style={!isPattern ? resolveBackgroundStyleFromLayout(layout, theme) : {}}
+    >
+      {bg === "zigzag" && <ZigzagBackground color={layout?.background_color || "#65696F"} />}
+      {bg === "waves" && <WaveBackground color={layout?.background_color || "#40474D"} />}
+      {bg === "stripes" && <StripeBackground color={layout?.background_color || "#65696F"} />}
+      {bg === "polka" && <PolkaBackground color={layout?.background_color || "#3d444b"} />}
+      {bg === "video" && <BackgroundVideo src={layout?.background_video} isPreview={positionClass === "absolute"} />}
+    </div>
+  );
+}
+
 /* ================= COMPONENT ================= */
 export default function MobilePublicSettings({
   data,
   scrollRef,
   onLogout,
+  isPreview = false, // 👈 NEW: true when rendered inside desktop phone mockup
 }: {
   data: any;
   scrollRef?: React.RefObject<HTMLDivElement | null>;
   onLogout?: () => void;
+  isPreview?: boolean;
 }) {
 
   const config = data?.configuration ?? {};
@@ -118,8 +176,6 @@ export default function MobilePublicSettings({
   const [editProducts, setEditProducts] = useState(false);
 
   const {
-    // layout = {},
-    // theme = {},
     banner = {},
     meeting = {},
     sections = { items: [] },
@@ -129,14 +185,12 @@ export default function MobilePublicSettings({
   const saving = useAppSelector((s) => s.publicProfile.saving);
   const [editSection, setEditSection] = useState<any>(null);
 
-  // local editable copy
   const [draft, setDraft] = useState<any>(config);
 
   const handleSave = () => {
     dispatch(savePublicProfile({ config: draft }));
   };
 
-  // keep in sync when API loads
   useEffect(() => {
     if (!config || !Object.keys(config).length) return;
 
@@ -144,10 +198,9 @@ export default function MobilePublicSettings({
       ...prev,
       ...config,
       contact: { ...prev.contact, ...config.contact },
-
       youtube: config.youtube || prev.youtube || { items: [] },
       links_files: config.links_files || prev.links_files || { items: [] },
-      social_links: config.social_links || prev.social_links || { items: [] }, // 👈 FIX
+      social_links: config.social_links || prev.social_links || { items: [] },
     }));
   }, [config]);
 
@@ -221,7 +274,7 @@ export default function MobilePublicSettings({
         return (
           <div className="space-y-3">
             <ProfileWrapper
-              profile={draft.profile}   // 👈 must be from draft
+              profile={draft.profile}
               cover={draft.cover}
               theme={draft.theme}
               user={data}
@@ -316,25 +369,6 @@ export default function MobilePublicSettings({
         );
       }
 
-      // case "video_gallery": {
-      //   const vg = draft.video_gallery;
-      //   return (
-      //     <VideoGallery
-      //       title={vg?.section_title}
-      //       items={sortByRank(vg?.items || [])}  // 👈 pass empty array
-      //       theme={draft.theme}
-      //       editable={!draft.video_gallery?.locked}
-      //       galleryValue={vg}
-      //       onGalleryChange={(v: any) =>
-      //         setDraft((prev: any) => ({
-      //           ...prev,
-      //           video_gallery: v,
-      //         }))
-      //       }
-      //     />
-      //   );
-      // }
-
       case "youtube":
         return (
           <YouTube
@@ -374,14 +408,14 @@ export default function MobilePublicSettings({
             title={draft.links_files?.section_title}
             items={draft.links_files?.items || []}
             theme={draft.theme}
-            editable={!draft.links_files?.locked} // 👈 only if NOT locked
+            editable={!draft.links_files?.locked}
             onChange={(next: { section_title: string; items: any[] }) =>
               setDraft((prev: any) => ({
                 ...prev,
                 links_files: {
                   ...prev.links_files,
-                  section_title: next.section_title, // ✅ SAVE TITLE
-                  items: next.items,                 // ✅ SAVE ITEMS
+                  section_title: next.section_title,
+                  items: next.items,
                 },
               }))
             }
@@ -431,7 +465,7 @@ export default function MobilePublicSettings({
             title={pg?.section_title}
             items={sortByRank(pg?.items || [])}
             theme={draft.theme}
-            editable={!pg?.locked}              // 🔒 respect lock
+            editable={!pg?.locked}
             onEdit={() => {
               setPhotoGalleryDraft(draft.photo_gallery);
               setEditPhotoGallery(true);
@@ -459,53 +493,6 @@ export default function MobilePublicSettings({
     });
   }, [editSection?.type]);
 
-  const resolveBackgroundStyle = () => {
-    // IMAGE
-    if (draft.layout?.use_background === "image" && draft.layout?.background_image) {
-      return {
-        backgroundImage: `url(${draft.layout.background_image})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundRepeat: "no-repeat",
-      };
-    }
-
-    // PATTERN BACKGROUNDS → handled by CSS
-    if (
-      ["waves", "polka", "stripes", "zigzag"].includes(
-        draft.layout?.use_background || ""
-      )
-    ) {
-      return {};
-    }
-
-    // GRADIENT
-    if (draft.layout?.use_background === "gradient") {
-      const from = draft.layout?.color1 || "#7c3aed";
-      const to = draft.layout?.color2 || "#6366f1";
-
-      const validDirections = {
-        "to-r": "to right",
-        "to-l": "to left",
-        "to-b": "to bottom",
-        "to-t": "to top",
-      };
-
-      const dir =
-        validDirections[draft.layout?.direction as keyof typeof validDirections] ||
-        "to right";
-
-      return {
-        backgroundImage: `linear-gradient(${dir}, ${from}, ${to})`,
-      };
-    }
-
-    // SOLID
-    return {
-      backgroundColor:
-        draft.layout?.color1 || draft.theme?.background_color || "#000",
-    };
-  };
   const safeSort = (arr: any[]) =>
     Array.isArray(arr)
       ? [...arr].sort((a, b) => (a.rank ?? 0) - (b.rank ?? 0))
@@ -523,7 +510,6 @@ export default function MobilePublicSettings({
       .then((loaded) => {
         document.fonts.add(loaded);
 
-        // expose to Tailwind + inline styles
         document.documentElement.style.setProperty(
           "--custom-font",
           "'UserCustomFont', system-ui, sans-serif"
@@ -536,38 +522,19 @@ export default function MobilePublicSettings({
       });
   }, [draft.layout?.custom_font, draft.layout?.use_custom_font]);
 
-  // useEffect(() => {
-  //   // always test with this local URL
-  //   const fontUrl = "http://localhost:5173/fonts/BitcountSingle_Cursive-Regular.ttf";
-
-  //   const font = new FontFace("CustomFont", `url(${fontUrl})`);
-
-  //   font
-  //     .load()
-  //     .then((loaded) => {
-  //       document.fonts.add(loaded);
-  //       document.documentElement.style.setProperty(
-  //         "--custom-font",
-  //         "CustomFont"
-  //       );
-
-  //       console.log("✅ Local test font loaded");
-  //     })
-  //     .catch((err) => {
-  //       console.error("❌ Local font failed", err);
-  //     });
-  // }, []);  // empty dependency for local test only
-
-  // any overlay open?
   const isAnyModalOpen =
-    open ||                     // ConnectModal
-    !!activePhoto ||            // PhotoModal
+    open ||
+    !!activePhoto ||
     editProducts ||
     editPhotoGallery ||
     openLayoutEditor ||
     editSection?.type === "youtube";
 
   useEffect(() => {
+    // On desktop preview (isPreview=true), we don't lock body scroll
+    // since the background is contained; only lock on true mobile
+    if (isPreview) return;
+
     if (!isAnyModalOpen) {
       document.body.style.overflow = "";
       document.body.style.position = "";
@@ -575,7 +542,6 @@ export default function MobilePublicSettings({
       return;
     }
 
-    // lock body
     const scrollY = window.scrollY;
     document.body.style.position = "fixed";
     document.body.style.top = `-${scrollY}px`;
@@ -594,39 +560,19 @@ export default function MobilePublicSettings({
       document.body.style.overflow = "";
       window.scrollTo(0, parseInt(y || "0") * -1);
     };
-  }, [isAnyModalOpen]);
+  }, [isAnyModalOpen, isPreview]);
+
+  // bgPositionClass no longer used here; background is handled by BackgroundLayer
 
   return (
- <div
-  className={`absolute w-full min-h-screen overflow-x-hidden p-4 pb-28 ${fontClass}`}
->
-  
-       {/* BACKGROUND — absolute in preview, fixed on real mobile */}
-       <div
-         className={`fixed inset-0 z-0 pointer-events-none`}
-         style={
-           !["stripes","waves","polka","zigzag","video"].includes(draft.layout?.use_background || "")
-             ? resolveBackgroundStyle()
-             : {}
-         }
-       >
-         {draft.layout?.use_background === "zigzag" && (
-           <ZigzagBackground color={draft.layout?.background_color || "#65696F"} />
-         )}
-         {draft.layout?.use_background === "waves" && (
-           <WaveBackground color={draft.layout?.background_color || "#40474D"} />
-         )}
-         {draft.layout?.use_background === "stripes" && (
-           <StripeBackground color={draft.layout?.background_color || "#65696F"} />
-         )}
-         {draft.layout?.use_background === "polka" && (
-           <PolkaBackground color={draft.layout?.background_color || "#3d444b"} />
-         )}
-         {draft.layout?.use_background === "video" && (
-           <BackgroundVideo src={draft.layout?.background_video} isPreview={false} />
-         )}
-       </div>
-   
+    <div className={`relative w-full min-h-full overflow-x-hidden p-4 pb-16 ${fontClass}`}>
+
+      {/* BACKGROUND: only here on real mobile. On desktop preview,
+          BackgroundLayer is a sibling outside the scroll container. */}
+      {!isPreview && (
+        <BackgroundLayer layout={draft.layout} theme={draft.theme} positionClass="fixed" />
+      )}
+
       <ConnectModal
         open={open}
         onClose={() => setOpen(false)}
@@ -646,13 +592,13 @@ export default function MobilePublicSettings({
       <EditModal
         open={editSection?.type === "youtube"}
         onClose={() => {
-          setYoutubeDraft(null);     // ❌ discard
+          setYoutubeDraft(null);
           setEditSection(null);
         }}
         onSave={() => {
           setDraft((prev: any) => ({
             ...prev,
-            youtube: youtubeDraft,   // ✅ commit
+            youtube: youtubeDraft,
           }));
           setYoutubeDraft(null);
           setEditSection(null);
@@ -661,7 +607,6 @@ export default function MobilePublicSettings({
         <h3 className="text-lg font-semibold">
           Manage YouTube Videos
         </h3>
-        {/* SECTION TITLE */}
         <div className="space-y-1">
           <p className="text-xs uppercase tracking-wide text-gray-500">
             Section title
@@ -684,7 +629,6 @@ export default function MobilePublicSettings({
           />
         </div>
 
-        {/* ADD */}
         <button
           onClick={() =>
             setYoutubeDraft((prev: any) => {
@@ -704,7 +648,6 @@ export default function MobilePublicSettings({
           ➕ Add Video
         </button>
 
-        {/* LIST */}
         {youtubeDraft && (
           <DndContext
             sensors={sensors}
@@ -758,12 +701,12 @@ export default function MobilePublicSettings({
       <EditModal
         open={editPhotoGallery}
         onClose={() => {
-          setEditPhotoGallery(false); // 👈 just close
+          setEditPhotoGallery(false);
         }}
         onSave={() => {
           setDraft((prev: any) => ({
             ...prev,
-            photo_gallery: photoGalleryDraft, // ✅ commit
+            photo_gallery: photoGalleryDraft,
           }));
           setEditPhotoGallery(false);
         }}
@@ -774,7 +717,7 @@ export default function MobilePublicSettings({
           <PhotoGallerySection
             value={photoGalleryDraft}
             disabled={draft.photo_gallery?.locked}
-            onChange={setPhotoGalleryDraft} // local only
+            onChange={setPhotoGalleryDraft}
           />
         )}
       </EditModal>
@@ -817,7 +760,6 @@ export default function MobilePublicSettings({
         <ProfileLayoutModal
           open={openLayoutEditor}
           onClose={() => {
-            // ✅ revert to previously saved layout + theme
             setLayoutDraft({
               layout: { ...(draft.layout || {}) },
               theme: { ...(draft.theme || {}) },
@@ -825,7 +767,6 @@ export default function MobilePublicSettings({
             setOpenLayoutEditor(false);
           }}
           onSave={() => {
-            // ✅ commit both layout + theme
             setDraft((prev: any) => ({
               ...prev,
               layout: layoutDraft?.layout,
@@ -888,7 +829,6 @@ function YouTubeRow({
         ${isDragging ? "opacity-50 scale-[1.02] z-50" : ""}
       `}
     >
-      {/* drag handle */}
       <span
         {...attributes}
         {...listeners}
@@ -898,7 +838,6 @@ function YouTubeRow({
         ☰
       </span>
 
-      {/* input */}
       <input
         value={v.url}
         onChange={(e) =>
@@ -916,7 +855,6 @@ function YouTubeRow({
         className="flex-1 border rounded-md p-2 text-sm"
       />
 
-      {/* delete */}
       <button
         onClick={() =>
           setDraft((prev: any) => ({
@@ -1050,7 +988,7 @@ function YouTube({
   items,
   theme,
   onEdit,
-  editable = true, // 👈 new
+  editable = true,
 }: {
   title: string;
   items: any[];
@@ -1080,7 +1018,6 @@ function YouTube({
 
   return (
     <Section title={title} theme={theme}>
-      {/* CAROUSEL */}
       <div
         ref={ref}
         onScroll={onScroll}
@@ -1108,7 +1045,6 @@ function YouTube({
               key={v.id}
               className="relative min-w-full h-48 snap-center px-1"
             >
-              {/* ROUND EDIT ICON */}
               {editable && (
                 <button
                   onClick={() => onEdit(v)}
@@ -1125,7 +1061,6 @@ function YouTube({
                 {i === active && id ? (
                   <YoutubeEmbed id={id} />
                 ) : (
-                  // Lightweight placeholder instead of iframe
                   <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm">
                     Video {i + 1}
                   </div>
@@ -1137,7 +1072,6 @@ function YouTube({
 
       </div>
 
-      {/* DOTS */}
       <div className="flex justify-center gap-2 mt-3">
         {valid.map((_, i) => (
           <span
@@ -1156,7 +1090,6 @@ function Social({ items, theme, shapeClass }: any) {
   if (!items?.length) return null;
   const t = resolveTheme(theme);
 
-  // 👇 ONLY enabled
   const visible = items.filter((i: any) => i.enabled);
 
   if (!visible.length) return null;
@@ -1253,7 +1186,6 @@ export function EditModal({
           animate-slide-from-bottom
         "
       >
-        {/* HEADER */}
         <div className="relative  border-b">
           <button
             onClick={onClose}
@@ -1265,12 +1197,10 @@ export function EditModal({
           </button>
         </div>
 
-        {/* BODY */}
         <div className="flex-1 p-4 space-y-3">
           {children}
         </div>
 
-        {/* FOOTER */}
         {showFooter && (
           <div className="sticky bottom-0 bg-white border-t p-4 flex gap-3">
             <button
@@ -1340,7 +1270,6 @@ export function PhotoGallery({
   return (
     <Section title={title || "Photo Gallery"} theme={theme}>
       <div className="relative">
-        {/* FLOATING EDIT ICON */}
         {editable && (
           <button
             onClick={onEdit}
@@ -1429,7 +1358,6 @@ function PhotoModal({
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* CLOSE ICON */}
         <button
           onClick={onClose}
           aria-label="Close"
@@ -1444,7 +1372,6 @@ function PhotoModal({
           ✕
         </button>
 
-        {/* IMAGE */}
         <div className="relative">
           <img
             src={item.img_url}
@@ -1460,7 +1387,6 @@ function PhotoModal({
           />
         </div>
 
-        {/* CONTENT */}
         <div className="p-5 space-y-4 overflow-y-auto">
           <h3
             className="text-lg font-semibold tracking-tight"
@@ -1499,116 +1425,6 @@ function PhotoModal({
   );
 }
 
-// function VideoGallery({
-//   title,
-//   items,
-//   theme,
-//   editable = false,
-//   galleryValue,
-//   onGalleryChange,
-// }: any) {
-//   const t = resolveTheme(theme);
-//   const [open, setOpen] = useState(false);
-
-//   const isYouTube = (url?: string) =>
-//     !!url && /youtube\.com|youtu\.be/.test(url);
-
-//   const isDirectVideo = (url?: string) =>
-//     !!url && /\.(mp4|webm|ogg)$/i.test(url);
-
-//   return (
-//     <Section title={title || "Video Gallery"} theme={theme}>
-//       <div className="relative">
-//         {/* FLOATING EDIT ICON */}
-//         {editable && (
-//           <button
-//             onClick={() => setOpen(true)}
-//             className="absolute -top-4 -right-0 z-20 h-9 w-9 rounded-full shadow-lg
-//                      flex items-center justify-center
-//                      bg-orange-500 
-//                      text-white hover:scale-110 active:scale-95"
-//           >
-//             <Pencil size={14} />
-//           </button>
-//         )}
-
-//         {/* EMPTY STATE */}
-//         {!items?.length ? (
-//           <div className="w-full py-10 text-center rounded-2xl">
-//             <p className="text-sm opacity-70" style={{ color: t.text }}>
-//               No videos added yet
-//             </p>
-//           </div>
-//         ) : (
-//           <div className="flex gap-4 overflow-x-auto pb-3 snap-x snap-mandatory">
-//             {items.map((v: any, i: number) => {
-//               const id = getYouTubeId(v.video_url);
-//               if (!id || !v.enabled) return null;
-
-//               return (
-//                 <div
-//                   key={i}
-//                   className="min-w-[220px] h-48 snap-start rounded-2xl overflow-hidden shadow-lg flex flex-col"
-//                   style={{ backgroundColor: t.cardBg }}
-//                 >
-//                   {/* VIDEO */}
-//                   <div className="w-full h-[140px] bg-black">
-//                     {isYouTube(v.video_url) ? (
-//                       <iframe
-//                         src={`https://www.youtube-nocookie.com/embed/${id}`}
-//                         className="w-full h-full"
-//                         frameBorder="0"
-//                         allowFullScreen
-//                       />
-//                     ) : isDirectVideo(v.video_url) ? (
-//                       <video
-//                         src={v.video_url}
-//                         controls
-//                         className="w-full h-full object-cover"
-//                       />
-//                     ) : (
-//                       <div className="w-full h-full flex items-center justify-center text-white text-sm">
-//                         Video preview not available
-//                       </div>
-//                     )}
-//                   </div>
-
-//                   {/* INFO */}
-//                   <div className="px-3 py-1 space-y-1">
-//                     <h4
-//                       className="text-sm font-semibold line-clamp-1"
-//                       style={{ color: t.text }}
-//                     >
-//                       {v.title}
-//                     </h4>
-
-//                     {v.description && (
-//                       <p
-//                         className="text-xs opacity-80 line-clamp-2"
-//                         style={{ color: t.text }}
-//                       >
-//                         {v.description}
-//                       </p>
-//                     )}
-//                   </div>
-//                 </div>
-//               );
-//             })}
-//           </div>
-//         )}
-
-//         {/* MODAL */}
-//         <VideoGalleryEditModal
-//           open={open}
-//           value={galleryValue}
-//           disabled={false}
-//           onClose={() => setOpen(false)}
-//           onSave={(v: any) => onGalleryChange(v)}
-//         />
-//       </div>
-//     </Section>
-//   );
-// }
 function BackgroundVideo({ src, isPreview = false }: { src?: string; isPreview?: boolean }) {
   if (!src) return null;
 
@@ -1637,7 +1453,6 @@ function EditableAbout({
   const [open, setOpen] = useState(false);
   const t = resolveTheme(theme);
 
-  // 🔒 lock background scroll when modal is open
   useEffect(() => {
     if (!open) {
       document.body.style.overflow = "";
@@ -1675,7 +1490,6 @@ function EditableAbout({
     <div
       className="relative rounded-2xl"
     >
-      {/* FLOATING EDIT */}
       {editable && (
         <button
           onClick={() => setOpen(true)}
@@ -1696,7 +1510,6 @@ function EditableAbout({
         {value || "Tap the pencil to add your story ✨"}
       </p>
 
-      {/* MODAL */}
       <AboutEditModal
         open={open}
         value={value}

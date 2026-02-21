@@ -29,8 +29,25 @@ export function normalizeProfile(api: any) {
       locked: Boolean(cfg.contact?.locked),
       lock_mode: cfg.contact?.lock_mode ?? undefined,
       locked_by: cfg?.contact?.locked_by ?? "",
+
       connect_title: cfg.contact?.connect_title || "Connect",
       contact_title: cfg.contact?.contact_title || "Save Contact",
+      form_title: cfg.contact?.form_title || "Contact Form",
+
+      fields: Array.isArray(cfg.contact?.fields)
+        ? cfg.contact.fields
+          .sort((a: any, b: any) => (a.rank ?? 0) - (b.rank ?? 0))
+          .map((f: any, i: number) => ({
+            id: f.id ?? `field_${i}`,
+            type: f.type ?? "text",
+            label: f.label ?? "",
+            placeholder: f.placeholder ?? "",
+            required: Boolean(f.required),
+            options: Array.isArray(f.options) ? f.options : [],
+            rank: f.rank ?? i + 1,
+            enabled: f.enabled ?? true, 
+          }))
+        : [],
     },
 
     /* ================= LAYOUT ================= */
@@ -217,7 +234,7 @@ const normalizePhotoGallery = (api: any) => {
 
     items: Array.isArray(g.items)
       ? g.items.map((p: any, i: number) => ({
-        id: p.id,
+        id: p.id || crypto.randomUUID(),
         title: p.title,
         description: p.description,
         link: p.link ?? "",     // 🔥 ADD
@@ -286,8 +303,23 @@ export function denormalizeProfile(
         locked: cfg.contact.locked,
         lock_mode: cfg.contact.lock_mode ?? null,
         locked_by: cfg.contact.locked_by,
+
         connect_title: cfg.contact.connect_title,
         contact_title: cfg.contact.contact_title,
+        form_title: cfg.contact.form_title,
+
+        fields: cfg.contact.fields
+          .sort((a: any, b: any) => a.rank - b.rank)
+          .map((f: any) => ({
+            id: f.id,
+            type: f.type,
+            label: f.label,
+            placeholder: f.placeholder,
+            required: f.required,
+             options: f.options ?? [],   
+            rank: f.rank,
+            enabled: f.enabled ?? true, 
+          })),
       },
 
       /* ================= LAYOUT ================= */

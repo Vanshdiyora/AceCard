@@ -9,7 +9,7 @@ import {
   arrayMove,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { X } from "lucide-react";
+import { GripVertical, X } from "lucide-react";
 import type { ProductRef } from "../../../../teams/components/details/publicProfile/TeamMemberPublicProfileTab";
 
 export default function ProductsReorder({
@@ -115,7 +115,7 @@ function Row({
           {...(!disabled ? attributes : {})}
           {...(!disabled ? listeners : {})}
         >
-          ☰
+           <GripVertical size={18} />
         </span>
 
         <div>

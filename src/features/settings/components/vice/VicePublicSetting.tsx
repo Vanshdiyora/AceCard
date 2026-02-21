@@ -23,12 +23,14 @@ import { AlignLeft, AlignCenter, AlignRight } from "lucide-react";
 import CoverCropModal from "../../../../common/ui/CoverCropModal";
 // import VideoGallerySection from "./sections/VideoGallerySection";
 // import { normalizeApiError } from "../../../../utils/normalizeApiError";
+import ContactSection from "./sections/ContactSection";
 import { fetchTeam } from "../../../teams/slice"; // adjust 
 import AddSectionModal from "./sections/AddSectionModal";
 import AppModal from "./ui/AppModal";
 import { ShareCardSection } from "./sections/ShareCardSection";
 import { Image, Video } from "lucide-react";
 import AddSocialModal from "./sections/AddSocialModal";
+import CommonItemsReorder from "./sections/CommonItemsReorder";
 
 const THEME_COLOR_KEYS = [
   "card_background",
@@ -98,6 +100,18 @@ export function isLinkFileRowComplete(item?: any) {
   return true;
 }
 
+export function isContactFieldComplete(field?: ContactField) {
+  if (!field) return true;
+  if (!field.label || field.label.trim() === "") return false;
+  if (!field.type) return false;
+  return true;
+}
+
+export function canAddContactField(fields: ContactField[]) {
+  if (!fields.length) return true;
+  return isContactFieldComplete(fields[fields.length - 1]);
+}
+
 function hasInvalidSocialLinks(items: any[] = []) {
   return items.some(
     (i) => i.enabled === true && (!i.url || i.url.trim() === "")
@@ -124,6 +138,26 @@ export interface YoutubeConfig extends LockMeta {
   section_title: string;
   locked_by: string;
   items: any[];
+}
+
+export interface ContactField {
+  id: string;
+  type: "text" | "textarea" | "dropdown" | "checkbox";
+  label: string;
+  placeholder?: string;
+  required: boolean;
+  enabled: boolean;
+  rank: number;
+
+  options?: string[];   // ✅ ADD THIS
+}
+
+export interface ContactConfig extends LockMeta {
+  connect_title: string;
+  contact_title: string;
+  form_title?: string;
+  locked_by: string;
+  fields: ContactField[];
 }
 
 export interface ContactConfig extends LockMeta {
@@ -225,6 +259,7 @@ export interface CoverConfig extends LockMeta {
 }
 
 export interface PhotoGalleryItem {
+  id?: string;
   title: string;
   description: string;
   link: string;
@@ -745,7 +780,7 @@ export default function VicePublicSetting({
                 section_title: e.target.value,
               })
             }
-            className="w-full rounded-full border px-4 py-3"
+            className="w-full rounded-xl border px-4 py-3"
             placeholder="Videos Gallery"
           />
         </div>
@@ -757,13 +792,17 @@ export default function VicePublicSetting({
             : ""
             }`}
         >
-          {
-            sectionDraft?.items?.map((item: any, index: number) => (
-              <div
-                key={item.id}
-                className="bg-gray-50 rounded-2xl p-5 space-y-4"
-              >
-                {/* ACTION ROW */}
+          <CommonItemsReorder
+            items={sectionDraft.items}
+            onChange={(items: any) =>
+              setSectionDraft({
+                ...sectionDraft,
+                items,
+              })
+            }
+            renderItem={(item: any, index: number) => (
+              <div className="bg-gray-50 rounded-2xl p-5 space-y-4">
+
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-medium text-gray-600">
                     Video {index + 1}
@@ -771,15 +810,16 @@ export default function VicePublicSetting({
 
                   <button
                     onClick={() => {
-                      const next = sectionDraft.items.filter(
-                        (i: any) => i.id !== item.id
-                      );
-                      setSectionDraft({
-                        ...sectionDraft,
-                        items: next.map((v: any, i: number) => ({
+                      const next = sectionDraft.items
+                        .filter((i: any) => i.id !== item.id)
+                        .map((v: any, i: number) => ({
                           ...v,
                           rank: i + 1,
-                        })),
+                        }));
+
+                      setSectionDraft({
+                        ...sectionDraft,
+                        items: next,
                       });
                     }}
                     className="text-red-500 text-sm"
@@ -788,33 +828,26 @@ export default function VicePublicSetting({
                   </button>
                 </div>
 
-                {/* VIDEO LINK INPUT */}
-                <div>
-                  <label className="text-sm text-gray-500">
-                    Video Link
-                  </label>
-                  <input
-                    value={item.url || ""}
-                    onChange={(e) => {
-                      const next = [...sectionDraft.items];
-                      next[index] = {
-                        ...item,
-                        url: e.target.value,
-                      };
+                <input
+                  value={item.url || ""}
+                  onChange={(e) => {
+                    const next = [...sectionDraft.items];
+                    next[index] = {
+                      ...item,
+                      url: e.target.value,
+                    };
 
-                      setYoutubeError(null);
-
-                      setSectionDraft({
-                        ...sectionDraft,
-                        items: next,
-                      });
-                    }}
-                    className="w-full mt-1 rounded-full border px-4 py-3"
-                    placeholder="https://youtube.com/..."
-                  />
-                </div>
+                    setSectionDraft({
+                      ...sectionDraft,
+                      items: next,
+                    });
+                  }}
+                  className="w-full rounded-xl border px-4 py-3"
+                  placeholder="https://youtube.com/..."
+                />
               </div>
-            ))}
+            )}
+          />
         </div>
 
         {/* ADD BUTTON */}
@@ -860,15 +893,12 @@ export default function VicePublicSetting({
                   ],
                 });
               }}
-              className="w-full border rounded-full py-3 text-sm font-medium hover:bg-gray-50"
+              className="w-full border rounded-xl py-3 text-sm font-medium hover:bg-gray-50"
             >
               + Add Another Video
             </button>
-
-
           </>
         )}
-
       </div>
     ),
 
@@ -931,7 +961,7 @@ export default function VicePublicSetting({
                 section_title: e.target.value,
               })
             }
-            className="w-full rounded-full border px-4 py-3"
+            className="w-full rounded-xl border px-4 py-3"
             placeholder="Photo Gallery"
           />
         </div>
@@ -943,100 +973,148 @@ export default function VicePublicSetting({
             : ""
             }`}
         >
-          {sectionDraft.items.map((item: any, index: number) => (
-            <div
-              key={index}
-              className="bg-gray-50 rounded-2xl p-5 space-y-4"
-            >
-              {/* ACTION ROW */}
-              <div className="flex justify-end gap-3">
-                <button
-                  onClick={() => {
-                    const next = sectionDraft.items.filter(
-                      (_: any, i: number) => i !== index
-                    );
-                    setSectionDraft({
-                      ...sectionDraft,
-                      items: next.map((v: any, i: number) => ({
-                        ...v,
-                        rank: i + 1,
-                      })),
-                    });
-                  }}
-                  className="text-red-500"
-                >
-                  Delete
-                </button>
+          <CommonItemsReorder
+            items={sectionDraft.items}
+            onChange={(items: any[]) =>
+              setSectionDraft({
+                ...sectionDraft,
+                items,
+              })
+            }
+            renderItem={(item: any, index: number) => (
+              <div className="bg-gray-50 rounded-2xl p-5 space-y-4">
+
+                {/* ACTION ROW */}
+                <div className="flex justify-end gap-3">
+                  <button
+                    onClick={() => {
+                      const next = sectionDraft.items
+                        .filter((i: any) => i.id !== item.id)
+                        .map((v: any, i: number) => ({
+                          ...v,
+                          rank: i + 1,
+                        }));
+
+                      setSectionDraft({
+                        ...sectionDraft,
+                        items: next,
+                      });
+                    }}
+                    className="text-red-500"
+                  >
+                    Delete
+                  </button>
+                </div>
+
+                {/* IMAGE PREVIEW */}
+                {/* IMAGE UPLOAD PREVIEW */}
+                <div className="relative border-2 border-dashed rounded-xl p-4 group cursor-pointer">
+
+                  {/* HIDDEN FILE INPUT */}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="absolute inset-0 opacity-0 cursor-pointer z-20"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+
+                      const res = await uploadImage(file);
+
+                      const next = [...sectionDraft.items];
+                      next[index] = {
+                        ...item,
+                        img_url: res.data.url,
+                      };
+
+                      setSectionDraft({
+                        ...sectionDraft,
+                        items: next,
+                      });
+                    }}
+                  />
+
+                  {item.img_url ? (
+                    <>
+                      <div className="relative w-full aspect-video rounded-xl overflow-hidden">
+                        <img
+                          src={item.img_url}
+                          className="absolute inset-0 w-full h-full object-cover"
+                          alt="Preview"
+                        />
+                      </div>
+
+                      {/* HOVER OVERLAY */}
+                      <div className="
+        absolute inset-0
+        bg-black/40
+        flex items-center justify-center
+        opacity-0 group-hover:opacity-100
+        transition
+        rounded-xl
+        z-10
+      ">
+                        <span className="px-4 py-2 bg-gray-100/40 text-sm font-medium rounded-full shadow">
+                          Change Photo
+                        </span>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="flex items-center justify-center aspect-video text-gray-500">
+                      Click to add a photo
+                    </div>
+                  )}
+                </div>
+
+                {/* TITLE */}
+                <div>
+                  <label className="text-sm text-gray-500">
+                    Title
+                  </label>
+                  <input
+                    value={item.title || ""}
+                    onChange={(e) => {
+                      const next = [...sectionDraft.items];
+                      next[index] = {
+                        ...item,
+                        title: e.target.value,
+                      };
+                      setSectionDraft({
+                        ...sectionDraft,
+                        items: next,
+                      });
+                    }}
+                    className="w-full mt-1 rounded-xl border px-4 py-3"
+                    placeholder="Enter a title or short description (optional)."
+                  />
+                </div>
+
+                {/* URL */}
+                <div>
+                  <label className="text-sm text-gray-500">
+                    URL
+                  </label>
+                  <input
+                    value={item.link || ""}
+                    onChange={(e) => {
+                      const next = [...sectionDraft.items];
+                      next[index] = {
+                        ...item,
+                        link: e.target.value,
+                      };
+                      setSectionDraft({
+                        ...sectionDraft,
+                        items: next,
+                      });
+                    }}
+                    className="w-full mt-1 rounded-xl border px-4 py-3"
+                    placeholder="https://example.com"
+                  />
+                </div>
               </div>
-
-              {/* IMAGE UPLOAD PREVIEW */}
-              <div className="border-2 border-dashed rounded-xl p-4">
-
-                {item.img_url ? (
-                  <div className="relative w-full aspect-video rounded-xl overflow-hidden">
-                    <img
-                      src={item.img_url}
-                      className="absolute inset-0 w-full h-full object-cover"
-                      alt="Preview"
-                    />
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-center aspect-video text-gray-500">
-                    Click to add a photo
-                  </div>
-                )}
-
-              </div>
-
-              {/* TITLE */}
-              <div>
-                <label className="text-sm text-gray-500">
-                  Title
-                </label>
-                <input
-                  value={item.title || ""}
-                  onChange={(e) => {
-                    const next = [...sectionDraft.items];
-                    next[index] = {
-                      ...item,
-                      title: e.target.value,
-                    };
-                    setSectionDraft({
-                      ...sectionDraft,
-                      items: next,
-                    });
-                  }}
-                  className="w-full mt-1 rounded-full border px-4 py-3"
-                  placeholder="Enter a title or short description (optional)."
-                />
-              </div>
-
-              {/* URL */}
-              <div>
-                <label className="text-sm text-gray-500">
-                  URL
-                </label>
-                <input
-                  value={item.link || ""}
-                  onChange={(e) => {
-                    const next = [...sectionDraft.items];
-                    next[index] = {
-                      ...item,
-                      link: e.target.value,
-                    };
-                    setSectionDraft({
-                      ...sectionDraft,
-                      items: next,
-                    });
-                  }}
-                  className="w-full mt-1 rounded-full border px-4 py-3"
-                  placeholder="https://example.com"
-                />
-              </div>
-            </div>
-          ))}
+            )}
+          />
         </div>
-
         {/* ADD PHOTO */}
         {!isReadOnly(sectionDraft) && (
           <>
@@ -1065,6 +1143,7 @@ export default function VicePublicSetting({
                   items: [
                     ...sectionDraft.items,
                     {
+                      id: crypto.randomUUID(),
                       title: "",
                       description: "",
                       link: "",
@@ -1075,7 +1154,7 @@ export default function VicePublicSetting({
                   ],
                 });
               }}
-              className="w-full border rounded-full py-3 text-sm font-medium hover:bg-gray-50"
+              className="w-full border rounded-xl py-3 text-sm font-medium hover:bg-gray-50"
             >
               + Upload Photo File
             </button>
@@ -1255,37 +1334,11 @@ export default function VicePublicSetting({
           />
         )}
 
-        <div className="space-y-2">
-          <label className="text-sm font-medium">
-            Connect Button Text
-          </label>
-          <input
-            value={sectionDraft.connect_title || ""}
-            onChange={(e) =>
-              setSectionDraft({
-                ...sectionDraft,
-                connect_title: e.target.value,
-              })
-            }
-            className="w-full rounded-full border px-4 py-3"
-          />
-        </div>
-
-        <div className="space-y-2">
-          <label className="text-sm font-medium">
-            Save Contact Button Text
-          </label>
-          <input
-            value={sectionDraft.contact_title || ""}
-            onChange={(e) =>
-              setSectionDraft({
-                ...sectionDraft,
-                contact_title: e.target.value,
-              })
-            }
-            className="w-full rounded-full border px-4 py-3"
-          />
-        </div>
+        <ContactSection
+          value={sectionDraft}
+          disabled={isReadOnly(sectionDraft)}
+          onChange={(v) => setSectionDraft(v)}
+        />
       </div>
     ),
 
@@ -1395,7 +1448,7 @@ export default function VicePublicSetting({
                 cta_text: e.target.value,
               })
             }
-            className="w-full rounded-full border px-4 py-3"
+            className="w-full rounded-xl border px-4 py-3"
           />
         </div>
 
@@ -1412,7 +1465,7 @@ export default function VicePublicSetting({
                 cta_url: e.target.value,
               })
             }
-            className="w-full rounded-full border px-4 py-3"
+            className="w-full rounded-xl border px-4 py-3"
           />
         </div>
 

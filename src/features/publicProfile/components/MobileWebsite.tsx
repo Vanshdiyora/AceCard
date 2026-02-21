@@ -475,6 +475,7 @@ const bgPositionClass = isPreview ? "absolute" : "fixed";
         onClose={() => setOpen(false)}
         handle={data?.username}
         theme={theme}
+        config={config.contact}
       />
 
       {/* MODAL */}

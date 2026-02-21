@@ -1,103 +1,209 @@
 import { useState } from "react";
 import { useAppDispatch } from "../../../app/hooks";
 import { sendConnectRequest } from "../slice";
+import type { ContactConfig, ContactField} from "../../settings/components/vice/VicePublicSetting";
 
-export function ConnectModal({ open, onClose, handle, theme }: any) {
+export function ConnectModal({
+  open,
+  onClose,
+  handle,
+  theme,
+  config,
+}: {
+  open: boolean;
+  onClose: () => void;
+  handle: string;
+  theme: any;
+  config: ContactConfig;
+}) {
   const dispatch = useAppDispatch();
 
-  const [form, setForm] = useState({
-    visitor_name: "",
-    visitor_phone: "",
-    visitor_email: "",
-    message: "",
-  });
+  const enabledFields =
+    config?.fields?.filter((f) => f.enabled) ?? [];
 
-  const [touched, setTouched] = useState({
-    visitor_name: false,
-    visitor_phone: false,
-    visitor_email: false,
-  });
+  /* ================= STATE ================= */
+
+  const [form, setForm] = useState<Record<string, any>>(
+    () =>
+      Object.fromEntries(
+        enabledFields.map((f) => [f.id, ""])
+      )
+  );
+
+  const [touched, setTouched] = useState<Record<
+    string,
+    boolean
+  >>({});
 
   const [submitted, setSubmitted] = useState(false);
 
-  const errors = {
-    visitor_name: !form.visitor_name.trim() ? "Name is required" : "",
-    visitor_phone: !form.visitor_phone.trim()
-      ? "Mobile number is required"
-      : "",
-    visitor_email: !form.visitor_email.trim()
-      ? "Email address is required"
-      : "",
-  };
+  /* ================= VALIDATION ================= */
 
-  const isValid =
-    !errors.visitor_name &&
-    !errors.visitor_phone &&
-    !errors.visitor_email;
+  const errors: Record<string, string> = {};
+
+  enabledFields.forEach((field) => {
+    if (
+      field.required &&
+      !form[field.id]?.toString().trim()
+    ) {
+      errors[field.id] = `${field.label} is required`;
+    }
+  });
+
+  const isValid = Object.keys(errors).length === 0;
 
   if (!open) return null;
 
+  /* ================= SUBMIT ================= */
+
   const submit = () => {
     if (!isValid) {
-      setTouched({
-        visitor_name: true,
-        visitor_phone: true,
-        visitor_email: true,
-      });
+      const allTouched: Record<string, boolean> = {};
+      enabledFields.forEach(
+        (f) => (allTouched[f.id] = true)
+      );
+      setTouched(allTouched);
       return;
     }
 
-    dispatch(sendConnectRequest({ handle, payload: form }));
+    dispatch(
+      sendConnectRequest({
+        handle,
+        payload: form,
+      })
+    );
 
-    // show success screen
     setSubmitted(true);
   };
 
   const closeAll = () => {
-    setForm({
-      visitor_name: "",
-      visitor_phone: "",
-      visitor_email: "",
-      message: "",
-    });
-
-    setTouched({
-      visitor_name: false,
-      visitor_phone: false,
-      visitor_email: false,
-    });
-
+    setForm(
+      Object.fromEntries(
+        enabledFields.map((f) => [f.id, ""])
+      )
+    );
+    setTouched({});
     setSubmitted(false);
     onClose();
   };
 
+  /* ================= RENDER FIELD ================= */
+
+  const renderField = (field: ContactField) => {
+    const commonProps = {
+      className:
+        "w-full px-4 py-3 rounded-xl text-sm outline-none",
+      style: {
+        backgroundColor:
+          theme.button_color ?? "#fff",
+        color: theme.button_text ?? "#000",
+      },
+      value: form[field.id] ?? "",
+      onChange: (
+        e: React.ChangeEvent<
+          HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+        >
+      ) =>
+        setForm({
+          ...form,
+          [field.id]:
+            field.type === "checkbox"
+              ? (e.target as HTMLInputElement).checked
+              : e.target.value,
+        }),
+      onBlur: () =>
+        setTouched({
+          ...touched,
+          [field.id]: true,
+        }),
+    };
+
+    switch (field.type) {
+      case "textarea":
+        return (
+          <textarea
+            rows={3}
+            placeholder={field.placeholder}
+            {...commonProps}
+          />
+        );
+
+      case "dropdown":
+        return (
+          <select {...commonProps}>
+            <option value="">
+              Select {field.label}
+            </option>
+            {(field.options ?? []).map(
+              (opt, i) => (
+                <option key={i} value={opt}>
+                  {opt}
+                </option>
+              )
+            )}
+          </select>
+        );
+
+      case "checkbox":
+        return (
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={form[field.id] ?? false}
+              onChange={(e) =>
+                setForm({
+                  ...form,
+                  [field.id]:
+                    e.target.checked,
+                })
+              }
+            />
+            {field.label}
+          </label>
+        );
+
+      default:
+        return (
+          <input
+            type={field.type}
+            placeholder={field.placeholder}
+            {...commonProps}
+          />
+        );
+    }
+  };
+
+  /* ================= UI ================= */
+
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 px-4">
-      {/* SUCCESS MODAL */}
+
+      {/* SUCCESS */}
       {submitted && (
-        <div className="w-full max-w-sm rounded-2xl shadow-2xl p-6 text-center"
-          style={{ backgroundColor: theme.card_background }}
+        <div
+          className="w-full max-w-sm rounded-2xl shadow-2xl p-6 text-center"
+          style={{
+            backgroundColor:
+              theme.card_background,
+          }}
         >
           <h3
             className="text-lg font-semibold mb-2"
-            style={{ color: theme.card_text }}
+            style={{
+              color: theme.card_text,
+            }}
           >
             Message Sent
           </h3>
-
-          <p
-            className="text-sm mb-6 opacity-80"
-            style={{ color: theme.card_text }}
-          >
-            Thanks for reaching out. We’ll contact you shortly.
-          </p>
 
           <button
             onClick={closeAll}
             className="w-full py-3 rounded-xl font-semibold text-sm"
             style={{
-              backgroundColor: theme.button_color ?? "#fff",
-              color: theme.button_text ?? "#000",
+              backgroundColor:
+                theme.button_color ?? "#fff",
+              color:
+                theme.button_text ?? "#000",
             }}
           >
             Done
@@ -105,139 +211,77 @@ export function ConnectModal({ open, onClose, handle, theme }: any) {
         </div>
       )}
 
-      {/* FORM MODAL */}
+      {/* FORM */}
       {!submitted && (
         <div
           className="w-full max-w-sm rounded-2xl shadow-2xl p-5"
-          style={{ backgroundColor: theme.card_background }}
+          style={{
+            backgroundColor:
+              theme.card_background,
+          }}
         >
-          {/* Header */}
           <div className="flex items-center justify-between mb-4">
             <h3
               className="text-base font-semibold"
-              style={{ color: theme.card_text }}
+              style={{
+                color: theme.card_text,
+              }}
             >
-              Connect
+              {config?.form_title ||
+                "Connect"}
             </h3>
 
             <button
               onClick={closeAll}
               className="text-lg"
-              style={{ color: theme.card_text }}
+              style={{
+                color: theme.card_text,
+              }}
             >
               ✕
             </button>
           </div>
 
-          {/* Inputs */}
           <div className="space-y-3">
-            {/* Name */}
-            <div>
-              <input
-                type="text"
-                placeholder="Full Name *"
-                className="w-full px-4 py-3 rounded-xl text-sm outline-none"
-                style={{
-                  backgroundColor: theme.button_color ?? "#fff",
-                  color: theme.button_text ?? "#000",
-                }}
-                value={form.visitor_name}
-                onChange={(e) =>
-                  setForm({ ...form, visitor_name: e.target.value })
-                }
-                onBlur={() =>
-                  setTouched({ ...touched, visitor_name: true })
-                }
-              />
-              {touched.visitor_name && errors.visitor_name && (
-                <p className="text-xs mt-1 text-red-500">
-                  {errors.visitor_name}
-                </p>
-              )}
-            </div>
+            {enabledFields.map((field) => (
+              <div key={field.id}>
+                {field.type !==
+                  "checkbox" && (
+                  <label className="text-xs mb-1 block opacity-70">
+                    {field.label}
+                    {field.required && " *"}
+                  </label>
+                )}
 
-            {/* Phone */}
-            <div>
-              <input
-                type="tel"
-                placeholder="Mobile Number *"
-                className="w-full px-4 py-3 rounded-xl text-sm outline-none"
-                style={{
-                  backgroundColor: theme.button_color ?? "#fff",
-                  color: theme.button_text ?? "#000",
-                }}
-                value={form.visitor_phone}
-                onChange={(e) =>
-                  setForm({ ...form, visitor_phone: e.target.value })
-                }
-                onBlur={() =>
-                  setTouched({ ...touched, visitor_phone: true })
-                }
-              />
-              {touched.visitor_phone && errors.visitor_phone && (
-                <p className="text-xs mt-1 text-red-500">
-                  {errors.visitor_phone}
-                </p>
-              )}
-            </div>
+                {renderField(field)}
 
-            {/* Email */}
-            <div>
-              <input
-                type="email"
-                placeholder="Email Address *"
-                className="w-full px-4 py-3 rounded-xl text-sm outline-none"
-                style={{
-                  backgroundColor: theme.button_color ?? "#fff",
-                  color: theme.button_text ?? "#000",
-                }}
-                value={form.visitor_email}
-                onChange={(e) =>
-                  setForm({ ...form, visitor_email: e.target.value })
-                }
-                onBlur={() =>
-                  setTouched({ ...touched, visitor_email: true })
-                }
-              />
-              {touched.visitor_email && errors.visitor_email && (
-                <p className="text-xs mt-1 text-red-500">
-                  {errors.visitor_email}
-                </p>
-              )}
-            </div>
-
-            {/* Message */}
-            <textarea
-              placeholder="Your message (optional)"
-              rows={3}
-              className="w-full px-4 py-3 rounded-xl text-sm outline-none resize-none"
-              style={{
-                backgroundColor: theme.button_color ?? "#fff",
-                color: theme.button_text ?? "#000",
-              }}
-              value={form.message}
-              onChange={(e) =>
-                setForm({ ...form, message: e.target.value })
-              }
-            />
+                {touched[field.id] &&
+                  errors[field.id] && (
+                    <p className="text-xs mt-1 text-red-500">
+                      {errors[field.id]}
+                    </p>
+                  )}
+              </div>
+            ))}
           </div>
 
-          {/* CTA */}
           <button
             onClick={submit}
             disabled={!isValid}
-            className={`w-full mt-5 py-3 rounded-xl font-semibold text-sm transition
-              ${
-                !isValid
-                  ? "opacity-50 cursor-not-allowed"
-                  : "active:scale-[0.98]"
-              }`}
+            className={`w-full mt-5 py-3 rounded-xl font-semibold text-sm ${
+              !isValid
+                ? "opacity-50 cursor-not-allowed"
+                : "active:scale-[0.98]"
+            }`}
             style={{
-              backgroundColor: theme.button_color ?? "#fff",
-              color: theme.button_text ?? "#000",
+              backgroundColor:
+                theme.button_color ?? "#fff",
+              color:
+                theme.button_text ?? "#000",
             }}
           >
-            Send Message
+            {config?.connect_title ||
+              "Send Message"}
           </button>
         </div>
       )}

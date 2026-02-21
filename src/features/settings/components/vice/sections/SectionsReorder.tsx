@@ -14,6 +14,7 @@ import {
   arrayMove,
 } from "@dnd-kit/sortable";
 import type { SectionItem } from "../../../../publicProfile/types";
+import { GripVertical } from "lucide-react";
 
 const HIDDEN_SECTIONS = ["video_gallery"];
 const SECTION_LABELS: Record<string, string> = {
@@ -169,7 +170,7 @@ function SortableRow({
             {...listeners}
             onClick={(e) => e.stopPropagation()}
           >
-            ☰
+              <GripVertical size={18} />
           </span>
         )}
         <span className="font-medium text-sm capitalize">

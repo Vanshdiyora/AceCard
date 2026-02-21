@@ -7,7 +7,6 @@ import BrandLoader from "../../../common/ui/BrandLoader";
 
 type Props = {
   handle?: string;
-  
 };
 
 export default function PublicProfilePage({ handle: propHandle }: Props) {
@@ -19,62 +18,72 @@ export default function PublicProfilePage({ handle: propHandle }: Props) {
   const handle = propHandle || routeHandle || username;
   const dispatch = useAppDispatch();
   const { data, loading } = useAppSelector((s) => s.publicProfile);
+
   /* -------- Load Profile -------- */
-useEffect(() => {
-  if (!handle) return;
-
-  if ("geolocation" in navigator) {
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        dispatch(
-          loadPublicProfile({
-            handle,
-            lat: pos.coords.latitude,
-            lng: pos.coords.longitude,
-          })
-        );
-      },
-      () => {
-        // fallback if user blocks location
-        dispatch(loadPublicProfile({ handle }));
-      },
-      { enableHighAccuracy: true, timeout: 8000 }
-    );
-  } else {
-    dispatch(loadPublicProfile({ handle }));
-  }
-}, [handle, dispatch]);
-
-
-  /* -------- Desktop Only Scroll Lock -------- */
   useEffect(() => {
-    if (window.innerWidth >= 640) {
-      document.body.classList.add("body-locked");
-      return () => document.body.classList.remove("body-locked");
-    }
-  }, []);
+    if (!handle) return;
 
-  if (!handle) return <div className="p-6">No profile handle found.</div>;
-  if (loading || !data) return <div className="p-6 mt-64"> <BrandLoader /> </div>;
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          dispatch(
+            loadPublicProfile({
+              handle,
+              lat: pos.coords.latitude,
+              lng: pos.coords.longitude,
+            })
+          );
+        },
+        () => {
+          dispatch(loadPublicProfile({ handle }));
+        },
+        { enableHighAccuracy: true, timeout: 8000 }
+      );
+    } else {
+      dispatch(loadPublicProfile({ handle }));
+    }
+  }, [handle, dispatch]);
+
+  if (!handle)
+    return <div className="p-6">No profile handle found.</div>;
+
+  if (loading || !data)
+    return (
+      <div className="h-screen flex items-center justify-center bg-[#f6f7fb]">
+        <BrandLoader />
+      </div>
+    );
 
   return (
-    <div className="min-h-screen sm:min-h-[100svh] w-full bg-[#f6f7fb] flex items-center justify-center">
-      {/* Phone shell only on desktop */}
-      <div className="w-full min-h-screen sm:max-w-[380px] sm:h-[720px] bg-black sm:rounded-[2.5rem] sm:p-2 shadow-2xl">
-        <div
-          id="phone-frame"
-          className="w-full h-full bg-white sm:rounded-[2rem] overflow-hidden flex flex-col relative"
-        >
-          <div className="flex-1 relative overflow-hidden">
-            {/* Desktop inner scroll, mobile normal flow */}
-            <div
-              id="phone-scroll"
-              className="sm:absolute sm:inset-0 sm:overflow-y-auto no-scrollbar"
-            >
-              <MobileWebsite data={data} />
+    <div className="min-h-screen bg-[#f6f7fb] flex items-center justify-center">
+
+      {/* 📱 MOBILE — Full Screen (No Phone Frame) */}
+      <div className="w-full h-full md:hidden bg-white">
+        <MobileWebsite data={data} isPreview={false} />
+      </div>
+
+      {/* 💻 DESKTOP — Phone Preview */}
+      <div className="hidden sm:flex w-full justify-center items-center min-h-screen bg-[#f6f7fb]">
+
+        {/* Phone wrapper = full viewport height */}
+        <div className="h-screen aspect-[10/19] max-w-[420px]">
+
+          <div
+            className="
+        w-full h-full
+        bg-white
+        shadow-xl
+        ring-1 ring-gray-200
+        overflow-hidden
+      "
+          >
+            <div className="h-full overflow-y-auto no-scrollbar">
+              <MobileWebsite data={data} isPreview={true} />
             </div>
           </div>
+
         </div>
+
       </div>
     </div>
   );
