@@ -30,11 +30,13 @@ export default function SectionsReorder({
   groupLocked,
   onChange,
   onSectionClick,
+  onToggle,
 }: {
   sections: SectionItem[];
   groupLocked?: boolean;
   onChange: (s: SectionItem[]) => void;
   onSectionClick?: (type: string) => void;
+  onToggle: (id: string, enabled: boolean) => void;
 }) {
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -111,6 +113,7 @@ export default function SectionsReorder({
                 s={s}
                 disabled={groupLocked}
                 onClick={() => onSectionClick?.(s.type)}
+                onToggle={onToggle}
               />
             )
           )}
@@ -121,14 +124,18 @@ export default function SectionsReorder({
 }
 
 /* ================= ROWS ================= */
+import { Trash2 } from "lucide-react";
+
 function SortableRow({
   s,
   disabled,
   onClick,
+  onToggle,
 }: {
   s: SectionItem;
   disabled?: boolean;
   onClick?: () => void;
+  onToggle: (id: string, enabled: boolean) => void;
 }) {
   const {
     attributes,
@@ -141,7 +148,9 @@ function SortableRow({
 
   const style = {
     transform: transform
-      ? `translate3d(${Math.round(transform.x)}px, ${Math.round(transform.y)}px, 0) scaleX(${transform.scaleX}) scaleY(${transform.scaleY})`
+      ? `translate3d(${Math.round(transform.x)}px, ${Math.round(
+          transform.y
+        )}px, 0)`
       : undefined,
     transition: isDragging ? "none" : transition,
     willChange: "transform",
@@ -155,9 +164,10 @@ function SortableRow({
       onClick={(e) => {
         if (disabled) return;
         if ((e.target as HTMLElement).closest(".drag-handle")) return;
+        if ((e.target as HTMLElement).closest(".delete-btn")) return;
         onClick?.();
       }}
-      className={`flex items-center justify-between border rounded-lg p-3 shadow-sm cursor-pointer transition-colors
+      className={`flex items-center justify-between border rounded-lg p-3 shadow-sm cursor-pointer transition
         ${isDragging ? "opacity-90 shadow-lg" : ""}
         ${disabled ? "bg-gray-100 opacity-60" : "bg-white hover:bg-gray-50"}
       `}
@@ -170,13 +180,27 @@ function SortableRow({
             {...listeners}
             onClick={(e) => e.stopPropagation()}
           >
-              <GripVertical size={18} />
+            <GripVertical size={18} />
           </span>
         )}
+
         <span className="font-medium text-sm capitalize">
           {SECTION_LABELS[s.type] || s.type.replace(/_/g, " ")}
         </span>
       </div>
+
+      {!disabled && s.type !== "profile" && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggle(s.id, false); // 🔥 disable section instead of toggle
+          }}
+          className="delete-btn text-gray-400 hover:text-red-500 transition"
+        >
+          <Trash2 size={18} />
+        </button>
+      )}
     </div>
   );
 }

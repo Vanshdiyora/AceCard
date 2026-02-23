@@ -13,12 +13,18 @@ export default function Links({
   theme,
   editable = false,
   onChange,
+  autoOpen = false,   // ✅ ADD THIS
 }: any) {
   if (!items?.length && !editable) return null;
 
   const t = resolveTheme(theme);
   const [open, setOpen] = useState(false);
 
+  useEffect(() => {
+    if (autoOpen) {
+      setOpen(true);
+    }
+  }, [autoOpen]);
   // ✅ buffer is OBJECT, not array
   const [buffer, setBuffer] = useState<{
     section_title: string;

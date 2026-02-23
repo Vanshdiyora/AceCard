@@ -58,12 +58,19 @@ export default function SocialSection({
   items = [],
   onChange,
   locked,
+  autoOpen = false, // NEW PROP
 }: any) {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [formOpen, setFormOpen] = useState(false);
 
   const enabled = items.filter((i: any) => i.enabled === true);
   const isAnyOpen = pickerOpen || formOpen;
+
+  useEffect(() => {
+    if (autoOpen) {
+      setPickerOpen(true);
+    }
+  }, [autoOpen]);
 
   /* ================= MUTATIONS ================= */
 

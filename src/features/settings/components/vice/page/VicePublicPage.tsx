@@ -32,14 +32,13 @@ export default function VicePublicPage() {
     setLiveConfig(denormalizeProfile(normalized, data));
   }, [data]);
   return (
-    <div className="pt-6 px-8 h-[calc(100vh-84px)]">
+<div className="pt-6 px-4 xl:px-8 xl:h-[calc(100vh-84px)]">
 
 
-
-      <div className="w-full h-full flex">
+<div className="w-full h-full flex flex-col xl:flex-row gap-8">
 
         {/* LEFT — Phone Preview */}
-        <div className="hidden xl:flex flex-1 justify-center">
+      <div className="flex justify-center xl:flex-1 order-1 xl:order-1">
           <div className="flex flex-col items-center">
 
             <a
@@ -66,7 +65,7 @@ export default function VicePublicPage() {
 
 
             {/* Phone Wrapper */}
-            <div className="w-full max-w-[400px] h-[80vh] max-h-[600px] aspect-[10/19]">
+      <div className="w-full max-w-[400px] aspect-[10/19] xl:h-[80vh] xl:max-h-[600px]">
 
 
               <div className="
@@ -96,7 +95,7 @@ export default function VicePublicPage() {
 
 
         {/* RIGHT — Editor Panel */}
-        <div className="w-full xl:w-[480px] xl:ml-auto bg-white rounded-2xl shadow-md h-full overflow-y-auto">
+<div className="w-full xl:w-[480px] xl:ml-auto bg-white rounded-2xl shadow-md h-full overflow-y-auto order-2 xl:order-2">
           <VicePublicSetting
             key={username}
             username={username}

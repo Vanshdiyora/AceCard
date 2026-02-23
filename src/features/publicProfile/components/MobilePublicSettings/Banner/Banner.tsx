@@ -12,6 +12,7 @@ export function Banner({
   theme,
   onBannerChange,
   editable = false,
+  autoOpen = false, // NEW: auto-open edit modal on mount
 }: any) {
   const t = resolveTheme(theme);
 
@@ -19,7 +20,11 @@ export function Banner({
 
   const [isEditing, setIsEditing] = useState(false);
   const [isCropping, setIsCropping] = useState(false);
-
+  useEffect(() => {
+    if (autoOpen) {
+      setIsEditing(true);
+    }
+  }, [autoOpen]);
   // 🔥 local draft
   const [draft, setDraft] = useState<{
     cta_text: string;

@@ -9,6 +9,7 @@ export function EditableMeetingCTA({
   shapeClass,
   onMeetingChange,
   editable = true,
+  autoOpen = false, // NEW
 }: any) {
   const t = resolveTheme(theme);
 
@@ -20,6 +21,12 @@ export function EditableMeetingCTA({
     meeting_url: string;
   } | null>(null);
 
+  useEffect(() => {
+    if (autoOpen) {
+      setIsEditing(true);
+    }
+  }, [autoOpen]);
+  
   // initialize draft ONLY when opening
   useEffect(() => {
     if (!isEditing) return;

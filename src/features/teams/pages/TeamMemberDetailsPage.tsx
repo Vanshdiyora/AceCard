@@ -1,7 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect, useMemo, useRef } from "react";
 import { ArrowLeft, Edit, Shield, UserX, CheckCircle2 } from "lucide-react";
-// import { useEffect as usePublicEffect } from "react";
 import PublicMobileWebsite from "../../publicProfile/components/MobileWebsite";
 import { useAppDispatch, useAppSelector } from "../../../app/hooks";
 import { updateMember, fetchMemberById, updatePermissions, transferLeads } from "../slice";
@@ -18,9 +17,8 @@ import BlockingLoader from "../../../common/ui/BlockingLoader";
 import ResultModal from "../../../common/ui/ResultModal";
 import TeamMemberTotalLeadsTab from "../components/details/TeamMemberTotalLeadsTab";
 import TeamMemberAnalyticsTab from "../components/details/TeamMemberAnalyticsTab";
-// import MemberMobileWebsite from "../components/MemberMobileWebsite";
 import { ActionButton } from "../../vendors/pages/VendorDetailsPage";
-import { fetchLeads } from "../../leads/slice"; // adjust path
+import { fetchLeads } from "../../leads/slice";
 import {
   normalizeProfile,
   denormalizeProfile,
@@ -31,7 +29,7 @@ const TABS = [
   "overview",
   "leads",
   "total-leads",
-  "analytics",      // 👈 NEW
+  "analytics",
   "public-profile",
 ] as const;
 
@@ -42,7 +40,7 @@ export default function TeamMemberDetailsPage() {
   const dispatch = useAppDispatch();
   const phoneScrollRef = useRef<HTMLDivElement>(null);
   const [livePreviewConfig, setLivePreviewConfig] = useState<any | null>(null);
-  const [isCropping, setIsCropping] = useState(false); // 👈 ADD
+  const [isCropping, setIsCropping] = useState(false);
 
   const auth = useAppSelector((s) => s.auth);
   const { members } = useAppSelector((s) => s.team);
@@ -59,11 +57,9 @@ export default function TeamMemberDetailsPage() {
     [members]
   );
 
-
   const member = useAppSelector(
     (s) => s.team.members.find((m) => m.id === Number(id)) || null
   );
-
 
   const [activeTab, setActiveTab] = useState<typeof TABS[number]>("overview");
   const [editOpen, setEditOpen] = useState(false);
@@ -76,13 +72,9 @@ export default function TeamMemberDetailsPage() {
   const [resultOpen, setResultOpen] = useState(false);
   const [resultSuccess, setResultSuccess] = useState(true);
   const [resultMessage, setResultMessage] = useState("");
-  const { data: publicProfile } = useAppSelector(
-    (s) => s.publicProfile
-  );
+  const { data: publicProfile } = useAppSelector((s) => s.publicProfile);
 
   const [transferOpen, setTransferOpen] = useState(false);
-  // const [pendingSuspend, setPendingSuspend] = useState(false);
-
 
   const showResult = (success: boolean, message: string) => {
     setResultSuccess(success);
@@ -90,25 +82,20 @@ export default function TeamMemberDetailsPage() {
     setResultOpen(true);
   };
 
-  /* ---------------- SAFE MEMOS (NO CONDITIONAL HOOKS) ---------------- */
+  /* ---------------- SAFE MEMOS ---------------- */
 
   const displayRole = useMemo(() => {
     if (!member) return "";
-
     switch (member.role) {
-      case "sales_rep":
-        return "Sales Person";   // 👈 changed
-      case "manager":
-        return "Manager";         // 👈 explicit
-      case "vendor_admin":
-        return "Vendor Admin";
+      case "sales_rep":    return "Sales Person";
+      case "manager":      return "Manager";
+      case "vendor_admin": return "Vendor Admin";
       default:
         return member.role
           .replace(/_/g, " ")
           .replace(/\b\w/g, (c) => c.toUpperCase());
     }
   }, [member]);
-
 
   const displayManager = useMemo(() => {
     if (!member) return null;
@@ -120,28 +107,19 @@ export default function TeamMemberDetailsPage() {
   /* ---------------- DATA FETCH ---------------- */
   useEffect(() => {
     if (member?.username) {
-      dispatch(
-        loadProfileViewByUsername({
-          username: member.username,
-        })
-      );
+      dispatch(loadProfileViewByUsername({ username: member.username }));
     }
   }, [member?.username, dispatch]);
 
   useEffect(() => {
     if (!id) return;
-
     setHasFetched(false);
-    dispatch(fetchMemberById(Number(id)))
-      .finally(() => setHasFetched(true));
+    dispatch(fetchMemberById(Number(id))).finally(() => setHasFetched(true));
   }, [id, dispatch]);
 
   /* ---------------- SCROLL LOCK ---------------- */
-
   const lockScroll = () => {
-    const scrollbarWidth =
-      window.innerWidth - document.documentElement.clientWidth;
-
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
     document.documentElement.style.overflow = "hidden";
     document.body.style.overflow = "hidden";
     document.body.style.paddingRight = `${scrollbarWidth}px`;
@@ -161,36 +139,20 @@ export default function TeamMemberDetailsPage() {
 
   const mergedProfile = useMemo(() => {
     if (!publicProfile) return null;
-
-    // 🔥 normalize base once
     const normalizedBase = normalizeProfile(publicProfile);
-
-    if (!livePreviewConfig) {
-      return denormalizeProfile(normalizedBase, publicProfile);
-    }
-
-    return denormalizeProfile(
-      {
-        ...normalizedBase,
-        ...livePreviewConfig,
-      },
-      publicProfile
-    );
+    if (!livePreviewConfig) return denormalizeProfile(normalizedBase, publicProfile);
+    return denormalizeProfile({ ...normalizedBase, ...livePreviewConfig }, publicProfile);
   }, [publicProfile, livePreviewConfig]);
 
   const displayRoleWithCustom = useMemo(() => {
     if (!member) return "";
-
     const base = displayRole;
     const custom = member.custom_job_role?.trim();
-
     if (!custom) return base;
-
     return `${custom} (${base})`;
   }, [member, displayRole]);
 
   /* ---------------- LOADING STATES ---------------- */
-
   if (!hasFetched && !member) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -209,7 +171,6 @@ export default function TeamMemberDetailsPage() {
           <ArrowLeft size={16} />
           Back to Team
         </button>
-
         <div className="flex flex-1 items-center justify-center text-red-500">
           Member not found
         </div>
@@ -218,19 +179,15 @@ export default function TeamMemberDetailsPage() {
   }
 
   /* ---------------- ACTIONS ---------------- */
-
   const handleStatusChange = async () => {
     try {
       setProcessing(true);
       await dispatch(
         updateMember({
           id: member.id,
-          data: {
-            status: suspendMode === "suspend" ? "suspended" : "active",
-          },
+          data: { status: suspendMode === "suspend" ? "suspended" : "active" },
         })
       ).unwrap();
-
       showResult(
         true,
         suspendMode === "suspend"
@@ -248,22 +205,12 @@ export default function TeamMemberDetailsPage() {
   const handleTransferAndSuspend = async (toId: number) => {
     try {
       setProcessing(true);
-
       await dispatch(
-        transferLeads({
-          from_rep_id: member.id,
-          to_rep_id: toId,
-          lead_ids: leadIds,
-        })
+        transferLeads({ from_rep_id: member.id, to_rep_id: toId, lead_ids: leadIds })
       ).unwrap();
-
       await dispatch(
-        updateMember({
-          id: member.id,
-          data: { status: "suspended" },
-        })
+        updateMember({ id: member.id, data: { status: "suspended" } })
       ).unwrap();
-
       showResult(true, "Leads transferred & member suspended.");
     } catch {
       showResult(false, "Transfer failed.");
@@ -276,161 +223,136 @@ export default function TeamMemberDetailsPage() {
 
   const avatarUrl = member.avatar || null;
 
+  const Avatar = ({ src, name }: { src?: string | null; name: string }) => (
+    <div className="h-14 w-14 rounded-full overflow-hidden flex items-center justify-center bg-purple-600 text-white font-semibold text-lg border">
+      {src ? (
+        <img src={src} alt={name} className="h-full w-full object-cover" />
+      ) : (
+        name.charAt(0).toUpperCase()
+      )}
+    </div>
+  );
 
-  const Avatar = ({
-    src,
-    name,
-  }: {
-    src?: string | null;
-    name: string;
-  }) => {
-    return (
-      <div className="h-14 w-14 rounded-full overflow-hidden flex items-center justify-center bg-purple-600 text-white font-semibold text-lg border">
-        {src ? (
-          <img
-            src={src}
-            alt={name}
-            className="h-full w-full object-cover"
-          />
-        ) : (
-          name.charAt(0).toUpperCase()
-        )}
-      </div>
-    );
-  };
+  const isPublicProfile = activeTab === "public-profile";
 
   /* ---------------- UI ---------------- */
   return (
     <div
-      className={`pt-6 px-6 grid grid-cols-1 gap-6 h-[calc(100vh-64px)]
-        transition-[grid-template-columns] duration-500 ease-in-out
-        ${activeTab === "public-profile"
-          ? "lg:grid-cols-[720px_1fr]"
-          : "lg:grid-cols-[1fr_320px]"
-        }
+      className={`
+        ${isPublicProfile ? "pt-4" : "pt-6"}
+        px-4 lg:px-6
+        grid grid-cols-1 gap-6
+        lg:h-[calc(100vh-64px)]
+        transition-all duration-500 ease-in-out
+        ${isPublicProfile ? "lg:grid-cols-[1fr_480px]" : "lg:grid-cols-[1fr_320px]"}
       `}
     >
 
-      {/* LEFT */}
+      {/* ── LEFT COLUMN ── */}
       <div
         className={`
-          h-full overflow-y-auto overscroll-contain pr-2
+          h-full pr-2
+          ${isPublicProfile ? "overflow-hidden" : "overflow-y-auto overscroll-contain"}
           transition-all duration-500 ease-in-out
-          ${activeTab === "public-profile"
-            ? "lg:order-2"
-            : "lg:order-1"
-          }
+          ${isPublicProfile ? "order-2 lg:order-2" : "order-1 lg:order-1"}
         `}
       >
 
-        {activeTab !== "public-profile" && (<button
-          onClick={() => navigate(-1)}
-          className="flex items-center gap-2 text-sm text-gray-500 hover:text-black mb-6"
-        >
-          <ArrowLeft size={16} />
-          Back to Team
-        </button>)}
+        {/* Back button — hidden on public-profile (pullout handles it) */}
+        {!isPublicProfile && (
+          <button
+            onClick={() => navigate(-1)}
+            className="flex items-center gap-2 text-sm text-gray-500 hover:text-black mb-6"
+          >
+            <ArrowLeft size={16} />
+            Back to Team
+          </button>
+        )}
 
-        {activeTab !== "public-profile" && (<DetailPageHeader
-          title={member.name}
-          subtitle={
-            displayManager
-              ? `${displayRoleWithCustom} • Manager - ${displayManager}`
-              : displayRoleWithCustom
-          }
-
-          avatar={
-            <Avatar
-              src={avatarUrl}
-              name={member.name}
-            />
-          }
-
-          status={{
-            label: member.status,
-            // variant: member.status === "active" ? "active" : "suspended",
-          }}
-          actions={
-            <div className="flex gap-3">
-              <ActionButton
-                icon={<Edit size={16} />}
-                label="Edit"
-                onClick={() => setEditOpen(true)}
-              />
-
-              <ActionButton
-                icon={<Shield size={16} />}
-                label="Permissions"
-                onClick={() => setPermOpen(true)}
-              />
-
-              <ActionButton
-                icon={
-                  member.status === "active" ? (
-                    <UserX size={16} />
-                  ) : (
-                    <CheckCircle2 size={16} />
-                  )
-                }
-                label={member.status === "active" ? "Suspend" : "Activate"}
-                onClick={async () => {
-                  if (member.status === "active") {
-                    try {
-                      setProcessing(true);
-
-                      const res = await dispatch(
-                        fetchLeads({
-                          page: 1,
-                          pageSize: 1000000,
-                          memberId: member.id,
-                        })
-                      ).unwrap();
-
-                      const ids = res.data.map((l: any) => l.id);
-
-                      if (ids.length > 0) {
-                        setLeadIds(ids);
-                        setTransferOpen(true);
-                      } else {
-                        setSuspendMode("suspend");
-                        setConfirmOpen(true);
-                      }
-                    } catch {
-                      showResult(false, "Failed to load leads");
-                    } finally {
-                      setProcessing(false);
-                    }
-                  } else {
-                    setSuspendMode("activate");
-                    setConfirmOpen(true);
+        {/* Header */}
+        {!isPublicProfile && (
+          <DetailPageHeader
+            title={member.name}
+            subtitle={
+              displayManager
+                ? `${displayRoleWithCustom} • Manager - ${displayManager}`
+                : displayRoleWithCustom
+            }
+            avatar={<Avatar src={avatarUrl} name={member.name} />}
+            status={{ label: member.status }}
+            actions={
+              <div className="flex gap-3">
+                <ActionButton
+                  icon={<Edit size={16} />}
+                  label="Edit"
+                  onClick={() => setEditOpen(true)}
+                />
+                <ActionButton
+                  icon={<Shield size={16} />}
+                  label="Permissions"
+                  onClick={() => setPermOpen(true)}
+                />
+                <ActionButton
+                  icon={
+                    member.status === "active"
+                      ? <UserX size={16} />
+                      : <CheckCircle2 size={16} />
                   }
-                }}
-                danger={member.status === "active"}
-                disabled={processing}
-              />
-            </div>
+                  label={member.status === "active" ? "Suspend" : "Activate"}
+                  onClick={async () => {
+                    if (member.status === "active") {
+                      try {
+                        setProcessing(true);
+                        const res = await dispatch(
+                          fetchLeads({ page: 1, pageSize: 1000000, memberId: member.id })
+                        ).unwrap();
+                        const ids = res.data.map((l: any) => l.id);
+                        if (ids.length > 0) {
+                          setLeadIds(ids);
+                          setTransferOpen(true);
+                        } else {
+                          setSuspendMode("suspend");
+                          setConfirmOpen(true);
+                        }
+                      } catch {
+                        showResult(false, "Failed to load leads");
+                      } finally {
+                        setProcessing(false);
+                      }
+                    } else {
+                      setSuspendMode("activate");
+                      setConfirmOpen(true);
+                    }
+                  }}
+                  danger={member.status === "active"}
+                  disabled={processing}
+                />
+              </div>
+            }
+          />
+        )}
 
-          }
-        />)}
-
-        {activeTab !== "public-profile" && (<div className="flex gap-6 border-b text-sm mt-6">
-          {TABS.filter(
-            (t) => t !== "total-leads" || member.role === "manager"
-          ).map((t) => (
-            <button
-              key={t}
-              onClick={() => setActiveTab(t)}
-              className={`pb-2 capitalize ${activeTab === t
-                ? "border-b-2 border-purple-600 text-purple-600 font-medium"
-                : "text-gray-500"
+        {/* Tab bar — hidden on public-profile (pullout handles it) */}
+        {!isPublicProfile && (
+          <div className="flex gap-6 border-b text-sm mt-6">
+            {TABS.filter((t) => t !== "total-leads" || member.role === "manager").map((t) => (
+              <button
+                key={t}
+                onClick={() => setActiveTab(t)}
+                className={`pb-2 capitalize ${
+                  activeTab === t
+                    ? "border-b-2 border-purple-600 text-purple-600 font-medium"
+                    : "text-gray-500"
                 }`}
-            >
-              {t.replace("-", " ")}
-            </button>
-          ))}
-        </div>)}
+              >
+                {t.replace("-", " ")}
+              </button>
+            ))}
+          </div>
+        )}
 
-        {activeTab === "public-profile" && (
+        {/* Pullout nav shown only on public-profile tab */}
+        {isPublicProfile && (
           <LeftPulloutTabs
             tabs={TABS}
             activeTab={activeTab}
@@ -440,77 +362,75 @@ export default function TeamMemberDetailsPage() {
           />
         )}
 
-        {activeTab === "overview" && (
-          <TeamMemberOverviewTab member={member} />
-        )}
-        {activeTab === "leads" && (
-          <TeamMemberLeadsTab memberId={member.id} />
-        )}
+        {/* ── TAB CONTENT ── */}
+        {activeTab === "overview" && <TeamMemberOverviewTab member={member} />}
+
+        {activeTab === "leads" && <TeamMemberLeadsTab memberId={member.id} />}
+
         {activeTab === "total-leads" && member.role === "manager" && (
           <TeamMemberTotalLeadsTab managerId={member.id} />
         )}
-        {activeTab === "analytics" && (
-          <TeamMemberAnalyticsTab memberId={member.id} />
-        )}
-        {activeTab === "public-profile" && (
-          <div className="">
-            <div className="h-[95%] overflow-hidden rounded-2xl bg-white overflow-y-auto">
-              <VicePublicSetting
-                key={member.username}
-                onLiveChange={(cfg) => setLivePreviewConfig(cfg)}
-                onCropToggle={setIsCropping}   // 👈 ADD
-              />
+
+        {activeTab === "analytics" && <TeamMemberAnalyticsTab memberId={member.id} />}
+
+        {/* Public-profile editor — fills remaining height and scrolls internally */}
+        {isPublicProfile && (
+          <div
+            className="w-full flex gap-8"
+            
+          >
+            <div
+              className="w-full xl:w-[480px] bg-white rounded-2xl shadow-md overflow-hidden flex flex-col"
+              style={{ height: "calc(100vh - 84px)" }}
+            >
+              <div className="flex-1 overflow-y-auto overscroll-contain">
+                <VicePublicSetting
+                  key={member.username}
+                  onLiveChange={(cfg) => setLivePreviewConfig(cfg)}
+                  onCropToggle={setIsCropping}
+                />
+              </div>
             </div>
           </div>
         )}
-
-
       </div>
 
-      {/* RIGHT — MOBILE PREVIEW */}
+      {/* ── RIGHT COLUMN — MOBILE PREVIEW ── */}
       <div
         className={`
-          hidden lg:flex h-full justify-center items-start overflow-hidden
+          ${isPublicProfile ? "flex w-full lg:flex" : "hidden lg:flex"}
+          ${isPublicProfile ? "" : "h-full"}
+          justify-center items-start overflow-hidden
           transition-all duration-500 ease-in-out
-          ${activeTab === "public-profile"
-            ? "lg:order-1"
-            : "lg:order-2"
-          }
+          ${isPublicProfile ? "order-1 lg:order-1" : "order-2 lg:order-2"}
           ${isCropping ? "opacity-0 pointer-events-none" : "opacity-100"}
         `}
       >
-        {/* Preview container to visually separate from dashboard */}
-        <div className="relative h-full flex items-start justify-center px-4 mt-8">
-
-          {/* Optional label (helps hierarchy a LOT) */}
+        <div
+          className={`
+            relative w-full h-min
+            flex ${isPublicProfile ? "flex-col items-center" : "items-start justify-center"}
+            px-4
+            ${isPublicProfile ? "mt-8" : "mt-8"}
+          `}
+        >
+          {/* Live Preview label */}
           <div className="absolute -top-8 text-xs text-gray-400 bg-gray-50 tracking-wide border border-[#D5d5d5] rounded-xl px-2 py-1 shadow-md hover:shadow-lg transition-shadow duration-200">
-            <a href={`${window.location.origin}/profile/${member.username}`} target="_blank" rel="noopener noreferrer">
+            <a
+              href={`${window.location.origin}/profile/${member.username}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               Live Preview
             </a>
           </div>
 
-          {/* SCALE WRAPPER */}
-          <div className="origin-top scale-[0.6] xl:scale-[0.7]">
-
-            {/* DEVICE FRAME */}
-            <div
-              className="
-                w-[390px] h-[780px]
-                rounded-[44px]
-                bg-white
-                p-[10px]
-              "
-            >
-              {/* DEVICE SCREEN */}
-              <div
-                className="
-                  w-full h-full
-                  bg-white
-                  rounded-[36px]
-                  overflow-hidden
-                  flex flex-col
-                "
-              >
+          {/* Scale wrapper */}
+          <div className="origin-top scale-[0.6] max-h-[500px] xl:scale-[0.7]">
+            {/* Device frame */}
+            <div className="w-[390px] h-[780px] rounded-[44px]">
+              {/* Device screen */}
+              <div className="w-full h-full bg-white rounded-[36px] overflow-hidden flex flex-col">
                 <div
                   ref={phoneScrollRef}
                   className="flex-1 overflow-y-auto overscroll-contain no-scrollbar"
@@ -529,12 +449,11 @@ export default function TeamMemberDetailsPage() {
                 </div>
               </div>
             </div>
-
           </div>
         </div>
       </div>
 
-      {/* MODALS */}
+      {/* ── MODALS ── */}
       <EditMemberModal
         open={editOpen}
         member={member}
@@ -542,11 +461,8 @@ export default function TeamMemberDetailsPage() {
         managers={managers}
         onClose={() => setEditOpen(false)}
         onSubmit={async (data) => {
-          const updated = await dispatch(
-            updateMember({ id: member.id, data })
-          ).unwrap();
-
-          return updated; // 👈 return to modal
+          const updated = await dispatch(updateMember({ id: member.id, data })).unwrap();
+          return updated;
         }}
         onSuccess={() => {
           dispatch(fetchMemberById(member.id));
@@ -555,7 +471,6 @@ export default function TeamMemberDetailsPage() {
           }
         }}
       />
-
 
       <PermissionsModal
         open={permOpen}
@@ -578,9 +493,7 @@ export default function TeamMemberDetailsPage() {
 
       <ConfirmationModal
         open={confirmOpen}
-        title={
-          suspendMode === "suspend" ? "Suspend Member" : "Activate Member"
-        }
+        title={suspendMode === "suspend" ? "Suspend Member" : "Activate Member"}
         message={
           suspendMode === "suspend"
             ? `Are you sure you want to suspend ${member.name}?`
@@ -599,7 +512,6 @@ export default function TeamMemberDetailsPage() {
         open={transferOpen}
         leads={leadIds}
         currentId={member.id}
-        // managers={members.filter(m => m.id !== member.id)} // keep this
         loading={processing}
         onClose={() => setTransferOpen(false)}
         onConfirm={handleTransferAndSuspend}
@@ -614,6 +526,8 @@ export default function TeamMemberDetailsPage() {
     </div>
   );
 }
+
+/* ── PULLOUT TABS (shown when on public-profile tab) ── */
 
 type PulloutTabsProps = {
   tabs: readonly string[];
@@ -647,29 +561,19 @@ export function LeftPulloutTabs({
         {/* Panel */}
         <div
           className="
-            h-full
-            w-full
+            h-full w-full
             bg-gradient-to-b from-purple-600 to-purple-700
-            rounded-r-2xl
-            shadow-xl
-            overflow-hidden
+            rounded-r-2xl shadow-xl overflow-hidden
           "
         >
           {/* Expanded content */}
           <div
             className="
-              opacity-0
-              group-hover:opacity-100
-              transition-opacity
-              duration-200
-              delay-100
-              h-full
-              px-4
-              py-6
-              text-white
+              opacity-0 group-hover:opacity-100
+              transition-opacity duration-200 delay-100
+              h-full px-4 py-6 text-white
             "
           >
-
             <button
               onClick={() => navigate(-1)}
               className="flex items-center gap-2 text-sm text-gray-100 hover:text-white mb-6"
@@ -680,19 +584,15 @@ export function LeftPulloutTabs({
 
             <nav className="flex flex-col gap-2">
               {tabs
-                .filter(
-                  (t) => t !== "total-leads" || allowTotalLeads
-                )
+                .filter((t) => t !== "total-leads" || allowTotalLeads)
                 .map((t) => {
                   const active = activeTab === t;
-
                   return (
                     <button
                       key={t}
                       onClick={() => onChange(t)}
                       className={`
-                        text-left px-3 py-2 rounded-lg capitalize
-                        transition-colors
+                        text-left px-3 py-2 rounded-lg capitalize transition-colors
                         ${active
                           ? "bg-white text-purple-700 font-medium"
                           : "text-purple-100 hover:bg-purple-500/30"

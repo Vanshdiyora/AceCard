@@ -222,6 +222,7 @@ export default function ContactSection({
                 <input
                     value={value.form_title || ""}
                     disabled={disabled}
+                    placeholder="Enter Form Title"
                     onChange={(e) =>
                         onChange({
                             ...value,
@@ -413,7 +414,7 @@ export default function ContactSection({
                         )}
 
                         {/* SWITCHES */}
-                        <div className="flex gap-10 mt-4">
+                        <div className="flex items-center justify-between mt-4 pt-2 border-t">
                             <Switch
                                 label="Required"
                                 value={field.required}

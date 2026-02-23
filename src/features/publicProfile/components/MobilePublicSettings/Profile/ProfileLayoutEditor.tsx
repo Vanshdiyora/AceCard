@@ -161,12 +161,12 @@ export function ProfileLayoutEditor({
                             <img
                                 src={
                                     t === 1
-                                        ? "/profileLayout/profile-1.jpg"
+                                        ? "/profileLayout/profile1.png"
                                         : t === 2
-                                            ? "/profileLayout/profile-2.jpg"
-                                            : "/profileLayout/profile-3.jpg"
+                                            ? "/profileLayout/profile2.png"
+                                            : "/profileLayout/profile3.png"
                                 }
-                                className="w-full h-16 object-cover rounded"
+                                className="w-full h-20 object-contain rounded-lg"
                             />
                             <p className="text-xs text-center mt-1">
                                 {t === 1 && "Profile Picture"}
@@ -180,29 +180,36 @@ export function ProfileLayoutEditor({
 
             {/* FADE */}
             {config.layout?.profile_type !== 2 && (
-                <div className="mt-5 grid grid-cols-[1fr_auto] items-center gap-4 h-10">
-                    <Switch
-                        label="Fade cover"
-                        value={!!config.layout?.is_fade}
-                        onChange={(v: boolean) =>
-                            update({
-                                ...config,
-                                layout: { ...config.layout, is_fade: v },
-                            })
-                        }
-                    />
-                    {/* Fade color (RIGHT) */}
-                    {config.layout.is_fade && (
-                        <MobileColorPicker
-                            label="Fade color"
-                            value={config.layout.fade_color ?? "#000000"}
-                            onChange={(val) =>
+                <div className="mt-6 space-y-4">
+
+                    {/* Fade Toggle */}
+                    <div className="bg-white border rounded-2xl p-4">
+                        <Switch
+                            label="Fade cover"
+                            value={!!config.layout?.is_fade}
+                            onChange={(v: boolean) =>
                                 update({
                                     ...config,
-                                    layout: { ...config.layout, fade_color: val },
+                                    layout: { ...config.layout, is_fade: v },
                                 })
                             }
                         />
+                    </div>
+
+                    {/* Fade Color */}
+                    {config.layout?.is_fade && (
+                        <div className="bg-gray-50 rounded-2xl p-4 border">
+                            <MobileColorPicker
+                                label="Fade color"
+                                value={config.layout.fade_color ?? "#000000"}
+                                onChange={(val: string) =>
+                                    update({
+                                        ...config,
+                                        layout: { ...config.layout, fade_color: val },
+                                    })
+                                }
+                            />
+                        </div>
                     )}
 
                 </div>
@@ -449,34 +456,81 @@ export function ProfileLayoutEditor({
             <div>
                 <h4 className="text-sm font-medium mb-2">Background</h4>
 
-                <div className="grid grid-cols-3 gap-2 mb-4">
+                <div className="grid grid-cols-3 gap-4 mb-6">
                     {[
-                        "solid",
-                        "gradient",
-                        "image",
-                        "video",
-                        "polka",
-                        "stripes",
-                        "zigzag",
-                    ].map((t) => (
-                        <button
-                            key={t}
-                            onClick={() =>
-                                update({
-                                    ...config,
-                                    layout: { ...config.layout, use_background: t },
-                                })
-                            }
-                            className={`border rounded-lg py-2 text-xs capitalize ${config.layout?.use_background === t
-                                ? "border-black bg-gray-50"
-                                : "border-gray-200"
-                                }`}
-                        >
-                            {t}
-                        </button>
-                    ))}
-                </div>
+                        { id: "solid", label: "Solid" },
+                        { id: "gradient", label: "Gradient" },
+                        { id: "image", label: "Image" },
+                        { id: "video", label: "Video" },
+                        { id: "polka", label: "Polka" },
+                        { id: "stripes", label: "Stripes" },
+                        { id: "zigzag", label: "Zigzag" },
+                    ].map((item) => {
+                        const isActive = config.layout?.use_background === item.id;
 
+                        return (
+                            <div key={item.id} className="text-center">
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        update({
+                                            ...config,
+                                            layout: {
+                                                ...config.layout,
+                                                use_background: item.id,
+                                            },
+                                        })
+                                    }
+                                    className={`
+            relative w-full aspect-square rounded-2xl overflow-hidden
+            border-2 transition-all duration-200
+            ${isActive
+                                            ? "border-black ring-2 ring-gray-300 scale-[1.02]"
+                                            : "border-gray-200 active:scale-95"}
+          `}
+                                >
+                                    {/* PREVIEW AREA */}
+
+                                    {item.id === "solid" && (
+                                        <div className="w-full h-full bg-gray-800" />
+                                    )}
+
+                                    {item.id === "gradient" && (
+                                        <div className="w-full h-full bg-gradient-to-b from-gray-400 to-gray-800" />
+                                    )}
+
+                                    {item.id === "image" && (
+                                        <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400 text-xs">
+                                            Image
+                                        </div>
+                                    )}
+
+                                    {item.id === "video" && (
+                                        <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400 text-xs">
+                                            Video
+                                        </div>
+                                    )}
+
+                                    {["polka", "stripes", "zigzag"].includes(item.id) && (
+                                        <img
+                                            src={`/backgrounds/${item.id}.svg`}
+                                            alt={item.label}
+                                            className="w-full h-full object-cover"
+                                        />
+                                    )}
+                                </button>
+
+                                {/* LABEL */}
+                                <p
+                                    className={`mt-2 text-xs font-medium transition ${isActive ? "text-black" : "text-gray-500"
+                                        }`}
+                                >
+                                    {item.label}
+                                </p>
+                            </div>
+                        );
+                    })}
+                </div>
                 {/* SOLID COLOR */}
                 {config.layout?.use_background === "solid" && (
                     <div className="mt-3">

@@ -47,6 +47,9 @@ import { ZigzagBackground } from "../patterns/ZigzagBackground";
 import { StripeBackground } from "../patterns/StripeBackground";
 import { PolkaBackground } from "../patterns/PolkaBackground";
 import { WaveBackground } from "../patterns/WaveBackground";
+import SectionsReorder from "../../../settings/components/vice/sections/SectionsReorder";
+import AddSectionModal from "../../../settings/components/vice/sections/AddSectionModal";
+import ContactSection from "../../../settings/components/vice/sections/ContactSection";
 
 /* ================= HELPERS ================= */
 
@@ -178,7 +181,7 @@ export default function MobilePublicSettings({
   const {
     banner = {},
     meeting = {},
-    sections = { items: [] },
+    // sections = { items: [] },
   } = config;
 
   const dispatch = useAppDispatch();
@@ -205,17 +208,20 @@ export default function MobilePublicSettings({
   }, [config]);
 
   const [openLayoutEditor, setOpenLayoutEditor] = useState(false);
-
+  const [openSectionsEditor, setOpenSectionsEditor] = useState(false);
+  const [openAddSection, setOpenAddSection] = useState(false);
   const [photoGalleryDraft, setPhotoGalleryDraft] = useState<any | null>(null);
   const [productsDraft, setProductsDraft] = useState<any | null>(null);
+  const [autoEditSection, setAutoEditSection] = useState<string | null>(null);
   const [layoutDraft, setLayoutDraft] = useState<{
     layout: any;
     theme: any;
   } | null>(null);
+  const [editContact, setEditContact] = useState(false);
+  const [contactDraft, setContactDraft] = useState<any | null>(null);
 
 
-
-  const orderedSections = sortByRank(sections.items);
+  const orderedSections = sortByRank(draft.sections?.items || []);
   const shapeClass = resolveShape(draft.layout?.button_style);
 
   useEffect(() => {
@@ -301,6 +307,7 @@ export default function MobilePublicSettings({
               value={draft.profile?.description || ""}
               theme={draft.theme}
               editable={!draft.profile?.locked}
+              autoOpen={autoEditSection === "about"}   // ✅ REQUIRED
               onChange={(val: string) =>
                 setDraft((prev: any) => ({
                   ...prev,
@@ -326,6 +333,7 @@ export default function MobilePublicSettings({
             <SocialSection
               locked={draft.social_links?.locked}
               items={draft.social_links?.items || []}
+              autoOpen={autoEditSection === "social_links"}
               onChange={(updater: any) =>
                 setDraft((prev: any) => {
                   const nextItems =
@@ -379,7 +387,7 @@ export default function MobilePublicSettings({
             onEdit={(item) => setEditSection({ type: "youtube", item })}
           />
         );
-
+      
       case "contact":
         return (
           <ProfileActions
@@ -388,16 +396,7 @@ export default function MobilePublicSettings({
             contact={draft.contact}
             layout={draft.layout}
             editable={!draft.contact?.locked}
-            onContactChange={(updater: any) =>
-              setDraft((prev: any) => ({
-                ...prev,
-                contact:
-                  typeof updater === "function"
-                    ? updater(prev.contact || {})
-                    : updater,
-              }))
-            }
-
+            onEdit={() => openSectionEditor("contact")} // 🔥 REQUIRED
             onConnect={() => isMobile && setOpen(true)}
           />
         );
@@ -408,6 +407,7 @@ export default function MobilePublicSettings({
             title={draft.links_files?.section_title}
             items={draft.links_files?.items || []}
             theme={draft.theme}
+            autoOpen={autoEditSection === "links_files"}
             editable={!draft.links_files?.locked}
             onChange={(next: { section_title: string; items: any[] }) =>
               setDraft((prev: any) => ({
@@ -429,6 +429,7 @@ export default function MobilePublicSettings({
             meeting={draft.meeting}
             theme={draft.theme}
             shapeClass={shapeClass}
+            autoOpen={autoEditSection === "meeting"}
             editable={!draft.meeting?.locked}
             onMeetingChange={(updater: any) =>
               setDraft((prev: any) =>
@@ -446,6 +447,7 @@ export default function MobilePublicSettings({
             ctaText={draft.banner.cta_text}
             ctaUrl={draft.banner.cta_url}
             theme={draft.theme}
+            autoOpen={autoEditSection === "banner"}
             editable={!draft.banner?.locked}
             onBannerChange={(updater: any) =>
               setDraft((prev: any) =>
@@ -475,8 +477,7 @@ export default function MobilePublicSettings({
           />
         );
       }
-
-
+      
       default:
         return null;
     }
@@ -528,7 +529,8 @@ export default function MobilePublicSettings({
     editProducts ||
     editPhotoGallery ||
     openLayoutEditor ||
-    editSection?.type === "youtube";
+    editSection?.type === "youtube" ||
+    editContact;
 
   useEffect(() => {
     // On desktop preview (isPreview=true), we don't lock body scroll
@@ -561,11 +563,51 @@ export default function MobilePublicSettings({
       window.scrollTo(0, parseInt(y || "0") * -1);
     };
   }, [isAnyModalOpen, isPreview]);
+  useEffect(() => {
+    if (!autoEditSection) return;
 
+    const timer = setTimeout(() => {
+      setAutoEditSection(null);
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [autoEditSection]);
+  const openSectionEditor = (type: string) => {
+    switch (type) {
+      case "products":
+        setProductsDraft(structuredClone(draft.products));
+        setEditProducts(true);
+        break;
+
+      case "photo_gallery":
+        setPhotoGalleryDraft(structuredClone(draft.photo_gallery));
+        setEditPhotoGallery(true);
+        break;
+
+      case "youtube":
+        setEditSection({ type: "youtube" });
+        break;
+      case "about":
+      case "social_links":
+      case "links_files":
+      case "meeting":
+      case "banner":
+        setAutoEditSection(type);
+        break;
+
+      case "contact":
+        setContactDraft(structuredClone(draft.contact));
+        setEditContact(true);
+        break;
+
+      default:
+        break;
+    }
+  };
   // bgPositionClass no longer used here; background is handled by BackgroundLayer
 
   return (
-    <div className={`relative w-full min-h-full overflow-x-hidden p-4 pb-16 ${fontClass}`}>
+    <div className={`relative w-full min-h-full overflow-x-hidden p-4 pb-24 ${fontClass}`}>
 
       {/* BACKGROUND: only here on real mobile. On desktop preview,
           BackgroundLayer is a sibling outside the scroll container. */}
@@ -645,7 +687,7 @@ export default function MobilePublicSettings({
           className="w-full py-2 rounded-xl border border-dashed
                text-sm font-semibold text-gray-600 hover:bg-gray-100"
         >
-          ➕ Add Video
+          Add Video
         </button>
 
         {youtubeDraft && (
@@ -722,6 +764,148 @@ export default function MobilePublicSettings({
         )}
       </EditModal>
 
+      {/* Contact */}
+      <EditModal
+        open={editContact}
+        onClose={() => {
+          setContactDraft(null);
+          setEditContact(false);
+        }}
+        onSave={() => {
+          setDraft((prev: any) => ({
+            ...prev,
+            contact: contactDraft,
+          }));
+          setContactDraft(null);
+          setEditContact(false);
+        }}
+      >
+        <h3 className="text-lg font-semibold">
+          Manage Contact Form
+        </h3>
+
+        {contactDraft && (
+          <ContactSection
+            value={contactDraft}
+            disabled={draft.contact?.locked}
+            onChange={setContactDraft}
+          />
+        )}
+      </EditModal>
+
+      {/* Section */}
+      <EditModal
+        open={openSectionsEditor}
+        onClose={() => setOpenSectionsEditor(false)}
+        onSave={() => {
+          setOpenSectionsEditor(false);
+        }}
+      >
+        <h3 className="text-lg font-semibold">
+          Reorder Sections
+        </h3>
+        <SectionsReorder
+          sections={draft.sections?.items || []}
+          groupLocked={false}
+          onChange={(items: any) =>
+            setDraft((prev: any) => ({
+              ...prev,
+              sections: {
+                ...prev.sections,
+                items,
+              },
+            }))
+          }
+          onSectionClick={() => {
+            setOpenSectionsEditor(false);
+            // optionally open section editor here
+          }}
+          onToggle={(id, enabled) => {
+            setDraft((prev: any) => ({
+              ...prev,
+              sections: {
+                ...prev.sections,
+                items: prev.sections.items.map((s: any) =>
+                  s.id === id ? { ...s, enabled } : s
+                ),
+              },
+            }));
+          }}
+        />
+      </EditModal>
+
+      <AddSectionModal
+        open={openAddSection}
+        sections={draft.sections?.items || []}
+        onClose={() => setOpenAddSection(false)}
+
+        onAdd={(type: string) => {
+          setOpenAddSection(false);
+
+          const exists = draft.sections.items.find((s: any) => s.type === type);
+
+          if (!exists) {
+            setDraft((prev: any) => ({
+              ...prev,
+              sections: {
+                ...prev.sections,
+                items: [
+                  ...prev.sections.items,
+                  {
+                    id: type,
+                    type,
+                    rank: prev.sections.items.length + 1,
+                    enabled: true,
+                  },
+                ],
+              },
+            }));
+          }
+
+          // 🔥 THIS IS WHAT WAS MISSING
+          openSectionEditor(type);
+        }}
+
+        onToggle={(type: string) => {
+          const items = draft.sections.items;
+          const existing = items.find((s: any) => s.type === type);
+
+          let updated;
+
+          if (existing) {
+            updated = items.map((s: any) =>
+              s.type === type ? { ...s, enabled: !s.enabled } : s
+            );
+          } else {
+            updated = [
+              ...items,
+              {
+                id: type,
+                type,
+                rank: items.length + 1,
+                enabled: true,
+              },
+            ];
+          }
+
+          // 🔥 re-rank enabled
+          const enabled = updated.filter((s: any) => s.enabled);
+          const disabled = updated.filter((s: any) => !s.enabled);
+
+          const reRanked = enabled.map((s: any, idx: number) => ({
+            ...s,
+            rank: idx + 1,
+          }));
+
+          setDraft((prev: any) => ({
+            ...prev,
+            sections: {
+              ...prev.sections,
+              items: [...reRanked, ...disabled],
+            },
+          }));
+        }}
+      />
       <ProductsEditModal
         open={editProducts}
         value={productsDraft}
@@ -795,8 +979,31 @@ export default function MobilePublicSettings({
             <div key={s.id}>{renderSection(s.type)}</div>
           ) : null
         )}
-      </div>
 
+        {/* 👇 SECTION ACTION BUTTONS */}
+        <div className="flex gap-3 pt-6">
+          <button
+            onClick={() => {
+              setOpenSectionsEditor(true);
+            }}
+            className="flex-1 py-3 rounded-xl border font-semibold
+                 bg-white/90 backdrop-blur shadow-sm
+                 hover:bg-gray-50 transition"
+          >
+            Edit Sections
+          </button>
+
+          <button
+            onClick={() => setOpenAddSection(true)}
+            className="flex-1 py-3 rounded-xl font-semibold text-white
+                 bg-purple-600 shadow
+                 hover:bg-purple-700 transition"
+          >
+            Add Section
+          </button>
+        </div>
+
+      </div>
     </div>
   );
 }
@@ -1449,10 +1656,15 @@ function EditableAbout({
   onChange,
   theme,
   editable = true,
+  autoOpen = false,
 }: any) {
   const [open, setOpen] = useState(false);
   const t = resolveTheme(theme);
-
+  useEffect(() => {
+    if (autoOpen) {
+      setOpen(true);
+    }
+  }, [autoOpen]);
   useEffect(() => {
     if (!open) {
       document.body.style.overflow = "";

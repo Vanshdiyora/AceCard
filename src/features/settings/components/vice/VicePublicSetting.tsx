@@ -160,11 +160,6 @@ export interface ContactConfig extends LockMeta {
   fields: ContactField[];
 }
 
-export interface ContactConfig extends LockMeta {
-  connect_title: string;
-  contact_title: string;
-  locked_by: string;
-}
 
 export interface LayoutConfig extends LockMeta {
   profile_type: ProfileLayoutType;
@@ -2435,17 +2430,40 @@ export default function VicePublicSetting({
                     <SectionsReorder
                       sections={config.sections.items}
                       groupLocked={config.sections.locked}
-                      onChange={(items) => {
 
-                        console.log("SectionsReorder render");
+                      onChange={(items) => {
                         update({
                           ...config,
                           sections: { ...config.sections, items },
-                        })
-                      }
-                      }
+                        });
+                      }}
+
+                      onToggle={(id, enabled) => {
+                        let updated = config.sections.items.map((s) =>
+                          s.id === id ? { ...s, enabled } : s
+                        );
+
+                        const enabledSections = updated
+                          .filter(s => s.enabled)
+                          .map((s, index) => ({
+                            ...s,
+                            rank: index + 1,
+                          }));
+
+                        const disabledSections = updated.filter(s => !s.enabled);
+
+                        update({
+                          ...config,
+                          sections: {
+                            ...config.sections,
+                            items: [...enabledSections, ...disabledSections],
+                          },
+                        });
+                      }}
+
                       onSectionClick={(type) => {
-                        if (sectionsLocked) return;
+                        if (isReadOnly(config.sections)) return;
+
                         setCameFromAddModal(false);
                         setPendingSection(null);
                         setActiveSection(type);
@@ -2845,9 +2863,10 @@ export default function VicePublicSetting({
         sections={config.sections.items}
         onClose={() => setAddSectionOpen(false)}
         onAdd={(type: string) => {
-          setCameFromAddModal(true);   // ✅ IMPORTANT
-          setAddSectionOpen(false);    // close add modal
-          openSectionEditor(type);     // open editor
+          setCameFromAddModal(true);
+          setPendingSection(type);  // 🔥 IMPORTANT
+          setAddSectionOpen(false);
+          openSectionEditor(type);
         }}
         onToggle={(type: string) => {
           const exists = config.sections.items.find(
