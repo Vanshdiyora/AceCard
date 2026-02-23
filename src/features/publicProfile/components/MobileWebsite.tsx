@@ -161,6 +161,7 @@ const bgPositionClass = isPreview ? "absolute" : "fixed";
     products,
     sections,
     photo_gallery,
+     card_buttons,
     // video_gallery,
   } = config;
 
@@ -305,7 +306,14 @@ const bgPositionClass = isPreview ? "absolute" : "fixed";
             onOpen={setActivePhoto}   // 👈 add
           />
         ) : null;
-
+case "card_buttons":
+  return (
+    <CardButtons
+      items={sortByRank(card_buttons.items)}
+      theme={theme}
+      shapeClass={shapeClass}
+    />
+  );
       default:
         return null;
     }
@@ -1133,5 +1141,62 @@ function BackgroundVideo({ src, isPreview = false }: { src?: string; isPreview?:
         className="w-full h-full object-cover"
       />
     </div>
+  );
+}
+
+function CardButtons({
+  items,
+  theme,
+  shapeClass,
+}: {
+  items: any[];
+  theme: any;
+  shapeClass?: string;
+}) {
+  const t = resolveTheme(theme);
+
+  const visible = items
+    ?.filter((i) => i.enabled !== false)
+    ?.slice(0, 2); // 🔥 MAX 2
+
+  if (!visible?.length) return null; // 🔥 MIN 0
+
+  const isSingle = visible.length === 1;
+
+  return (
+    <Section theme={theme}>
+      <div
+        className={`flex gap-3 ${
+          isSingle ? "flex-col" : "flex-row"
+        }`}
+      >
+        {visible.map((btn: any) => (
+          <a
+            key={btn.id}
+            href={btn.link}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`
+              ${isSingle ? "w-full" : "flex-1"}
+              py-3
+              text-sm
+              font-semibold
+              text-center
+              shadow-md
+              transition
+              active:scale-95
+              hover:opacity-90
+              ${shapeClass}
+            `}
+            style={{
+              backgroundColor: t.buttonBg,
+              color: t.buttonText,
+            }}
+          >
+            {btn.title}
+          </a>
+        ))}
+      </div>
+    </Section>
   );
 }

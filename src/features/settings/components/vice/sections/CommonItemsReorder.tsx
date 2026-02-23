@@ -1,7 +1,8 @@
 import {
   DndContext,
   closestCenter,
-  PointerSensor,
+  MouseSensor,
+  TouchSensor,
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
@@ -32,7 +33,19 @@ export default function CommonItemsReorder<T extends ItemWithId>({
   onChange,
   renderItem,
 }: Props<T>) {
-  const sensors = useSensors(useSensor(PointerSensor));
+  const sensors = useSensors(
+    useSensor(MouseSensor, {
+      activationConstraint: {
+        distance: 5,
+      },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 150,
+        tolerance: 5,
+      },
+    })
+  );
 
   const handleDragEnd = (event: any) => {
     const { active, over } = event;

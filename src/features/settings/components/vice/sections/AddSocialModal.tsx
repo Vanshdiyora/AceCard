@@ -14,6 +14,20 @@ import {
 } from "react-icons/si";
 
 import { FiPhone, FiGlobe } from "react-icons/fi";
+// 🔥 New Brand Icons
+import {
+  SiThreads,
+  SiTelegram,
+  SiCalendly,
+  SiAppstore,
+  SiGoogleplay,
+} from "react-icons/si";
+
+import {
+  FiMail,
+  FiMapPin,
+  FiMessageSquare,
+} from "react-icons/fi";
 
 // ---------------- ICON MAP ----------------
 const ICONS: Record<string, any> = {
@@ -25,8 +39,19 @@ const ICONS: Record<string, any> = {
   snapchat: SiSnapchat,
   tiktok: SiTiktok,
   whatsapp: SiWhatsapp,
+
   phone: FiPhone,
   website: FiGlobe,
+
+  // 🔥 NEW ONES
+  email: FiMail,
+  address: FiMapPin,
+  threads: SiThreads,
+  telegram: SiTelegram,
+  sms: FiMessageSquare,
+  calendly: SiCalendly,
+  appstore: SiAppstore,
+  playstore: SiGoogleplay,
 };
 
 export default function AddSocialModal({

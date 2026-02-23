@@ -14,15 +14,17 @@ import {
   arrayMove,
 } from "@dnd-kit/sortable";
 import type { SectionItem } from "../../../../publicProfile/types";
-import { GripVertical } from "lucide-react";
+import { GripVertical, Trash2 } from "lucide-react";
 
 const HIDDEN_SECTIONS = ["video_gallery"];
+
 const SECTION_LABELS: Record<string, string> = {
   youtube: "Videos",
   links_files: "Links & Files",
   photo_gallery: "Photo Gallery",
   social_links: "Social Links",
   meeting: "Meeting Button",
+  contact: "Lead Capture",
 };
 
 export default function SectionsReorder({
@@ -40,15 +42,10 @@ export default function SectionsReorder({
 }) {
   const sensors = useSensors(
     useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 4,
-      },
+      activationConstraint: { distance: 4 },
     }),
     useSensor(TouchSensor, {
-      activationConstraint: {
-        delay: 250,
-        tolerance: 8,
-      },
+      activationConstraint: { delay: 250, tolerance: 8 },
     })
   );
 
@@ -71,12 +68,10 @@ export default function SectionsReorder({
       sensors={sensors}
       collisionDetection={closestCenter}
       measuring={{
-        droppable: {
-          strategy: MeasuringStrategy.Always,
-        },
+        droppable: { strategy: MeasuringStrategy.Always },
       }}
       onDragEnd={(e) => {
-        if (groupLocked) return;
+        if (groupLocked) return; // 🔥 stop reorder logic
 
         const { active, over } = e;
         if (!over || active.id === over.id) return;
@@ -111,8 +106,8 @@ export default function SectionsReorder({
               <SortableRow
                 key={s.id}
                 s={s}
-                disabled={groupLocked}
-                onClick={() => onSectionClick?.(s.type)}
+                dragDisabled={groupLocked}   // 👈 ONLY drag disabled
+                onClick={() => onSectionClick?.(s.type)} // 👈 ALWAYS clickable
                 onToggle={onToggle}
               />
             )
@@ -123,17 +118,16 @@ export default function SectionsReorder({
   );
 }
 
-/* ================= ROWS ================= */
-import { Trash2 } from "lucide-react";
+/* ================= ROW ================= */
 
 function SortableRow({
   s,
-  disabled,
+  dragDisabled,
   onClick,
   onToggle,
 }: {
   s: SectionItem;
-  disabled?: boolean;
+  dragDisabled?: boolean;
   onClick?: () => void;
   onToggle: (id: string, enabled: boolean) => void;
 }) {
@@ -144,7 +138,10 @@ function SortableRow({
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: s.id, disabled });
+  } = useSortable({
+    id: s.id,
+    disabled: dragDisabled, // 🔥 drag only disabled
+  });
 
   const style = {
     transform: transform
@@ -153,7 +150,6 @@ function SortableRow({
         )}px, 0)`
       : undefined,
     transition: isDragging ? "none" : transition,
-    willChange: "transform",
     zIndex: isDragging ? 10 : undefined,
   };
 
@@ -162,39 +158,40 @@ function SortableRow({
       ref={setNodeRef}
       style={style}
       onClick={(e) => {
-        if (disabled) return;
         if ((e.target as HTMLElement).closest(".drag-handle")) return;
         if ((e.target as HTMLElement).closest(".delete-btn")) return;
-        onClick?.();
+        onClick?.(); // 👈 ALWAYS works
       }}
       className={`flex items-center justify-between border rounded-lg p-3 shadow-sm cursor-pointer transition
         ${isDragging ? "opacity-90 shadow-lg" : ""}
-        ${disabled ? "bg-gray-100 opacity-60" : "bg-white hover:bg-gray-50"}
+        bg-white hover:bg-gray-50
       `}
     >
       <div className="flex items-center gap-3">
-        {!disabled && (
-          <span
-            className="cursor-grab touch-none select-none drag-handle"
-            {...attributes}
-            {...listeners}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <GripVertical size={18} />
-          </span>
-        )}
+        <span
+          className={`touch-none select-none drag-handle ${
+            dragDisabled
+              ? "cursor-not-allowed text-gray-300"
+              : "cursor-grab"
+          }`}
+          {...(!dragDisabled ? attributes : {})}
+          {...(!dragDisabled ? listeners : {})}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <GripVertical size={18} />
+        </span>
 
         <span className="font-medium text-sm capitalize">
           {SECTION_LABELS[s.type] || s.type.replace(/_/g, " ")}
         </span>
       </div>
 
-      {!disabled && s.type !== "profile" && (
+      {!dragDisabled && s.type !== "profile" && (
         <button
           type="button"
           onClick={(e) => {
             e.stopPropagation();
-            onToggle(s.id, false); // 🔥 disable section instead of toggle
+            onToggle(s.id, false);
           }}
           className="delete-btn text-gray-400 hover:text-red-500 transition"
         >
@@ -204,6 +201,8 @@ function SortableRow({
     </div>
   );
 }
+
+/* ================= FIXED ROW ================= */
 
 function FixedRow({ s }: { s: SectionItem }) {
   return (

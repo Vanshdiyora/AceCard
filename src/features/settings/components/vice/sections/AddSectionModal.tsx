@@ -11,6 +11,7 @@ const ALL_SECTIONS = [
   { id: "social_links", label: "Social Links" },
   { id: "contact", label: "Contact" },
   { id: "about", label: "About" },
+  { id: "card_buttons", label: "Card Buttons" },
 ];
 
 export default function AddSectionModal({

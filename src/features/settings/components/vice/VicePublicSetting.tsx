@@ -31,6 +31,7 @@ import { ShareCardSection } from "./sections/ShareCardSection";
 import { Image, Video } from "lucide-react";
 import AddSocialModal from "./sections/AddSocialModal";
 import CommonItemsReorder from "./sections/CommonItemsReorder";
+import CardButtonsSection from "./sections/CardButtonsSection";
 
 const THEME_COLOR_KEYS = [
   "card_background",
@@ -138,6 +139,19 @@ export interface YoutubeConfig extends LockMeta {
   section_title: string;
   locked_by: string;
   items: any[];
+}
+
+export interface CardButtonItem {
+  id: string;
+  title: string;
+  link: string;
+  rank: number;
+  enabled: boolean;
+}
+
+export interface CardButtonsConfig extends LockMeta {
+  locked_by: string;
+  items: CardButtonItem[];
 }
 
 export interface ContactField {
@@ -285,7 +299,7 @@ interface PublicProfileConfig {
     items: any[];
   };
 
-
+  card_buttons: CardButtonsConfig;
   products: ProductsConfig;
 
   youtube: YoutubeConfig;
@@ -309,17 +323,15 @@ interface PublicProfileConfig {
 
 }
 
-function getChangedFields<T extends object>(
-  current: T,
-  original: T
-): Partial<T> {
+function getChangedFields<T extends object>(current: T, original: T): Partial<T> {
   const result: Partial<T> = {};
 
   Object.keys(current).forEach((key) => {
     const currVal = (current as any)[key];
     const origVal = (original as any)[key];
 
-    // Handle strings safely (important for bio)
+    if (currVal === undefined || currVal === null) return; // skip undefined
+
     if (typeof currVal === "string" && typeof origVal === "string") {
       if (currVal.trim() !== origVal.trim()) {
         (result as any)[key] = currVal;
@@ -327,8 +339,12 @@ function getChangedFields<T extends object>(
       return;
     }
 
-    // Deep compare objects
-    if (JSON.stringify(currVal) !== JSON.stringify(origVal)) {
+    try {
+      if (JSON.stringify(currVal) !== JSON.stringify(origVal)) {
+        (result as any)[key] = currVal;
+      }
+    } catch {
+      // if stringify fails, include it anyway
       (result as any)[key] = currVal;
     }
   });
@@ -684,7 +700,6 @@ export default function VicePublicSetting({
       }
 
       setOriginalConfig(structuredClone(config)); // 👈 reset snapshot
-
       setResultSuccess(true);
       setResultMessage("Public profile updated successfully.");
       setResultOpen(true);
@@ -735,7 +750,7 @@ export default function VicePublicSetting({
         )}
 
         <MeetingSection
-          disabled={false}
+          disabled={isReadOnly(sectionDraft)}
           value={sectionDraft}
           onChange={(v) => setSectionDraft(v)}
         />
@@ -1178,6 +1193,7 @@ export default function VicePublicSetting({
 
         <SocialSection
           items={sectionDraft.items}
+          disabled={isReadOnly(sectionDraft)}
           onChange={(items: any) => {
             setSocialError(null);
             setSectionDraft({
@@ -1237,6 +1253,7 @@ export default function VicePublicSetting({
             label=""
             value={sectionDraft.toggle_price}
             onChange={(v) =>
+              !isReadOnly(sectionDraft) &&
               setSectionDraft({
                 ...sectionDraft,
                 toggle_price: v,
@@ -1299,6 +1316,7 @@ export default function VicePublicSetting({
         {/* REORDER */}
         {sectionDraft.items?.length > 0 && (
           <ProductsReorder
+            disabled={isReadOnly(sectionDraft)}
             items={sectionDraft.items}
             onChange={(items) =>
               setSectionDraft({
@@ -1381,6 +1399,7 @@ export default function VicePublicSetting({
         <Switch
           label="Enable Banner"
           value={sectionDraft.enabled}
+          disabled={isReadOnly(sectionDraft)}
           onChange={(v) =>
             setSectionDraft({
               ...sectionDraft,
@@ -1395,8 +1414,11 @@ export default function VicePublicSetting({
             Banner Image
           </p>
 
-          <div className="relative h-40 w-full rounded-xl border overflow-hidden bg-gray-50">
-
+          <div
+            className={`relative h-40 w-full rounded-xl border overflow-hidden bg-gray-50 transition
+    ${isReadOnly(sectionDraft) ? "opacity-60 pointer-events-none" : "hover:bg-gray-100"}
+  `}
+          >
             {sectionDraft.image_url ? (
               <img
                 src={sectionDraft.image_url}
@@ -1408,25 +1430,27 @@ export default function VicePublicSetting({
               </div>
             )}
 
-            <label className="absolute inset-0 bg-black/40 text-white flex items-center justify-center opacity-0 hover:opacity-100 cursor-pointer transition">
-              Upload
-              <input
-                type="file"
-                hidden
-                accept="image/*"
-                onChange={async (e) => {
-                  const file = e.target.files?.[0];
-                  if (!file) return;
+            {!isReadOnly(sectionDraft) && (
+              <label className="absolute inset-0 bg-black/40 text-white flex items-center justify-center opacity-0 hover:opacity-100 cursor-pointer transition">
+                Upload
+                <input
+                  type="file"
+                  hidden
+                  accept="image/*"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
 
-                  const res = await uploadImage(file);
+                    const res = await uploadImage(file);
 
-                  setSectionDraft({
-                    ...sectionDraft,
-                    image_url: res.data.url,
-                  });
-                }}
-              />
-            </label>
+                    setSectionDraft({
+                      ...sectionDraft,
+                      image_url: res.data.url,
+                    });
+                  }}
+                />
+              </label>
+            )}
           </div>
         </div>
 
@@ -1437,6 +1461,7 @@ export default function VicePublicSetting({
           </label>
           <input
             value={sectionDraft.cta_text || ""}
+            disabled={isReadOnly(sectionDraft)}
             onChange={(e) =>
               setSectionDraft({
                 ...sectionDraft,
@@ -1453,6 +1478,7 @@ export default function VicePublicSetting({
             CTA URL
           </label>
           <input
+            disabled={isReadOnly(sectionDraft)}
             value={sectionDraft.cta_url || ""}
             onChange={(e) =>
               setSectionDraft({
@@ -1466,6 +1492,30 @@ export default function VicePublicSetting({
 
       </div>
     ),
+
+    card_buttons: sectionDraft && (
+      <div className="space-y-6">
+        {showLockable && (
+          <LockControl
+            value={sectionDraft}
+            role={config.role}
+            currentUser={username}
+            onChange={(v) =>
+              setSectionDraft({
+                ...sectionDraft,
+                ...v,
+              })
+            }
+          />
+        )}
+
+        <CardButtonsSection
+          value={sectionDraft}
+          disabled={isReadOnly(sectionDraft)}
+          onChange={(v) => setSectionDraft(v)}
+        />
+      </div>
+    ),
   };
 
   const SECTION_LABELS: Record<string, string> = {
@@ -1475,9 +1525,10 @@ export default function VicePublicSetting({
     photo_gallery: "Photo Gallery",
     social_links: "Social Links",
     products: "Products",
-    contact: "Contact",
+    contact: "Lead Capture",
     banner: "Banner",
     about: "About",
+    card_buttons: "Card Buttons",
   };
 
   const handleSectionSave = () => {
@@ -1567,6 +1618,9 @@ export default function VicePublicSetting({
       };
     }
 
+    if (activeSection === "card_buttons") {
+      nextConfig = { ...nextConfig, card_buttons: sectionDraft };
+    }
     /* ================= APPLY UPDATE ================= */
     update(nextConfig);
 
@@ -1765,6 +1819,7 @@ export default function VicePublicSetting({
       contact: config.contact,
       banner: config.banner,
       about: config.profile,
+      card_buttons: config.card_buttons,
     };
 
     const base = sectionMap[type];
@@ -2426,7 +2481,7 @@ export default function VicePublicSetting({
                   </div>
 
                   {/* REORDER */}
-                  <div className={sectionsLocked ? "opacity-60 pointer-events-none" : ""}>
+                  <div className={""}>
                     <SectionsReorder
                       sections={config.sections.items}
                       groupLocked={config.sections.locked}
@@ -2462,8 +2517,7 @@ export default function VicePublicSetting({
                       }}
 
                       onSectionClick={(type) => {
-                        if (isReadOnly(config.sections)) return;
-
+                        // if (config.sections.locked && role !== "vendor_admin") return;
                         setCameFromAddModal(false);
                         setPendingSection(null);
                         setActiveSection(type);
@@ -2478,6 +2532,7 @@ export default function VicePublicSetting({
                           contact: config.contact,
                           banner: config.banner,
                           about: config.profile,
+                          card_buttons: config.card_buttons,
                         };
 
                         const base = sectionMap[type];
@@ -3544,32 +3599,40 @@ export function Switch({
   label,
   value,
   onChange,
+  disabled = false,
 }: {
   label: string;
   value: boolean;
   onChange: (v: boolean) => void;
+  disabled?: boolean;
 }) {
   return (
     <div className="flex items-center gap-10">
-      <span className="text-sm font-medium text-gray-700">
+      <span className={`text-sm font-medium ${disabled ? "text-gray-400" : "text-gray-700"}`}>
         {label}
       </span>
 
       <button
         type="button"
-        onClick={() => onChange(!value)}
-        className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${value ? "bg-purple-600" : "bg-gray-300"
+        disabled={disabled}
+        onClick={() => !disabled && onChange(!value)}
+        className={`relative inline-flex h-6 w-11 items-center rounded-full transition
+          ${disabled
+            ? "bg-gray-200 cursor-not-allowed"
+            : value
+              ? "bg-purple-600"
+              : "bg-gray-300"
           }`}
       >
         <span
-          className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${value ? "translate-x-6" : "translate-x-1"
-            }`}
+          className={`inline-block h-4 w-4 transform rounded-full bg-white transition
+            ${value ? "translate-x-6" : "translate-x-1"}
+          `}
         />
       </button>
     </div>
   );
 }
-
 export function FontDropdown({
   value,
   useCustom,

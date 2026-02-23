@@ -4,7 +4,7 @@ import { Input, Switch } from "../../../../teams/components/details/publicProfil
 import { fetchSalesProducts } from "../../../../products/slice";
 import { useAppDispatch } from "../../../../../app/hooks";
 import type { Product } from "../../../../products/types";
-import { X } from "lucide-react";
+import { GripVertical, X } from "lucide-react";
 
 import {
   DndContext,
@@ -322,7 +322,7 @@ function ProductRow({ p, value, update }: any) {
         className="cursor-grab active:cursor-grabbing select-none
                    touch-none text-gray-500 px-2"
       >
-        ☰
+        <GripVertical size={18} />
       </span>
 
       <p className="flex-1 border rounded p-2 text-sm bg-white">

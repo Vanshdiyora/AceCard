@@ -54,7 +54,7 @@ export function EditableMeetingCTA({
   };
 
   return (
-    <div className="px-12 relative">
+    <div className="relative">
       {/* ✏️ EDIT ICON */}
       {editable && (
         <button

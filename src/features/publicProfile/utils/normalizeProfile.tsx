@@ -25,6 +25,30 @@ export function normalizeProfile(api: any) {
       cover_url: cfg.cover?.cover_url ?? "",
     },
 
+    /* ================= CARD BUTTONS ================= */
+    card_buttons: (() => {
+      const rawItems = Array.isArray(cfg.card_buttons?.items)
+        ? cfg.card_buttons.items
+        : [];
+
+      const mappedItems = rawItems
+        .sort((a: any, b: any) => (a.rank ?? 0) - (b.rank ?? 0))
+        .map((b: any, i: number) => ({
+          id: b.id ?? crypto.randomUUID(),
+          title: b.title ?? "",
+          link: b.link ?? "",
+          rank: i + 1, // always normalize rank
+          enabled: b.enabled ?? true,
+        }));
+
+      return {
+        locked: Boolean(cfg.card_buttons?.locked),
+        lock_mode: cfg.card_buttons?.lock_mode ?? "individual",
+        locked_by: cfg.card_buttons?.locked_by ?? "",
+        items: mappedItems, // ✅ no fallback
+      };
+    })(),
+
     contact: {
       locked: Boolean(cfg.contact?.locked),
       lock_mode: cfg.contact?.lock_mode ?? undefined,
@@ -45,7 +69,7 @@ export function normalizeProfile(api: any) {
             required: Boolean(f.required),
             options: Array.isArray(f.options) ? f.options : [],
             rank: f.rank ?? i + 1,
-            enabled: f.enabled ?? true, 
+            enabled: f.enabled ?? true,
           }))
         : [],
     },
@@ -316,9 +340,9 @@ export function denormalizeProfile(
             label: f.label,
             placeholder: f.placeholder,
             required: f.required,
-             options: f.options ?? [],   
+            options: f.options ?? [],
             rank: f.rank,
-            enabled: f.enabled ?? true, 
+            enabled: f.enabled ?? true,
           })),
       },
 
@@ -376,7 +400,22 @@ export function denormalizeProfile(
         cta_text: cfg.banner.cta_text,
         cta_url: cfg.banner.cta_url,
       },
+      /* ================= CARD BUTTONS ================= */
+      card_buttons: {
+        locked: cfg.card_buttons.locked,
+        lock_mode: cfg.card_buttons.lock_mode ?? null,
+        locked_by: cfg.card_buttons.locked_by,
 
+        items: cfg.card_buttons.items
+          .sort((a: any, b: any) => a.rank - b.rank)
+          .map((b: any) => ({
+            id: b.id,
+            title: b.title,
+            link: b.link,
+            rank: b.rank,
+            enabled: b.enabled,
+          })),
+      },
       /* ================= MEETING ================= */
       meeting: {
         locked: cfg.meeting.locked,

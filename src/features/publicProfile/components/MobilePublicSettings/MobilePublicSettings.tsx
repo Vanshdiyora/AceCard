@@ -28,21 +28,7 @@ import { Banner } from "./Banner/Banner";
 import { EditableMeetingCTA } from "./Meeting/EditableMeetingCTA";
 import PhotoGallerySection from "./sections/PhotoGallerySection";
 import { ProductsEditModal } from "./sections/ProductsEditModal";
-import {
-  DndContext,
-  closestCenter,
-  PointerSensor,
-  TouchSensor,
-  useSensor,
-  useSensors,
-} from "@dnd-kit/core";
-import {
-  SortableContext,
-  verticalListSortingStrategy,
-  useSortable,
-  arrayMove,
-} from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
+
 import { ZigzagBackground } from "../patterns/ZigzagBackground";
 import { StripeBackground } from "../patterns/StripeBackground";
 import { PolkaBackground } from "../patterns/PolkaBackground";
@@ -50,6 +36,8 @@ import { WaveBackground } from "../patterns/WaveBackground";
 import SectionsReorder from "../../../settings/components/vice/sections/SectionsReorder";
 import AddSectionModal from "../../../settings/components/vice/sections/AddSectionModal";
 import ContactSection from "../../../settings/components/vice/sections/ContactSection";
+import CardButtonsSection from "../../../settings/components/vice/sections/CardButtonsSection";
+import CommonItemsReorder from "../../../settings/components/vice/sections/CommonItemsReorder";
 
 /* ================= HELPERS ================= */
 
@@ -213,6 +201,8 @@ export default function MobilePublicSettings({
   const [photoGalleryDraft, setPhotoGalleryDraft] = useState<any | null>(null);
   const [productsDraft, setProductsDraft] = useState<any | null>(null);
   const [autoEditSection, setAutoEditSection] = useState<string | null>(null);
+  const [editCardButtons, setEditCardButtons] = useState(false);
+  const [cardButtonsDraft, setCardButtonsDraft] = useState<any | null>(null);
   const [layoutDraft, setLayoutDraft] = useState<{
     layout: any;
     theme: any;
@@ -258,11 +248,6 @@ export default function MobilePublicSettings({
         return "font-inter";
     }
   };
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
-    useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 5 } })
-  );
 
 
   const isMobile = useIsMobile();
@@ -387,7 +372,7 @@ export default function MobilePublicSettings({
             onEdit={(item) => setEditSection({ type: "youtube", item })}
           />
         );
-      
+
       case "contact":
         return (
           <ProfileActions
@@ -477,7 +462,18 @@ export default function MobilePublicSettings({
           />
         );
       }
-      
+
+      case "card_buttons":
+        return (
+          <CardButtonsPreview
+            title={draft.card_buttons?.section_title}
+            items={sortByRank(draft.card_buttons?.items || [])}
+            theme={draft.theme}
+            layout={draft.layout}
+            editable={!draft.card_buttons?.locked}
+            onEdit={() => openSectionEditor("card_buttons")}
+          />
+        );
       default:
         return null;
     }
@@ -594,7 +590,17 @@ export default function MobilePublicSettings({
       case "banner":
         setAutoEditSection(type);
         break;
-
+      case "card_buttons":
+        setCardButtonsDraft(
+          structuredClone(
+            draft.card_buttons ?? {
+              section_title: "Card Buttons",
+              items: [],
+            }
+          )
+        );
+        setEditCardButtons(true);
+        break;
       case "contact":
         setContactDraft(structuredClone(draft.contact));
         setEditContact(true);
@@ -605,7 +611,7 @@ export default function MobilePublicSettings({
     }
   };
   // bgPositionClass no longer used here; background is handled by BackgroundLayer
-
+  const sectionsLocked = draft.sections?.locked;
   return (
     <div className={`relative w-full min-h-full overflow-x-hidden p-4 pb-24 ${fontClass}`}>
 
@@ -649,93 +655,114 @@ export default function MobilePublicSettings({
         <h3 className="text-lg font-semibold">
           Manage YouTube Videos
         </h3>
-        <div className="space-y-1">
-          <p className="text-xs uppercase tracking-wide text-gray-500">
-            Section title
-          </p>
-
-          <input
-            type="text"
-            value={youtubeDraft?.section_title || "Video Gallery"}
-            placeholder="Video Gallery"
-            onChange={(e) =>
-              setYoutubeDraft((prev: any) => ({
-                ...prev,
-                section_title:
-                  e.target.value.trim() === ""
-                    ? "Video Gallery"
-                    : e.target.value,
-              }))
-            }
-            className="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-          />
-        </div>
-
-        <button
-          onClick={() =>
-            setYoutubeDraft((prev: any) => {
-              const items = prev?.items || [];
-              return {
-                ...prev,
-                items: [
-                  ...items,
-                  { id: Date.now(), url: "", rank: items.length + 1 },
-                ],
-              };
-            })
-          }
-          className="w-full py-2 rounded-xl border border-dashed
-               text-sm font-semibold text-gray-600 hover:bg-gray-100"
-        >
-          Add Video
-        </button>
 
         {youtubeDraft && (
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={({ active, over }) => {
-              if (!over || active.id === over.id) return;
+          <div className="space-y-6">
 
-              setYoutubeDraft((prev: any) => {
-                const items = safeSort(prev.items);
+            {/* GALLERY TITLE */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">
+                Gallery Title
+              </label>
+              <input
+                type="text"
+                value={youtubeDraft.section_title || ""}
+                onChange={(e) =>
+                  setYoutubeDraft((prev: any) => ({
+                    ...prev,
+                    section_title: e.target.value,
+                  }))
+                }
+                className="w-full rounded-xl border px-4 py-3"
+                placeholder="Videos Gallery"
+              />
+            </div>
 
-                const oldIndex = items.findIndex(i => i.id === active.id);
-                const newIndex = items.findIndex(i => i.id === over.id);
+            {/* VIDEO CARDS */}
+            <div className="space-y-4">
+              <CommonItemsReorder
+                items={youtubeDraft.items || []}
+                onChange={(updatedItems: any[]) =>
+                  setYoutubeDraft((prev: any) => ({
+                    ...prev,
+                    items: updatedItems.map((i, idx) => ({
+                      ...i,
+                      rank: idx + 1,
+                    })),
+                  }))
+                }
+                renderItem={(item: any, index: number) => (
+                  <div className="bg-gray-50 rounded-2xl p-5 space-y-4">
 
-                return {
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-medium text-gray-600">
+                        Video {index + 1}
+                      </span>
+
+                      <button
+                        onClick={() => {
+                          const next = youtubeDraft.items
+                            .filter((i: any) => i.id !== item.id)
+                            .map((v: any, i: number) => ({
+                              ...v,
+                              rank: i + 1,
+                            }));
+
+                          setYoutubeDraft({
+                            ...youtubeDraft,
+                            items: next,
+                          });
+                        }}
+                        className="text-red-500 text-sm"
+                      >
+                        Delete
+                      </button>
+                    </div>
+
+                    <input
+                      value={item.url || ""}
+                      onChange={(e) => {
+                        const next = [...youtubeDraft.items];
+                        next[index] = {
+                          ...item,
+                          url: e.target.value,
+                        };
+
+                        setYoutubeDraft({
+                          ...youtubeDraft,
+                          items: next,
+                        });
+                      }}
+                      className="w-full rounded-xl border px-4 py-3"
+                      placeholder="https://youtube.com/..."
+                    />
+                  </div>
+                )}
+              />
+            </div>
+
+            {/* ADD BUTTON */}
+            <button
+              onClick={() =>
+                setYoutubeDraft((prev: any) => ({
                   ...prev,
-                  items: arrayMove(items, oldIndex, newIndex)
-                    .map((i, idx) => ({ ...i, rank: idx + 1 })),
-                };
-              });
-            }}
-          >
-            <SortableContext
-              items={(youtubeDraft.items || []).map((i: any) => i.id)}
-              strategy={verticalListSortingStrategy}
+                  items: [
+                    ...(prev.items || []),
+                    {
+                      id: crypto.randomUUID(),
+                      url: "",
+                      rank: (prev.items?.length || 0) + 1,
+                      enabled: true,
+                    },
+                  ],
+                }))
+              }
+              className="w-full border rounded-xl py-3 text-sm font-medium hover:bg-gray-50"
             >
-              <div className="space-y-2 max-h-72 overflow-y-auto
-                        overscroll-contain touch-pan-y">
-                {(youtubeDraft.items || []).map((v: any) => (
-                  <YouTubeRow
-                    key={v.id}
-                    v={v}
-                    setDraft={(updater: any) =>
-                      setYoutubeDraft((prev: any) => {
-                        const items =
-                          typeof updater === "function"
-                            ? updater(prev.items)
-                            : updater;
+              + Add Another Video
+            </button>
 
-                        return { ...prev, items };
-                      })
-                    }
-                  />
-                ))}
-              </div>
-            </SortableContext>
-          </DndContext>
+          </div>
         )}
       </EditModal>
 
@@ -832,6 +859,35 @@ export default function MobilePublicSettings({
             }));
           }}
         />
+      </EditModal>
+
+      {/* Card Buttons */}
+      <EditModal
+        open={editCardButtons}
+        onClose={() => {
+          setCardButtonsDraft(null);
+          setEditCardButtons(false);
+        }}
+        onSave={() => {
+          setDraft((prev: any) => ({
+            ...prev,
+            card_buttons: cardButtonsDraft,
+          }));
+          setCardButtonsDraft(null);
+          setEditCardButtons(false);
+        }}
+      >
+        <h3 className="text-lg font-semibold">
+          Manage Card Buttons
+        </h3>
+
+        {cardButtonsDraft && (
+          <CardButtonsSection
+            value={cardButtonsDraft}
+            disabled={draft.card_buttons?.locked}
+            onChange={setCardButtonsDraft}
+          />
+        )}
       </EditModal>
 
       <AddSectionModal
@@ -983,21 +1039,27 @@ export default function MobilePublicSettings({
         {/* 👇 SECTION ACTION BUTTONS */}
         <div className="flex gap-3 pt-6">
           <button
-            onClick={() => {
-              setOpenSectionsEditor(true);
-            }}
-            className="flex-1 py-3 rounded-xl border font-semibold
-                 bg-white/90 backdrop-blur shadow-sm
-                 hover:bg-gray-50 transition"
+            onClick={() => setOpenSectionsEditor(true)}
+            disabled={sectionsLocked}
+            className={`flex-1 py-3 rounded-xl border font-semibold
+    bg-white/90 backdrop-blur shadow-sm
+    transition
+    ${sectionsLocked
+                ? "opacity-50 cursor-not-allowed"
+                : "hover:bg-gray-50"
+              }`}
           >
             Edit Sections
           </button>
 
           <button
             onClick={() => setOpenAddSection(true)}
-            className="flex-1 py-3 rounded-xl font-semibold text-white
-                 bg-purple-600 shadow
-                 hover:bg-purple-700 transition"
+            disabled={sectionsLocked}
+            className={`flex-1 py-3 rounded-xl font-semibold text-white shadow transition
+    ${sectionsLocked
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-purple-600 hover:bg-purple-700"
+              }`}
           >
             Add Section
           </button>
@@ -1009,78 +1071,78 @@ export default function MobilePublicSettings({
 }
 
 /* ================= UI BLOCKS ================= */
-function YouTubeRow({
-  v,
-  setDraft,
-}: {
-  v: any;
-  setDraft: any;
-}) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: v.id });
+// function YouTubeRow({
+//   v,
+//   setDraft,
+// }: {
+//   v: any;
+//   setDraft: any;
+// }) {
+//   const {
+//     attributes,
+//     listeners,
+//     setNodeRef,
+//     transform,
+//     transition,
+//     isDragging,
+//   } = useSortable({ id: v.id });
 
-  return (
-    <div
-      ref={setNodeRef}
-      style={{
-        transform: CSS.Transform.toString(transform),
-        transition,
-      }}
-      className={`flex items-center gap-2 bg-gray-50 p-2 rounded-lg border
-        ${isDragging ? "opacity-50 scale-[1.02] z-50" : ""}
-      `}
-    >
-      <span
-        {...attributes}
-        {...listeners}
-        className="cursor-grab active:cursor-grabbing select-none
-                   touch-none text-gray-500 px-2 py-1"
-      >
-        ☰
-      </span>
+//   return (
+//     <div
+//       ref={setNodeRef}
+//       style={{
+//         transform: CSS.Transform.toString(transform),
+//         transition,
+//       }}
+//       className={`flex items-center gap-2 bg-gray-50 p-2 rounded-lg border
+//         ${isDragging ? "opacity-50 scale-[1.02] z-50" : ""}
+//       `}
+//     >
+//       <span
+//         {...attributes}
+//         {...listeners}
+//         className="cursor-grab active:cursor-grabbing select-none
+//                    touch-none text-gray-500 px-2 py-1"
+//       >
+//         ☰
+//       </span>
 
-      <input
-        value={v.url}
-        onChange={(e) =>
-          setDraft((prev: any) => ({
-            ...prev,
-            youtube: {
-              ...prev.youtube,
-              items: prev.youtube.items.map((i: any) =>
-                i.id === v.id ? { ...i, url: e.target.value } : i
-              ),
-            },
-          }))
-        }
-        placeholder="YouTube link"
-        className="flex-1 border rounded-md p-2 text-sm"
-      />
+//       <input
+//         value={v.url}
+//         onChange={(e) =>
+//           setDraft((prev: any) => ({
+//             ...prev,
+//             youtube: {
+//               ...prev.youtube,
+//               items: prev.youtube.items.map((i: any) =>
+//                 i.id === v.id ? { ...i, url: e.target.value } : i
+//               ),
+//             },
+//           }))
+//         }
+//         placeholder="YouTube link"
+//         className="flex-1 border rounded-md p-2 text-sm"
+//       />
 
-      <button
-        onClick={() =>
-          setDraft((prev: any) => ({
-            ...prev,
-            youtube: {
-              ...prev.youtube,
-              items: prev.youtube.items
-                .filter((i: any) => i.id !== v.id)
-                .map((i: any, r: number) => ({ ...i, rank: r + 1 })),
-            },
-          }))
-        }
-        className="text-red-500 text-sm px-2"
-      >
-        ✕
-      </button>
-    </div>
-  );
-}
+//       <button
+//         onClick={() =>
+//           setDraft((prev: any) => ({
+//             ...prev,
+//             youtube: {
+//               ...prev.youtube,
+//               items: prev.youtube.items
+//                 .filter((i: any) => i.id !== v.id)
+//                 .map((i: any, r: number) => ({ ...i, rank: r + 1 })),
+//             },
+//           }))
+//         }
+//         className="text-red-500 text-sm px-2"
+//       >
+//         ✕
+//       </button>
+//     </div>
+//   );
+// }
 
 
 export function Section({ title, children, theme }: any) {
@@ -1364,16 +1426,18 @@ export function EditModal({
   onSave,
   children,
   showFooter = true,
+  disableSave = false, // 👈 NEW
 }: {
   open: boolean;
   onClose: () => void;
   onSave?: () => void;
   children: React.ReactNode;
   showFooter?: boolean;
+  disableSave?: boolean; // 👈 NEW
 }) {
   if (!open) return null;
 
-  return (
+  return createPortal(
     <div
       className="
         fixed inset-0 z-[9999]
@@ -1388,12 +1452,12 @@ export function EditModal({
         className="
           w-full max-w-md
           bg-white rounded-2xl shadow-xl
-          max-h-[85vh] overflow-y-auto
+          max-h-[85vh]
           flex flex-col
           animate-slide-from-bottom
         "
       >
-        <div className="relative  border-b">
+        <div className="relative">
           <button
             onClick={onClose}
             className="absolute right-3 top-3 h-8 w-8
@@ -1404,7 +1468,7 @@ export function EditModal({
           </button>
         </div>
 
-        <div className="flex-1 p-4 space-y-3">
+        <div className="flex-1 overflow-y-auto p-4 space-y-3">
           {children}
         </div>
 
@@ -1420,8 +1484,12 @@ export function EditModal({
             {onSave && (
               <button
                 onClick={onSave}
-                className="flex-1 py-2 rounded-lg
-                           bg-purple-600 text-white font-semibold"
+                disabled={disableSave}
+                className={`flex-1 py-2 rounded-lg font-semibold
+      ${disableSave
+                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                    : "bg-purple-600 text-white"
+                  }`}
               >
                 Save
               </button>
@@ -1429,7 +1497,8 @@ export function EditModal({
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
@@ -1786,5 +1855,67 @@ function AboutEditModal({
       </div>
     </div>,
     document.body
+  );
+}
+
+function CardButtonsPreview({
+  title,
+  items,
+  theme,
+  layout,
+  editable = false,
+  onEdit,
+}: any) {
+  const t = resolveTheme(theme);
+  const shapeClass = resolveShape(layout?.button_style);
+
+  const visible = (items || []).filter((i: any) => i.enabled);
+
+  if (!visible.length && !editable) return null;
+
+  return (
+    <Section title={title || "Quick Actions"} theme={theme}>
+      <div className="relative">
+        {editable && (
+          <button
+            onClick={onEdit}
+            className="absolute -top-4 right-0 z-20 h-9 w-9 rounded-full shadow-lg
+              flex items-center justify-center bg-orange-500 text-white
+              hover:scale-110 active:scale-95"
+          >
+            <Pencil size={14} />
+          </button>
+        )}
+
+        {visible.length === 0 ? (
+          <div className="py-6 text-center text-sm opacity-60 italic">
+            No buttons added
+          </div>
+        ) : (
+          <div
+            className={`flex gap-3 ${visible.length === 1 ? "flex-col" : "flex-row"
+              }`}
+          >
+            {visible.slice(0, 2).map((btn: any) => (
+              <a
+                key={btn.id}
+                href={btn.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`flex-1 text-center py-3 font-semibold shadow-md
+                  transition hover:scale-[1.02]
+                  ${shapeClass}`}
+                style={{
+                  backgroundColor: t.buttonBg,
+                  color: t.buttonText,
+                }}
+              >
+                {btn.title || "Button"}
+              </a>
+            ))}
+          </div>
+        )}
+      </div>
+    </Section>
   );
 }

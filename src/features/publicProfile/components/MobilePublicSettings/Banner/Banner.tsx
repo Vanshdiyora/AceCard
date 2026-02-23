@@ -12,7 +12,7 @@ export function Banner({
   theme,
   onBannerChange,
   editable = false,
-  autoOpen = false, // NEW: auto-open edit modal on mount
+  autoOpen = false,
 }: any) {
   const t = resolveTheme(theme);
 
@@ -20,18 +20,21 @@ export function Banner({
 
   const [isEditing, setIsEditing] = useState(false);
   const [isCropping, setIsCropping] = useState(false);
-  useEffect(() => {
-    if (autoOpen) {
-      setIsEditing(true);
-    }
-  }, [autoOpen]);
-  // 🔥 local draft
+
+  const [draftImage, setDraftImage] = useState<string | null>(null);
   const [draft, setDraft] = useState<{
     cta_text: string;
     cta_url: string;
   } | null>(null);
 
-  /* ---------- INIT DRAFT ONLY ON OPEN ---------- */
+  /* ---------------- AUTO OPEN ---------------- */
+  useEffect(() => {
+    if (autoOpen) {
+      setIsEditing(true);
+    }
+  }, [autoOpen]);
+
+  /* ---------------- INIT DRAFT ON OPEN ---------------- */
   useEffect(() => {
     if (!isEditing) return;
 
@@ -39,25 +42,20 @@ export function Banner({
       cta_text: ctaText || "",
       cta_url: ctaUrl || "",
     });
-  }, [isEditing, ctaText, ctaUrl]);
 
-  /* ---------- IMAGE UPLOAD ---------- */
+    setDraftImage(image); // initialize preview with committed image
+  }, [isEditing, ctaText, ctaUrl, image]);
+
+  /* ---------------- IMAGE UPLOAD ---------------- */
   const uploadBanner = async (blob: Blob) => {
     const file = new File([blob], "banner.jpg", { type: "image/jpeg" });
     const res = await uploadImage(file);
 
-    onBannerChange((prev: any) => ({
-      ...prev,
-      banner: {
-        ...prev.banner,
-        image_url: res.data.url,
-      },
-    }));
-
+    setDraftImage(res.data.url); // only update preview
     setIsCropping(false);
   };
 
-  /* ---------- SAVE ---------- */
+  /* ---------------- SAVE ---------------- */
   const saveBanner = () => {
     if (!draft) return;
 
@@ -65,6 +63,7 @@ export function Banner({
       ...prev,
       banner: {
         ...prev.banner,
+        image_url: draftImage, // commit image
         cta_text: draft.cta_text,
         cta_url: draft.cta_url,
       },
@@ -76,6 +75,7 @@ export function Banner({
 
   return (
     <div className="relative">
+      {/* CTA TEXT */}
       {ctaText && (
         <p
           className="text-sm font-semibold pb-2"
@@ -85,7 +85,7 @@ export function Banner({
         </p>
       )}
 
-      {/* ✏️ EDIT ICON */}
+      {/* EDIT BUTTON */}
       {editable && (
         <button
           onClick={() => setIsEditing(true)}
@@ -97,7 +97,7 @@ export function Banner({
         </button>
       )}
 
-      {/* BANNER IMAGE */}
+      {/* OUTSIDE BANNER (ONLY COMMITTED IMAGE) */}
       <div
         className="cursor-pointer"
         onClick={() => ctaUrl && window.open(ctaUrl, "_blank")}
@@ -109,11 +109,13 @@ export function Banner({
         />
       </div>
 
-      {/* ---------- EDIT MODAL ---------- */}
+      {/* ---------------- EDIT MODAL ---------------- */}
       <EditModal
         open={isEditing}
-        onClose={() => setIsEditing(false)}   // ❌ discard
-        onSave={saveBanner}                   // ✅ commit
+        onClose={() => {
+          setIsEditing(false); // discard draft automatically
+        }}
+        onSave={saveBanner}
       >
         <h3 className="text-lg font-semibold">
           Edit Banner
@@ -121,6 +123,17 @@ export function Banner({
 
         {draft && (
           <div className="space-y-4">
+
+            {/* PREVIEW IMAGE INSIDE MODAL */}
+            <div className="w-full h-32 rounded-2xl overflow-hidden bg-gray-100">
+              <img
+                src={draftImage || image}
+                alt="Banner Preview"
+                className="w-full h-full object-cover"
+              />
+            </div>
+
+            {/* CHANGE IMAGE BUTTON */}
             <button
               onClick={() =>
                 document.getElementById("bannerInput")?.click()
@@ -143,6 +156,7 @@ export function Banner({
               }}
             />
 
+            {/* CTA TEXT */}
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">
                 CTA Text
@@ -159,6 +173,7 @@ export function Banner({
               />
             </div>
 
+            {/* CTA LINK */}
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">
                 CTA Link
@@ -178,7 +193,7 @@ export function Banner({
         )}
       </EditModal>
 
-      {/* ---------- CROP ---------- */}
+      {/* ---------------- CROP MODAL ---------------- */}
       {isCropping && fileRef.current && (
         <CoverCropModal
           file={fileRef.current}
