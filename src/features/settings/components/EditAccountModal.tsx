@@ -33,7 +33,7 @@ export default function EditAccountModal({ open, onClose }: Props) {
       email: data.email ?? "",
       phone: data.phone ?? "",
       role: data.role ?? "",
-      custom_job_role: data.custom_job_role ?? "",
+      custom_job_role: data.custom_job_role || capitalizeFirst(data.role || ""),
       company_description: data.company_description ?? "",
       address: data.address ?? "",
     });
@@ -84,7 +84,7 @@ export default function EditAccountModal({ open, onClose }: Props) {
       ...(isVendor
         ? { vendor_name: form.name }
         : { name: form.name }),
-      custom_job_role: form.custom_job_role,
+      custom_job_role: form.custom_job_role || form.role,
       address: form.address,
       company_description: form.company_description,
     };
@@ -96,6 +96,57 @@ export default function EditAccountModal({ open, onClose }: Props) {
       console.error("Update failed:", err);
     }
   };
+  const capitalizeFirst = (value: string) =>
+    value ? value.charAt(0).toUpperCase() + value.slice(1) : "";
+  /* ---------- FIELD CONFIG ---------- */
+  const fields: FieldConfig[] = [
+    {
+      name: "name",
+      label: "Name",
+      type: "text" as const,
+
+      disabled: true,
+      minLength: 2,
+    },
+    {
+      name: "email",
+      label: "Email",
+      type: "email" as const,
+      disabled: true,   // 🔒 disable
+    },
+    {
+      name: "phone",
+      label: "Phone",
+      type: "text" as const,
+      pattern: /^[0-9+\-()\s]{7,15}$/,
+      disabled: true,   // 🔒 disable
+    },
+    // {
+    //   name: "role",
+    //   label: "Role",
+    //   type: "text" as const,
+    //   disabled: true,  // ✅ editable → maps to custom_job_role
+    // },
+    {
+      name: "custom_job_role",
+      label: "Custom Role",
+      type: "text" as const,
+      disabled: true,  // ✅ editable → maps to custom_job_role
+    },
+    {
+      name: "company_description",
+      label: "Company Description",
+      type: "textarea" as const,
+      required: true,
+      maxLength: 1000,
+    },
+    {
+      name: "address",
+      label: "Address",
+      required: true,
+      type: "textarea" as const,
+    },
+  ];
   /* ---------- UI ---------- */
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
@@ -140,55 +191,6 @@ export default function EditAccountModal({ open, onClose }: Props) {
   );
 }
 
-/* ---------- FIELD CONFIG ---------- */
-const fields: FieldConfig[] = [
-  {
-    name: "name",
-    label: "Name",
-    type: "text" as const,
-    required: true,
-    minLength: 2,
-  },
-  {
-    name: "email",
-    label: "Email",
-    type: "email" as const,
-    disabled: true,   // 🔒 disable
-  },
-  {
-    name: "phone",
-    label: "Phone",
-    type: "text" as const,
-    pattern: /^[0-9+\-()\s]{7,15}$/,
-    disabled: true,   // 🔒 disable
-  },
-  // {
-  //   name: "role",
-  //   label: "Role",
-  //   type: "text" as const,
-  //   disabled: true,  // ✅ editable → maps to custom_job_role
-  // },
-  {
-    name: "custom_job_role",
-    label: "Custom Role",
-    type: "text" as const,
-    required: true,
-    disabled: false,  // ✅ editable → maps to custom_job_role
-  },
-  {
-    name: "company_description",
-    label: "Company Description",
-    type: "textarea" as const,
-    required: true,
-    maxLength: 1000,
-  },
-  {
-    name: "address",
-    label: "Address",
-    required: true,
-    type: "textarea" as const,
-  },
-];
 
 
 /* ---------- SCROLL HELPERS ---------- */

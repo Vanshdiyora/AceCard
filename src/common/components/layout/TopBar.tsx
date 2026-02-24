@@ -54,14 +54,22 @@ export default function Topbar({ type }: TopbarProps) {
   }, [token, dispatch]);
 
   const name = useMemo(() => {
+  if (profile?.role === "vendor_admin") {
     return (
-      profile?.vendor_name ||   // 👈 ADD THIS
-      profile?.name ||
+      profile?.vendor_name ||
       jwtUser?.name ||
       jwtUser?.email?.split("@")[0] ||
       ""
     );
-  }, [profile, jwtUser]);
+  }
+
+  return (
+    profile?.name ||
+    jwtUser?.name ||
+    jwtUser?.email?.split("@")[0] ||
+    ""
+  );
+}, [profile, jwtUser]);
 
   const isLoadingUser = profileLoading || !name;
 
