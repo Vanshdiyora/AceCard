@@ -55,6 +55,7 @@ export default function Topbar({ type }: TopbarProps) {
 
   const name = useMemo(() => {
     return (
+      profile?.vendor_name ||   // 👈 ADD THIS
       profile?.name ||
       jwtUser?.name ||
       jwtUser?.email?.split("@")[0] ||
@@ -94,14 +95,14 @@ export default function Topbar({ type }: TopbarProps) {
     setOpen(false);
     requestAnimationFrame(() => {
       dispatch(logout());
-eraseCookie("token");
-eraseCookie("subdomain");
+      eraseCookie("token");
+      eraseCookie("subdomain");
 
       dispatch(resetSettings());
       window.location.href = "/login";
     });
   };
-  
+
   const Dropdown = (
     <div
       className="absolute right-0 top-full mt-2 bg-white border shadow-xl rounded-lg w-44 z-50 origin-top-right"

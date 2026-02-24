@@ -28,8 +28,8 @@ export const settingsService = {
       other_links: data.other_links ?? null,
       display_settings: data.display_settings ?? null,
       address: (data as any).address ?? "",
-      custom_job_role: data.custom_job_role?? ""
-
+      custom_job_role: data.custom_job_role?? "",
+      vendor_name: data.vendor_name ?? ""
     };
   },
 
@@ -52,7 +52,8 @@ export const settingsService = {
       other_links: data.other_links ?? null,
       display_settings: data.display_settings ?? null,
       address: (data as any).address ?? "",
-      custom_job_role: data.custom_job_role?? ""
+      custom_job_role: data.custom_job_role?? "",
+      vendor_name: data.vendor_name ?? ""
     };
   },
 

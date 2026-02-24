@@ -32,6 +32,7 @@ import { Image, Video } from "lucide-react";
 import AddSocialModal from "./sections/AddSocialModal";
 import CommonItemsReorder from "./sections/CommonItemsReorder";
 import CardButtonsSection from "./sections/CardButtonsSection";
+import BrandLoader from "../../../../common/ui/BrandLoader";
 
 const THEME_COLOR_KEYS = [
   "card_background",
@@ -726,7 +727,7 @@ export default function VicePublicSetting({
   const role = useAppSelector((s) => s.auth.role);
 
   if (loading || !config)
-    return <p className="text-gray-400">Loading...</p>;
+    return <p className="text-gray-400"><BrandLoader /></p>;
 
   const isReadOnly = (meta?: { locked?: boolean }) =>
     meta?.locked === true && role !== "vendor_admin";

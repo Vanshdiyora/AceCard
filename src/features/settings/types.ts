@@ -2,6 +2,7 @@
 export interface AccountProfileResponse {
   username: string; // 👈 ADD THIS
   name: string;
+  vendor_name: string;
   email: string;
   phone: string;
   role: string;
@@ -29,7 +30,8 @@ export interface AccountProfile {
   other_links: any;
   display_settings: any;
   address: string;
-    custom_job_role: string;
+  custom_job_role: string;
+  vendor_name: string;
 }
 
 export type UpdateAccountProfilePayload = AccountProfile;
@@ -98,7 +100,8 @@ export interface SettingsState {
   };
 }
 export interface UpdateMyAccountProfilePayload {
-  name: string;
+  name?: string;
+  vendor_name?: string;
   custom_job_role: string;
   address: string;
   company_description: string;

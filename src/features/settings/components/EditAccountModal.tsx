@@ -24,12 +24,16 @@ export default function EditAccountModal({ open, onClose }: Props) {
   useEffect(() => {
     if (!data || !open) return;
 
+    const isVendor = data.role === "vendor_admin";
+
     setForm({
-      name: data.name ?? "",
+      name: isVendor
+        ? data.vendor_name ?? ""
+        : data.name ?? "",
       email: data.email ?? "",
       phone: data.phone ?? "",
       role: data.role ?? "",
-      custom_job_role: data.custom_job_role?? "",
+      custom_job_role: data.custom_job_role ?? "",
       company_description: data.company_description ?? "",
       address: data.address ?? "",
     });
@@ -52,35 +56,46 @@ export default function EditAccountModal({ open, onClose }: Props) {
   };
 
   /* ---------- SAVE ---------- */
-  const save = () => {
-    const hasErrors = fields.some((field) => {
-      const error = validateField(
-        field,
-        form[field.name],
-        form
-      );
+  const save = async () => {
+    const newErrors: Record<string, string | null> = {};
 
-      setErrors((prev) => ({
-        ...prev,
-        [field.name]: error,
-      }));
+    // validate only active fields
+    fields.forEach((field) => {
+      if (field.disabled) return;
 
-      return error;
+      const error = validateField(field, form[field.name], form);
+      newErrors[field.name] = error;
     });
 
-    if (hasErrors) return;
+    setErrors(newErrors);
+
+    // check if any real error exists
+    const hasErrors = Object.values(newErrors).some(
+      (error) => typeof error === "string" && error.length > 0
+    );
+
+    if (hasErrors) {
+      return;
+    }
+
+    const isVendor = data?.role === "vendor_admin";
+
     const payload = {
-      name: form.name,
+      ...(isVendor
+        ? { vendor_name: form.name }
+        : { name: form.name }),
       custom_job_role: form.custom_job_role,
       address: form.address,
       company_description: form.company_description,
     };
 
-    dispatch(updateMyAccountProfile(payload));
-    onClose();
-
+    try {
+      await dispatch(updateMyAccountProfile(payload)).unwrap();
+      onClose();
+    } catch (err) {
+      console.error("Update failed:", err);
+    }
   };
-
   /* ---------- UI ---------- */
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">

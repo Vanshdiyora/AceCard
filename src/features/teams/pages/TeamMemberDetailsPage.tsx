@@ -87,8 +87,8 @@ export default function TeamMemberDetailsPage() {
   const displayRole = useMemo(() => {
     if (!member) return "";
     switch (member.role) {
-      case "sales_rep":    return "Sales Person";
-      case "manager":      return "Manager";
+      case "sales_rep": return "Sales Person";
+      case "manager": return "Manager";
       case "vendor_admin": return "Vendor Admin";
       default:
         return member.role
@@ -239,13 +239,14 @@ export default function TeamMemberDetailsPage() {
   return (
     <div
       className={`
-        ${isPublicProfile ? "pt-4" : "pt-6"}
-        px-4 lg:px-6
-        grid grid-cols-1 gap-6
-        lg:h-[calc(100vh-64px)]
-        transition-all duration-500 ease-in-out
-        ${isPublicProfile ? "lg:grid-cols-[1fr_480px]" : "lg:grid-cols-[1fr_320px]"}
-      `}
+    ${isPublicProfile ? "pt-4" : "pt-6"}
+    px-4 lg:px-6
+    grid grid-cols-1
+    gap-6 xl:gap-0
+    lg:h-[calc(100vh-64px)]
+    transition-all duration-500 ease-in-out
+    ${isPublicProfile ? "xl:grid-cols-[1fr_480px]" : "xl:grid-cols-[1fr_320px]"}
+  `}
     >
 
       {/* ── LEFT COLUMN ── */}
@@ -339,11 +340,10 @@ export default function TeamMemberDetailsPage() {
               <button
                 key={t}
                 onClick={() => setActiveTab(t)}
-                className={`pb-2 capitalize ${
-                  activeTab === t
+                className={`pb-2 capitalize ${activeTab === t
                     ? "border-b-2 border-purple-600 text-purple-600 font-medium"
                     : "text-gray-500"
-                }`}
+                  }`}
               >
                 {t.replace("-", " ")}
               </button>
@@ -377,7 +377,7 @@ export default function TeamMemberDetailsPage() {
         {isPublicProfile && (
           <div
             className="w-full flex gap-8"
-            
+
           >
             <div
               className="w-full xl:w-[480px] bg-white rounded-2xl shadow-md overflow-hidden flex flex-col"
@@ -396,23 +396,23 @@ export default function TeamMemberDetailsPage() {
       </div>
 
       {/* ── RIGHT COLUMN — MOBILE PREVIEW ── */}
+      {/* ── RIGHT COLUMN — MOBILE PREVIEW ── */}
       <div
         className={`
-          ${isPublicProfile ? "flex w-full lg:flex" : "hidden lg:flex"}
-          ${isPublicProfile ? "" : "h-full"}
-          justify-center items-start overflow-hidden
-          transition-all duration-500 ease-in-out
-          ${isPublicProfile ? "order-1 lg:order-1" : "order-2 lg:order-2"}
-          ${isCropping ? "opacity-0 pointer-events-none" : "opacity-100"}
-        `}
+    ${isPublicProfile ? "flex w-full" : "hidden xl:flex"}
+    ${isPublicProfile ? "" : "h-full"}
+    justify-center items-start overflow-hidden
+    transition-all duration-500 ease-in-out
+    ${isPublicProfile ? "order-1 xl:order-1" : "order-2 xl:order-2"}
+    ${isCropping ? "opacity-0 pointer-events-none" : "opacity-100"}
+  `}
       >
         <div
           className={`
-            relative w-full h-min
-            flex ${isPublicProfile ? "flex-col items-center" : "items-start justify-center"}
-            px-4
-            ${isPublicProfile ? "mt-8" : "mt-8"}
-          `}
+      relative w-full h-min
+      flex ${isPublicProfile ? "flex-col items-center" : "items-start justify-center"}
+      px-4 mt-8
+    `}
         >
           {/* Live Preview label */}
           <div className="absolute -top-8 text-xs text-gray-400 bg-gray-50 tracking-wide border border-[#D5d5d5] rounded-xl px-2 py-1 shadow-md hover:shadow-lg transition-shadow duration-200">
@@ -427,9 +427,7 @@ export default function TeamMemberDetailsPage() {
 
           {/* Scale wrapper */}
           <div className="origin-top scale-[0.6] max-h-[500px] xl:scale-[0.7]">
-            {/* Device frame */}
             <div className="w-[390px] h-[780px] rounded-[44px]">
-              {/* Device screen */}
               <div className="w-full h-full bg-white rounded-[36px] overflow-hidden flex flex-col">
                 <div
                   ref={phoneScrollRef}

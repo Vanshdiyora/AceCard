@@ -111,10 +111,15 @@ export default function AccountSettings() {
       <h2 className="text-xl font-semibold mb-6">Account Settings</h2>
 
       <div className="space-y-2 mb-8">
-        {renderView("Name", data.name)}
+        {renderView(
+          "Name",
+          data.role === "vendor_admin"
+            ? data.vendor_name
+            : data.name
+        )}
         {renderView("Email", data.email)}
         {renderView("Phone", data.phone)}
-   {renderView("Role", data.custom_job_role || data.role)}
+        {renderView("Role", data.custom_job_role || data.role)}
 
         {renderView("Company Description", data.company_description)}
         {renderView("Address", data.address)}
@@ -146,8 +151,8 @@ export default function AccountSettings() {
                 onChange={(e) => setMeta(e.target.value.trim())}
                 placeholder="1234567890123"
                 className={`w-full mt-1 px-3 py-2 border rounded-lg outline-none ${meta === "" || isMetaPixel(meta)
-                    ? "border-gray-300"
-                    : "border-red-500"
+                  ? "border-gray-300"
+                  : "border-red-500"
                   }`}
               />
               {meta !== "" && !isMetaPixel(meta) && (
@@ -161,8 +166,8 @@ export default function AccountSettings() {
                 disabled={!isMetaPixel(meta) || tracking.saving}
                 onClick={saveMeta}
                 className={`h-10 px-5 rounded-lg text-white ${isMetaPixel(meta) && !tracking.saving
-                    ? "bg-purple-600"
-                    : "bg-gray-300"
+                  ? "bg-purple-600"
+                  : "bg-gray-300"
                   }`}
               >
                 Save
@@ -181,8 +186,8 @@ export default function AccountSettings() {
                 onChange={(e) => setGa(e.target.value.trim())}
                 placeholder="G-XXXXXXXXXX"
                 className={`w-full mt-1 px-3 py-2 border rounded-lg outline-none ${ga === "" || isGA(ga)
-                    ? "border-gray-300"
-                    : "border-red-500"
+                  ? "border-gray-300"
+                  : "border-red-500"
                   }`}
               />
               {ga !== "" && !isGA(ga) && (
@@ -196,8 +201,8 @@ export default function AccountSettings() {
                 disabled={!isGA(ga) || tracking.saving}
                 onClick={saveGA}
                 className={`h-10 px-5 rounded-lg text-white ${isGA(ga) && !tracking.saving
-                    ? "bg-purple-600"
-                    : "bg-gray-300"
+                  ? "bg-purple-600"
+                  : "bg-gray-300"
                   }`}
               >
                 Save
@@ -216,8 +221,8 @@ export default function AccountSettings() {
                 onChange={(e) => setLi(e.target.value.trim())}
                 placeholder="123456"
                 className={`w-full mt-1 px-3 py-2 border rounded-lg outline-none ${li === "" || isLinkedIn(li)
-                    ? "border-gray-300"
-                    : "border-red-500"
+                  ? "border-gray-300"
+                  : "border-red-500"
                   }`}
               />
               {li !== "" && !isLinkedIn(li) && (
@@ -231,8 +236,8 @@ export default function AccountSettings() {
                 disabled={!isLinkedIn(li) || tracking.saving}
                 onClick={saveLI}
                 className={`h-10 px-5 rounded-lg text-white ${isLinkedIn(li) && !tracking.saving
-                    ? "bg-purple-600"
-                    : "bg-gray-300"
+                  ? "bg-purple-600"
+                  : "bg-gray-300"
                   }`}
               >
                 Save
