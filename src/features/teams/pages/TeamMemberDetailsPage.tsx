@@ -341,8 +341,8 @@ export default function TeamMemberDetailsPage() {
                 key={t}
                 onClick={() => setActiveTab(t)}
                 className={`pb-2 capitalize ${activeTab === t
-                    ? "border-b-2 border-purple-600 text-purple-600 font-medium"
-                    : "text-gray-500"
+                  ? "border-b-2 border-purple-600 text-purple-600 font-medium"
+                  : "text-gray-500"
                   }`}
               >
                 {t.replace("-", " ")}

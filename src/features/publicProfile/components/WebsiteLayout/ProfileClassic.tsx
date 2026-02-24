@@ -14,7 +14,12 @@ const resolveTheme = (theme: any) => ({
   text: theme.card_text || "#EA3636",
   buttonText: theme.button_text || "#5F29F5",
 });
+const safeSrc = (value?: string | null): string | null => {
+  if (!value) return null;
 
+  const trimmed = value.trim();
+  return trimmed !== "" ? trimmed : null;
+};
 export function ProfileClassic({
   profile,
   cover,
@@ -46,19 +51,18 @@ export function ProfileClassic({
         style={{ backgroundColor: t.cardBg }}
       >
         {/* ================= COVER ================= */}
-        {cover?.cover_url ? (
-          <img
-            src={cover.cover_url}
-            className="w-full h-full object-cover"
-            alt="Cover"
-          />
-        ) : (
-          <div
-            className="h-full flex items-center justify-center text-xs text-gray-400"
-            style={{ backgroundColor: t.cardBg }}
-          />
-        )}
-
+        {safeSrc(cover?.cover_url) ? (
+  <img
+    src={safeSrc(cover?.cover_url)!}
+    className="w-full h-full object-cover"
+    alt="Cover"
+  />
+) : (
+  <div
+    className="h-full flex items-center justify-center text-xs text-gray-400"
+    style={{ backgroundColor: t.cardBg }}
+  />
+)}
         {/* ================= FADE ================= */}
         {layout?.is_fade && (
           <div
@@ -90,18 +94,18 @@ export function ProfileClassic({
                 borderRadius: BORDER_RADIUS, // 👈 fixed rounded-xl
               }}
             >
-              {profile?.avatar_url ? (
-                <img
-                  src={profile.avatar_url}
-                  alt="Avatar"
-                  style={{
-                    width: avatarSize,
-                    height: avatarSize,
-                    objectFit: "cover",
-                    borderRadius: "100%", // 👈 always circular
-                  }}
-                />
-              ) : (
+             {safeSrc(profile?.avatar_url) ? (
+  <img
+    src={safeSrc(profile?.avatar_url)!}
+    alt="Avatar"
+    style={{
+      width: avatarSize,
+      height: avatarSize,
+      objectFit: "cover",
+      borderRadius: "100%",
+    }}
+  />
+) : (
                 <div
                   className="flex items-center justify-center text-xs font-semibold"
                   style={{
