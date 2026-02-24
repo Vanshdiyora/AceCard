@@ -110,6 +110,8 @@ export default function AddVendorModal({
       type: "text",
       placeholder: "Enter primary contact number",
       required: true,
+      min: 10,
+      max: 15,
       pattern: /^[0-9+\-()\s]{7,15}$/,
     },
     {

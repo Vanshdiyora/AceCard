@@ -170,17 +170,20 @@ export default function DynamicForm({
                   disabled={disabled || field.disabled}
                   value={form[field.name] ?? ""}
                   placeholder={field.placeholder}
-                  onChange={(e) =>
-                    handleChange(
-                      field,
-                      e.target.value === ""
-                        ? ""
-                        : Number(e.target.value)
-                    )
-                  }
-                  onBlur={() => handleBlur(field.name)}
                   min={field.min}
+                  max={field.max}
+                  onWheel={(e) => (e.target as HTMLInputElement).blur()}
+                  onChange={(e) => {
+                    const raw = e.target.value;
+
+                   handleChange(
+  field,
+  raw === "" ? null : Number(raw)
+);
+                  }}
+                  onBlur={() => handleBlur(field.name)}
                 />
+
                 {showError && (
                   <p className="text-xs text-red-500 mt-1">{error}</p>
                 )}

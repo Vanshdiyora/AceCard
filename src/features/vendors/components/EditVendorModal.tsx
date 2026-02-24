@@ -76,7 +76,7 @@ export default function EditVendorModal({
     },
 
     { name: "primary_email", label: "Primary Email", type: "email", required: true },
-    { name: "primary_phone", label: "Primary Phone", type: "text", required: true },
+    { name: "primary_phone", label: "Primary Phone", type: "number", required: true },
 
     {
       name: "payment_terms",
