@@ -127,7 +127,9 @@ export default function DataTable<T>({
           <div
             key={i}
             onClick={() => onRowClick?.(row)}
-            className="grid bg-white border rounded-2xl px-4 py-3 hover:bg-gray-50 items-center min-h-[60px]"
+            className={`grid bg-white border rounded-2xl px-4 py-3 items-center min-h-[60px]
+    ${onRowClick ? "hover:bg-gray-50 cursor-pointer" : ""}
+  `}
             style={{ gridTemplateColumns: gridTemplate, columnGap: "15px" }}
           >
             {columns.map((c, j) => (
