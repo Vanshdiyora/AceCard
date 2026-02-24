@@ -50,6 +50,13 @@ export function validateField(
     if (field.maxLength && value.length > field.maxLength) {
       return `${field.label} must be at most ${field.maxLength} characters`;
     }
+    // ✅ Email validation
+    if (field.type === "email" && value.trim() !== "") {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(value.trim())) {
+        return `${field.label} is not a valid email address`;
+      }
+    }
   }
 
   if (field.pattern && !field.pattern.test(value)) {

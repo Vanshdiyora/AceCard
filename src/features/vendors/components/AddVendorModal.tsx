@@ -107,7 +107,7 @@ export default function AddVendorModal({
     {
       name: "primary_phone",
       label: "Primary Phone",
-      type: "text",
+      type: "number",
       placeholder: "Enter primary contact number",
       required: true,
       min: 10,
@@ -149,6 +149,12 @@ export default function AddVendorModal({
       type: "email",
       required: true,
       placeholder: "poc@company.com",
+      validate: (value, form) => {
+        if (value && form.primary_email && value.trim().toLowerCase() === form.primary_email.trim().toLowerCase()) {
+          return "Vendor POC Email must be different from Primary Email";
+        }
+        return null;
+      },
     },
     {
       name: "subscription_end_date",
@@ -174,7 +180,22 @@ export default function AddVendorModal({
 
   /* ---------- UPDATE ---------- */
   const update = (key: string, value: any) => {
-    setForm((prev) => ({ ...prev, [key]: value }));
+    setForm((prev) => {
+      const updated = { ...prev, [key]: value };
+
+      // ✅ Re-validate poc email when primary email changes and vice versa
+      if (key === "primary_email" || key === "vendor_poc_email") {
+        const pocField = fields.find((f) => f.name === "vendor_poc_email");
+        if (pocField?.validate) {
+          const pocValue = key === "vendor_poc_email" ? value : prev.vendor_poc_email;
+          const primaryValue = key === "primary_email" ? value : prev.primary_email;
+          const error = pocField.validate(pocValue, { ...updated, primary_email: primaryValue });
+          setErrors((prev) => ({ ...prev, vendor_poc_email: error }));
+        }
+      }
+
+      return updated;
+    });
   };
 
   /* ---------- SAVE ---------- */
