@@ -151,7 +151,10 @@ export const fetchLeadConfig = createAsyncThunk<LeadFormConfig>(
   }
 );
 
-export const saveLeadConfig = createAsyncThunk<LeadFormConfig, LeadFormConfig>(
+export const saveLeadConfig = createAsyncThunk<
+  LeadFormConfig,
+  LeadFormConfig
+>(
   "settings/saveLeadConfig",
   async (payload, thunkAPI) => {
     try {
@@ -333,11 +336,7 @@ const settingsSlice = createSlice({
       })
       .addCase(saveLeadConfig.fulfilled, (s, a) => {
         s.leadConfig.saving = false;
-        s.leadConfig.data = {
-          ...s.leadConfig.data,
-          standardFields: a.payload.standardFields,
-          customFields: a.payload.customFields,
-        };
+        s.leadConfig.data = a.payload;
       })
       .addCase(saveLeadConfig.rejected, (s, a) => {
         s.leadConfig.saving = false;

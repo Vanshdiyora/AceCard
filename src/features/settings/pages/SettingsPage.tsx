@@ -29,7 +29,7 @@ export default function SettingsPage() {
 
         {/* Hide header in profile mode if you want */}
         {!isProfile && (
-          <div className="flex items-center justify-between mb-8 px-6">
+          <div className="flex items-center justify-between px-6">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">
                 Settings

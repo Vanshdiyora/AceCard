@@ -74,7 +74,13 @@ export interface LeadFormConfig {
   standardFields: Record<string, boolean>;
   customFields: CustomField[];
 }
-
+export interface LeadConfigApiResponse {
+  id: number;
+  vendor_id: number;
+  config: LeadFormConfig;
+  created_at?: string;
+  updated_at?: string;
+}
 // ---------- State ----------
 export interface SettingsState {
   account: {

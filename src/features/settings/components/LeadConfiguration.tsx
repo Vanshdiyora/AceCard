@@ -49,15 +49,14 @@ export default function LeadConfiguration() {
   }, [dispatch]);
 
   useEffect(() => {
-    if (!data) return;
+  if (!data) return;
 
-    const existingCustom = data.customFields || [];
+  const existingCustom = data.customFields || [];
+  const hasStage = existingCustom.some((f) => f.fieldId === "stage");
 
-    const hasStage = existingCustom.some((f) => f.fieldId === "stage");
-
-    const withStage = hasStage
-      ? existingCustom
-      : [
+  const withStage = hasStage
+    ? existingCustom
+    : [
         {
           fieldId: "stage",
           label: "Stage",
@@ -69,12 +68,9 @@ export default function LeadConfiguration() {
         ...existingCustom,
       ];
 
-    setStandardFields((prev) =>
-      Object.keys(prev).length ? prev : data.standardFields || {}
-    );
-
-    setCustomFields((prev) => (prev.length ? prev : withStage));
-  }, [data]);
+  setStandardFields(data.standardFields || {});
+  setCustomFields(withStage);
+}, [data]);
 
   const STAGE_COLORS = [
     { bg: "bg-blue-100", text: "text-blue-700", border: "border-blue-300" },

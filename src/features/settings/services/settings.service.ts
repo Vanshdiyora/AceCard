@@ -5,7 +5,8 @@ import type {
   UpdateAccountProfilePayload,
   LeadFormConfig,
   CRMIntegration,
-  UpdateMyAccountProfilePayload
+  UpdateMyAccountProfilePayload,
+  LeadConfigApiResponse
 } from "../types";
 
 const BASE_URL = "/profile";
@@ -59,19 +60,23 @@ export const settingsService = {
 
   // ---------- Lead Configuration ----------
   async getLeadsConfig(): Promise<LeadFormConfig> {
-    const res = await axios.get<any>("/vendor/leads-config");
-    const raw = res.data || {};
+  const res = await axios.get<LeadConfigApiResponse>(
+    "/vendor/leads-config"
+  );
 
-    return {
-      standardFields: raw.config?.standardFields ?? {},
-      customFields: raw.config?.customFields ?? [],
-    };
-  },
+  return res.data.config;
+},
 
-  async updateLeadsConfig(payload: LeadFormConfig): Promise<LeadFormConfig> {
-    const res = await axios.put("/vendor/leads-config", payload);
-    return res.data;
-  },
+async updateLeadsConfig(
+  payload: LeadFormConfig
+): Promise<LeadFormConfig> {
+  const res = await axios.put<LeadConfigApiResponse>(
+    "/vendor/leads-config",
+    payload
+  );
+
+  return res.data.config;
+},
 
 
   // ---------- Suggested Questions ----------
