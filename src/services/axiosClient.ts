@@ -35,13 +35,26 @@ axiosClient.interceptors.response.use(
   (error) => {
     const status = error?.response?.status;
     const message = error?.response?.data?.error;
+    const role = getCookie("role");
 
-    const shouldLogout = (status === 403 && message === "Your Vendor account is archived");
+    const shouldLogoutVendorArchived =
+      status === 403 && message === "Your Vendor account is archived";
 
-    if (shouldLogout) {
-      // 🔥 Clear auth cookie
+    const shouldLogoutSuperAdmin =
+      status === 401 && role === "super_admin";
+
+    const shouldLogoutInvalidToken =
+      message === "invalid token";
+
+    if (
+      shouldLogoutVendorArchived ||
+      shouldLogoutSuperAdmin ||
+      shouldLogoutInvalidToken
+    ) {
+      // 🔥 Clear auth cookies
       eraseCookie("token");
-      eraseCookie("subdomain")
+      eraseCookie("subdomain");
+      eraseCookie("role");
 
       // 🔁 Prevent redirect loop
       if (!window.location.pathname.includes("/login")) {
