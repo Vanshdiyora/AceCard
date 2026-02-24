@@ -4,6 +4,7 @@ import { createVendor } from "../slice";
 import DynamicForm, { type FieldConfig } from "../../../common/ui/DynamicForm";
 import { validateField } from "../../../common/utils/formValidator";
 import type { VendorItem } from "../types";
+import { uploadImage } from "../../publicProfile/services/publicProfile.api";
 
 interface AddVendorModalProps {
   open: boolean;
@@ -25,6 +26,7 @@ export default function AddVendorModal({
   const dispatch = useAppDispatch();
 
   const [form, setForm] = useState<VendorForm>({
+    avatar: "",
     legal_name: "",
     address: "",
     gst: "", // ✅ GST added
@@ -58,6 +60,15 @@ export default function AddVendorModal({
 
   /* ---------- FIELD CONFIG ---------- */
   const fields: FieldConfig[] = [
+    {
+      name: "avatar",
+      label: "Vendor Profile Image",
+      type: "image",
+      upload: async (file: File) => {
+        const res = await uploadImage(file);
+        return res.data.url; // must return uploaded URL
+      },
+    },
     {
       name: "legal_name",
       label: "Legal Name",
@@ -110,7 +121,7 @@ export default function AddVendorModal({
       options: [
         { label: "Monthly", value: "monthly" },
         { label: "Quarterly", value: "quarterly" },
-        { label: "Semi-Annually ", value: "semiannually" }, 
+        { label: "Semi-Annually ", value: "semiannually" },
         { label: "Annually", value: "annually" },
       ],
     },

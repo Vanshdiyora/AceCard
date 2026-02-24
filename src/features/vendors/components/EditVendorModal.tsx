@@ -1,17 +1,19 @@
 import { useState, useEffect } from "react";
 import { useAppDispatch } from "../../../app/hooks";
 import { updateVendor } from "../slice";
-import DynamicForm, { type FieldConfig } from "../../../common/ui/DynamicForm";
+import DynamicForm, {
+  type FieldConfig,
+} from "../../../common/ui/DynamicForm";
 import { validateField } from "../../../common/utils/formValidator";
+import { uploadImage } from "../../publicProfile/services/publicProfile.api";
 import type { VendorItem } from "../types";
 
 type Props = {
   vendor: VendorItem;
   open: boolean;
   onClose: () => void;
-  onSuccess?: () => void; // ✅ add
+  onSuccess?: () => void;
 };
-
 
 type VendorForm = Partial<VendorItem>;
 
@@ -19,9 +21,8 @@ export default function EditVendorModal({
   vendor,
   open,
   onClose,
-  onSuccess, // ✅ receive it
+  onSuccess,
 }: Props) {
-
   const dispatch = useAppDispatch();
 
   const [form, setForm] = useState<VendorForm>({});
@@ -35,7 +36,7 @@ export default function EditVendorModal({
     };
   }, [open]);
 
-  /* ---------- INIT (load vendor + format date) ---------- */
+  /* ---------- INIT ---------- */
   useEffect(() => {
     if (!open || !vendor) return;
 
@@ -49,11 +50,20 @@ export default function EditVendorModal({
     setErrors({});
   }, [vendor, open]);
 
-  const shouldRender = open && vendor;
-  if (!shouldRender) return null;
+  if (!open || !vendor) return null;
 
   /* ---------- FIELD CONFIG ---------- */
   const fields: FieldConfig[] = [
+    {
+      name: "avatar", // 👈 store image URL here
+      label: "Vendor Profile Image",
+      type: "image",
+      upload: async (file: File) => {
+        const res = await uploadImage(file);
+        return res.data.url; // must return image URL
+      },
+    },
+
     { name: "legal_name", label: "Legal Name", type: "text", required: true, minLength: 2 },
     { name: "address", label: "Address", type: "text", required: true },
 
@@ -76,7 +86,7 @@ export default function EditVendorModal({
       options: [
         { label: "Monthly", value: "monthly" },
         { label: "Quarterly", value: "quarterly" },
-        { label: "Semi-Annually ", value: "semiannually" }, 
+        { label: "Semi-Annually", value: "semiannually" },
         { label: "Annually", value: "annually" },
       ],
     },
@@ -91,10 +101,11 @@ export default function EditVendorModal({
       type: "date",
       required: true,
     },
+
     {
       name: "allowed_crm_integrations",
       label: "CRM Systems",
-      type: "search-multiselect",   // ✅ CHANGE HERE
+      type: "search-multiselect",
       placeholder: "Search & select CRM systems",
       options: [
         { label: "Zoho", value: "zoho" },
@@ -102,7 +113,6 @@ export default function EditVendorModal({
         { label: "Salesforce", value: "salesforce" },
         { label: "Odoo", value: "odoo" },
       ],
-      hideValues: false, // optional
     },
   ];
 
@@ -111,11 +121,18 @@ export default function EditVendorModal({
 
   /* ---------- SAVE ---------- */
   const save = async () => {
-    if (!vendor) return;
-
     const hasErrors = fields.some((field) => {
-      const error = validateField(field, form[field.name as keyof VendorForm], form);
-      setErrors((p) => ({ ...p, [field.name]: error }));
+      const error = validateField(
+        field,
+        form[field.name as keyof VendorForm],
+        form
+      );
+
+      setErrors((prev) => ({
+        ...prev,
+        [field.name]: error,
+      }));
+
       return error;
     });
 
@@ -135,24 +152,26 @@ export default function EditVendorModal({
           : [],
     };
 
-    const res = await dispatch(updateVendor({ id: vendor.id, data: payload }));
+    const res = await dispatch(
+      updateVendor({ id: vendor.id, data: payload })
+    );
 
     if (updateVendor.fulfilled.match(res)) {
-      onSuccess?.();   // 🔥 tell parent to refetch
+      onSuccess?.();
       onClose();
     }
-
   };
 
   /* ---------- UI ---------- */
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
       <div className="bg-white w-[450px] max-h-[90vh] rounded-xl shadow-lg flex flex-col">
+
         <div className="p-5 border-b">
           <h2 className="text-xl font-semibold">Edit Vendor</h2>
         </div>
 
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto p-5">
           <DynamicForm
             fields={fields}
             form={form}
@@ -166,6 +185,7 @@ export default function EditVendorModal({
           <button className="px-4 py-2 border rounded" onClick={onClose}>
             Cancel
           </button>
+
           <button
             className="px-4 py-2 bg-purple-600 text-white rounded"
             onClick={save}

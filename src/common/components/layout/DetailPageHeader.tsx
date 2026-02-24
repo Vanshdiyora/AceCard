@@ -31,36 +31,35 @@ export default function DetailPageHeader({
 }: DetailPageHeaderProps) {
   return (
     <div className="bg-white rounded-2xl border p-6 flex items-center justify-between gap-4">
-      
+
       {/* Left */}
       <div className="flex items-center gap-4 min-w-0">
-        
+
         {avatar && <div className="shrink-0">{avatar}</div>}
 
         <div className="min-w-0">
-          <h2 className="text-xl font-semibold leading-tight truncate">
+          <h2 className="text-xl font-semibold leading-snug break-words">
             {title}
           </h2>
 
-      <div className="flex items-center gap-3 mt-2">
-  {subtitle && (
-  <span className="text-sm text-gray-600 leading-none truncate max-w-full block">
-    {subtitle}
-  </span>
-)}
+          <div className="flex items-center gap-3 mt-2 flex-wrap">
+            {subtitle && (
+              <span className="text-sm text-gray-600 leading-none break-all">
+                {subtitle}
+              </span>
+            )}
 
-  {status && (
-    <span
-      className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border leading-none ${
-        statusStyles[status.label.toLowerCase()] ||
-        "bg-gray-100 text-gray-700 border-gray-200"
-      }`}
-    >
-      {status.label.charAt(0).toUpperCase() +
-        status.label.slice(1)}
-    </span>
-  )}
-</div>
+            {status && (
+              <span
+                className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border leading-none ${statusStyles[status.label.toLowerCase()] ||
+                  "bg-gray-100 text-gray-700 border-gray-200"
+                  }`}
+              >
+                {status.label.charAt(0).toUpperCase() +
+                  status.label.slice(1)}
+              </span>
+            )}
+          </div>
 
         </div>
       </div>

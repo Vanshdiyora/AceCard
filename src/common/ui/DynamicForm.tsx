@@ -3,6 +3,7 @@ import BrandLoader from "./BrandLoader";
 import SearchableSelect from "./SearchableSelect";
 import { validateField } from "../utils/formValidator";
 import CustomSelect from "./CustomSelect";
+import AvatarCropModal from "./AvatarCropModal";
 
 /* ---------- TYPES ---------- */
 
@@ -84,10 +85,11 @@ export default function DynamicForm({
   setErrors,
   noValidate = false,
   disabled = false,
-   className = "",  
+  className = "",
 }: DynamicFormProps) {
   const [touched, setTouched] = useState<Record<string, boolean>>({});
-
+  const [cropFile, setCropFile] = useState<File | null>(null);
+  const [cropField, setCropField] = useState<FieldConfig | null>(null);
   /* ---------- CHANGE HANDLER ---------- */
   const handleChange = (field: FieldConfig, value: any) => {
     // if (disabled || field.disabled) return;
@@ -115,14 +117,14 @@ export default function DynamicForm({
   };
 
   return (
-   <form
-  className={`
+    <form
+      className={`
     ${!className ? "p-5" : ""}
     space-y-4 overflow-y-auto custom-scrollbar flex-1
     ${className || ""}
   `}
-  noValidate={noValidate}
->
+      noValidate={noValidate}
+    >
 
       {fields.map((field) => {
         const error = errors[field.name];
@@ -365,10 +367,12 @@ export default function DynamicForm({
                         hidden
                         accept="image/*"
                         disabled={disabled || field.disabled}
-                        onChange={async (e) => {
-                          if (!e.target.files?.[0] || !field.upload) return;
-                          const url = await field.upload(e.target.files[0]);
-                          handleChange(field, url);
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+
+                          setCropFile(file);
+                          setCropField(field);
                         }}
                       />
                     </label>
@@ -390,6 +394,31 @@ export default function DynamicForm({
           </div>
         );
       })}
+      {cropFile && cropField && (
+        <AvatarCropModal
+          file={cropFile}
+          onCancel={() => {
+            setCropFile(null);
+            setCropField(null);
+          }}
+          onSave={async (blob) => {
+            if (!cropField.upload) return;
+
+            const croppedFile = new File(
+              [blob],
+              cropFile.name,
+              { type: blob.type }
+            );
+
+            const url = await cropField.upload(croppedFile);
+
+            handleChange(cropField, url);
+
+            setCropFile(null);
+            setCropField(null);
+          }}
+        />
+      )}
     </form>
   );
 }
