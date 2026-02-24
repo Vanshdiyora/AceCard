@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useAppDispatch, useAppSelector } from "../../../app/hooks";
 import { updateCampaign } from "../slice";
 import { fetchTeam } from "../../teams/slice";
@@ -30,7 +30,7 @@ export default function EditCampaignModal({
 }: Props) {
   const dispatch = useAppDispatch();
 
-  const { members } = useAppSelector((s) => s.team);
+  // const { members } = useAppSelector((s) => s.team);
   const { products, loading: productsLoading } = useAppSelector(
     (s) => s.products
   );
@@ -38,7 +38,7 @@ export default function EditCampaignModal({
 
   const [form, setForm] = useState<any>(null);
   const [errors, setErrors] = useState<Record<string, string | null>>({});
-
+  const [submitAttempted, setSubmitAttempted] = useState(false);
   /* ---------- PAGINATION STATE ---------- */
   const [managerPage, setManagerPage] = useState(1);
   const [salesPage, setSalesPage] = useState(1);
@@ -52,15 +52,7 @@ export default function EditCampaignModal({
   const [loadingMoreSales, setLoadingMoreSales] = useState(false);
   const [loadingMoreProducts, setLoadingMoreProducts] = useState(false);
 
-  const managers = useMemo(
-    () => members.filter((m) => m.role === "manager"),
-    [members]
-  );
-
-  const salespeople = useMemo(
-    () => members.filter((m) => m.role === "sales_rep"),
-    [members]
-  );
+const { managers, salesReps: salespeople } = useAppSelector((s) => s.team); 
 
   /* ---------- FORM BUILDER ---------- */
   const buildForm = (c: EnrichedCampaign) => ({
@@ -68,7 +60,7 @@ export default function EditCampaignModal({
     description: c.description ?? "",
     status: c.status,
     budget: c.budget ?? "",
-manager_id: c.manager_id ?? "",
+    manager_id: c.manager_id ?? "",
     assigned_reps_ids: c.assigned_reps?.map((r) => r.id) ?? [],
     product_ids: c.products?.map((p) => p.id) ?? [],
     start_date: c.start_date?.split("T")[0] ?? "",
@@ -81,7 +73,7 @@ manager_id: c.manager_id ?? "",
 
     setForm(buildForm(campaign));
     setErrors({});
-
+    setSubmitAttempted(false);
     setManagerPage(1);
     setSalesPage(1);
     setProductPage(1);
@@ -211,45 +203,45 @@ manager_id: c.manager_id ?? "",
       required: true,
       options: STATUS_OPTIONS,
     },
-   {
-  name: "manager_id",
-  label: "Owner (Manager)",
-  type: "search-select",   // 🔥
-  required: true,
-  options: managers.map((m) => ({
-    label: m.name,
-    value: m.id,
-  })),
-  onScrollEnd: loadMoreManagers,
-  showLoader: loadingMoreManagers,
-},
+    {
+      name: "manager_id",
+      label: "Owner (Manager)",
+      type: "search-select",   // 🔥
+      required: true,
+      options: managers.map((m) => ({
+        label: m.name,
+        value: m.id,
+      })),
+      onScrollEnd: loadMoreManagers,
+      showLoader: loadingMoreManagers,
+    },
 
-{
-  name: "assigned_reps_ids",
-  label: "Assigned Salespersons",
-  type: "search-multiselect", // 🔥
-  options: salespeople.map((s) => ({
-    label: s.name,
-    value: s.id,
-  })),
-  onScrollEnd: loadMoreSales,
-  showLoader: loadingMoreSales,
-},
+    {
+      name: "assigned_reps_ids",
+      label: "Assigned Salespersons",
+      type: "search-multiselect", // 🔥
+      options: salespeople.map((s) => ({
+        label: s.name,
+        value: s.id,
+      })),
+      onScrollEnd: loadMoreSales,
+      showLoader: loadingMoreSales,
+    },
 
-{
-  name: "product_ids",
-  label: "Products",
-  type: "search-multiselect", // 🔥
-  required: true,
-  options: products.map((p) => ({
-    label: p.name,
-    value: p.id,
-  })),
-  onScrollEnd: loadMoreProducts,
-  showLoader: loadingMoreProducts || productsLoading,
-  disabled: productsLoading,
-  hideValues: false,
-},
+    {
+      name: "product_ids",
+      label: "Products",
+      type: "search-multiselect", // 🔥
+      required: true,
+      options: products.map((p) => ({
+        label: p.name,
+        value: p.id,
+      })),
+      onScrollEnd: loadMoreProducts,
+      showLoader: loadingMoreProducts || productsLoading,
+      disabled: productsLoading,
+      hideValues: false,
+    },
 
     {
       name: "start_date",
@@ -266,11 +258,19 @@ manager_id: c.manager_id ?? "",
 
   /* ---------- SAVE ---------- */
   const save = async () => {
-    const hasErrors = fields.some((field) => {
+    setSubmitAttempted(true); // ✅ ADD
+
+    // ✅ Collect all errors at once
+    const newErrors: Record<string, string | null> = {};
+    let hasErrors = false;
+
+    fields.forEach((field) => {
       const error = validateField(field, form[field.name], form);
-      setErrors((prev) => ({ ...prev, [field.name]: error }));
-      return error;
+      newErrors[field.name] = error;
+      if (error) hasErrors = true;
     });
+
+    setErrors(newErrors); // ✅ Single update
 
     if (hasErrors) return;
 
@@ -320,6 +320,7 @@ manager_id: c.manager_id ?? "",
           onChange={update}
           errors={errors}
           setErrors={setErrors}
+          submitAttempted={submitAttempted} 
         />
 
         <div className="p-4 border-t flex justify-end gap-3">

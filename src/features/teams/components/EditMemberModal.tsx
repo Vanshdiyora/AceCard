@@ -13,7 +13,7 @@ export default function EditMemberModal({
   onSuccess, // 👈 NEW
   currentRole,
   managers,
-    managersMeta,
+  managersMeta,
   loadMoreManagers,
 }: {
   open: boolean;
@@ -23,8 +23,8 @@ export default function EditMemberModal({
   onSuccess?: (updated: any) => void; // 👈 callback
   currentRole: "vendor_admin" | "manager" | "sales_rep";
   managers: { id: number; name: string }[];
-managersMeta?: any;              // ✅ NEW
-loadMoreManagers?: () => void;   // ✅ NEW
+  managersMeta?: any;              // ✅ NEW
+  loadMoreManagers?: () => void;   // ✅ NEW
 
 }) {
 
@@ -32,6 +32,7 @@ loadMoreManagers?: () => void;   // ✅ NEW
   const [errors, setErrors] = useState<
     Record<string, string | null>
   >({});
+ const [submitAttempted, setSubmitAttempted] = useState(false);
 
   /* ---------- INIT FORM ---------- */
   useEffect(() => {
@@ -46,7 +47,7 @@ loadMoreManagers?: () => void;   // ✅ NEW
       avatar: member.avatar ?? "",
       custom_job_role: member.custom_job_role ?? "", // 👈 ADD
     });
-
+setSubmitAttempted(false); 
 
     setErrors({});
   }, [member, open]);
@@ -102,9 +103,8 @@ loadMoreManagers?: () => void;   // ✅ NEW
       label: "Custom Job Role",
       type: "text",
       placeholder: "e.g. Senior Sales Manager",
-      required: false,
+      required: true,
     },
-
     ...(currentRole === "vendor_admin"
       ? [
         {
@@ -121,20 +121,20 @@ loadMoreManagers?: () => void;   // ✅ NEW
       : []),
     ...(currentRole === "vendor_admin" && form.role === "sales_rep"
       ? [
-       {
-  name: "manager_id",
-  label: "Manager",
-  type: "select" as const,
-  required: true,
-  options: managers.map((m) => ({
-    label: m.name,
-    value: m.id,
-  })),
-  hasMore: managersMeta
-    ? managersMeta.page < managersMeta.total_pages
-    : false,
-  onLoadMore: loadMoreManagers,
-}
+        {
+          name: "manager_id",
+          label: "Manager",
+          type: "select" as const,
+          required: true,
+          options: managers.map((m) => ({
+            label: m.name,
+            value: m.id,
+          })),
+          hasMore: managersMeta
+            ? managersMeta.page < managersMeta.total_pages
+            : false,
+          onLoadMore: loadMoreManagers,
+        }
 
       ]
       : []),
@@ -143,11 +143,19 @@ loadMoreManagers?: () => void;   // ✅ NEW
 
   /* ---------- SUBMIT ---------- */
   const submit = async () => {
-    const hasErrors = fields.some((field) => {
+    setSubmitAttempted(true); // ✅ ADD
+
+    // ✅ Collect all errors at once
+    const newErrors: Record<string, string | null> = {};
+    let hasErrors = false;
+
+    fields.forEach((field) => {
       const error = validateField(field, form[field.name], form);
-      setErrors((prev) => ({ ...prev, [field.name]: error }));
-      return error;
+      newErrors[field.name] = error;
+      if (error) hasErrors = true;
     });
+
+    setErrors(newErrors); // ✅ Single update
 
     if (hasErrors) return;
 
@@ -161,14 +169,13 @@ loadMoreManagers?: () => void;   // ✅ NEW
     }
 
     try {
-      const updated = await onSubmit(form); // 👈 wait
-      onSuccess?.(updated);                 // 👈 notify parent
+      const updated = await onSubmit(form);
+      onSuccess?.(updated);
       onClose();
     } catch (e) {
       console.error("Update failed", e);
     }
   };
-
 
   /* ---------- UI ---------- */
   return (
@@ -183,13 +190,14 @@ loadMoreManagers?: () => void;   // ✅ NEW
         </div>
 
         {/* Scrollable Form Area */}
-        <div className="overflow-y-auto px-5 py-4 flex-1">
+        <div className="overflow-y-auto flex-1">
           <DynamicForm
             fields={fields}
             form={form}
             onChange={update}
             errors={errors}
             setErrors={setErrors}
+            submitAttempted={submitAttempted}
           />
         </div>
 

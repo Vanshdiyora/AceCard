@@ -41,7 +41,7 @@ export default function AddVendorModal({
   });
 
   const [errors, setErrors] = useState<Record<string, string | null>>({});
-
+const [submitAttempted, setSubmitAttempted] = useState(false);
   /* ---------- BODY SCROLL LOCK ---------- */
   useEffect(() => {
     document.body.style.overflow = open ? "hidden" : "";
@@ -51,10 +51,11 @@ export default function AddVendorModal({
   }, [open]);
 
   /* ---------- RESET ---------- */
-  useEffect(() => {
-    if (!open) return;
-    setErrors({});
-  }, [open]);
+useEffect(() => {
+  if (!open) return;
+  setErrors({});
+  setSubmitAttempted(false); // ✅ ADD
+}, [open]);
 
   if (!open) return null;
 
@@ -199,52 +200,53 @@ export default function AddVendorModal({
   };
 
   /* ---------- SAVE ---------- */
-  const save = async () => {
-    const hasErrors = fields.some((field) => {
-      const error = validateField(
-        field,
-        form[field.name as keyof VendorForm],
-        form
-      );
+ const save = async () => {
+  setSubmitAttempted(true);
 
-      setErrors((prev) => ({
-        ...prev,
-        [field.name]: error,
-      }));
+  // ✅ Collect all errors at once into a single object
+  const newErrors: Record<string, string | null> = {};
+  let hasErrors = false;
 
-      return error;
-    });
+  fields.forEach((field) => {
+    const error = validateField(
+      field,
+      form[field.name as keyof VendorForm],
+      form
+    );
+    newErrors[field.name] = error;
+    if (error) hasErrors = true;
+  });
 
-    if (hasErrors) return;
+  // ✅ Single state update — React will batch this with setSubmitAttempted
+  setErrors(newErrors);
 
-    try {
-      setProcessing(true);
+  if (hasErrors) return;
 
-      const payload = {
-        ...form,
-        vendor_poc_name: form.vendor_poc_name?.trim(),
-        vendor_poc_email: form.vendor_poc_email?.trim(),
-        gst: form.gst?.trim() || undefined,
-        subscription_end_date: form.subscription_end_date
-          ? new Date(form.subscription_end_date).toISOString()
-          : undefined,
-        allowed_crm_integrations:
-          form.allowed_crm_integrations?.length
-            ? form.allowed_crm_integrations
-            : [],
-      };
+  try {
+    setProcessing(true);
+    const payload = {
+      ...form,
+      vendor_poc_name: form.vendor_poc_name?.trim(),
+      vendor_poc_email: form.vendor_poc_email?.trim(),
+      gst: form.gst?.trim() || undefined,
+      subscription_end_date: form.subscription_end_date
+        ? new Date(form.subscription_end_date).toISOString()
+        : undefined,
+      allowed_crm_integrations:
+        form.allowed_crm_integrations?.length
+          ? form.allowed_crm_integrations
+          : [],
+    };
 
-
-      await dispatch(createVendor(payload)).unwrap();
-      onSuccess();
-      onClose();
-    } catch (err: any) {
-      onError(err?.message || "Failed to create vendor.");
-    } finally {
-      setProcessing(false);
-    }
-  };
-
+    await dispatch(createVendor(payload)).unwrap();
+    onSuccess();
+    onClose();
+  } catch (err: any) {
+    onError(err?.message || "Failed to create vendor.");
+  } finally {
+    setProcessing(false);
+  }
+};
   /* ---------- UI ---------- */
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
@@ -255,6 +257,7 @@ export default function AddVendorModal({
 
         <div className="flex-1 overflow-y-auto">
           <DynamicForm
+            submitAttempted={submitAttempted}
             fields={fields}
             form={form}
             onChange={update}

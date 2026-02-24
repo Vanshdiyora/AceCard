@@ -39,13 +39,14 @@ export default function AddMemberModal({
   currentRole,
   currentUserId,
   managers,
-    managersMeta,
+  managersMeta,
   loadMoreManagers,
 }: Props) {
   const [form, setForm] = useState<FormState | null>(null);
   const [errors, setErrors] = useState<
     Record<string, string | null>
   >({});
+  const [submitAttempted, setSubmitAttempted] = useState(false);
 
   /* ---------- INIT FORM ---------- */
   useEffect(() => {
@@ -62,7 +63,7 @@ export default function AddMemberModal({
       avatar: "",
       custom_job_role: "", // 👈 ADD
     });
-
+    setSubmitAttempted(false);
     setErrors({});
   }, [open, currentRole, currentUserId]);
 
@@ -149,20 +150,20 @@ export default function AddMemberModal({
 
     ...(form.role === "sales_rep" && currentRole === "vendor_admin"
       ? [
-      {
-  name: "manager_id",
-  label: "Manager",
-  type: "select" as const,
-  required: true,
-  options: managers.map((m) => ({
-    label: m.name,
-    value: m.id,
-  })),
-  hasMore: managersMeta
-    ? managersMeta.page < managersMeta.total_pages
-    : false,
-  onLoadMore: loadMoreManagers,
-}
+        {
+          name: "manager_id",
+          label: "Manager",
+          type: "select" as const,
+          required: true,
+          options: managers.map((m) => ({
+            label: m.name,
+            value: m.id,
+          })),
+          hasMore: managersMeta
+            ? managersMeta.page < managersMeta.total_pages
+            : false,
+          onLoadMore: loadMoreManagers,
+        }
 
       ]
       : []),
@@ -171,31 +172,30 @@ export default function AddMemberModal({
 
   /* ---------- SUBMIT ---------- */
   const submit = () => {
-    // 🔒 VALIDATE ALL FIELDS
-    const hasErrors = fields.some((field) => {
+    setSubmitAttempted(true); // ✅ ADD
+
+    // ✅ Collect all errors at once
+    const newErrors: Record<string, string | null> = {};
+    let hasErrors = false;
+
+    fields.forEach((field) => {
       const error = validateField(
         field,
         form[field.name as keyof FormState],
         form
       );
-
-      setErrors((prev) => ({
-        ...prev,
-        [field.name]: error,
-      }));
-
-      return error;
+      newErrors[field.name] = error;
+      if (error) hasErrors = true;
     });
+
+    setErrors(newErrors); // ✅ Single update
 
     if (hasErrors) return;
 
     let payload = { ...form };
-
-    // Auto-assign manager if current user is manager
     if (currentRole === "manager") {
       payload.manager_id = currentUserId;
     }
-
     onSubmit(payload);
   };
 
@@ -216,6 +216,7 @@ export default function AddMemberModal({
           onChange={update}
           errors={errors}
           setErrors={setErrors}
+          submitAttempted={submitAttempted}
         />
 
         <div className="p-4 border-t flex justify-end gap-2 sticky bottom-0 bg-white">

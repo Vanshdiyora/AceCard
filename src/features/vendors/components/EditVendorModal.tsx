@@ -27,6 +27,7 @@ export default function EditVendorModal({
 
   const [form, setForm] = useState<VendorForm>({});
   const [errors, setErrors] = useState<Record<string, string | null>>({});
+  const [submitAttempted, setSubmitAttempted] = useState(false); // ✅ ADD
 
   /* ---------- BODY SCROLL LOCK ---------- */
   useEffect(() => {
@@ -48,6 +49,7 @@ export default function EditVendorModal({
     });
 
     setErrors({});
+    setSubmitAttempted(false); // ✅ RESET on open
   }, [vendor, open]);
 
   if (!open || !vendor) return null;
@@ -55,18 +57,16 @@ export default function EditVendorModal({
   /* ---------- FIELD CONFIG ---------- */
   const fields: FieldConfig[] = [
     {
-      name: "avatar", // 👈 store image URL here
+      name: "avatar",
       label: "Vendor Profile Image",
       type: "image",
       upload: async (file: File) => {
         const res = await uploadImage(file);
-        return res.data.url; // must return image URL
+        return res.data.url;
       },
     },
-
     { name: "legal_name", label: "Legal Name", type: "text", required: true, minLength: 2 },
     { name: "address", label: "Address", type: "text", required: true },
-
     {
       name: "gst",
       label: "GST Number",
@@ -74,10 +74,8 @@ export default function EditVendorModal({
       pattern: /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/,
       patternMessage: "Enter a valid GST number",
     },
-
     { name: "primary_email", label: "Primary Email", type: "email", required: true },
     { name: "primary_phone", label: "Primary Phone", type: "number", required: true },
-
     {
       name: "payment_terms",
       label: "Payment Terms",
@@ -90,7 +88,6 @@ export default function EditVendorModal({
         { label: "Annually", value: "annually" },
       ],
     },
-
     { name: "vendor_poc_name", label: "Vendor POC Name", type: "text", required: true },
     { name: "pricing_per_card", label: "Price per Card", type: "number", required: true, min: 1 },
     {
@@ -115,7 +112,6 @@ export default function EditVendorModal({
       type: "date",
       required: true,
     },
-
     {
       name: "allowed_crm_integrations",
       label: "CRM Systems",
@@ -130,11 +126,11 @@ export default function EditVendorModal({
     },
   ];
 
+  /* ---------- UPDATE ---------- */
   const update = (key: string, value: any) => {
     setForm((prev) => {
       const updated = { ...prev, [key]: value };
 
-      // ✅ Re-validate poc email when primary email changes and vice versa
       if (key === "primary_email" || key === "vendor_poc_email") {
         const pocField = fields.find((f) => f.name === "vendor_poc_email");
         if (pocField?.validate) {
@@ -148,22 +144,26 @@ export default function EditVendorModal({
       return updated;
     });
   };
+
   /* ---------- SAVE ---------- */
   const save = async () => {
-    const hasErrors = fields.some((field) => {
+    setSubmitAttempted(true); // ✅ ADD
+
+    // ✅ Collect all errors at once into a single object
+    const newErrors: Record<string, string | null> = {};
+    let hasErrors = false;
+
+    fields.forEach((field) => {
       const error = validateField(
         field,
         form[field.name as keyof VendorForm],
         form
       );
-
-      setErrors((prev) => ({
-        ...prev,
-        [field.name]: error,
-      }));
-
-      return error;
+      newErrors[field.name] = error;
+      if (error) hasErrors = true;
     });
+
+    setErrors(newErrors); // ✅ Single state update
 
     if (hasErrors) return;
 
@@ -207,6 +207,7 @@ export default function EditVendorModal({
             onChange={update}
             errors={errors}
             setErrors={setErrors}
+            submitAttempted={submitAttempted} // ✅ ADD
           />
         </div>
 
@@ -214,7 +215,6 @@ export default function EditVendorModal({
           <button className="px-4 py-2 border rounded" onClick={onClose}>
             Cancel
           </button>
-
           <button
             className="px-4 py-2 bg-purple-600 text-white rounded"
             onClick={save}

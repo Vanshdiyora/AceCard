@@ -59,6 +59,7 @@ export default function CreateCampaignModal({
   const [form, setForm] = useState(EMPTY_FORM);
   const [errors, setErrors] = useState<Record<string, string | null>>({});
   const [processing, setProcessing] = useState(false);
+  const [submitAttempted, setSubmitAttempted] = useState(false);
 
   const [resultOpen, setResultOpen] = useState(false);
   const [resultSuccess, setResultSuccess] = useState(true);
@@ -139,6 +140,7 @@ export default function CreateCampaignModal({
 
     setForm(EMPTY_FORM);
     setErrors({});
+    setSubmitAttempted(false);
     setManagerSearch("");
     setSalesSearch("");
     setProductSearch("");
@@ -274,6 +276,7 @@ export default function CreateCampaignModal({
       label: "Target / Budget",
       type: "number",
       required: true,
+      min: 0,
       placeholder: "Enter budget amount",
     },
     {
@@ -340,12 +343,20 @@ export default function CreateCampaignModal({
   ====================================================== */
 
   const handleSubmit = async () => {
-    const hasErrors = fields.some((f) => {
+    setSubmitAttempted(true); // ✅ ADD
+
+    // ✅ Collect all errors at once
+    const newErrors: Record<string, string | null> = {};
+    let hasErrors = false;
+
+    fields.forEach((f) => {
       const key = f.name as keyof typeof form;
-      const e = validateField(f, form[key], form);
-      setErrors((p) => ({ ...p, [key]: e }));
-      return !!e;
+      const error = validateField(f, form[key], form);
+      newErrors[key] = error;
+      if (error) hasErrors = true;
     });
+
+    setErrors(newErrors); // ✅ Single update
 
     if (hasErrors) return;
 
@@ -396,6 +407,7 @@ export default function CreateCampaignModal({
             onChange={update}
             errors={errors}
             setErrors={setErrors}
+            submitAttempted={submitAttempted}
           />
 
           <div className="p-4 border-t flex justify-end gap-3">

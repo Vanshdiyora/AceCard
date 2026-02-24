@@ -31,25 +31,26 @@ export default function ProductFormModal({
   const [errors, setErrors] = useState<
     Record<string, string | null>
   >({});
+  const [submitAttempted, setSubmitAttempted] = useState(false);
 
-  // Dynamic extra fields
   const [extraProps, setExtraProps] = useState<
     { key: string; value: string }[]
   >([]);
 
-  // Backend meta
   const [meta, setMeta] = useState<any>({});
 
   /* ---------------- LOAD PRODUCT ---------------- */
 
   useEffect(() => {
+    if (!open) return;
+
     if (product) {
       setBase({
         name: product.name ?? "",
         price: product.price ?? "",
         category: product.category ?? "",
         description: product.description ?? "",
-        product_img_url: product.product_img_url ?? "",   // 👈
+        product_img_url: product.product_img_url ?? "",
       });
 
       const list = Object.entries(
@@ -82,26 +83,9 @@ export default function ProductFormModal({
       setMeta({});
     }
 
+    setSubmitAttempted(false);
     setErrors({});
   }, [product, open]);
-
-  /* ---------------- LOCK BODY SCROLL ---------------- */
-
-  useEffect(() => {
-    if (!open) return;
-
-    const scrollY = window.scrollY;
-    document.body.style.position = "fixed";
-    document.body.style.top = `-${scrollY}px`;
-    document.body.style.width = "100%";
-
-    return () => {
-      document.body.style.position = "";
-      document.body.style.top = "";
-      document.body.style.width = "";
-      window.scrollTo(0, scrollY);
-    };
-  }, [open]);
 
   if (!open) return null;
 
@@ -114,7 +98,7 @@ export default function ProductFormModal({
       type: "image",
       upload: async (file: File) => {
         const res = await uploadImage(file);
-        return res.data.url; // must return URL
+        return res.data.url;
       },
     },
     {
@@ -147,7 +131,6 @@ export default function ProductFormModal({
       placeholder: "Write product description",
       maxLength: 500,
     },
-
   ];
 
   /* ---------------- HANDLE FIELD UPDATE ---------------- */
@@ -159,28 +142,28 @@ export default function ProductFormModal({
     }));
   };
 
-  /* ---------------- SUBMIT HANDLER ---------------- */
+  /* ---------------- SUBMIT ---------------- */
 
   const handleSubmit = () => {
-    // 🔒 BLOCK SUBMIT IF INVALID
-    const hasErrors = fields.some((field) => {
+    setSubmitAttempted(true);
+
+    const newErrors: Record<string, string | null> = {};
+    let hasErrors = false;
+
+    fields.forEach((field) => {
       const error = validateField(
         field,
         base[field.name as keyof typeof base],
         base
       );
-
-      setErrors((prev) => ({
-        ...prev,
-        [field.name]: error,
-      }));
-
-      return error;
+      newErrors[field.name] = error;
+      if (error) hasErrors = true;
     });
+
+    setErrors(newErrors);
 
     if (hasErrors) return;
 
-    // Build extra_properties
     const extra_properties: Record<string, any> = {};
     extraProps.forEach((p) => {
       if (p.key.trim()) {
@@ -188,7 +171,6 @@ export default function ProductFormModal({
       }
     });
 
-    // Final payload
     const payload = {
       ...meta,
       ...base,
@@ -199,39 +181,43 @@ export default function ProductFormModal({
     onSubmit(payload);
   };
 
-  /* ---------------- UI ---------------- */
+  /* ---------------- UI (MATCHED TO AddMemberModal) ---------------- */
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-      <div className="bg-white p-6 rounded-xl w-[500px] max-h-[85vh] shadow-lg flex flex-col space-y-4">
+      <div className="bg-white w-[420px] max-h-[90vh] overflow-y-auto rounded-xl shadow-lg">
 
-        <h2 className="text-xl font-semibold">
-          {product ? "Edit Product" : "Add Product"}
-        </h2>
+        {/* HEADER */}
+        <div className="p-5 border-b">
+          <h2 className="text-xl font-semibold">
+            {product ? "Edit Product" : "Add Product"}
+          </h2>
+        </div>
 
-        {/* -------- BASE PRODUCT FIELDS -------- */}
+        {/* FORM */}
         <DynamicForm
           fields={fields}
           form={base}
           onChange={update}
           errors={errors}
           setErrors={setErrors}
+          submitAttempted={submitAttempted}
         />
 
-        {/* -------- ACTIONS -------- */}
-        <div className="flex justify-end gap-3 mt-4">
+        {/* FOOTER (STICKY LIKE AddMemberModal) */}
+        <div className="p-4 border-t flex justify-end gap-2 sticky bottom-0 bg-white">
           <button
             onClick={onClose}
-            className="border px-4 py-2 rounded-lg"
+            className="px-4 py-2 border rounded"
           >
             Cancel
           </button>
 
           <button
             onClick={handleSubmit}
-            className="bg-purple-600 text-white px-4 py-2 rounded-lg"
+            className="px-4 py-2 bg-purple-600 text-white rounded"
           >
-            {product ? "Update Product" : "Create Product"}
+            {product ? "Update" : "Add"}
           </button>
         </div>
       </div>

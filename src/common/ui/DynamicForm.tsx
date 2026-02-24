@@ -66,6 +66,7 @@ interface DynamicFormProps {
   noValidate?: boolean;
   disabled?: boolean;
   className?: string;
+  submitAttempted?: boolean;
 }
 
 /* ---------- STYLES ---------- */
@@ -86,6 +87,7 @@ export default function DynamicForm({
   noValidate = false,
   disabled = false,
   className = "",
+  submitAttempted = false,
 }: DynamicFormProps) {
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [cropFile, setCropFile] = useState<File | null>(null);
@@ -128,7 +130,7 @@ export default function DynamicForm({
 
       {fields.map((field) => {
         const error = errors[field.name];
-        const showError = touched[field.name] && error;
+        const showError = (touched[field.name] || submitAttempted) && error;
 
         return (
           <div key={field.name} className="flex flex-col">
@@ -176,10 +178,10 @@ export default function DynamicForm({
                   onChange={(e) => {
                     const raw = e.target.value;
 
-                   handleChange(
-  field,
-  raw === "" ? null : Number(raw)
-);
+                    handleChange(
+                      field,
+                      raw === "" ? null : Number(raw)
+                    );
                   }}
                   onBlur={() => handleBlur(field.name)}
                 />

@@ -32,6 +32,7 @@ export default function NewTicketModal({
   const [errors, setErrors] = useState<
     Record<string, string | null>
   >({});
+ const [submitAttempted, setSubmitAttempted] = useState(false);
 
   /* ---------- BODY SCROLL LOCK ---------- */
   useEffect(() => {
@@ -58,6 +59,7 @@ export default function NewTicketModal({
       category: "technical",
       description: "",
     });
+    setSubmitAttempted(false);
     setErrors({});
   }, [open]);
 
@@ -114,22 +116,24 @@ export default function NewTicketModal({
   };
 
   /* ---------- SUBMIT ---------- */
-  const submit = async () => {
-    // 🔒 VALIDATE ALL FIELDS
-    const hasErrors = fields.some((field) => {
+ const submit = async () => {
+    setSubmitAttempted(true); // ✅ ADD
+
+    // ✅ Collect all errors at once
+    const newErrors: Record<string, string | null> = {};
+    let hasErrors = false;
+
+    fields.forEach((field) => {
       const error = validateField(
         field,
         form[field.name as keyof NewSupportTicketForm],
         form
       );
-
-      setErrors((prev) => ({
-        ...prev,
-        [field.name]: error,
-      }));
-
-      return error;
+      newErrors[field.name] = error;
+      if (error) hasErrors = true;
     });
+
+    setErrors(newErrors); // ✅ Single update
 
     if (hasErrors) return;
 
@@ -142,7 +146,6 @@ export default function NewTicketModal({
       onSubmitEnd?.(false, "Failed to create ticket");
     }
   };
-
   /* ---------- UI ---------- */
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
@@ -157,6 +160,7 @@ export default function NewTicketModal({
           onChange={update}
           errors={errors}
           setErrors={setErrors}
+           submitAttempted={submitAttempted} 
         />
 
         <div className="flex justify-end gap-3 mt-6">

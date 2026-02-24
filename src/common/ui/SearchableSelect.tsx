@@ -104,9 +104,10 @@ export default function SearchableSelect({
     );
   };
 
-  const isSelected = (val: any) =>
-    multiple ? Array.isArray(value) && value.includes(val) : value === val;
-
+const isSelected = (val: any) =>
+  multiple
+    ? Array.isArray(value) && value.some((v) => v == val) // ✅ loose equality
+    : value == val; // ✅ loose equality
   return (
     <>
       {/* ================= TRIGGER ================= */}
@@ -151,19 +152,19 @@ export default function SearchableSelect({
           {/* MULTIPLE SELECT */}
           {multiple ? (
             Array.isArray(value) && value.length > 0 && !hideValues ? (
-              options
-                .filter((o) => value.includes(o.value))
-                .map((o) => (
+              value.map((v: any) => {
+                const opt = options.find((o) => o.value === v);
+                return (
                   <span
-                    key={o.value}
+                    key={v}
                     className="flex items-center gap-1 bg-purple-100 text-purple-700 px-2 py-0.5 rounded text-xs"
                   >
-                    {o.label}
+                    {opt?.label ?? `ID: ${v}`}  {/* ✅ fallback if option not loaded */}
                     <button
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
-                        const updated = value.filter((v: any) => v !== o.value);
+                        const updated = value.filter((val: any) => val !== v);
                         onChange(updated);
                       }}
                       className="ml-1 text-purple-500 hover:text-red-500 font-bold"
@@ -171,25 +172,34 @@ export default function SearchableSelect({
                       ×
                     </button>
                   </span>
-                ))
+                );
+              })
             ) : (
               <span className="text-gray-400 text-sm">
-                {placeholder}
+                {Array.isArray(value) && value.length > 0 && hideValues
+                  ? `${value.length} selected`
+                  : placeholder}
               </span>
             )
           ) : (
-            /* SINGLE SELECT */
-            value != null && !hideValues ? (
-              <span className="text-gray-800 truncate">
-                {options.find((o) => o.value === value)?.label}
-              </span>
-            ) : (
-              <span className="text-gray-400 text-sm">
-                {placeholder}
-              </span>
-            )
-          )}
+            (() => {
+              const selectedOption = options.find((o) => o.value == value);
 
+              if (!selectedOption || hideValues) {
+                return (
+                  <span className="text-gray-400 text-sm">
+                    {placeholder}
+                  </span>
+                );
+              }
+
+              return (
+                <span className="text-gray-800 truncate">
+                  {selectedOption.label}
+                </span>
+              );
+            })()
+          )}
         </div>
 
       </div>
