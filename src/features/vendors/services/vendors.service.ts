@@ -1,5 +1,5 @@
 import type { FetchVendorsParams } from "../slice";
-import type { VendorListResponse, VendorItem, SearchVendorTeamParams , VendorTeamResponse } from "../types";
+import type { VendorListResponse, VendorItem, SearchVendorTeamParams, VendorTeamResponse } from "../types";
 import api from "../../../services/axiosClient"; // adjust path if needed
 import type { AxiosResponse } from "axios";
 
@@ -63,6 +63,8 @@ export const vendorsService = {
         params: {
           page: params.page,
           page_size: params.page_size,
+          sort_by: params.sort_by,
+          sort_order: params.sort_order,
         },
       }
     );

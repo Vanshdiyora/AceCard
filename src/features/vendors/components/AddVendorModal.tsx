@@ -92,7 +92,7 @@ useEffect(() => {
       label: "GST Number",
       type: "text",
       placeholder: "27AAPFU0939F1ZV",
-      required: false,
+      required: true,
       pattern:
         /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/,
       patternMessage: "Enter a valid GST number",

@@ -10,7 +10,7 @@ import {
 type Props = {
   onPaid: () => void;
   onMarkUnpaid?: () => void; // ✅ NEW (optional for safety)
-  onArchive: () => void;
+  onArchive?: () => void;
 };
 
 const DROPDOWN_HEIGHT = 220; // ⬆ increased for new action
@@ -120,16 +120,19 @@ export default function PaymentsRowActionsDropdown({
             )}
 
             {/* ARCHIVE */}
-            <button
-              className="w-full px-4 py-2 flex items-center gap-2 text-red-600 hover:bg-red-50"
-              onClick={() => {
-                onArchive();
-                setOpen(false);
-              }}
-            >
-              <Archive size={16} />
-              Archive
-            </button>
+           {/* ARCHIVE */}
+{onArchive && (
+  <button
+    className="w-full px-4 py-2 flex items-center gap-2 text-red-600 hover:bg-red-50"
+    onClick={() => {
+      onArchive();
+      setOpen(false);
+    }}
+  >
+    <Archive size={16} />
+    Archive
+  </button>
+)}
           </div>,
           document.body
         )}

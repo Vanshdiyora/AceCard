@@ -61,7 +61,9 @@ export default function PaymentsPage() {
   const [unpaidOpen, setUnpaidOpen] = useState(false);
   const [unpaidVendor, setUnpaidVendor] =
     useState<VendorPayment | null>(null);
-
+  const [archiveFromUnpaid, setArchiveFromUnpaid] = useState(false);
+  const [unpaidCompletedVendor, setUnpaidCompletedVendor] =
+    useState<VendorPayment | null>(null);
   /* ------------------------------- ui state -------------------------------- */
 
   const [processing, setProcessing] = useState(false);
@@ -351,7 +353,7 @@ export default function PaymentsPage() {
           try {
             setProcessing(true);
 
-            // optimistic UI
+            // optimistic update
             dispatch(
               markUnpaidLocal({ vendor_id: unpaidVendor.vendor_id })
             );
@@ -360,15 +362,24 @@ export default function PaymentsPage() {
               markVendorUnpaid({ vendor_id: unpaidVendor.vendor_id })
             ).unwrap();
 
-            // ✅ AUTO OPEN ARCHIVE CONFIRMATION
+            // close unpaid modal FIRST
+            setUnpaidOpen(false);
+
+            // mark flow
+            setArchiveFromUnpaid(true);
+            setUnpaidCompletedVendor(unpaidVendor);
+
+            // open archive modal
             setArchiveVendorTarget(unpaidVendor);
             setArchiveOpen(true);
+
+            // clear unpaid vendor
+            setUnpaidVendor(null);
+
           } catch (err) {
             showResult(false, getErrorMessage(err));
           } finally {
             setProcessing(false);
-            setUnpaidOpen(false);
-            setUnpaidVendor(null);
           }
         }}
       />
@@ -380,6 +391,18 @@ export default function PaymentsPage() {
         loading={processing}
         onCancel={() => {
           setArchiveOpen(false);
+
+          // 👇 If archive was triggered from unpaid flow
+          if (archiveFromUnpaid && unpaidCompletedVendor) {
+            showResult(
+              true,
+              `${unpaidCompletedVendor.vendor_name} marked as unpaid successfully.`
+            );
+
+            setArchiveFromUnpaid(false);
+            setUnpaidCompletedVendor(null);
+          }
+
           setArchiveVendorTarget(null);
         }}
         onConfirm={async () => {
@@ -387,16 +410,21 @@ export default function PaymentsPage() {
 
           try {
             setProcessing(true);
+
             await dispatch(
               archiveVendor(archiveVendorTarget.vendor_id)
             ).unwrap();
-            showResult(true, "Vendor marked as unpaid and archived successfully.");
+
+            showResult(true, "Vendor archived successfully.");
+
           } catch (err) {
             showResult(false, getErrorMessage(err));
           } finally {
             setProcessing(false);
             setArchiveOpen(false);
             setArchiveVendorTarget(null);
+            setArchiveFromUnpaid(false);
+            setUnpaidCompletedVendor(null);
           }
         }}
       />

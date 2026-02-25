@@ -3,6 +3,11 @@ import { useState } from "react";
 import type { IconType } from "react-icons";
 import { IoNotifications } from "react-icons/io5";
 import { CreditCard } from "lucide-react";
+import { useAppDispatch } from "../../../app/hooks";
+import { logout } from "../../../features/auth/slice";
+import { resetSettings } from "../../../features/settings/slice";
+import { eraseCookie } from "../../../utils/cookieUtils";
+import { LogOut } from "lucide-react";
 
 type MenuItem = {
   label: string;
@@ -17,6 +22,7 @@ type SidebarProps = {
 export default function Sidebar({ type }: SidebarProps) {
   const location = useLocation();
   const [hovered, setHovered] = useState<string | null>(null);
+  const dispatch = useAppDispatch();
 
   const adminBase = "/admin";
   const superBase = "/super";
@@ -42,9 +48,18 @@ export default function Sidebar({ type }: SidebarProps) {
   ];
 
   const menu = type === "superadmin" ? superMenu : adminMenu;
+  const handleLogout = () => {
+    dispatch(logout());
+    eraseCookie("token");
+    eraseCookie("subdomain");
 
+    dispatch(resetSettings());
+
+    // Hard redirect (same behavior as topbar)
+    window.location.href = "/login";
+  };
   return (
-    <aside className="sticky top-0 h-screen w-64 p-6 shrink-0"
+    <aside className="sticky top-0 h-screen w-64 p-6 shrink-0 flex flex-col"
 
       style={{ backgroundColor: "white" }}
     >
@@ -52,7 +67,7 @@ export default function Sidebar({ type }: SidebarProps) {
         <img src="/fullLogo.png" className="h-20 object-contain text-black" />
       </div>
 
-      <ul className="space-y-2">
+      <ul className="space-y-2 flex-1">
         {menu.map((item) => {
           const currentPath = location.pathname.replace(/\/$/, "");
 
@@ -105,6 +120,16 @@ export default function Sidebar({ type }: SidebarProps) {
           );
         })}
       </ul>
+      {/* Logout Button */}
+      <div className="pt-4 border-t">
+        <button
+          onClick={handleLogout}
+          className="w-full flex items-center gap-3 px-4 py-2 rounded-3xl transition text-red-600 hover:bg-red-50"
+        >
+          <LogOut size={18} />
+          Sign Out
+        </button>
+      </div>
     </aside>
   );
 }

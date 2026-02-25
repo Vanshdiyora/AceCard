@@ -42,13 +42,14 @@ const initialState: VendorsState = {
 
 
 /* ---------- THUNKS ---------- */
-
 export type FetchVendorsParams = {
   page?: number;
   page_size?: number;
   search?: string;
-  legal_name?: string; // ✅ add
+  legal_name?: string;
   status?: "active" | "archived";
+  sort_by?: "plan" | "last_seen" | "seats" | "onboarding" | "alphabetical";
+  sort_order?: "asc" | "desc";
   append?: boolean;
 };
 

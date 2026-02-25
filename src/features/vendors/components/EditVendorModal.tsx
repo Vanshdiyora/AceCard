@@ -13,15 +13,23 @@ type Props = {
   open: boolean;
   onClose: () => void;
   onSuccess?: () => void;
+  onError?: (message: string) => void;
+  setProcessing?: (v: boolean) => void;
 };
 
 type VendorForm = Partial<VendorItem>;
-
+function getErrorMessage(err: unknown): string {
+  if (typeof err === "string") return err;
+  if (err instanceof Error) return err.message;
+  return "Something went wrong";  
+}
 export default function EditVendorModal({
   vendor,
   open,
   onClose,
   onSuccess,
+  onError,
+  setProcessing,
 }: Props) {
   const dispatch = useAppDispatch();
 
@@ -71,6 +79,7 @@ export default function EditVendorModal({
       name: "gst",
       label: "GST Number",
       type: "text",
+      required: true,
       pattern: /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/,
       patternMessage: "Enter a valid GST number",
     },
@@ -146,50 +155,55 @@ export default function EditVendorModal({
   };
 
   /* ---------- SAVE ---------- */
-  const save = async () => {
-    setSubmitAttempted(true); // ✅ ADD
+ const save = async () => {
+  setSubmitAttempted(true);
 
-    // ✅ Collect all errors at once into a single object
-    const newErrors: Record<string, string | null> = {};
-    let hasErrors = false;
+  const newErrors: Record<string, string | null> = {};
+  let hasErrors = false;
 
-    fields.forEach((field) => {
-      const error = validateField(
-        field,
-        form[field.name as keyof VendorForm],
-        form
-      );
-      newErrors[field.name] = error;
-      if (error) hasErrors = true;
-    });
-
-    setErrors(newErrors); // ✅ Single state update
-
-    if (hasErrors) return;
-
-    const payload = {
-      ...form,
-      vendor_poc_name: form.vendor_poc_name?.trim(),
-      vendor_poc_email: form.vendor_poc_email?.trim(),
-      gst: form.gst?.trim() || undefined,
-      subscription_end_date: form.subscription_end_date
-        ? new Date(form.subscription_end_date).toISOString()
-        : undefined,
-      allowed_crm_integrations:
-        form.allowed_crm_integrations?.length
-          ? form.allowed_crm_integrations
-          : [],
-    };
-
-    const res = await dispatch(
-      updateVendor({ id: vendor.id, data: payload })
+  fields.forEach((field) => {
+    const error = validateField(
+      field,
+      form[field.name as keyof VendorForm],
+      form
     );
+    newErrors[field.name] = error;
+    if (error) hasErrors = true;
+  });
 
-    if (updateVendor.fulfilled.match(res)) {
-      onSuccess?.();
-      onClose();
-    }
+  setErrors(newErrors);
+  if (hasErrors) return;
+
+  const payload = {
+    ...form,
+    vendor_poc_name: form.vendor_poc_name?.trim(),
+    vendor_poc_email: form.vendor_poc_email?.trim(),
+    gst: form.gst?.trim() || undefined,
+    subscription_end_date: form.subscription_end_date
+      ? new Date(form.subscription_end_date).toISOString()
+      : undefined,
+    allowed_crm_integrations:
+      form.allowed_crm_integrations?.length
+        ? form.allowed_crm_integrations
+        : [],
   };
+
+  try {
+    setProcessing?.(true);
+
+    await dispatch(
+      updateVendor({ id: vendor.id, data: payload })
+    ).unwrap();
+
+    onClose();
+    onSuccess?.();
+
+  } catch (err) {
+    onError?.(getErrorMessage(err));
+  } finally {
+    setProcessing?.(false);
+  }
+};
 
   /* ---------- UI ---------- */
   return (

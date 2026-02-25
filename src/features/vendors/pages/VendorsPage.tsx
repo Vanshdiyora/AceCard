@@ -68,7 +68,11 @@ export default function VendorsPage() {
   const { seatsUpdating } = useAppSelector(s => s.vendors);
   const [activeTab, setActiveTab] = useState<"all" | "active" | "archived">("all");
   const [search, setSearch] = useState("");
-  const [sort, setSort] = useState<"recent" | "name">("recent");
+  const [sortBy, setSortBy] = useState<
+    "plan" | "last_seen" | "seats" | "onboarding" | "alphabetical" | undefined
+  >(undefined);
+
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc" | "">("");
   const [page, setPage] = useState(1);
 
   const pageSize = 10;
@@ -91,37 +95,47 @@ export default function VendorsPage() {
     setResultMessage(message);
     setResultOpen(true);
   };
-
   useEffect(() => {
-    const params: any = { page, page_size: pageSize };
+    const params: any = {
+      page,
+      page_size: pageSize,
+    };
 
     if (search.trim()) params.search = search.trim();
     if (activeTab !== "all") params.status = activeTab;
 
+    // ✅ Only send sorting if selected
+    if (sortBy) {
+      params.sort_by = sortBy;
+      params.sort_order = sortOrder;
+    }
+
     dispatch(fetchVendors(params));
-  }, [dispatch, page, pageSize, search, activeTab]);
+  }, [dispatch, page, pageSize, search, activeTab, sortBy, sortOrder]);
 
   const finalVendors = useMemo(() => {
-    let list = [...vendors];
-
-    if (activeTab !== "all") list = list.filter(v => v.status === activeTab);
-
-    if (sort === "name") list.sort((a, b) => a.legal_name.localeCompare(b.legal_name));
-
-    return list;
-  }, [vendors, activeTab, sort]);
+    if (activeTab !== "all") {
+      return vendors.filter(v => v.status === activeTab);
+    }
+    return vendors;
+  }, [vendors, activeTab]);
 
   const handleExportVendors = async () => {
     try {
       const totalCount = meta?.total_count ?? 0;
       if (!totalCount) return;
 
-      const params = {
+      const params: any = {
         page: 1,
         page_size: totalCount,
         search: search.trim() || undefined,
         status: activeTab !== "all" ? activeTab : undefined,
       };
+
+      if (sortBy) {
+        params.sort_by = sortBy;
+        params.sort_order = sortOrder;
+      }
 
       // 🚫 NO REDUX DISPATCH
       const result = await vendorsService.list(params);
@@ -239,6 +253,7 @@ export default function VendorsPage() {
     document.body.style.overflow = "";
     document.body.style.paddingRight = "";
   };
+
   useEffect(() => {
 
     if (isAnyModalOpen) {
@@ -291,9 +306,39 @@ export default function VendorsPage() {
 
       {selectedVendor && (
         <>
-          <EditVendorModal vendor={selectedVendor} open={editOpen} onClose={() => setEditOpen(false)} />
-          <UpdateSeatsModal vendor={selectedVendor} open={seatsOpen} onClose={() => setSeatsOpen(false)} />
-          <NotifyVendorModal vendor={selectedVendor} open={notifyOpen} onClose={() => setNotifyOpen(false)} />
+          <EditVendorModal
+            vendor={selectedVendor}
+            open={editOpen}
+            onClose={() => setEditOpen(false)}
+            setProcessing={setProcessing}
+            onSuccess={() => {
+              setEditOpen(false);
+              showResult(true, "Vendor updated successfully.");
+            }}
+            onError={(msg) => showResult(false, msg)}
+          />
+          <UpdateSeatsModal
+            vendor={selectedVendor}
+            open={seatsOpen}
+            onClose={() => setSeatsOpen(false)}
+            onSuccess={() => {
+              setSeatsOpen(false);
+              showResult(true, "Seats updated successfully.");
+            }}
+            onError={(msg: string) => showResult(false, msg)}
+            setProcessing={setProcessing}
+          />
+          <NotifyVendorModal
+            vendor={selectedVendor}
+            open={notifyOpen}
+            onClose={() => setNotifyOpen(false)}
+            onSuccess={() => {
+              setNotifyOpen(false);
+              showResult(true, "Vendor notified successfully.");
+            }}
+            onError={(msg: string) => showResult(false, msg)}
+            setProcessing={setProcessing}
+          />
           <ArchiveVendorModal
             vendor={selectedVendor}
             open={archiveOpen}
@@ -358,13 +403,36 @@ export default function VendorsPage() {
 
         filters={[
           {
-            key: "sort",
-            placeholder: "Sort by",
-            value: sort,
-            onChange: (v) => { setSort(v as "recent" | "name"); setPage(1); },
+            key: "sortBy",
+            placeholder: "Sort By",
+            title: "Sort By",
+            value: sortBy,
+            onChange: (v) => {
+              setSortBy(
+                v as "plan" | "last_seen" | "seats" | "onboarding" | "alphabetical"
+              );
+              setPage(1);
+            },
             options: [
-              { label: "Recent", value: "recent" },
-              { label: "Name A–Z", value: "name" },
+              { label: "Alphabetical", value: "alphabetical" },
+              { label: "Plan", value: "plan" },
+              { label: "Last Seen", value: "last_seen" },
+              { label: "Seats", value: "seats" },
+              { label: "Onboarding", value: "onboarding" },
+            ],
+          },
+          {
+            key: "sortOrder",
+            placeholder: "Order",
+            title: "Order",
+            value: sortOrder,
+            onChange: (v) => {
+              setSortOrder(v as "asc" | "desc");
+              setPage(1);
+            },
+            options: [
+              { label: "Ascending", value: "asc" },
+              { label: "Descending", value: "desc" },
             ],
           },
         ]}

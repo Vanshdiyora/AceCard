@@ -8,17 +8,27 @@ interface UpdateSeatsModalProps {
   open: boolean;
   onClose: () => void;
   onSuccess?: (seats: number) => void;
+  onError?: (message: string) => void;
+  setProcessing?: (v: boolean) => void;
 }
 
+function getErrorMessage(err: unknown): string {
+  if (typeof err === "string") return err;
+  if (err instanceof Error) return err.message;
+  return "Something went wrong";
+}
 
 export default function UpdateSeatsModal({
   vendor,
   open,
   onClose,
-  onSuccess
+  onSuccess,
+  onError,
+  setProcessing
 }: UpdateSeatsModalProps) {
   const dispatch = useAppDispatch();
   const [seats, setSeats] = useState<string>("");
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (vendor) {
@@ -27,18 +37,28 @@ export default function UpdateSeatsModal({
   }, [vendor]);
 
   const save = async () => {
-    if (!vendor) return;
+    if (!vendor || saving) return;
 
     const parsedSeats = Number(seats);
     if (!Number.isInteger(parsedSeats) || parsedSeats < 0) return;
 
-    await dispatch(
-      updateSeats({ id: vendor.id, seats: parsedSeats })
-    ).unwrap();
+    try {
+      setSaving(true);
+      setProcessing?.(true);
 
-    onClose();
-    onSuccess?.(parsedSeats);
+      await dispatch(
+        updateSeats({ id: vendor.id, seats: parsedSeats })
+      ).unwrap();
 
+      onClose();
+      onSuccess?.(parsedSeats);
+
+    } catch (err) {
+      onError?.(getErrorMessage(err));
+    } finally {
+      setSaving(false);
+      setProcessing?.(false);
+    }
   };
 
   if (!open || !vendor) return null;
@@ -60,18 +80,25 @@ export default function UpdateSeatsModal({
             value={seats}
             onChange={(e) => setSeats(e.target.value)}
             className="border rounded-lg w-full px-3 py-2"
+            disabled={saving}
           />
         </div>
 
         <div className="px-6 py-4 border-t flex justify-end gap-3">
-          <button onClick={onClose} className="px-4 py-2 border rounded-lg">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 border rounded-lg"
+            disabled={saving}
+          >
             Cancel
           </button>
+
           <button
             onClick={save}
-            className="px-4 py-2 bg-purple-600 text-white rounded-lg"
+            disabled={saving}
+            className="px-4 py-2 bg-purple-600 text-white rounded-lg disabled:opacity-50"
           >
-            Save Changes
+            {saving ? "Saving..." : "Save Changes"}
           </button>
         </div>
       </div>
