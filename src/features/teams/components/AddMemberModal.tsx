@@ -23,7 +23,6 @@ interface FormState {
   name: string;
   email: string;
   phone: string;
-  password: string;
   role: "manager" | "sales_rep";
   manager_id?: number;
   avatar?: string;
@@ -56,7 +55,6 @@ export default function AddMemberModal({
       name: "",
       email: "",
       phone: "",
-      password: "",
       role: currentRole === "vendor_admin" ? "manager" : "sales_rep",
       manager_id:
         currentRole === "manager" ? currentUserId : undefined,
@@ -122,13 +120,6 @@ export default function AddMemberModal({
       label: "Phone",
       type: "text",
       placeholder: "Enter phone number",
-      required: true,
-    },
-    {
-      name: "password",
-      label: "Password",
-      type: "text",
-      placeholder: "Set a temporary password",
       required: true,
     },
     {

@@ -53,21 +53,18 @@ export const vendorsService = {
   },
 
   search: async (
-    params: FetchVendorsParams,
-    body?: { legal_name?: string; status?: "active" | "archived" }
+    params: FetchVendorsParams & { q?: string }
   ): Promise<VendorListResponse> => {
-    const res = await api.post(
-      "/admin/vendors/search",
-      body ?? {},
-      {
-        params: {
-          page: params.page,
-          page_size: params.page_size,
-          sort_by: params.sort_by,
-          sort_order: params.sort_order,
-        },
-      }
-    );
+    const res = await api.get("/admin/search", {
+      params: {
+        q: params.q,
+        page: params.page,
+        page_size: params.page_size,
+        sort_by: params.sort_by,
+        sort_order: params.sort_order,
+      },
+    });
+
     return res.data;
   },
 };

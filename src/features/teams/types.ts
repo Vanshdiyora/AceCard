@@ -82,7 +82,6 @@ export interface TeamListResponse {
 export interface CreateTeamMemberDTO {
   email: string;
   name: string;
-  password: string;
   phone: string;
   role: string;
   manager_id?: number;

@@ -12,6 +12,9 @@ type Props = {
   open: boolean;
   onClose: () => void;
   campaign: EnrichedCampaign;
+  onSuccess?: () => void;
+  onError?: (message: string) => void;
+  setProcessing?: (v: boolean) => void;
 };
 
 const STATUS_OPTIONS = [
@@ -27,6 +30,9 @@ export default function EditCampaignModal({
   open,
   onClose,
   campaign,
+  onSuccess,
+  onError,
+  setProcessing,
 }: Props) {
   const dispatch = useAppDispatch();
 
@@ -257,54 +263,65 @@ const { managers, salesReps: salespeople } = useAppSelector((s) => s.team);
   ];
 
   /* ---------- SAVE ---------- */
-  const save = async () => {
-    setSubmitAttempted(true); // ✅ ADD
+const save = async () => {
+  setSubmitAttempted(true);
 
-    // ✅ Collect all errors at once
-    const newErrors: Record<string, string | null> = {};
-    let hasErrors = false;
+  const newErrors: Record<string, string | null> = {};
+  let hasErrors = false;
 
-    fields.forEach((field) => {
-      const error = validateField(field, form[field.name], form);
-      newErrors[field.name] = error;
-      if (error) hasErrors = true;
-    });
+  fields.forEach((field) => {
+    const error = validateField(field, form[field.name], form);
+    newErrors[field.name] = error;
+    if (error) hasErrors = true;
+  });
 
-    setErrors(newErrors); // ✅ Single update
+  setErrors(newErrors);
+  if (hasErrors) return;
 
-    if (hasErrors) return;
+  try {
+    setProcessing?.(true);
 
-    try {
-      await dispatch(
-        updateCampaign({
-          id: campaign.id,
-          data: {
-            name: form.name,
-            description: form.description || undefined,
-            status: form.status,
-            budget: Number(form.budget),
-            manager_id: Number(form.manager_id),
-            assigned_reps_ids: form.assigned_reps_ids.length
-              ? form.assigned_reps_ids
-              : undefined,
-            product_ids: form.product_ids.length
-              ? form.product_ids
-              : undefined,
-            start_date: form.start_date
-              ? new Date(form.start_date).toISOString()
-              : undefined,
-            end_date: form.end_date
-              ? new Date(form.end_date).toISOString()
-              : undefined,
-          },
-        })
-      ).unwrap();
+    await dispatch(
+      updateCampaign({
+        id: campaign.id,
+        data: {
+          name: form.name,
+          description: form.description || undefined,
+          status: form.status,
+          budget: Number(form.budget),
+          manager_id: Number(form.manager_id),
+          assigned_reps_ids: form.assigned_reps_ids.length
+            ? form.assigned_reps_ids
+            : undefined,
+          product_ids: form.product_ids.length
+            ? form.product_ids
+            : undefined,
+          start_date: form.start_date
+            ? new Date(form.start_date).toISOString()
+            : undefined,
+          end_date: form.end_date
+            ? new Date(form.end_date).toISOString()
+            : undefined,
+        },
+      })
+    ).unwrap();
 
-      onClose();
-    } catch (err) {
-      console.error("Failed to update campaign", err);
-    }
-  };
+    onClose();
+    onSuccess?.(); // ✅ Trigger ResultModal
+
+  } catch (err: unknown) {
+    const message =
+      typeof err === "string"
+        ? err
+        : err instanceof Error
+        ? err.message
+        : "Failed to update campaign.";
+
+    onError?.(message); // ✅ Trigger error ResultModal
+  } finally {
+    setProcessing?.(false);
+  }
+};
 
   /* ---------- UI ---------- */
   return (

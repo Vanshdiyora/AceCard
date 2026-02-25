@@ -6,14 +6,14 @@ import DynamicForm, { type FieldConfig } from "../../../common/ui/DynamicForm";
 export function TransferLeadsModal({
     open,
     leads,
-    currentId,   // 👈 receive it
+    currentId,
     onConfirm,
     onClose,
     loading,
 }: {
     open: boolean;
     leads: number[];
-    currentId: number;      // 👈 new
+    currentId: number;
     onConfirm: (toId: number) => void;
     onClose: () => void;
     loading: boolean;
@@ -74,7 +74,11 @@ export function TransferLeadsModal({
                     setPage(1);
                 },
                 options: members
-                    .filter((m) => m.id !== currentId) // 👈 remove self
+                    .filter(
+                        (m) =>
+                            m.id !== currentId &&
+                            m.status !== "suspended"   // 👈 exclude suspended
+                    )
                     .map((m) => ({
                         label: `${m.name} • ${m.role.replace("_", " ")}`,
                         value: m.id,
@@ -118,8 +122,8 @@ export function TransferLeadsModal({
                         disabled={!form.to_rep_id || loading}
                         onClick={() => onConfirm(form.to_rep_id)}
                         className={`px-5 py-2 rounded-xl text-sm font-medium ${!form.to_rep_id || loading
-                                ? "bg-gray-200 text-gray-400"
-                                : "bg-red-600 text-white hover:bg-red-700"
+                            ? "bg-gray-200 text-gray-400"
+                            : "bg-red-600 text-white hover:bg-red-700"
                             }`}
                     >
                         {loading ? "Transferring..." : "Transfer & Continue"}

@@ -235,7 +235,7 @@ export default function ProductsPage() {
         }}
       />
 
-      {error && <ErrorAlert message={error} />}
+      <ErrorAlert message={error} />
 
       <PageFilters
         tabs={[

@@ -47,6 +47,7 @@ export type FetchVendorsParams = {
   page_size?: number;
   search?: string;
   legal_name?: string;
+  q?: string;
   status?: "active" | "archived";
   sort_by?: "plan" | "last_seen" | "seats" | "onboarding" | "alphabetical";
   sort_order?: "asc" | "desc";
@@ -87,8 +88,7 @@ export const searchVendors = createAsyncThunk<
   { rejectValue: string }
 >("vendors/search", async (params, { rejectWithValue }) => {
   try {
-    const { legal_name, status, ...pagination } = params;
-    return await vendorsService.search(pagination, { legal_name, status });
+    return await vendorsService.search(params); // ✅ pass everything directly
   } catch (err: unknown) {
     return rejectWithValue(extractError(err, "Failed to search vendors"));
   }

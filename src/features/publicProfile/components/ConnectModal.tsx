@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useAppDispatch } from "../../../app/hooks";
 import { sendConnectRequest } from "../slice";
-import type { ContactConfig, ContactField} from "../../settings/components/vice/VicePublicSetting";
+import type { ContactConfig, ContactField } from "../../settings/components/vice/VicePublicSetting";
+import { CustomDropdown } from "./CustomDropdown";
 
 export function ConnectModal({
   open,
@@ -130,20 +131,15 @@ export function ConnectModal({
 
       case "dropdown":
         return (
-          <select {...commonProps}>
-            <option value="">
-              Select {field.label}
-            </option>
-            {(field.options ?? []).map(
-              (opt, i) => (
-                <option key={i} value={opt}>
-                  {opt}
-                </option>
-              )
-            )}
-          </select>
+          <CustomDropdown
+            field={field}
+            value={form[field.id]}
+            onChange={(val:any) =>
+              setForm({ ...form, [field.id]: val })
+            }
+            theme={theme}
+          />
         );
-
       case "checkbox":
         return (
           <label className="flex items-center gap-2 text-sm">
@@ -214,10 +210,9 @@ export function ConnectModal({
       {/* FORM */}
       {!submitted && (
         <div
-          className="w-full max-w-sm rounded-2xl shadow-2xl p-5"
+          className="w-full max-w-sm rounded-2xl shadow-2xl p-5 max-h-[90vh] flex flex-col"
           style={{
-            backgroundColor:
-              theme.card_background,
+            backgroundColor: theme.card_background,
           }}
         >
           <div className="flex items-center justify-between mb-4">
@@ -242,16 +237,16 @@ export function ConnectModal({
             </button>
           </div>
 
-          <div className="space-y-3">
+          <div className="space-y-3 overflow-y-auto pr-2 flex-1">
             {enabledFields.map((field) => (
               <div key={field.id}>
                 {field.type !==
                   "checkbox" && (
-                  <label className="text-xs mb-1 block opacity-70">
-                    {field.label}
-                    {field.required && " *"}
-                  </label>
-                )}
+                    <label className="text-xs mb-1 block opacity-70">
+                      {field.label}
+                      {field.required && " *"}
+                    </label>
+                  )}
 
                 {renderField(field)}
 
@@ -268,11 +263,10 @@ export function ConnectModal({
           <button
             onClick={submit}
             disabled={!isValid}
-            className={`w-full mt-5 py-3 rounded-xl font-semibold text-sm ${
-              !isValid
-                ? "opacity-50 cursor-not-allowed"
-                : "active:scale-[0.98]"
-            }`}
+            className={`w-full mt-5 py-3 rounded-xl font-semibold text-sm ${!isValid
+              ? "opacity-50 cursor-not-allowed"
+              : "active:scale-[0.98]"
+              }`}
             style={{
               backgroundColor:
                 theme.button_color ?? "#fff",

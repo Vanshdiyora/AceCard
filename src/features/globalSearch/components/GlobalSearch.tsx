@@ -44,12 +44,11 @@ const vendorLoading = useAppSelector((s) => s.vendors.searchLoading);
 
     if (mode === "super_admin") {
       dispatch(
-        searchVendors({
-          page: 1,
-          page_size: 10,
-          legal_name: debouncedQuery
-
-        })
+       searchVendors({
+  page: 1,
+  page_size: 10,
+  q: debouncedQuery
+})
       );
     } else {
       dispatch(fetchGlobalSearch({ query: debouncedQuery, mode }));

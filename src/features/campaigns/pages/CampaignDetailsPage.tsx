@@ -230,8 +230,18 @@ export default function CampaignDetailsPage() {
         <CampaignProductsTab assignedProducts={campaign.products ?? []} />
       )}
 
-      <EditCampaignModal open={openEdit} onClose={() => setOpenEdit(false)} campaign={campaign} />
-
+      <EditCampaignModal
+        open={openEdit}
+        onClose={() => setOpenEdit(false)}
+        campaign={campaign}
+        setProcessing={setProcessing}
+        onSuccess={async () => {
+          setOpenEdit(false);
+          showResult(true, "Campaign updated successfully.");
+          await dispatch(fetchCampaignById(campaign.id));
+        }}
+        onError={(msg) => showResult(false, msg)}
+      />
       <ConfirmationModal
         open={confirmOpen === "archive"}
         title="Archive Campaign"

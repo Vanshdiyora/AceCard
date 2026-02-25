@@ -80,39 +80,39 @@ export default function ProductDetailsPage() {
   }
 
   const isArchived = product!.status === "archived";
-// function ProductAvatar({
-//   name,
-//   image,
-// }: {
-//   name: string;
-//   image?: string;
-// }) {
-//   const initials = name
-//     .split(" ")
-//     .map(n => n[0])
-//     .join("")
-//     .slice(0, 2)
-//     .toUpperCase();
+  // function ProductAvatar({
+  //   name,
+  //   image,
+  // }: {
+  //   name: string;
+  //   image?: string;
+  // }) {
+  //   const initials = name
+  //     .split(" ")
+  //     .map(n => n[0])
+  //     .join("")
+  //     .slice(0, 2)
+  //     .toUpperCase();
 
-//   return (
-//     <div className="w-14 h-14 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
-//       {image ? (
-//         <img
-//           src={image}
-//           alt={name}
-//           className="w-full h-full object-cover"
-//           onError={(e) => {
-//             (e.currentTarget as HTMLImageElement).style.display = "none";
-//           }}
-//         />
-//       ) : (
-//         <span className="text-lg font-semibold text-gray-700">
-//           {initials}
-//         </span>
-//       )}
-//     </div>
-//   );
-// }
+  //   return (
+  //     <div className="w-14 h-14 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
+  //       {image ? (
+  //         <img
+  //           src={image}
+  //           alt={name}
+  //           className="w-full h-full object-cover"
+  //           onError={(e) => {
+  //             (e.currentTarget as HTMLImageElement).style.display = "none";
+  //           }}
+  //         />
+  //       ) : (
+  //         <span className="text-lg font-semibold text-gray-700">
+  //           {initials}
+  //         </span>
+  //       )}
+  //     </div>
+  //   );
+  // }
 
   /* ---------- ARCHIVE / ACTIVATE ---------- */
   const handleConfirm = async () => {
@@ -179,26 +179,26 @@ export default function ProductDetailsPage() {
         }}
         actions={
           <div className="flex gap-3">
-  <ActionButton
-    icon={<Edit2 size={16} />}
-    label="Edit"
-    onClick={() => setEditOpen(true)}
-  />
+            <ActionButton
+              icon={<Edit2 size={16} />}
+              label="Edit"
+              onClick={() => setEditOpen(true)}
+            />
 
-  <ActionButton
-    icon={
-      isArchived ? (
-        <CheckCircle size={16} />
-      ) : (
-        <Archive size={16} />
-      )
-    }
-    label={isArchived ? "Activate" : "Archive"}
-    onClick={() => setConfirmOpen(true)}
-    danger={!isArchived}
-    disabled={processing}
-  />
-</div>
+            <ActionButton
+              icon={
+                isArchived ? (
+                  <CheckCircle size={16} />
+                ) : (
+                  <Archive size={16} />
+                )
+              }
+              label={isArchived ? "Activate" : "Archive"}
+              onClick={() => setConfirmOpen(true)}
+              danger={!isArchived}
+              disabled={processing}
+            />
+          </div>
 
         }
       />

@@ -396,7 +396,6 @@ export default function TeamMemberDetailsPage() {
       </div>
 
       {/* ── RIGHT COLUMN — MOBILE PREVIEW ── */}
-      {/* ── RIGHT COLUMN — MOBILE PREVIEW ── */}
       <div
         className={`
     ${isPublicProfile ? "flex w-full" : "hidden xl:flex"}

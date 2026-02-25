@@ -31,7 +31,7 @@ export function normalizeProfile(api: any) {
         ? cfg.card_buttons.items
         : [];
 
-      const mappedItems = rawItems
+      const mappedItems = [...rawItems]
         .sort((a: any, b: any) => (a.rank ?? 0) - (b.rank ?? 0))
         .map((b: any, i: number) => ({
           id: b.id ?? crypto.randomUUID(),
@@ -59,7 +59,7 @@ export function normalizeProfile(api: any) {
       form_title: cfg.contact?.form_title || "Contact Form",
 
       fields: Array.isArray(cfg.contact?.fields)
-        ? cfg.contact.fields
+        ? [...cfg.contact.fields]
           .sort((a: any, b: any) => (a.rank ?? 0) - (b.rank ?? 0))
           .map((f: any, i: number) => ({
             id: f.id ?? `field_${i}`,

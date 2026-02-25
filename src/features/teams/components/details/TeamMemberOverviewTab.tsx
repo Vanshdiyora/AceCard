@@ -76,10 +76,10 @@ export default function TeamMemberOverviewTab({
 
   /* ---------------- Campaigns ---------------- */
   useEffect(() => {
-    if (member?.id && member.role !== "manager") {
-      dispatch(fetchCampaignsByTeamMember({ memberId: member.id }));
-    }
-  }, [member.id, member.role, dispatch]);
+    if (!member?.id) return;
+
+    dispatch(fetchCampaignsByTeamMember({ memberId: member.id }));
+  }, [member.id, dispatch]);
 
   const campaigns = useMemo(() => {
     if (member.role === "manager") {
