@@ -375,7 +375,7 @@ export default function VicePublicSetting({
   const [isCropping, setIsCropping] = useState(false);
   const coverFileRef = useRef<File | null>(null);
   const [originalConfig, setOriginalConfig] = useState<PublicProfileConfig | null>(null);
-
+  const [modalError, setModalError] = useState<string | null>(null);
   const { data: publicProfile, loading } = useAppSelector(
     (s) => s.publicProfile
   );
@@ -727,9 +727,9 @@ export default function VicePublicSetting({
   const role = useAppSelector((s) => s.auth.role);
 
   if (loading || !config)
-    return<div className="text-gray-400">
-  <BrandLoader />
-</div>;
+    return <div className="text-gray-400">
+      <BrandLoader />
+    </div>;
 
   const isReadOnly = (meta?: { locked?: boolean }) =>
     meta?.locked === true && role !== "vendor_admin";
@@ -1019,7 +1019,6 @@ export default function VicePublicSetting({
                   </button>
                 </div>
 
-                {/* IMAGE PREVIEW */}
                 {/* IMAGE UPLOAD PREVIEW */}
                 <div className="relative border-2 border-dashed rounded-xl p-4 group cursor-pointer">
 
@@ -1098,7 +1097,7 @@ export default function VicePublicSetting({
                       });
                     }}
                     className="w-full mt-1 rounded-xl border px-4 py-3"
-                    placeholder="Enter a title or short description (optional)."
+                    placeholder="Enter a title or short description."
                   />
                 </div>
 
@@ -1534,9 +1533,77 @@ export default function VicePublicSetting({
     card_buttons: "Card Buttons",
   };
 
+  const validateSectionDraft = (): boolean => {
+    if (!activeSection || !sectionDraft) return false;
+
+    // YouTube
+    if (activeSection === "youtube") {
+      for (const item of sectionDraft.items) {
+        if (!isYoutubeRowComplete(item)) {
+          setModalError("Please enter valid YouTube URLs for all videos.");
+          return false;
+        }
+      }
+    }
+
+    // Photo Gallery
+    if (activeSection === "photo_gallery") {
+      for (const item of sectionDraft.items) {
+        if (!isPhotoRowComplete(item)) {
+          setModalError("Please complete all photo entries.");
+          return false;
+        }
+      }
+    }
+
+    // Social Links
+    if (activeSection === "social_links") {
+      if (hasInvalidSocialLinks(sectionDraft.items)) {
+        setModalError("Please fill all enabled social links.");
+        return false;
+      }
+    }
+
+    // Links & Files
+    if (activeSection === "links_files") {
+      for (const item of sectionDraft.items) {
+        if (!isLinkFileRowComplete(item)) {
+          setModalError("Please complete all link/file entries.");
+          return false;
+        }
+      }
+    }
+
+    // Contact
+    if (activeSection === "contact") {
+      for (const field of sectionDraft.fields || []) {
+        if (!isContactFieldComplete(field)) {
+          setModalError("Please complete all contact fields.");
+          return false;
+        }
+      }
+    }
+
+    // Card Buttons
+    if (activeSection === "card_buttons") {
+      for (const btn of sectionDraft.items || []) {
+        if (!btn.title?.trim() || !btn.link?.trim()) {
+          setModalError("Each card button must have title and link.");
+          return false;
+        }
+      }
+    }
+
+    setModalError(null); // 🔥 clear error if valid
+    return true;
+  };
+
   const handleSectionSave = () => {
     if (!activeSection || !sectionDraft || !config) return;
+    const isValid = validateSectionDraft();
+    if (!isValid) return;
 
+    setModalError(null); // clear before saving
     let nextConfig = { ...config };
 
     /* ================= ENABLE SECTION (ONLY IF FROM ADD FLOW) ================= */
@@ -2197,7 +2264,7 @@ export default function VicePublicSetting({
                   <input
                     type="number"
                     min={0}
-                    max={600}
+                    max={40}
                     step={1}
                     value={
                       config.layout.profile_width === 0
@@ -2960,6 +3027,7 @@ export default function VicePublicSetting({
       />
       <AppModal
         open={!!activeSection}
+        errorMessage={modalError} 
         title={
           activeSection
             ? SECTION_LABELS[activeSection] ||
@@ -2969,10 +3037,18 @@ export default function VicePublicSetting({
         description="Manage section content"
         size="xl"
         onClose={() => {
+          // Close modal
           setActiveSection(null);
           setSectionDraft(null);
-          setSocialError(null);   // 🔥 RESET HERE
 
+          // 🔥 Clear ALL validation errors
+          setModalError(null);
+          setSocialError(null);
+          setYoutubeError(null);
+          setPhotoError(null);
+          setFormErrors({});
+
+          // Reset add flow
           if (cameFromAddModal) {
             setCameFromAddModal(false);
             setPendingSection(null);
@@ -2982,10 +3058,19 @@ export default function VicePublicSetting({
         onBack={() => {
           setActiveSection(null);
           setSectionDraft(null);
+
+          // 🔥 clear errors here too
+          setModalError(null);
+          setSocialError(null);
+          setYoutubeError(null);
+          setPhotoError(null);
+          setFormErrors({});
+
           setAddSectionOpen(true);
         }}
         onConfirm={handleSectionSave}
         confirmText="Save Changes"
+        
       >
         {activeSection && SECTION_COMPONENTS[activeSection]}
       </AppModal>

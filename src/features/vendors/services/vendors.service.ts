@@ -65,6 +65,22 @@ export const vendorsService = {
       },
     });
 
-    return res.data;
+    const response = res.data;
+
+    return {
+      data: response.results ?? [],
+      meta: {
+        page: response.page ?? 1,
+        page_size: response.limit ?? 10,
+        total_count: response.total ?? 0,
+        total_pages: Math.ceil(
+          (response.total ?? 0) / (response.limit ?? 10)
+        ),
+        has_next:
+          (response.page ?? 1) <
+          Math.ceil((response.total ?? 0) / (response.limit ?? 10)),
+        has_previous: (response.page ?? 1) > 1,
+      },
+    };
   },
 };

@@ -8,6 +8,12 @@ const resolveTheme = (theme: any) => ({
   buttonText: theme.button_text || "#5F29F5",
 });
 
+const safeSrc = (value?: string | null): string | null => {
+  if (!value) return null;
+  const trimmed = value.trim();
+  return trimmed !== "" ? trimmed : null;
+};
+
 export function ProfileCenter({
   profile,
   theme,
@@ -26,7 +32,11 @@ export function ProfileCenter({
   );
 
   const ring = layout?.profile_width ?? 6;
-  const BORDER_RADIUS = 100; // rounded-xl
+
+  // 🔥 Only change image source based on layout.custom_profile
+  const avatarSrc =
+    (profile?.custom_profile && safeSrc(profile?.custom_profile_url)) ||
+    safeSrc(profile?.avatar_url);
 
   /* ================= ALIGNMENT ================= */
   const align =
@@ -50,34 +60,31 @@ export function ProfileCenter({
       >
         {/* ================= AVATAR ================= */}
         <div className={`w-full flex ${avatarAlign}`}>
-          {/* Border ring (fixed rounded-xl) */}
           <div
             className="flex items-center justify-center"
             style={{
               backgroundColor: "#9ca3af",
               padding: ring,
-              borderRadius: BORDER_RADIUS,
+              borderRadius: "100%", // keep circular
               transition: "padding 150ms ease",
             }}
           >
-            {/* Inner background (fixed rounded-xl) */}
             <div
               style={{
                 backgroundColor: t.buttonBg,
-                borderRadius: BORDER_RADIUS,
+                borderRadius: "100%", // keep circular
               }}
             >
-              {profile?.avatar_url ? (
+              {avatarSrc ? (
                 <img
-                  src={profile.avatar_url}
+                  src={avatarSrc}
                   alt="Avatar"
                   style={{
                     width: avatarSize,
                     height: avatarSize,
                     objectFit: "cover",
-                    borderRadius: "100%", // 👈 always circular
-                    transition:
-                      "width 150ms ease, height 150ms ease",
+                    borderRadius: "100%", // always circular
+                    transition: "width 150ms ease, height 150ms ease",
                   }}
                 />
               ) : (
@@ -88,9 +95,8 @@ export function ProfileCenter({
                     height: avatarSize,
                     backgroundColor: t.cardBg,
                     color: t.text,
-                    borderRadius: "100%", // 👈 always circular
-                    transition:
-                      "width 150ms ease, height 150ms ease",
+                    borderRadius: "100%",
+                    transition: "width 150ms ease, height 150ms ease",
                   }}
                 >
                   {user?.name?.[0] || "?"}
@@ -107,7 +113,7 @@ export function ProfileCenter({
 
         <p className="text-xs opacity-90" style={{ color: t.text }}>
           {formatRole(
-            profile.custom_job_role || user?.job_title || user?.role
+            profile?.custom_job_role || user?.job_title || user?.role
           )}{" "}
           at {user?.vendor_name}
         </p>

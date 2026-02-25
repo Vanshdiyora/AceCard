@@ -49,6 +49,7 @@ export const resolveTheme = (theme: any) => ({
 });
 
 
+
 const getYouTubeId = (url?: string) => {
   if (!url) return null;
 
@@ -203,6 +204,7 @@ export default function MobilePublicSettings({
   const [autoEditSection, setAutoEditSection] = useState<string | null>(null);
   const [editCardButtons, setEditCardButtons] = useState(false);
   const [cardButtonsDraft, setCardButtonsDraft] = useState<any | null>(null);
+  const [modalError, setModalError] = useState<string | null>(null);
   const [layoutDraft, setLayoutDraft] = useState<{
     layout: any;
     theme: any;
@@ -249,6 +251,104 @@ export default function MobilePublicSettings({
     }
   };
 
+  type ValidatorFn = (draft: any) => string | null;
+  const isYoutubeRowComplete = (item: any) =>
+    item.url?.trim() && getYouTubeId(item.url);
+
+  const isPhotoRowComplete = (item: any) =>
+    item.img_url?.trim();
+
+  const isContactFieldComplete = (field: any) =>
+    field.label?.trim();
+
+  const hasInvalidSocialLinks = (items: any[]) =>
+    items.some((i) => i.enabled && !i.url?.trim());
+  const sectionValidators: Record<string, ValidatorFn> = {
+    youtube: (draft) => {
+      const invalid = (draft.items || []).some(
+        (item: any) => !isYoutubeRowComplete(item)
+      );
+
+      return invalid
+        ? "Please enter valid YouTube URLs for all videos."
+        : null;
+    },
+
+    photo_gallery: (draft) => {
+      const invalid = (draft.items || []).some(
+        (item: any) => !isPhotoRowComplete(item)
+      );
+
+      return invalid
+        ? "Please complete all photo entries."
+        : null;
+    },
+
+    social_links: (draft) => {
+      return hasInvalidSocialLinks(draft.items || [])
+        ? "Please fill all enabled social links."
+        : null;
+    },
+
+    links_files: (draft) => {
+      const items = draft?.items || [];
+      console.log("Validating links_files with items:", items);
+      // 🚨 Case 1: No links added
+      if (items.length === 0) {
+        return "Please add at least one link or file.";
+      }
+
+      // 🚨 Case 2: Incomplete rows
+      const invalid = items.some(
+        (item: any) => !item.title?.trim() || !item.url?.trim()
+      );
+
+      if (invalid) {
+        return "Please complete all link/file entries.";
+      }
+
+      return null;
+    },
+
+    contact: (draft) => {
+      const invalid = (draft.fields || []).some(
+        (field: any) => !isContactFieldComplete(field)
+      );
+
+      return invalid
+        ? "Please complete all contact fields."
+        : null;
+    },
+
+    card_buttons: (draft) => {
+      const invalid = (draft.items || []).some(
+        (btn: any) => !btn.title?.trim() || !btn.link?.trim()
+      );
+
+      return invalid
+        ? "Each card button must have title and link."
+        : null;
+    },
+  };
+
+  const validateSectionDraft = (
+    sectionKey: string,
+    sectionDraft: any
+  ): boolean => {
+    const validator = sectionValidators[sectionKey];
+
+    if (!validator) return true;
+
+    const error = validator(sectionDraft);
+
+    if (error) {
+      setModalError(error);
+      return false;
+    }
+
+    setModalError(null);
+    return true;
+  };
 
   const isMobile = useIsMobile();
   const updateDraft = (updater: any) => {
@@ -639,15 +739,21 @@ export default function MobilePublicSettings({
       {/* Youtube */}
       <EditModal
         open={editSection?.type === "youtube"}
+        errorMessage={modalError}
         onClose={() => {
+          setModalError(null);
           setYoutubeDraft(null);
           setEditSection(null);
         }}
         onSave={() => {
+          if (!validateSectionDraft("youtube", youtubeDraft)) return;
+
           setDraft((prev: any) => ({
             ...prev,
             youtube: youtubeDraft,
           }));
+
+          setModalError(null);
           setYoutubeDraft(null);
           setEditSection(null);
         }}
@@ -769,14 +875,20 @@ export default function MobilePublicSettings({
       {/* Photo gallery */}
       <EditModal
         open={editPhotoGallery}
+        errorMessage={modalError}
         onClose={() => {
+          setModalError(null);
           setEditPhotoGallery(false);
         }}
         onSave={() => {
+          if (!validateSectionDraft("photo_gallery", photoGalleryDraft)) return;
+
           setDraft((prev: any) => ({
             ...prev,
             photo_gallery: photoGalleryDraft,
           }));
+
+          setModalError(null);
           setEditPhotoGallery(false);
         }}
       >
@@ -794,15 +906,21 @@ export default function MobilePublicSettings({
       {/* Contact */}
       <EditModal
         open={editContact}
+        errorMessage={modalError}
         onClose={() => {
+          setModalError(null);
           setContactDraft(null);
           setEditContact(false);
         }}
         onSave={() => {
+          if (!validateSectionDraft("contact", contactDraft)) return;
+
           setDraft((prev: any) => ({
             ...prev,
             contact: contactDraft,
           }));
+
+          setModalError(null);
           setContactDraft(null);
           setEditContact(false);
         }}
@@ -864,15 +982,21 @@ export default function MobilePublicSettings({
       {/* Card Buttons */}
       <EditModal
         open={editCardButtons}
+        errorMessage={modalError}
         onClose={() => {
+          setModalError(null);
           setCardButtonsDraft(null);
           setEditCardButtons(false);
         }}
         onSave={() => {
+          if (!validateSectionDraft("card_buttons", cardButtonsDraft)) return;
+
           setDraft((prev: any) => ({
             ...prev,
             card_buttons: cardButtonsDraft,
           }));
+
+          setModalError(null);
           setCardButtonsDraft(null);
           setEditCardButtons(false);
         }}
@@ -1427,6 +1551,7 @@ export function EditModal({
   children,
   showFooter = true,
   disableSave = false, // 👈 NEW
+  errorMessage,
 }: {
   open: boolean;
   onClose: () => void;
@@ -1434,6 +1559,7 @@ export function EditModal({
   children: React.ReactNode;
   showFooter?: boolean;
   disableSave?: boolean; // 👈 NEW
+  errorMessage?: string | null;
 }) {
   if (!open) return null;
 
@@ -1468,36 +1594,52 @@ export function EditModal({
           </button>
         </div>
 
+
         <div className="flex-1 overflow-y-auto p-4 space-y-3">
           {children}
         </div>
 
-        {showFooter && (
-          <div className="sticky bottom-0 bg-white border-t p-4 flex gap-3">
-            <button
-              onClick={onClose}
-              className="flex-1 py-2 rounded-lg border font-semibold"
-            >
-              Cancel
-            </button>
 
-            {onSave && (
-              <button
-                onClick={onSave}
-                disabled={disableSave}
-                className={`flex-1 py-2 rounded-lg font-semibold
-      ${disableSave
-                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                    : "bg-purple-600 text-white"
-                  }`}
-              >
-                Save
-              </button>
+        {showFooter && (
+          <div className="sticky bottom-0 bg-white border-t">
+
+            {/* Error ABOVE buttons */}
+            {errorMessage && (
+              <div className="px-4 pt-3">
+                <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-2 text-sm text-red-600">
+                  {errorMessage}
+                </div>
+              </div>
             )}
+
+            {/* 🔘 Buttons row */}
+            <div className="p-4 flex gap-3">
+              <button
+                onClick={onClose}
+                className="flex-1 py-2 rounded-lg border font-semibold"
+              >
+                Cancel
+              </button>
+
+              {onSave && (
+                <button
+                  onClick={onSave}
+                  disabled={disableSave}
+                  className={`flex-1 py-2 rounded-lg font-semibold
+            ${disableSave
+                      ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                      : "bg-purple-600 text-white"
+                    }`}
+                >
+                  Save
+                </button>
+              )}
+            </div>
+
           </div>
         )}
       </div>
-    </div>,
+    </div >,
     document.body
   );
 }

@@ -32,6 +32,8 @@ export interface PageFiltersProps {
   onImport?: () => void;
   disableExport?: boolean; // optional
   rightSlot?: React.ReactNode;
+
+  initialSearch?: string;
 }
 
 /* ---------------- COMPONENT ---------------- */
@@ -49,14 +51,19 @@ export default function PageFilters({
   onExport,
   onImport,
   disableExport = false,
-  rightSlot
+  rightSlot,
+  initialSearch = "",
 }: PageFiltersProps) {
   const [panelOpen, setPanelOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
 
-  const [searchValue, setSearchValue] = useState("");
+const [searchValue, setSearchValue] = useState(initialSearch ?? "");
   const debounceRef = useRef<number | undefined>(undefined);
-
+useEffect(() => {
+  if (initialSearch !== undefined) {
+    setSearchValue(initialSearch);
+  }
+}, [initialSearch]);
   /* -------- Outside click -------- */
   useEffect(() => {
     const handler = (e: MouseEvent) => {

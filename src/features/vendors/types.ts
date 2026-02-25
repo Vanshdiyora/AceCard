@@ -10,7 +10,9 @@ export interface VendorItem {
   avatar?: string;
   secondary_phone?: string;
   secondary_email?: string;
-
+  name?: string;
+  vendor_id?: number;
+  type?: string;
   logo_url?: string;
   brand_color?: string;
   tagline?: string;

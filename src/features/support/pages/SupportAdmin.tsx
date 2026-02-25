@@ -5,7 +5,7 @@ import {
   replyTicket,
   fetchAdminSupportStats,
 } from "../slice";
-
+import { useSearchParams } from "react-router-dom";
 import { MessageSquare, Clock, CheckCircle2 } from "lucide-react";
 
 import PageHeader from "../../../common/components/layout/PageHeader";
@@ -40,6 +40,8 @@ export const formatDate = (value?: string) => {
 
 export default function SupportAdmin() {
   const dispatch = useAppDispatch();
+const [searchParams] = useSearchParams();
+const initialQuery = searchParams.get("q") ?? "";
 
   const {
     tickets,
@@ -54,7 +56,7 @@ export default function SupportAdmin() {
   const pageSize = 10;
 
   const [activeTab, setActiveTab] = useState("all");
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(initialQuery);
   const [selectedTicket, setSelectedTicket] = useState<any>(null);
   const [detailsModal, setDetailsModal] = useState(false);
 
@@ -68,6 +70,11 @@ export default function SupportAdmin() {
     setResultMessage(message);
     setResultOpen(true);
   };
+useEffect(() => {
+  if (initialQuery) {
+    setSearch(initialQuery);
+  }
+}, [initialQuery]);
 
   useEffect(() => {
     const params: any = { page, page_size: pageSize };
@@ -260,6 +267,7 @@ export default function SupportAdmin() {
           { label: "In-progress", value: "pending" },
           { label: "Closed", value: "closed" },
         ]}
+        initialSearch={initialQuery} 
         activeTab={activeTab}
         onTabChange={setActiveTab}
         searchPlaceholder="Search tickets..."

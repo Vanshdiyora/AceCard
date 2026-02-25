@@ -19,7 +19,7 @@ export default function GlobalSearch({ mode }: GlobalSearchProps) {
 
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-
+const wrapperRef = useRef<HTMLDivElement>(null);
   const debouncedQuery = useDebounce(query, 300);
 
   // 🔹 Global search (admin)
@@ -27,9 +27,9 @@ export default function GlobalSearch({ mode }: GlobalSearchProps) {
   const globalLoading = useAppSelector(selectLoading);
 
   // 🔹 Vendor search (super admin)
-// ✅ CORRECT (search state)
-const vendors = useAppSelector((s) => s.vendors.searchResults);
-const vendorLoading = useAppSelector((s) => s.vendors.searchLoading);
+  // ✅ CORRECT (search state)
+  const vendors = useAppSelector((s) => s.vendors.searchResults);
+  const vendorLoading = useAppSelector((s) => s.vendors.searchLoading);
 
 
   const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -44,11 +44,11 @@ const vendorLoading = useAppSelector((s) => s.vendors.searchLoading);
 
     if (mode === "super_admin") {
       dispatch(
-       searchVendors({
-  page: 1,
-  page_size: 10,
-  q: debouncedQuery
-})
+        searchVendors({
+          page: 1,
+          page_size: 10,
+          q: debouncedQuery
+        })
       );
     } else {
       dispatch(fetchGlobalSearch({ query: debouncedQuery, mode }));
@@ -56,21 +56,36 @@ const vendorLoading = useAppSelector((s) => s.vendors.searchLoading);
 
     setActiveIndex(0);
   }, [debouncedQuery, mode, dispatch]);
+useEffect(() => {
+  const handleClickOutside = (event: MouseEvent) => {
+    if (!wrapperRef.current?.contains(event.target as Node)) {
+      setQuery("");         // 👈 clears input
+      setActiveIndex(0);    // 👈 reset keyboard selection
+    }
+  };
 
+  document.addEventListener("mousedown", handleClickOutside);
+
+  return () => {
+    document.removeEventListener("mousedown", handleClickOutside);
+  };
+}, []);
   /* ---------- NORMALIZED RESULTS ---------- */
   const results: GlobalSearchItem[] = useMemo(() => {
-  if (mode === "super_admin") {
-    return vendors.map((v) => ({
-      id: v.id, // ✅ FIX
-      label: v.legal_name,
-      type: "vendor",
-      route: `/admin/vendors/${v.id}`,
-    }));
-  }
+    if (mode === "super_admin") {
+      return vendors.map((v) => ({
+        id: v.id,
+        label: v.name ?? "Untitled",
+        type: v.type ?? "vendor",
+        route:
+          v.type === "vendor"
+            ? `/super/vendors/${v.vendor_id}`
+            : `/super/support?q=${encodeURIComponent(v.name ?? "")}`, // 🔥 pass query
+      }));
+    }
 
-  return globalResults;
-}, [mode, vendors, globalResults]);
-
+    return globalResults;
+  }, [mode, vendors, globalResults]);
 
   const loading = mode === "super_admin" ? vendorLoading : globalLoading;
 
@@ -107,7 +122,7 @@ const vendorLoading = useAppSelector((s) => s.vendors.searchLoading);
 
   /* ---------- UI ---------- */
   return (
-    <div className="relative">
+<div ref={wrapperRef} className="relative">
       <div className="relative">
         <Search
           className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
@@ -154,11 +169,10 @@ const vendorLoading = useAppSelector((s) => s.vendors.searchLoading);
                   e.stopPropagation();
                   handleSelect(item);
                 }}
-                className={`px-4 py-2 cursor-pointer flex justify-between ${
-                  i === activeIndex
-                    ? "bg-blue-100"
-                    : "hover:bg-gray-100"
-                }`}
+                className={`px-4 py-2 cursor-pointer flex justify-between ${i === activeIndex
+                  ? "bg-blue-100"
+                  : "hover:bg-gray-100"
+                  }`}
               >
                 <span>{item.label}</span>
                 <span className="text-xs uppercase text-gray-500">
