@@ -32,7 +32,7 @@ export default function RecentActivity({ items }: Props) {
     >
       <h3 className="font-semibold text-[#2d1a53] mb-4">Recent Activity</h3>
 
-      <div className="divide-y divide-purple-100">
+      <div className="max-h-[475px] overflow-y-auto divide-y divide-purple-100 pr-2">
         {last24HoursItems.map((i, idx) => (
           <div key={idx} className="relative flex items-center py-4">
             {/* Left */}
