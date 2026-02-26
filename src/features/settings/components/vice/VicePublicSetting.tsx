@@ -2757,43 +2757,93 @@ export default function VicePublicSetting({
               <div className="mt-6 space-y-3">
                 <p className="text-sm font-medium">Background Video</p>
 
-                {/* PREVIEW */}
-                {config.layout.background_video && (
-                  <video
-                    src={config.layout.background_video}
-                    className="w-full h-40 rounded-lg object-cover"
-                    autoPlay
-                    muted
-                    loop
-                    playsInline
-                  />
+                {config.layout.background_video ? (
+                  /* ================= VIDEO EXISTS ================= */
+                  <div className="relative group w-full h-40 rounded-2xl overflow-hidden bg-gray-300">
+
+                    {/* VIDEO */}
+                    <video
+                      src={config.layout.background_video}
+                      className="w-full h-full object-cover"
+                      autoPlay
+                      muted
+                      loop
+                      playsInline
+                    />
+
+                    {/* HOVER OVERLAY */}
+                    <div className="
+          absolute inset-0
+          bg-black/50
+          flex items-center justify-center
+          opacity-0
+          group-hover:opacity-100
+          transition
+        ">
+                      <span className="text-white font-medium">
+                        Change Video
+                      </span>
+                    </div>
+
+                    {/* INPUT */}
+                    <input
+                      type="file"
+                      accept="video/mp4,video/webm"
+                      className="absolute inset-0 opacity-0 cursor-pointer"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+
+                        const res = await uploadImage(file);
+                        const url = res.data.url;
+
+                        update({
+                          ...config,
+                          layout: { ...config.layout, background_video: url },
+                        });
+                      }}
+                    />
+                  </div>
+                ) : (
+                  /* ================= NO VIDEO ================= */
+                  <label
+                    className="
+    w-full h-40
+    flex flex-col items-center justify-center gap-2
+    rounded-2xl
+    bg-gray-100
+    border-2 border-dashed border-gray-300
+    cursor-pointer
+    text-gray-600
+    font-medium
+    hover:bg-gray-200
+    transition
+  "
+                  >
+                    <span className="text-sm">Upload Video</span>
+                    <span className="text-xs text-gray-400">
+                      MP4 or WebM
+                    </span>
+
+                    <input
+                      type="file"
+                      accept="video/mp4,video/webm"
+                      hidden
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+
+                        const res = await uploadImage(file);
+                        const url = res.data.url;
+
+                        update({
+                          ...config,
+                          layout: { ...config.layout, background_video: url },
+                        });
+                      }}
+                    />
+                  </label>
                 )}
-
-                {/* UPLOAD */}
-                <label className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-dashed cursor-pointer text-sm hover:bg-gray-50">
-                  Upload video
-                  <input
-                    type="file"
-                    accept="video/mp4,video/webm"
-                    hidden
-                    onChange={async (e) => {
-                      const file = e.target.files?.[0];
-                      if (!file) return;
-
-                      const res = await uploadImage(file); // reuse existing
-                      const url = res.data.url;
-
-                      update({
-                        ...config,
-                        layout: { ...config.layout, background_video: url },
-                      });
-                    }}
-                  />
-                </label>
-
-                <p className="text-xs text-gray-500">
-                  MP4 / WebM • Autoplays silently in background
-                </p>
               </div>
             )}
 
@@ -2868,11 +2918,14 @@ export default function VicePublicSetting({
               <div className="mt-6">
                 <p className="text-sm font-medium">Background Image</p>
 
-                <div className="relative h-32 w-full rounded-xl border overflow-hidden bg-gray-50">
+                <div className="relative h-32 w-full rounded-xl border border-gray-200 overflow-hidden bg-gray-50 group">
+
+                  {/* IMAGE OR PLACEHOLDER */}
                   {config.layout.background_image ? (
                     <img
                       src={config.layout.background_image}
                       className="w-full h-full object-cover"
+                      alt="Background"
                     />
                   ) : (
                     <div className="h-full flex items-center justify-center text-xs text-gray-400">
@@ -2880,8 +2933,19 @@ export default function VicePublicSetting({
                     </div>
                   )}
 
-                  <label className="absolute inset-0 bg-black/40 text-white flex items-center justify-center opacity-0 hover:opacity-100 cursor-pointer transition">
-                    Upload
+                  {/* HOVER OVERLAY */}
+                  <label className="
+    absolute inset-0
+    bg-black/40
+    text-white
+    flex items-center justify-center
+    opacity-0
+    group-hover:opacity-100
+    cursor-pointer
+    transition
+  ">
+                    {config.layout.background_image ? "Change Image" : "Upload Image"}
+
                     <input
                       type="file"
                       hidden

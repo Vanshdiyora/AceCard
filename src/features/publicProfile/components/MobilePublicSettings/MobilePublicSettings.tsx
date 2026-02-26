@@ -13,6 +13,18 @@ import {
   SiSnapchat,
   SiTiktok,
 } from "react-icons/si";
+import {
+  SiTelegram,
+  SiPinterest,
+  SiThreads,
+  SiGithub,
+  SiDiscord,
+  SiCalendly,
+  SiAppstore,
+  SiGoogleplay,
+} from "react-icons/si";
+
+import { FiMail, FiMapPin, FiMessageSquare } from "react-icons/fi";
 import { ProfileLayoutModal } from "./Profile/ProfileLayoutModal";
 import { ProfileLayoutEditor } from "./Profile/ProfileLayoutEditor";
 import { uploadImage } from "../../services/publicProfile.api";
@@ -1564,16 +1576,27 @@ function Social({ items, theme, shapeClass }: any) {
                 color: t.buttonText,
               }}
             >
-              {s.id === "instagram" && <SiInstagram size={32} />}
-              {s.id === "linkedin" && <SiLinkedin size={32} />}
-              {s.id === "youtube" && <SiYoutube size={32} />}
-              {s.id === "twitter" && <SiX size={32} />}
-              {s.id === "facebook" && <SiFacebook size={32} />}
-              {s.id === "whatsapp" && <SiWhatsapp size={32} />}
-              {s.id === "phone" && <FiPhone size={32} />}
-              {s.id === "website" && <FiGlobe size={32} />}
-              {s.id === "snapchat" && <SiSnapchat size={32} />}
-              {s.id === "tiktok" && <SiTiktok size={32} />}
+                {s.id === "instagram" && <SiInstagram size={30} />}
+              {s.id === "linkedin" && <SiLinkedin size={30} />}
+              {s.id === "youtube" && <SiYoutube size={30} />}
+              {s.id === "twitter" && <SiX size={30} />}
+              {s.id === "facebook" && <SiFacebook size={30} />}
+              {s.id === "whatsapp" && <SiWhatsapp size={30} />}
+              {s.id === "phone" && <FiPhone size={30} />}
+              {s.id === "website" && <FiGlobe size={30} />}
+              {s.id === "snapchat" && <SiSnapchat size={30} />}
+              {s.id === "tiktok" && <SiTiktok size={30} />}
+              {s.id === "address" && <FiMapPin size={30} />}
+              {s.id === "email" && <FiMail size={30} />}
+              {s.id === "telegram" && <SiTelegram size={30} />}
+              {s.id === "pinterest" && <SiPinterest size={30} />}
+              {s.id === "threads" && <SiThreads size={30} />}
+              {s.id === "github" && <SiGithub size={30} />}
+              {s.id === "discord" && <SiDiscord size={30} />}
+              {s.id === "calendly" && <SiCalendly size={30} />}
+              {s.id === "appstore" && <SiAppstore size={30} />}
+              {s.id === "playstore" && <SiGoogleplay size={30} />}
+              {s.id === "sms" && <FiMessageSquare size={30} />}
             </a>
           ))}
         </div>

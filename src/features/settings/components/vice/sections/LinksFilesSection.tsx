@@ -40,8 +40,15 @@ export default function LinksFilesSection({
   onChange,
   disabled = false,
 }: {
-  value: { items: Item[] };
-  onChange: (v: { items: Item[] }) => void;
+  value: {
+    section_title?: string;
+    items: Item[];
+  };
+
+  onChange: (v: {
+    section_title?: string;
+    items: Item[];
+  }) => void;
   disabled?: boolean;
 }) {
   const items = [...value.items].sort((a, b) => a.rank - b.rank);
@@ -95,169 +102,187 @@ export default function LinksFilesSection({
 
   return (
     <div className="space-y-4 w-full">
+      {/* SECTION TITLE */}
+      <div className="max-w-md">
+        <label className="block text-xs font-semibold text-gray-500 mb-1">
+          Section Title
+        </label>
+
+        <input
+          disabled={disabled}
+          value={value.section_title || ""}
+          placeholder="e.g. Important Links"
+          className="border rounded-xl p-3 text-sm w-full"
+          onChange={(e) =>
+            onChange({
+              ...value,
+              section_title: e.target.value,
+            })
+          }
+        />
+      </div>
       {/* ADD */}
       <div className="w-full sm:w-44">
         <button
           onClick={addItem}
           disabled={disabled}
           className={`w-full px-4 py-3 sm:py-2 rounded-lg text-white text-sm ${disabled
-              ? "bg-gray-400 cursor-not-allowed"
-              : "bg-purple-600 hover:opacity-90"
+            ? "bg-gray-400 cursor-not-allowed"
+            : "bg-purple-600 hover:opacity-90"
             }`}
         >
           + Add Link / File
         </button>
       </div>
-      
+
       {/* ERROR */}
       {error && (
         <p className="text-sm text-red-600">
           {error}
         </p>
       )}
-   <CommonItemsReorder
-  items={items}
-  onChange={(reordered) =>
-    onChange({
-      ...value,
-      items: reordered.map((i, idx) => ({
-        ...i,
-        rank: idx + 1,
-      })),
-    })
-  }
-  renderItem={(item: Item) => (
-    <div className="relative bg-white border rounded-xl p-3 shadow-sm">
+      <CommonItemsReorder
+        items={items}
+        onChange={(reordered) =>
+          onChange({
+            ...value,
+            items: reordered.map((i, idx) => ({
+              ...i,
+              rank: idx + 1,
+            })),
+          })
+        }
+        renderItem={(item: Item) => (
+          <div className="relative bg-white border rounded-xl p-3 shadow-sm">
 
-      {/* HEADER */}
-      <div className="flex justify-between items-center mb-2">
-        <span className="text-xs text-gray-400">
-          {item.type === "link" ? "Link" : "File"}
-        </span>
+            {/* HEADER */}
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-xs text-gray-400">
+                {item.type === "link" ? "Link" : "File"}
+              </span>
 
-        <button
-          onClick={() => removeItem(item.id)}
-          disabled={disabled}
-          className={`font-bold ${
-            disabled
-              ? "text-gray-300 cursor-not-allowed"
-              : "text-red-500 hover:text-red-700"
-          }`}
-        >
-          ✕
-        </button>
-      </div>
+              <button
+                onClick={() => removeItem(item.id)}
+                disabled={disabled}
+                className={`font-bold ${disabled
+                  ? "text-gray-300 cursor-not-allowed"
+                  : "text-red-500 hover:text-red-700"
+                  }`}
+              >
+                ✕
+              </button>
+            </div>
 
-      {/* FORM GRID */}
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+            {/* FORM GRID */}
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
 
-        {/* TYPE */}
-        <div className="md:col-span-2">
-          <label className="block text-xs font-semibold text-gray-500 mb-1">
-            Type
-          </label>
-          <CustomSelect
-            disabled={disabled}
-            value={item.type}
-            onChange={(v) => {
-              setError(null);
-              onChange({
-                ...value,
-                items: items.map((i) =>
-                  i.id === item.id
-                    ? {
-                        ...i,
-                        type: v,
-                        url: v === "link" ? i.url : "",
-                        file_url: v === "file" ? i.file_url : "",
-                        file_type: v === "file" ? i.file_type : "",
-                      }
-                    : i
-                ),
-              });
-            }}
-          />
-        </div>
+              {/* TYPE */}
+              <div className="md:col-span-2">
+                <label className="block text-xs font-semibold text-gray-500 mb-1">
+                  Type
+                </label>
+                <CustomSelect
+                  disabled={disabled}
+                  value={item.type}
+                  onChange={(v) => {
+                    setError(null);
+                    onChange({
+                      ...value,
+                      items: items.map((i) =>
+                        i.id === item.id
+                          ? {
+                            ...i,
+                            type: v,
+                            url: v === "link" ? i.url : "",
+                            file_url: v === "file" ? i.file_url : "",
+                            file_type: v === "file" ? i.file_type : "",
+                          }
+                          : i
+                      ),
+                    });
+                  }}
+                />
+              </div>
 
-        {/* TITLE */}
-        <div className="md:col-span-3">
-          <label className="block text-xs font-semibold text-gray-500 mb-1">
-            Title
-          </label>
-          <input
-            disabled={disabled}
-            value={item.title}
-            placeholder="e.g. Website"
-            className="border rounded-xl p-3 text-sm w-full"
-            onChange={(e) => {
-              setError(null);
-              onChange({
-                ...value,
-                items: items.map((i) =>
-                  i.id === item.id
-                    ? { ...i, title: e.target.value }
-                    : i
-                ),
-              });
-            }}
-          />
-        </div>
+              {/* TITLE */}
+              <div className="md:col-span-3">
+                <label className="block text-xs font-semibold text-gray-500 mb-1">
+                  Title
+                </label>
+                <input
+                  disabled={disabled}
+                  value={item.title}
+                  placeholder="e.g. Website"
+                  className="border rounded-xl p-3 text-sm w-full"
+                  onChange={(e) => {
+                    setError(null);
+                    onChange({
+                      ...value,
+                      items: items.map((i) =>
+                        i.id === item.id
+                          ? { ...i, title: e.target.value }
+                          : i
+                      ),
+                    });
+                  }}
+                />
+              </div>
 
-        {/* LINK */}
-        {item.type === "link" && (
-          <div className="md:col-span-7">
-            <label className="block text-xs font-semibold text-gray-500 mb-1">
-              Link URL
-            </label>
-            <input
-              disabled={disabled}
-              value={item.url}
-              placeholder="https://example.com"
-              className="border rounded-xl p-3 text-sm w-full"
-              onChange={(e) => {
-                setError(null);
-                onChange({
-                  ...value,
-                  items: items.map((i) =>
-                    i.id === item.id
-                      ? { ...i, url: e.target.value }
-                      : i
-                  ),
-                });
-              }}
-            />
+              {/* LINK */}
+              {item.type === "link" && (
+                <div className="md:col-span-7">
+                  <label className="block text-xs font-semibold text-gray-500 mb-1">
+                    Link URL
+                  </label>
+                  <input
+                    disabled={disabled}
+                    value={item.url}
+                    placeholder="https://example.com"
+                    className="border rounded-xl p-3 text-sm w-full"
+                    onChange={(e) => {
+                      setError(null);
+                      onChange({
+                        ...value,
+                        items: items.map((i) =>
+                          i.id === item.id
+                            ? { ...i, url: e.target.value }
+                            : i
+                        ),
+                      });
+                    }}
+                  />
+                </div>
+              )}
+
+              {/* FILE */}
+              {item.type === "file" && (
+                <div className="md:col-span-7">
+                  <label className="block text-xs font-semibold text-gray-500 mb-1">
+                    File URL
+                  </label>
+                  <input
+                    disabled={disabled}
+                    value={item.file_url}
+                    placeholder="https://file.pdf"
+                    className="border rounded-xl p-3 text-sm w-full"
+                    onChange={(e) => {
+                      setError(null);
+                      onChange({
+                        ...value,
+                        items: items.map((i) =>
+                          i.id === item.id
+                            ? { ...i, file_url: e.target.value }
+                            : i
+                        ),
+                      });
+                    }}
+                  />
+                </div>
+              )}
+            </div>
           </div>
         )}
-
-        {/* FILE */}
-        {item.type === "file" && (
-          <div className="md:col-span-7">
-            <label className="block text-xs font-semibold text-gray-500 mb-1">
-              File URL
-            </label>
-            <input
-              disabled={disabled}
-              value={item.file_url}
-              placeholder="https://file.pdf"
-              className="border rounded-xl p-3 text-sm w-full"
-              onChange={(e) => {
-                setError(null);
-                onChange({
-                  ...value,
-                  items: items.map((i) =>
-                    i.id === item.id
-                      ? { ...i, file_url: e.target.value }
-                      : i
-                  ),
-                });
-              }}
-            />
-          </div>
-        )}
-      </div>
-    </div>
-  )}
-/>
+      />
     </div>
   );
 }
@@ -344,14 +369,13 @@ function CustomSelect({
         type="button"
         disabled={disabled}
         onClick={() => !disabled && openDropdown()}
-        className={`w-full border rounded-xl p-3 text-sm flex justify-between items-center ${
-          disabled
-            ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-            : "bg-white hover:bg-gray-50"
-        }`}
+        className={`w-full border rounded-xl p-3 text-sm flex justify-between items-center ${disabled
+          ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+          : "bg-white hover:bg-gray-50"
+          }`}
       >
         <span>{current?.label}</span>
-          <ChevronDown className="w-4 h-4 text-gray-500" />
+        <ChevronDown className="w-4 h-4 text-gray-500" />
       </button>
 
       {open &&
@@ -376,15 +400,12 @@ function CustomSelect({
                   onChange(o.value);
                   setOpen(false);
                 }}
-                className={`w-full text-left px-3 py-2 text-sm transition ${
-                  value === o.value
-                    ? "bg-indigo-100 font-semibold"
-                    : "hover:bg-indigo-50"
-                } ${
-                  index === 0 ? "rounded-t-xl" : ""
-                } ${
-                  index === options.length - 1 ? "rounded-b-xl" : ""
-                }`}
+                className={`w-full text-left px-3 py-2 text-sm transition ${value === o.value
+                  ? "bg-indigo-100 font-semibold"
+                  : "hover:bg-indigo-50"
+                  } ${index === 0 ? "rounded-t-xl" : ""
+                  } ${index === options.length - 1 ? "rounded-b-xl" : ""
+                  }`}
               >
                 {o.label}
               </button>
