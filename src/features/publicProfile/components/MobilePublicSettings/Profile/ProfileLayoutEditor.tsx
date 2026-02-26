@@ -536,11 +536,11 @@ export function ProfileLayoutEditor({
                     <div className="mt-3">
                         <MobileColorPicker
                             label="Card Background Color"
-                            value={config.layout?.color1 || "#000000"}
+                            value={config.layout?.background_color || "#000000"}
                             onChange={(v) =>
                                 update({
                                     ...config,
-                                    layout: { ...config.layout, color1: v },
+                                    layout: { ...config.layout, background_color: v },
                                 })
                             }
                         />
@@ -597,11 +597,11 @@ export function ProfileLayoutEditor({
                         <div className="mt-3">
                             <MobileColorPicker
                                 label="Pattern Background Color"
-                                value={config.layout?.color1 || "#2f343a"}
+                                value={config.layout?.background_color || "#2f343a"}
                                 onChange={(v) =>
                                     update({
                                         ...config,
-                                        layout: { ...config.layout, color1: v },
+                                        layout: { ...config.layout, background_color: v },
                                     })
                                 }
                             />

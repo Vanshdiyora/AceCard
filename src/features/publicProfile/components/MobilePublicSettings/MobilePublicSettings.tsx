@@ -125,7 +125,7 @@ export function resolveBackgroundStyleFromLayout(layout: any, theme: any) {
     const dir = validDirections[layout?.direction] || "to right";
     return { backgroundImage: `linear-gradient(${dir}, ${from}, ${to})` };
   }
-  return { backgroundColor: layout?.color1 || theme?.background_color || "#000" };
+  return { backgroundColor: layout?.background_color || theme?.background_color || "#000" };
 }
 
 /**
@@ -891,41 +891,41 @@ export default function MobilePublicSettings({
             </div>
 
             {/* ADD BUTTON */}
-           <button
-  onClick={() => {
-    const items = youtubeDraft?.items || [];
+            <button
+              onClick={() => {
+                const items = youtubeDraft?.items || [];
 
-    // 🚨 Check incomplete rows
-    const hasInvalid = items.some(
-      (item: any) => !isYoutubeRowComplete(item)
-    );
+                // 🚨 Check incomplete rows
+                const hasInvalid = items.some(
+                  (item: any) => !isYoutubeRowComplete(item)
+                );
 
-    if (hasInvalid) {
-      setModalError("Please complete existing video URLs before adding a new one.");
-      return;
-    }
+                if (hasInvalid) {
+                  setModalError("Please complete existing video URLs before adding a new one.");
+                  return;
+                }
 
-    // ✅ Clear old error
-    setModalError(null);
+                // ✅ Clear old error
+                setModalError(null);
 
-    // ✅ Add new row
-    setYoutubeDraft((prev: any) => ({
-      ...prev,
-      items: [
-        ...(prev.items || []),
-        {
-          id: crypto.randomUUID(),
-          url: "",
-          rank: (prev.items?.length || 0) + 1,
-          enabled: true,
-        },
-      ],
-    }));
-  }}
-  className="w-full border rounded-xl py-3 text-sm font-medium hover:bg-gray-50"
->
-  + Add Another Video
-</button>
+                // ✅ Add new row
+                setYoutubeDraft((prev: any) => ({
+                  ...prev,
+                  items: [
+                    ...(prev.items || []),
+                    {
+                      id: crypto.randomUUID(),
+                      url: "",
+                      rank: (prev.items?.length || 0) + 1,
+                      enabled: true,
+                    },
+                  ],
+                }));
+              }}
+              className="w-full border rounded-xl py-3 text-sm font-medium hover:bg-gray-50"
+            >
+              + Add Another Video
+            </button>
 
           </div>
         )}
@@ -1576,7 +1576,7 @@ function Social({ items, theme, shapeClass }: any) {
                 color: t.buttonText,
               }}
             >
-                {s.id === "instagram" && <SiInstagram size={30} />}
+              {s.id === "instagram" && <SiInstagram size={30} />}
               {s.id === "linkedin" && <SiLinkedin size={30} />}
               {s.id === "youtube" && <SiYoutube size={30} />}
               {s.id === "twitter" && <SiX size={30} />}
