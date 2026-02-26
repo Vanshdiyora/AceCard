@@ -2,7 +2,7 @@ import { useState } from "react";
 import { formatRole } from "../../MobilePublicSettings";
 import { uploadImage } from "../../../../services/publicProfile.api";
 import AvatarCropModal from "../../../../../../common/ui/AvatarCropModal";
-
+import { Camera as ImageIcon } from "lucide-react";
 /* helper */
 const resolveTheme = (theme: any) => ({
   cardBg: theme.card_background || "#6B6E93",
@@ -37,15 +37,15 @@ export function ProfileCenter({
     layout?.card_alignment === "left"
       ? "items-start text-left"
       : layout?.card_alignment === "right"
-      ? "items-end text-right"
-      : "items-center text-center";
+        ? "items-end text-right"
+        : "items-center text-center";
 
   const avatarAlign =
     layout?.card_alignment === "left"
       ? "justify-start"
       : layout?.card_alignment === "right"
-      ? "justify-end"
-      : "justify-center";
+        ? "justify-end"
+        : "justify-center";
 
   const [cropFile, setCropFile] = useState<File | null>(null);
 
@@ -118,13 +118,15 @@ export function ProfileCenter({
               {/* 📸 CAMERA BUTTON */}
               <label
                 className="
-                  absolute -bottom-3 left-1/2 -translate-x-1/2
-                  bg-orange-500 text-white p-2.5 rounded-full
-                  shadow-lg cursor-pointer
-                  hover:scale-105 transition
-                "
+    absolute -bottom-3 left-1/2 -translate-x-1/2
+    bg-orange-500 text-white p-2 rounded-full
+    shadow-lg cursor-pointer
+    hover:scale-105 active:scale-95 transition
+    flex items-center justify-center
+  "
               >
-                📷
+                <ImageIcon size={18} strokeWidth={2} />
+
                 <input
                   type="file"
                   hidden
