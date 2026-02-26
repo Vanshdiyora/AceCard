@@ -140,6 +140,33 @@ function LinksFilesModal({
   onClose: () => void;
   onSave: () => void;
 }) {
+  const [error, setError] = useState<string | null>(null);
+
+  const validate = () => {
+    const items = buffer.items || [];
+
+    // Case 1: No items
+    if (items.length === 0) {
+      setError("Please add at least one link or file.");
+      return false;
+    }
+
+    // Case 2: Incomplete rows
+    const invalid = items.some(
+      (item: any) =>
+        !item.title?.trim() ||
+        !(item.url?.trim() || item.file_url?.trim())
+    );
+
+    if (invalid) {
+      setError("Please complete all link/file entries.");
+      return false;
+    }
+
+    setError(null);
+    return true;
+  };
+
   /* 🔒 Lock background scroll */
   useEffect(() => {
     if (!open) {
@@ -182,10 +209,13 @@ function LinksFilesModal({
       >
         {/* CLOSE */}
         <button
-          onClick={onClose}
+          onClick={() => {
+            setError(null);   // clear error
+            onClose();
+          }}
           className="absolute right-3 top-3 h-8 w-8
-                     rounded-full flex items-center justify-center
-                     text-gray-400 hover:text-gray-700 hover:bg-gray-100"
+             rounded-full flex items-center justify-center
+             text-gray-400 hover:text-gray-700 hover:bg-gray-100"
         >
           ✕
         </button>
@@ -236,23 +266,44 @@ function LinksFilesModal({
         </div>
 
         {/* FOOTER */}
-        <div className="border-t p-4 flex gap-3">
-          <button
-            onClick={onClose}
-            className="flex-1 py-2 rounded-xl border
-                       text-gray-600 font-semibold hover:bg-gray-50"
-          >
-            Cancel
-          </button>
+        <div className="border-t bg-white">
 
-          <button
-            onClick={onSave}
-            className="flex-1 py-2 rounded-xl
-                       bg-purple-600 text-white font-semibold
-                       hover:bg-purple-500"
-          >
-            Save
-          </button>
+          {/* ERROR MESSAGE (Full width, above buttons) */}
+          {error && (
+            <div className="px-4 pt-3">
+              <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-2 text-sm text-red-600">
+                {error}
+              </div>
+            </div>
+          )}
+
+          {/* BUTTON ROW */}
+          <div className="p-4 flex gap-3">
+            <button
+              onClick={() => {
+                setError(null);   // clear error
+                onClose();
+              }}
+              className="flex-1 py-2.5 rounded-xl border
+                 text-gray-600 font-semibold
+                 hover:bg-gray-50 transition"
+            >
+              Cancel
+            </button>
+
+            <button
+              onClick={() => {
+                if (!validate()) return;
+                onSave();
+              }}
+              className="flex-1 py-2.5 rounded-xl
+                 bg-purple-600 text-white font-semibold
+                 hover:bg-purple-500 transition"
+            >
+              Save
+            </button>
+          </div>
+
         </div>
       </div>
     </div>,

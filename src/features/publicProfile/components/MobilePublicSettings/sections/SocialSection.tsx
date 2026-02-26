@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
-import { Trash2 } from "lucide-react";
+import { Trash2, ArrowLeft } from "lucide-react";
 import { createPortal } from "react-dom";
 import AddSocialModal from "./AddSocialModal";
 
 // Icons
+// Existing
 import {
   SiInstagram,
   SiLinkedin,
@@ -13,8 +14,13 @@ import {
   SiWhatsapp,
   SiSnapchat,
   SiTiktok,
+  SiThreads,
+  SiTelegram,
+  SiAppstore,
+  SiGoogleplay,
 } from "react-icons/si";
-import { FiPhone, FiGlobe } from "react-icons/fi";
+
+import { FiPhone, FiGlobe, FiMail, FiMapPin, FiMessageCircle } from "react-icons/fi";
 
 /* ================= ICON MAP ================= */
 
@@ -27,8 +33,19 @@ const ICONS: Record<string, any> = {
   snapchat: SiSnapchat,
   tiktok: SiTiktok,
   whatsapp: SiWhatsapp,
+
   phone: FiPhone,
   website: FiGlobe,
+
+  // 🔥 NEW ONES
+  email: FiMail,
+  address: FiMapPin,
+  threads: SiThreads,
+  telegram: SiTelegram,
+  sms: FiMessageCircle,
+  calendly: FiGlobe,
+  appstore: SiAppstore,
+  playstore: SiGoogleplay,
 };
 
 const ALL_SOCIALS = [
@@ -40,8 +57,19 @@ const ALL_SOCIALS = [
   { id: "snapchat", label: "Snapchat" },
   { id: "tiktok", label: "TikTok" },
   { id: "whatsapp", label: "WhatsApp" },
+
   { id: "phone", label: "Phone" },
   { id: "website", label: "Website" },
+
+  // 🔥 NEW ONES
+  { id: "email", label: "Email" },
+  { id: "address", label: "Address" },
+  { id: "threads", label: "Threads" },
+  { id: "telegram", label: "Telegram" },
+  { id: "sms", label: "SMS" },
+  { id: "calendly", label: "Calendly" },
+  { id: "appstore", label: "App Store" },
+  { id: "playstore", label: "Play Store" },
 ];
 
 /* ================= VALIDATION ================= */
@@ -131,11 +159,10 @@ export default function SocialSection({
           setFormOpen(false);
           setPickerOpen(true);
         }}
-        className={`mt-3 px-4 py-2 rounded-lg text-sm font-semibold ${
-          locked
-            ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-            : "bg-purple-600 text-white"
-        }`}
+        className={`mt-3 px-4 py-2 rounded-lg text-sm font-semibold ${locked
+          ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+          : "bg-purple-600 text-white"
+          }`}
       >
         + Add Social
       </button>
@@ -157,20 +184,27 @@ export default function SocialSection({
       <SocialLinksModal
         open={formOpen}
         items={enabled}
+        onBack={() => {
+          setFormOpen(false);
+          setPickerOpen(true);
+        }}
+        onCloseAll={() => {
+          setFormOpen(false);
+          setPickerOpen(false);
+        }}
         onUpdate={update}
         onRemove={remove}
-        onClose={() => setFormOpen(false)}
       />
     </>
   );
 }
 
 /* ================= LINKS MODAL ================= */
-
 function SocialLinksModal({
   open,
   items,
-  onClose,
+  onBack,
+  onCloseAll,
   onUpdate,
   onRemove,
 }: any) {
@@ -185,24 +219,46 @@ function SocialLinksModal({
     }
 
     setError(null);
-    onClose();
+    onCloseAll(); // fully close flow
   };
 
   return createPortal(
     <div className="fixed inset-0 z-[999] bg-black/40 flex items-center justify-center px-3">
-      <div className="bg-white w-full max-w-md rounded-2xl p-4 shadow-xl max-h-[85vh] flex flex-col">
+      <div className="bg-white w-full max-w-md rounded-2xl shadow-xl max-h-[85vh] flex flex-col">
 
-        <h3 className="text-base font-semibold mb-3">
-          Add your links
-        </h3>
+        {/* HEADER */}
+        <div className="flex items-center justify-between px-4 py-3 border-b">
 
-        {error && (
-          <p className="text-sm text-red-600 mb-2">
-            {error}
-          </p>
-        )}
+          {/* 🔙 BACK BUTTON */}
+          <button
+            onClick={onBack}
+            className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-purple-600"
+          >
+            <ArrowLeft size={18} />
+          </button>
 
-        <div className="flex-1 overflow-y-auto space-y-3">
+          <h3 className="text-base font-semibold">
+            Add your links
+          </h3>
+
+          {/* ❌ CLOSE ICON */}
+          <button
+            onClick={onCloseAll}
+            className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-gray-100"
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* BODY */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-3">
+
+          {error && (
+            <div className="rounded-lg bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-600">
+              {error}
+            </div>
+          )}
+
           {items.map((s: any) => {
             const Icon = ICONS[s.id] || FiGlobe;
 
@@ -239,12 +295,15 @@ function SocialLinksModal({
           })}
         </div>
 
-        <button
-          onClick={handleDone}
-          className="mt-4 w-full py-3 rounded-xl bg-purple-600 text-white font-semibold hover:opacity-90"
-        >
-          Done
-        </button>
+        {/* FOOTER */}
+        <div className="p-4 border-t">
+          <button
+            onClick={handleDone}
+            className="w-full py-3 rounded-xl bg-purple-600 text-white font-semibold hover:opacity-90"
+          >
+            Done
+          </button>
+        </div>
       </div>
     </div>,
     document.body

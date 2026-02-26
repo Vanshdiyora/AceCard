@@ -2,6 +2,7 @@ import { createPortal } from "react-dom";
 import { Plus, Check } from "lucide-react";
 
 // 🔥 Official brand logos
+// 🔥 Official brand logos
 import {
   SiInstagram,
   SiLinkedin,
@@ -11,9 +12,19 @@ import {
   SiWhatsapp,
   SiSnapchat,
   SiTiktok,
+  SiThreads,
+  SiTelegram,
+  SiAppstore,
+  SiGoogleplay,
 } from "react-icons/si";
 
-import { FiPhone, FiGlobe } from "react-icons/fi";
+import {
+  FiPhone,
+  FiGlobe,
+  FiMail,
+  FiMapPin,
+  FiMessageCircle,
+} from "react-icons/fi";
 
 // ---------------- ICON MAP ----------------
 const ICONS: Record<string, any> = {
@@ -25,10 +36,20 @@ const ICONS: Record<string, any> = {
   snapchat: SiSnapchat,
   tiktok: SiTiktok,
   whatsapp: SiWhatsapp,
+
   phone: FiPhone,
   website: FiGlobe,
-};
 
+  // 🔥 NEW ONES
+  email: FiMail,
+  address: FiMapPin,
+  threads: SiThreads,
+  telegram: SiTelegram,
+  sms: FiMessageCircle,
+  calendly: FiGlobe,
+  appstore: SiAppstore,
+  playstore: SiGoogleplay,
+};    
 export default function AddSocialModal({
   open,
   all,

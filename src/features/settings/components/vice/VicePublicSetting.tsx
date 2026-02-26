@@ -1101,6 +1101,31 @@ export default function VicePublicSetting({
                   />
                 </div>
 
+                {/* DESCRIPTION */}
+                <div>
+                  <label className="text-sm text-gray-500">
+                    Description
+                  </label>
+
+                  <textarea
+                    value={item.description || ""}
+                    onChange={(e) => {
+                      const next = [...sectionDraft.items];
+                      next[index] = {
+                        ...item,
+                        description: e.target.value,
+                      };
+
+                      setSectionDraft({
+                        ...sectionDraft,
+                        items: next,
+                      });
+                    }}
+                    className="w-full mt-1 rounded-xl border px-4 py-3 text-sm"
+                    placeholder="Enter description..."
+                    rows={3}
+                  />
+                </div>
                 {/* URL */}
                 <div>
                   <label className="text-sm text-gray-500">
@@ -3027,7 +3052,7 @@ export default function VicePublicSetting({
       />
       <AppModal
         open={!!activeSection}
-        errorMessage={modalError} 
+        errorMessage={modalError}
         title={
           activeSection
             ? SECTION_LABELS[activeSection] ||
@@ -3070,7 +3095,7 @@ export default function VicePublicSetting({
         }}
         onConfirm={handleSectionSave}
         confirmText="Save Changes"
-        
+
       >
         {activeSection && SECTION_COMPONENTS[activeSection]}
       </AppModal>

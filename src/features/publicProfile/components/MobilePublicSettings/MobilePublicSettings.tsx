@@ -21,7 +21,7 @@ import { savePublicProfile } from "../../slice";
 import { FiPhone, FiGlobe } from "react-icons/fi";
 import React from "react";
 import { useState, useEffect } from "react";
-import { ConnectModal } from "./Profile/WebsiteLayout/ConnectModal";
+import { ConnectModal } from "../ConnectModal";
 import { ProfileActions } from "../../components/MobilePublicSettings/Profile/WebsiteLayout/ProfileActions";
 import { ProfileWrapper } from "../../components/MobilePublicSettings/Profile/WebsiteLayout/ProfileWrapper";
 import { Banner } from "./Banner/Banner";
@@ -179,8 +179,20 @@ export default function MobilePublicSettings({
 
   const [draft, setDraft] = useState<any>(config);
 
-  const handleSave = () => {
-    dispatch(savePublicProfile({ config: draft }));
+  const handleSave = async () => {
+    try {
+      await dispatch(savePublicProfile({ config: draft })).unwrap();
+
+      setResultModal({
+        type: "success",
+        message: "Profile updated successfully",
+      });
+    } catch (err: any) {
+      setResultModal({
+        type: "error",
+        message: err?.message || "Something went wrong. Please try again.",
+      });
+    }
   };
 
   useEffect(() => {
@@ -208,6 +220,10 @@ export default function MobilePublicSettings({
   const [layoutDraft, setLayoutDraft] = useState<{
     layout: any;
     theme: any;
+  } | null>(null);
+  const [resultModal, setResultModal] = useState<{
+    type: "success" | "error";
+    message: string;
   } | null>(null);
   const [editContact, setEditContact] = useState(false);
   const [contactDraft, setContactDraft] = useState<any | null>(null);
@@ -256,7 +272,10 @@ export default function MobilePublicSettings({
     item.url?.trim() && getYouTubeId(item.url);
 
   const isPhotoRowComplete = (item: any) =>
-    item.img_url?.trim();
+    item.title?.trim() &&
+    item.img_url?.trim() &&
+    item.description?.trim() &&
+    item.link?.trim();
 
   const isContactFieldComplete = (field: any) =>
     field.label?.trim();
@@ -275,13 +294,23 @@ export default function MobilePublicSettings({
     },
 
     photo_gallery: (draft) => {
-      const invalid = (draft.items || []).some(
+      const items = draft?.items || [];
+
+      // 🚨 No photos
+      if (items.length === 0) {
+        return "Please add at least one photo.";
+      }
+
+      // 🚨 Incomplete rows
+      const invalid = items.some(
         (item: any) => !isPhotoRowComplete(item)
       );
 
-      return invalid
-        ? "Please complete all photo entries."
-        : null;
+      if (invalid) {
+        return "Please complete all photo entries.";
+      }
+
+      return null;
     },
 
     social_links: (draft) => {
@@ -554,7 +583,8 @@ export default function MobilePublicSettings({
             theme={draft.theme}
             editable={!pg?.locked}
             onEdit={() => {
-              setPhotoGalleryDraft(draft.photo_gallery);
+              setModalError(null); // 🔥 clear old error
+              setPhotoGalleryDraft(structuredClone(draft.photo_gallery));
               setEditPhotoGallery(true);
             }}
 
@@ -726,6 +756,7 @@ export default function MobilePublicSettings({
         onClose={() => setOpen(false)}
         handle={data?.username}
         theme={draft.theme}
+        config={config.contact}
       />
 
       {/* MODAL */}
@@ -848,25 +879,41 @@ export default function MobilePublicSettings({
             </div>
 
             {/* ADD BUTTON */}
-            <button
-              onClick={() =>
-                setYoutubeDraft((prev: any) => ({
-                  ...prev,
-                  items: [
-                    ...(prev.items || []),
-                    {
-                      id: crypto.randomUUID(),
-                      url: "",
-                      rank: (prev.items?.length || 0) + 1,
-                      enabled: true,
-                    },
-                  ],
-                }))
-              }
-              className="w-full border rounded-xl py-3 text-sm font-medium hover:bg-gray-50"
-            >
-              + Add Another Video
-            </button>
+           <button
+  onClick={() => {
+    const items = youtubeDraft?.items || [];
+
+    // 🚨 Check incomplete rows
+    const hasInvalid = items.some(
+      (item: any) => !isYoutubeRowComplete(item)
+    );
+
+    if (hasInvalid) {
+      setModalError("Please complete existing video URLs before adding a new one.");
+      return;
+    }
+
+    // ✅ Clear old error
+    setModalError(null);
+
+    // ✅ Add new row
+    setYoutubeDraft((prev: any) => ({
+      ...prev,
+      items: [
+        ...(prev.items || []),
+        {
+          id: crypto.randomUUID(),
+          url: "",
+          rank: (prev.items?.length || 0) + 1,
+          enabled: true,
+        },
+      ],
+    }));
+  }}
+  className="w-full border rounded-xl py-3 text-sm font-medium hover:bg-gray-50"
+>
+  + Add Another Video
+</button>
 
           </div>
         )}
@@ -1103,7 +1150,12 @@ export default function MobilePublicSettings({
           setEditProducts(false);
         }}
       />
-
+      <ResultModal
+        open={!!resultModal}
+        type={resultModal?.type || "success"}
+        message={resultModal?.message || ""}
+        onClose={() => setResultModal(null)}
+      />
       {/* BOTTOM ACTION BAR */}
       <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur border-t shadow px-4 py-3 flex gap-3 justify-center">
         <button
@@ -2016,7 +2068,7 @@ function CardButtonsPreview({
   if (!visible.length && !editable) return null;
 
   return (
-    <Section title={title || "Quick Actions"} theme={theme}>
+    <Section title={title || "Card Button"} theme={theme}>
       <div className="relative">
         {editable && (
           <button
@@ -2059,5 +2111,55 @@ function CardButtonsPreview({
         )}
       </div>
     </Section>
+  );
+}
+
+function ResultModal({
+  open,
+  type,
+  message,
+  onClose,
+}: {
+  open: boolean;
+  type: "success" | "error";
+  message: string;
+  onClose: () => void;
+}) {
+  if (!open) return null;
+
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[9999] bg-black/50 flex items-center justify-center px-4"
+      onClick={onClose}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-sm bg-white rounded-2xl shadow-xl p-6 text-center space-y-4"
+      >
+        <div
+          className={`mx-auto h-14 w-14 rounded-full flex items-center justify-center
+            ${type === "success"
+              ? "bg-green-100 text-green-600"
+              : "bg-red-100 text-red-600"
+            }`}
+        >
+          {type === "success" ? "✓" : "!"}
+        </div>
+
+        <h3 className="text-lg font-semibold">
+          {type === "success" ? "Success" : "Error"}
+        </h3>
+
+        <p className="text-sm text-gray-600">{message}</p>
+
+        <button
+          onClick={onClose}
+          className="w-full py-2 rounded-xl bg-purple-600 text-white font-semibold"
+        >
+          OK
+        </button>
+      </div>
+    </div>,
+    document.body
   );
 }
