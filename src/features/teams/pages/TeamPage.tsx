@@ -413,7 +413,12 @@ export default function TeamPage() {
         onSubmit={async (data) => {
           try {
             setBlocking(true);
+
             await dispatch(createMember(data)).unwrap();
+
+            // ✅ Refresh subscription after adding member
+            await dispatch(fetchSubscription());
+
             setAddOpen(false);
             showResult(true, "Team member added successfully.");
           } catch (err: any) {
