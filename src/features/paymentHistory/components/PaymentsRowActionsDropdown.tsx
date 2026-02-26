@@ -13,7 +13,6 @@ type Props = {
   onArchive?: () => void;
 };
 
-const DROPDOWN_HEIGHT = 220; // ⬆ increased for new action
 
 export default function PaymentsRowActionsDropdown({
   onPaid,
@@ -30,26 +29,27 @@ export default function PaymentsRowActionsDropdown({
 
   /* ---------------------- calculate position ---------------------- */
   useEffect(() => {
-    if (!open || !buttonRef.current) return;
+  if (!open || !buttonRef.current || !dropdownRef.current) return;
 
-    const rect = buttonRef.current.getBoundingClientRect();
-    const viewportHeight = window.innerHeight;
+  const rect = buttonRef.current.getBoundingClientRect();
+  const dropdownHeight = dropdownRef.current.offsetHeight;
+  const viewportHeight = window.innerHeight;
 
-    const spaceBelow = viewportHeight - rect.bottom;
-    const spaceAbove = rect.top;
+  const spaceBelow = viewportHeight - rect.bottom;
+  const spaceAbove = rect.top;
 
-    const shouldOpenTop =
-      spaceBelow < DROPDOWN_HEIGHT && spaceAbove > spaceBelow;
+  const shouldOpenTop =
+    spaceBelow < dropdownHeight && spaceAbove > spaceBelow;
 
-    setPlacement(shouldOpenTop ? "top" : "bottom");
+  setPlacement(shouldOpenTop ? "top" : "bottom");
 
-    setPos({
-      left: rect.right - 200,
-      top: shouldOpenTop
-        ? rect.top - DROPDOWN_HEIGHT + 30
-        : rect.bottom + 6,
-    });
-  }, [open]);
+  setPos({
+    left: rect.right - 192, // match w-48 (12rem = 192px)
+    top: shouldOpenTop
+      ? rect.top - dropdownHeight - 6   // ⬅ PERFECT alignment
+      : rect.bottom + 6,
+  });
+}, [open]);
 
   /* ---------------------- outside click ---------------------- */
   useEffect(() => {

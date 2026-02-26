@@ -9,6 +9,7 @@ import {
   resetSettings,
 } from "../../../features/settings/slice";
 import { eraseCookie } from "../../../utils/cookieUtils";
+import GlobalSignOutConfirmationModal from "../../ui/GlobalSignOutConfirmationModal";
 
 type TopbarProps = {
   type: "admin" | "super_admin";
@@ -54,22 +55,22 @@ export default function Topbar({ type }: TopbarProps) {
   }, [token, dispatch]);
 
   const name = useMemo(() => {
-  if (profile?.role === "vendor_admin") {
+    if (profile?.role === "vendor_admin") {
+      return (
+        profile?.vendor_name ||
+        jwtUser?.name ||
+        jwtUser?.email?.split("@")[0] ||
+        ""
+      );
+    }
+
     return (
-      profile?.vendor_name ||
+      profile?.name ||
       jwtUser?.name ||
       jwtUser?.email?.split("@")[0] ||
       ""
     );
-  }
-
-  return (
-    profile?.name ||
-    jwtUser?.name ||
-    jwtUser?.email?.split("@")[0] ||
-    ""
-  );
-}, [profile, jwtUser]);
+  }, [profile, jwtUser]);
 
   const isLoadingUser = profileLoading || !name;
 
@@ -82,7 +83,8 @@ export default function Topbar({ type }: TopbarProps) {
 
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
-
+  const [signOutOpen, setSignOutOpen] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
@@ -100,17 +102,24 @@ export default function Topbar({ type }: TopbarProps) {
   };
 
   const handleLogout = () => {
-    setOpen(false);
-    requestAnimationFrame(() => {
+    setOpen(false); // close dropdown
+    setSignOutOpen(true);
+  };
+  const confirmLogout = async () => {
+    try {
+      setSigningOut(true);
+
       dispatch(logout());
       eraseCookie("token");
       eraseCookie("subdomain");
-
       dispatch(resetSettings());
-      window.location.href = "/login";
-    });
-  };
 
+      window.location.href = "/login";
+    } finally {
+      setSigningOut(false);
+      setSignOutOpen(false);
+    }
+  };
   const Dropdown = (
     <div
       className="absolute right-0 top-full mt-2 bg-white border shadow-xl rounded-lg w-44 z-50 origin-top-right"
@@ -146,6 +155,7 @@ export default function Topbar({ type }: TopbarProps) {
 
   if (type === "super_admin") {
     return (
+      <>
       <header className="h-20 bg-[#E6E4F2] border-b px-4 sm:px-6 flex items-center justify-between min-w-0 relative">
         <div className="flex-1 min-w-0 max-w-md">
           <GlobalSearch mode="super_admin" />
@@ -158,7 +168,7 @@ export default function Topbar({ type }: TopbarProps) {
             className="relative flex items-center gap-2 cursor-pointer"
             onClick={() => !isLoadingUser && setOpen((p) => !p)}
             ref={menuRef}
-          >
+            >
             {isLoadingUser ? SkeletonAvatar : (
               <div className="w-10 h-10 bg-purple-600 text-white rounded-full flex items-center justify-center font-medium">
                 {initials}
@@ -175,40 +185,55 @@ export default function Topbar({ type }: TopbarProps) {
           </div>
         </div>
       </header>
+       <GlobalSignOutConfirmationModal
+        open={signOutOpen}
+        loading={signingOut}
+        onCancel={() => setSignOutOpen(false)}
+        onConfirm={confirmLogout}
+      />
+        </>
     );
   }
 
   return (
-    <header className="h-16 bg-[#E6E4F2] px-4 sm:px-6 flex items-center justify-between min-w-0 relative">
-      {isLoadingUser ? (
-        <div className="h-4 w-32 bg-gray-300 rounded animate-pulse" />
-      ) : (
-        <h3 className="text-base sm:text-xl font-medium truncate">
-          Hi, {name}
-        </h3>
-      )}
+    <>
+      <header className="h-16 bg-[#E6E4F2] px-4 sm:px-6 flex items-center justify-between min-w-0 relative">
+        {isLoadingUser ? (
+          <div className="h-4 w-32 bg-gray-300 rounded animate-pulse" />
+        ) : (
+          <h3 className="text-base sm:text-xl font-medium truncate">
+            Hi, {name}
+          </h3>
+        )}
 
-      <div className="flex-1 mx-4 min-w-0 max-w-md">
-        <GlobalSearch mode="admin" />
-      </div>
-
-      <div className="flex items-center gap-4 shrink-0">
-        <NotificationBell />
-
-        <div className="relative" ref={menuRef}>
-          <div
-            className="cursor-pointer"
-            onClick={() => !isLoadingUser && setOpen((p) => !p)}
-          >
-            {isLoadingUser ? SkeletonAvatar : (
-              <Avatar size={40} />
-            )}
-          </div>
-
-          {!isLoadingUser && open && Dropdown}
+        <div className="flex-1 mx-4 min-w-0 max-w-md">
+          <GlobalSearch mode="admin" />
         </div>
 
-      </div>
-    </header>
+        <div className="flex items-center gap-4 shrink-0">
+          <NotificationBell />
+
+          <div className="relative" ref={menuRef}>
+            <div
+              className="cursor-pointer"
+              onClick={() => !isLoadingUser && setOpen((p) => !p)}
+            >
+              {isLoadingUser ? SkeletonAvatar : (
+                <Avatar size={40} />
+              )}
+            </div>
+
+            {!isLoadingUser && open && Dropdown}
+          </div>
+
+        </div>
+      </header>
+      <GlobalSignOutConfirmationModal
+        open={signOutOpen}
+        loading={signingOut}
+        onCancel={() => setSignOutOpen(false)}
+        onConfirm={confirmLogout}
+      />
+    </>
   );
 }

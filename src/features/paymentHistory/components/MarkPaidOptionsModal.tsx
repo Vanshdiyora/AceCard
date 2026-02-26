@@ -30,7 +30,22 @@ export default function MarkPaidOptionsModal({
   if (!open || !vendor) return null;
 
   // 🔢 multiplier based on payment terms
-  const multiplier = vendor.payment_terms === "annually" ? 12 : 1;
+const getMultiplier = (term?: string) => {
+  switch (term) {
+    case "monthly":
+      return 1;
+    case "quarterly":
+      return 3;
+    case "semi_annually":
+      return 6;
+    case "annually":
+      return 12;
+    default:
+      return 1;
+  }
+};
+
+const multiplier = getMultiplier(vendor.payment_terms);
 
   // 💰 safely calculated total
   const total: number | "" =

@@ -8,6 +8,7 @@ import { logout } from "../../../features/auth/slice";
 import { resetSettings } from "../../../features/settings/slice";
 import { eraseCookie } from "../../../utils/cookieUtils";
 import { LogOut } from "lucide-react";
+import GlobalSignOutConfirmationModal from "../../ui/GlobalSignOutConfirmationModal";
 
 type MenuItem = {
   label: string;
@@ -23,7 +24,8 @@ export default function Sidebar({ type }: SidebarProps) {
   const location = useLocation();
   const [hovered, setHovered] = useState<string | null>(null);
   const dispatch = useAppDispatch();
-
+  const [signOutOpen, setSignOutOpen] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
   const adminBase = "/admin";
   const superBase = "/super";
 
@@ -48,15 +50,20 @@ export default function Sidebar({ type }: SidebarProps) {
   ];
 
   const menu = type === "superadmin" ? superMenu : adminMenu;
-  const handleLogout = () => {
-    dispatch(logout());
-    eraseCookie("token");
-    eraseCookie("subdomain");
+  const handleLogout = async () => {
+    try {
+      setSigningOut(true);
 
-    dispatch(resetSettings());
+      dispatch(logout());
+      eraseCookie("token");
+      eraseCookie("subdomain");
+      dispatch(resetSettings());
 
-    // Hard redirect (same behavior as topbar)
-    window.location.href = "/login";
+      window.location.href = "/login";
+    } finally {
+      setSigningOut(false);
+      setSignOutOpen(false);
+    }
   };
   return (
     <aside className="sticky top-0 h-screen w-64 p-6 shrink-0 flex flex-col"
@@ -123,13 +130,20 @@ export default function Sidebar({ type }: SidebarProps) {
       {/* Logout Button */}
       <div className="pt-4 border-t">
         <button
-          onClick={handleLogout}
+          onClick={() => setSignOutOpen(true)}
           className="w-full flex items-center gap-3 px-4 py-2 rounded-3xl transition text-red-600 hover:bg-red-50"
         >
           <LogOut size={18} />
           Sign Out
         </button>
       </div>
+
+      <GlobalSignOutConfirmationModal
+        open={signOutOpen}
+        loading={signingOut}
+        onCancel={() => setSignOutOpen(false)}
+        onConfirm={handleLogout}
+      />
     </aside>
   );
 }
