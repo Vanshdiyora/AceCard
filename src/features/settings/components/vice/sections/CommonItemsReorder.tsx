@@ -26,12 +26,14 @@ interface Props<T extends ItemWithId> {
   items: T[];
   onChange: (items: T[]) => void;
   renderItem: (item: T, index: number) => React.ReactNode;
+  disabled?: boolean; // ✅ add this
 }
 
 export default function CommonItemsReorder<T extends ItemWithId>({
   items,
   onChange,
   renderItem,
+  disabled = false,
 }: Props<T>) {
   const sensors = useSensors(
     useSensor(MouseSensor, {
@@ -48,6 +50,7 @@ export default function CommonItemsReorder<T extends ItemWithId>({
   );
 
   const handleDragEnd = (event: any) => {
+    if (disabled) return; // ✅ prevents reorder
     const { active, over } = event;
 
     if (!over || active.id === over.id) return;
@@ -77,7 +80,11 @@ export default function CommonItemsReorder<T extends ItemWithId>({
       >
         <div className="space-y-4">
           {items.map((item, index) => (
-            <SortableItem key={item.id} id={item.id}>
+            <SortableItem
+              key={item.id}
+              id={item.id}
+              disabled={disabled} // ✅ pass it
+            >
               {renderItem(item, index)}
             </SortableItem>
           ))}
@@ -90,12 +97,14 @@ export default function CommonItemsReorder<T extends ItemWithId>({
 function SortableItem({
   id,
   children,
+  disabled = false, // ✅ add this
 }: {
   id: string;
   children: React.ReactNode;
+  disabled?: boolean;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition } =
-    useSortable({ id });
+    useSortable({ id, disabled });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -105,13 +114,11 @@ function SortableItem({
   return (
     <div ref={setNodeRef} style={style} className="relative">
       {/* Drag Handle */}
-      <div
-        {...attributes}
-        {...listeners}
-        className="absolute left-2 top-3 cursor-grab text-gray-400 hover:text-gray-600"
-      >
-        <GripVertical size={18} />
-      </div>
+      {!disabled && (
+        <div {...attributes} {...listeners} className="absolute left-2 top-3 cursor-grab">
+          <GripVertical size={18} />
+        </div>
+      )}
 
       <div className="pl-8">{children}</div>
     </div>
