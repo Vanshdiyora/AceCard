@@ -57,9 +57,7 @@ export default function TeamMemberDetailsPage() {
     [members]
   );
 
-  const member = useAppSelector(
-    (s) => s.team.members.find((m) => m.id === Number(id)) || null
-  );
+const member = useAppSelector((s) => s.team.selectedMember);
 
   const [activeTab, setActiveTab] = useState<typeof TABS[number]>("overview");
   const [editOpen, setEditOpen] = useState(false);

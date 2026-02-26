@@ -30,16 +30,20 @@ const SECTION_LABELS: Record<string, string> = {
 export default function SectionsReorder({
   sections,
   groupLocked,
+  role,                 // 👈 ADD THIS
   onChange,
   onSectionClick,
   onToggle,
 }: {
   sections: SectionItem[];
   groupLocked?: boolean;
+  role?: string | null;        // 👈 ADD
   onChange: (s: SectionItem[]) => void;
   onSectionClick?: (type: string) => void;
   onToggle: (id: string, enabled: boolean) => void;
 }) {
+  const isReorderDisabled =
+  groupLocked && role !== "vendor_admin";
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: { distance: 4 },
@@ -71,7 +75,7 @@ export default function SectionsReorder({
         droppable: { strategy: MeasuringStrategy.Always },
       }}
       onDragEnd={(e) => {
-        if (groupLocked) return; // 🔥 stop reorder logic
+        if (isReorderDisabled) return; // 🔥 stop reorder logic
 
         const { active, over } = e;
         if (!over || active.id === over.id) return;
@@ -106,7 +110,7 @@ export default function SectionsReorder({
               <SortableRow
                 key={s.id}
                 s={s}
-                dragDisabled={groupLocked}   // 👈 ONLY drag disabled
+                dragDisabled={isReorderDisabled}   // 👈 ONLY drag disabled
                 onClick={() => onSectionClick?.(s.type)} // 👈 ALWAYS clickable
                 onToggle={onToggle}
               />

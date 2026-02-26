@@ -51,17 +51,18 @@ interface TeamState {
 
   loading: boolean;
   error?: string;
+    selectedMember: TeamMember | null; 
 }
 
 const initialState: TeamState = {
   members: [],
   managers: [],
   salesReps: [],
+  selectedMember: null,   // 👈 ADD
   meta: {},
   analytics: null,
   analyticsLoading: false,
   loading: false,
-  error: undefined,
 };
 
 
@@ -280,11 +281,12 @@ const teamSlice = createSlice({
         state.error = action.payload as string;
       })
 
-      .addCase(fetchMemberById.fulfilled, (state, action) => {
-        const idx = state.members.findIndex((m) => m.id === action.payload.id);
-        if (idx !== -1) state.members[idx] = action.payload;
-        else state.members.push(action.payload);
-      })
+    .addCase(fetchMemberById.fulfilled, (state, action) => {
+  state.selectedMember = action.payload;
+
+  const idx = state.members.findIndex((m) => m.id === action.payload.id);
+  if (idx !== -1) state.members[idx] = action.payload;
+})
 
       .addCase(createMember.fulfilled, (state, action) => {
         state.members.unshift(action.payload);
@@ -293,6 +295,7 @@ const teamSlice = createSlice({
       .addCase(updateMember.fulfilled, (state, action) => {
         const idx = state.members.findIndex((m) => m.id === action.payload.id);
         if (idx !== -1) {
+          state.selectedMember = action.payload;
           state.members[idx] = normalizeMember({
             ...state.members[idx],
             ...action.payload,

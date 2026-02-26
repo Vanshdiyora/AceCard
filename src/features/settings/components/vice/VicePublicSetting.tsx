@@ -2580,7 +2580,7 @@ export default function VicePublicSetting({
                     <SectionsReorder
                       sections={config.sections.items}
                       groupLocked={config.sections.locked}
-
+                      role={role}  
                       onChange={(items) => {
                         update({
                           ...config,

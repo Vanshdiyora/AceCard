@@ -2,6 +2,7 @@ import { useState } from "react";
 import { uploadImage } from "../../../../publicProfile/services/publicProfile.api";
 import AvatarCropModal from "../../../../../common/ui/AvatarCropModal";
 import { Toggle } from "../../../../teams/components/details/publicProfile/TeamMemberPublicProfileTab";
+import { Camera } from "lucide-react";
 
 export default function ProfileSection({
   profile,
@@ -114,7 +115,7 @@ function ImageBox({ url, onSelect }: any) {
         ) : (
           <div className="h-full flex flex-col items-center justify-center text-gray-400 text-sm">
             <div className="w-10 h-10 rounded-full bg-white/80 flex items-center justify-center shadow">
-              📷
+              <Camera />
             </div>
             <span className="mt-2">Upload</span>
           </div>
