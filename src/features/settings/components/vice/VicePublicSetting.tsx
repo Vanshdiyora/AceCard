@@ -2987,6 +2987,7 @@ export default function VicePublicSetting({
           <LockControl
             value={config.theme}
             role={config.role}
+            currentUser={username}
             onChange={(v) =>
               update({
                 ...config,
