@@ -13,6 +13,19 @@ import {
   SiSnapchat,
   SiTiktok,
 } from "react-icons/si";
+import {
+  SiTelegram,
+  SiPinterest,
+  SiThreads,
+  SiGithub,
+  SiDiscord,
+  SiCalendly,
+  SiAppstore,
+  SiGoogleplay,
+} from "react-icons/si";
+
+import { FiMail, FiMapPin, FiMessageSquare } from "react-icons/fi";
+
 import { normalizeProfile } from "../utils/normalizeProfile";
 import { FiPhone, FiGlobe } from "react-icons/fi";
 
@@ -74,12 +87,12 @@ export default function MobileWebsite({
   isPreview = false,
 }: {
   data: any;
-    isPreview?: boolean;
+  isPreview?: boolean;
   scrollRef?: React.RefObject<HTMLDivElement | null>;
 }) {
   const normalized = normalizeProfile(data);
   const config = normalized;
-const bgPositionClass = isPreview ? "absolute" : "fixed";
+  const bgPositionClass = isPreview ? "absolute" : "fixed";
 
   useEffect(() => {
     if (!data) return;
@@ -161,7 +174,7 @@ const bgPositionClass = isPreview ? "absolute" : "fixed";
     products,
     sections,
     photo_gallery,
-     card_buttons,
+    card_buttons,
     // video_gallery,
   } = config;
 
@@ -306,14 +319,14 @@ const bgPositionClass = isPreview ? "absolute" : "fixed";
             onOpen={setActivePhoto}   // 👈 add
           />
         ) : null;
-case "card_buttons":
-  return (
-    <CardButtons
-      items={sortByRank(card_buttons.items)}
-      theme={theme}
-      shapeClass={shapeClass}
-    />
-  );
+      case "card_buttons":
+        return (
+          <CardButtons
+            items={sortByRank(card_buttons.items)}
+            theme={theme}
+            shapeClass={shapeClass}
+          />
+        );
       default:
         return null;
     }
@@ -449,68 +462,68 @@ case "card_buttons":
   return (
     <div className={`relative w-full ${isPreview ? "h-full" : "min-h-screen"} overflow-x-hidden`}>
 
-    {/* BACKGROUND — absolute in preview, fixed on real mobile */}
-    <div
-      className={`${bgPositionClass} inset-0 z-0 pointer-events-none`}
-      style={
-        !["stripes","waves","polka","zigzag","video"].includes(layout?.use_background || "")
-          ? resolveBackgroundStyle()
-          : {}
-      }
-    >
-      {layout?.use_background === "zigzag" && (
-        <ZigzagBackground color={layout?.background_color || "#65696F"} />
-      )}
-      {layout?.use_background === "waves" && (
-        <WaveBackground color={layout?.background_color || "#40474D"} />
-      )}
-      {layout?.use_background === "stripes" && (
-        <StripeBackground color={layout?.background_color || "#65696F"} />
-      )}
-      {layout?.use_background === "polka" && (
-        <PolkaBackground color={layout?.background_color || "#3d444b"} />
-      )}
-      {layout?.use_background === "video" && (
-        <BackgroundVideo src={layout?.background_video} isPreview={isPreview} />
-      )}
-    </div>
-
-    <div
-      className={`relative h-full w-full no-scrollbar overflow-y-auto p-4 ${fontClass}`}>
-
-      <ConnectModal
-        open={open}
-        onClose={() => setOpen(false)}
-        handle={data?.username}
-        theme={theme}
-        config={config.contact}
-      />
-
-      {/* MODAL */}
-      {isMobile && (
-        <PhotoModal
-          open={!!activePhoto}
-          item={activePhoto}
-          theme={theme}
-          onClose={() => setActivePhoto(null)}
-        />
-      )}
-
-
-
-      <span className="wave-3 absolute inset-0" />
-      <span className="wave-fade" />
-      <div className="relative z-10 space-y-6">
-
-        {orderedSections.map((s: any) =>
-          s?.enabled ? (
-            <div key={s.id}>{renderSection(s.type)}</div>
-          ) : null
+      {/* BACKGROUND — absolute in preview, fixed on real mobile */}
+      <div
+        className={`${bgPositionClass} inset-0 z-0 pointer-events-none`}
+        style={
+          !["stripes", "waves", "polka", "zigzag", "video"].includes(layout?.use_background || "")
+            ? resolveBackgroundStyle()
+            : {}
+        }
+      >
+        {layout?.use_background === "zigzag" && (
+          <ZigzagBackground color={layout?.background_color || "#65696F"} />
+        )}
+        {layout?.use_background === "waves" && (
+          <WaveBackground color={layout?.background_color || "#40474D"} />
+        )}
+        {layout?.use_background === "stripes" && (
+          <StripeBackground color={layout?.background_color || "#65696F"} />
+        )}
+        {layout?.use_background === "polka" && (
+          <PolkaBackground color={layout?.background_color || "#3d444b"} />
+        )}
+        {layout?.use_background === "video" && (
+          <BackgroundVideo src={layout?.background_video} isPreview={isPreview} />
         )}
       </div>
 
+      <div
+        className={`relative h-full w-full no-scrollbar overflow-y-auto p-4 ${fontClass}`}>
+
+        <ConnectModal
+          open={open}
+          onClose={() => setOpen(false)}
+          handle={data?.username}
+          theme={theme}
+          config={config.contact}
+        />
+
+        {/* MODAL */}
+        {isMobile && (
+          <PhotoModal
+            open={!!activePhoto}
+            item={activePhoto}
+            theme={theme}
+            onClose={() => setActivePhoto(null)}
+          />
+        )}
+
+
+
+        <span className="wave-3 absolute inset-0" />
+        <span className="wave-fade" />
+        <div className="relative z-10 space-y-6">
+
+          {orderedSections.map((s: any) =>
+            s?.enabled ? (
+              <div key={s.id}>{renderSection(s.type)}</div>
+            ) : null
+          )}
+        </div>
+
+      </div>
     </div>
-</div>
   );
 }
 
@@ -756,6 +769,17 @@ function Social({ items, theme, shapeClass }: any) {
               {s.id === "website" && <FiGlobe size={30} />}
               {s.id === "snapchat" && <SiSnapchat size={30} />}
               {s.id === "tiktok" && <SiTiktok size={30} />}
+              {s.id === "address" && <FiMapPin size={30} />}
+              {s.id === "email" && <FiMail size={30} />}
+              {s.id === "telegram" && <SiTelegram size={30} />}
+              {s.id === "pinterest" && <SiPinterest size={30} />}
+              {s.id === "threads" && <SiThreads size={30} />}
+              {s.id === "github" && <SiGithub size={30} />}
+              {s.id === "discord" && <SiDiscord size={30} />}
+              {s.id === "calendly" && <SiCalendly size={30} />}
+              {s.id === "appstore" && <SiAppstore size={30} />}
+              {s.id === "playstore" && <SiGoogleplay size={30} />}
+              {s.id === "sms" && <FiMessageSquare size={30} />}
 
             </a>
           ))}
@@ -1166,9 +1190,8 @@ function CardButtons({
   return (
     <Section theme={theme}>
       <div
-        className={`flex gap-3 ${
-          isSingle ? "flex-col" : "flex-row"
-        }`}
+        className={`flex gap-3 ${isSingle ? "flex-col" : "flex-row"
+          }`}
       >
         {visible.map((btn: any) => (
           <a

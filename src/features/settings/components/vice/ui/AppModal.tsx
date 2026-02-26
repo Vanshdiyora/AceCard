@@ -18,7 +18,7 @@ interface AppModalProps {
   loading?: boolean;
   showBack?: boolean;
   onBack?: () => void;
-   errorMessage?: string | null;
+  errorMessage?: string | null;
 }
 
 export default function AppModal({
@@ -35,7 +35,7 @@ export default function AppModal({
   loading = false,
   showBack = false,
   onBack,
-   errorMessage,
+  errorMessage,
 }: AppModalProps) {
   if (!open) return null;
 
@@ -61,47 +61,47 @@ export default function AppModal({
         className={`w-full ${widthMap[size]} bg-white rounded-2xl shadow-xl animate-in fade-in zoom-in-95`}
       >
         {/* HEADER */}
-{(title || description || errorMessage) && (
-  <div className="px-6 pt-6 pb-4 border-b space-y-3">
-    <div className="flex items-start justify-between">
-      <div>
-        {showBack && (
-          <button
-            onClick={onBack}
-            className="flex items-center gap-2 text-gray-500 hover:text-gray-900 transition"
-          >
-            <ArrowLeft size={18} />
-            <span className="text-sm font-medium">Back</span>
-          </button>
+        {(title || description || errorMessage) && (
+          <div className="px-6 pt-6 pb-4 border-b space-y-3">
+            <div className="flex items-start justify-between">
+              <div>
+                {showBack && (
+                  <button
+                    onClick={onBack}
+                    className="flex items-center gap-2 text-gray-500 hover:text-gray-900 transition"
+                  >
+                    <ArrowLeft size={18} />
+                    <span className="text-sm font-medium">Back</span>
+                  </button>
+                )}
+
+                {title && (
+                  <h3 className="text-lg font-semibold">{title}</h3>
+                )}
+
+                {description && (
+                  <p className="text-sm text-gray-500 mt-1">
+                    {description}
+                  </p>
+                )}
+              </div>
+
+              <button
+                onClick={onClose}
+                className="text-gray-400 hover:text-gray-700"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* 🔥 ERROR BANNER */}
+            {errorMessage && (
+              <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-2 text-sm text-red-600">
+                {errorMessage}
+              </div>
+            )}
+          </div>
         )}
-
-        {title && (
-          <h3 className="text-lg font-semibold">{title}</h3>
-        )}
-
-        {description && (
-          <p className="text-sm text-gray-500 mt-1">
-            {description}
-          </p>
-        )}
-      </div>
-
-      <button
-        onClick={onClose}
-        className="text-gray-400 hover:text-gray-700"
-      >
-        <X size={18} />
-      </button>
-    </div>
-
-    {/* 🔥 ERROR BANNER */}
-    {errorMessage && (
-      <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-2 text-sm text-red-600">
-        {errorMessage}
-      </div>
-    )}
-  </div>
-)}
 
         {/* BODY */}
         <div className="px-6 py-6 max-h-[70vh] overflow-y-auto">
