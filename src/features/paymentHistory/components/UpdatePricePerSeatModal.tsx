@@ -41,7 +41,6 @@ export default function UpdatePricePerSeatModal({
           payment_terms: vendor.payment_terms,
           seats: vendor.seats,
           price_per_card: parsedPrice,
-          payment_amount_total: vendor.seats * parsedPrice,
         })
       ).unwrap();
 
