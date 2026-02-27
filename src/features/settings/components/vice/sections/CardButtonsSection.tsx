@@ -60,9 +60,8 @@ export default function CardButtonsSection({
         onChange={updateItems}
         renderItem={(btn: CardButtonItem, index: number) => (
           <div
-            className={`border rounded-xl p-4 space-y-4 ${
-              disabled ? "opacity-60 pointer-events-none" : ""
-            }`}
+            className={`border rounded-xl p-4 space-y-4 ${disabled ? "opacity-60 pointer-events-none" : ""
+              }`}
           >
             <div className="flex justify-between items-center">
               <p className="text-sm font-medium">
@@ -70,11 +69,11 @@ export default function CardButtonsSection({
               </p>
 
               <button
-                onClick={() =>
-                  updateItems(
-                    items.filter((b) => b.id !== btn.id)
-                  )
-                }
+                type="button"
+                onClick={() => {
+                  const updated = items.filter((_, i) => i !== index);
+                  updateItems(updated);
+                }}
                 className="text-red-500 text-sm"
               >
                 Delete

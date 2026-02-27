@@ -14,35 +14,35 @@ import type {
 const BASE = "/vendor/leads";
 
 export const LeadsService = {
-async getLeads(
-  page?: number,
-  pageSize?: number,
-  team_member_id?: number,
-  memberId?: number,
-  search?: string,
-  stage?: LeadStage,
+  async getLeads(
+    page?: number,
+    pageSize?: number,
+    team_member_id?: number,
+    memberId?: number,
+    search?: string,
+    stage?: LeadStage,
 
-  // 👇 ADD
-  sort_by?: SortBy,
-  sort_order?: SortOrder
-): Promise<LeadsApiResponse> {
-  const res = await axiosClient.get(BASE, {
-    params: {
-      page,
-      page_size: pageSize,
-      team_member_id,
-      member_id: memberId,
-      search: search || undefined,
-      stage: stage || undefined,
+    // 👇 ADD
+    sort_by?: SortBy,
+    sort_order?: SortOrder
+  ): Promise<LeadsApiResponse> {
+    const res = await axiosClient.get(BASE, {
+      params: {
+        page,
+        page_size: pageSize,
+        team_member_id,
+        member_id: memberId,
+        search: search || undefined,
+        stage: stage || undefined,
 
-      // 👇 ADD
-      sort_by,
-      sort_order,
-    },
-  });
+        // 👇 ADD
+        sort_by,
+        sort_order,
+      },
+    });
 
-  return res.data;
-},
+    return res.data;
+  },
 
   async createLead(data: CreateLeadDto): Promise<Lead> {
     const res = await axiosClient.post(BASE, data);
@@ -84,4 +84,12 @@ async getLeads(
   },
   getMeetings: (leadId: number) =>
     axiosClient.get<Meeting[]>(`/vendor/leads/${leadId}/meetings`).then((r) => r.data),
+
+  async transferLead(id: number, to_rep_id: number): Promise<Lead> {
+    const res = await axiosClient.post(`${BASE}/${id}/transfer`, {
+      to_rep_id,
+    });
+
+    return res.data;
+  },
 };

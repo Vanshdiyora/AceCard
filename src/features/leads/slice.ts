@@ -39,6 +39,8 @@ interface LeadsState {
   timeline: Record<number, TimelineItem[]>;
   meetings: Record<number, Meeting[]>;
 
+  // 👇 ADD THIS
+  transferLoading: boolean;
 }
 
 const initialState: LeadsState = {
@@ -48,7 +50,8 @@ const initialState: LeadsState = {
   loading: false,
   error: null,
   timeline: {},
-  meetings: {}
+  meetings: {},
+  transferLoading: false,
 };
 
 /* -----------------------------------------------------
@@ -109,6 +112,19 @@ export const fetchLeads = createAsyncThunk<
   }
 );
 
+export const transferLead = createAsyncThunk<
+  Lead,
+  { id: number; to_rep_id: number },
+  { rejectValue: string }
+>("leads/transfer", async ({ id, to_rep_id }, { rejectWithValue }) => {
+  try {
+    return await LeadsService.transferLead(id, to_rep_id);
+  } catch (err) {
+    return rejectWithValue(
+      extractApiError(err, "Failed to transfer lead")
+    );
+  }
+});
 
 export const fetchLeadMeetings = createAsyncThunk<
   { leadId: number; meetings: Meeting[] },
@@ -265,6 +281,27 @@ const leadsSlice = createSlice({
       .addCase(updateLead.fulfilled, (state, action) => {
         const i = state.leads.findIndex((l) => l.id === action.payload.id);
         if (i !== -1) state.leads[i] = action.payload;
+      })
+      .addCase(transferLead.pending, (state) => {
+        state.transferLoading = true;
+        state.error = null;
+      })
+
+      .addCase(transferLead.fulfilled, (state, action) => {
+        state.transferLoading = false;
+
+        const index = state.leads.findIndex(
+          (l) => l.id === action.payload.id
+        );
+
+        if (index !== -1) {
+          state.leads[index] = action.payload;
+        }
+      })
+
+      .addCase(transferLead.rejected, (state, action) => {
+        state.transferLoading = false;
+        state.error = action.payload ?? "Failed to transfer lead";
       })
 
       .addCase(fetchLeadById.pending, (state) => {

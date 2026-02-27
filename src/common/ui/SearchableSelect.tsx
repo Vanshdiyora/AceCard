@@ -10,7 +10,7 @@ interface Option {
 }
 
 interface Props {
-  value: any; // single: value, multi: value[]
+  value: any;
   onChange: (v: any) => void;
   options: Option[];
   placeholder?: string;
@@ -39,39 +39,48 @@ export default function SearchableSelect({
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [pos, setPos] = useState({ top: 0, left: 0, width: 0 });
-  const [openUp, setOpenUp] = useState(false); // ✅ ADD
+  const [openUp, setOpenUp] = useState(false);
 
   const triggerRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // ✅ Always keep latest onScrollEnd in a ref — scroll handler reads from ref,
+  // so it never becomes stale even when parent re-renders with new function refs
+  const onScrollEndRef = useRef(onScrollEnd);
+  useEffect(() => {
+    onScrollEndRef.current = onScrollEnd;
+  }, [onScrollEnd]);
+
+  // ✅ Same for loading — prevents double-firing while fetch is in-flight
+  const loadingRef = useRef(loading);
+  useEffect(() => {
+    loadingRef.current = loading;
+  }, [loading]);
 
   const filtered = options.filter((o) =>
     o.label.toLowerCase().includes(query.toLowerCase())
   );
 
-  /* ---------- CLOSE ON SCROLL / RESIZE ---------- */
+  /* ---------- AUTO LOAD MORE WHEN LIST DOESN'T FILL THE DROPDOWN ---------- */
   useEffect(() => {
     if (!open) return;
+    if (!onScrollEndRef.current) return;
 
-    const handleScroll = (e: Event) => {
-      const target = e.target as Node;
+    // Wait for DOM to paint before measuring
+    const id = setTimeout(() => {
+      const el = dropdownRef.current?.querySelector(
+        ".scroll-list"
+      ) as HTMLElement | null;
+      if (!el) return;
 
-      // ✅ Ignore scroll inside dropdown
-      if (dropdownRef.current?.contains(target)) {
-        return;
+      // If no scrollbar exists and we're not already fetching, load more
+      if (el.scrollHeight <= el.clientHeight && !loadingRef.current) {
+        onScrollEndRef.current?.();
       }
+    }, 150);
 
-      setOpen(false);
-    };
-
-    window.addEventListener("scroll", handleScroll, true);
-    window.addEventListener("resize", handleScroll);
-
-    return () => {
-      window.removeEventListener("scroll", handleScroll, true);
-      window.removeEventListener("resize", handleScroll);
-    };
-  }, [open]);
-
+    return () => clearTimeout(id);
+  }, [open, filtered.length]); // re-runs each time new items arrive
 
   /* ---------- CLOSE ON OUTSIDE CLICK ---------- */
   useEffect(() => {
@@ -104,10 +113,11 @@ export default function SearchableSelect({
     );
   };
 
-const isSelected = (val: any) =>
-  multiple
-    ? Array.isArray(value) && value.some((v) => v == val) // ✅ loose equality
-    : value == val; // ✅ loose equality
+  const isSelected = (val: any) =>
+    multiple
+      ? Array.isArray(value) && value.some((v) => v == val)
+      : value == val;
+
   return (
     <>
       {/* ================= TRIGGER ================= */}
@@ -122,23 +132,17 @@ const isSelected = (val: any) =>
           const viewportHeight = window.innerHeight;
           const spaceBelow = viewportHeight - r.bottom;
           const spaceAbove = r.top;
-
           const DROPDOWN_ESTIMATED_HEIGHT = 260;
 
           const shouldOpenUp =
-            spaceBelow < DROPDOWN_ESTIMATED_HEIGHT &&
-            spaceAbove > spaceBelow;
+            spaceBelow < DROPDOWN_ESTIMATED_HEIGHT && spaceAbove > spaceBelow;
 
           setOpenUp(shouldOpenUp);
-
           setPos({
-            top: shouldOpenUp
-              ? r.top
-              : r.bottom,
+            top: shouldOpenUp ? r.top : r.bottom,
             left: r.left,
             width: r.width,
           });
-
 
           setOpen((s) => !s);
         }}
@@ -148,8 +152,6 @@ const isSelected = (val: any) =>
         `}
       >
         <div className="flex items-center flex-wrap w-full min-h-[20px] gap-1">
-
-          {/* MULTIPLE SELECT */}
           {multiple ? (
             Array.isArray(value) && value.length > 0 && !hideValues ? (
               value.map((v: any) => {
@@ -159,7 +161,7 @@ const isSelected = (val: any) =>
                     key={v}
                     className="flex items-center gap-1 bg-purple-100 text-purple-700 px-2 py-0.5 rounded text-xs"
                   >
-                    {opt?.label ?? `ID: ${v}`}  {/* ✅ fallback if option not loaded */}
+                    {opt?.label ?? `ID: ${v}`}
                     <button
                       type="button"
                       onClick={(e) => {
@@ -184,24 +186,15 @@ const isSelected = (val: any) =>
           ) : (
             (() => {
               const selectedOption = options.find((o) => o.value == value);
-
               if (!selectedOption || hideValues) {
-                return (
-                  <span className="text-gray-400 text-sm">
-                    {placeholder}
-                  </span>
-                );
+                return <span className="text-gray-400 text-sm">{placeholder}</span>;
               }
-
               return (
-                <span className="text-gray-800 truncate">
-                  {selectedOption.label}
-                </span>
+                <span className="text-gray-800 truncate">{selectedOption.label}</span>
               );
             })()
           )}
         </div>
-
       </div>
 
       {/* ================= DROPDOWN ================= */}
@@ -212,9 +205,7 @@ const isSelected = (val: any) =>
             className="fixed z-[99999] bg-white border rounded-xl shadow-lg"
             style={{
               top: openUp ? undefined : pos.top,
-              bottom: openUp
-                ? window.innerHeight - pos.top + "px"
-                : undefined,
+              bottom: openUp ? window.innerHeight - pos.top + "px" : undefined,
               left: pos.left,
               width: pos.width,
             }}
@@ -232,13 +223,17 @@ const isSelected = (val: any) =>
               className="w-full px-3 py-2 border-b outline-none text-sm"
             />
 
-            {/* LIST */}
+            {/* LIST — class "scroll-list" used by useEffect to measure overflow */}
             <div
-              className="max-h-64 overflow-y-auto custom-scrollbar"
+              className="scroll-list max-h-64 overflow-y-auto custom-scrollbar"
               onScroll={(e) => {
                 const el = e.currentTarget;
-                if (el.scrollTop + el.clientHeight >= el.scrollHeight - 5) {
-                  onScrollEnd?.();
+                const nearBottom =
+                  el.scrollTop + el.clientHeight >= el.scrollHeight - 5;
+
+                // ✅ Guard: don't fire if already loading
+                if (nearBottom && !loadingRef.current) {
+                  onScrollEndRef.current?.();
                 }
               }}
             >

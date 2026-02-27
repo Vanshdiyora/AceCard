@@ -324,31 +324,77 @@ interface PublicProfileConfig {
 
 }
 
-function getChangedFields<T extends object>(current: T, original: T): Partial<T> {
-  const result: Partial<T> = {};
+function getChangedFields<T>(current: T, original: T): Partial<T> {
+  // 🔥 If original missing → everything changed
+  if (original === undefined || original === null) {
+    return current as any;
+  }
 
-  Object.keys(current).forEach((key) => {
+  // 🔥 If values are strictly equal → no change
+  if (current === original) {
+    return {} as any;
+  }
+
+  // 🔥 Handle primitive values (string, number, boolean, null)
+  const isPrimitive = (val: any) =>
+    val === null || typeof val !== "object";
+
+  if (isPrimitive(current) || isPrimitive(original)) {
+    return current !== original ? (current as any) : ({} as any);
+  }
+
+  // 🔥 Handle Arrays
+  if (Array.isArray(current) && Array.isArray(original)) {
+    // Length changed
+    if (current.length !== original.length) {
+      return current as any;
+    }
+
+    // Deep compare each element
+    for (let i = 0; i < current.length; i++) {
+      const diff = getChangedFields(current[i], original[i]);
+      if (
+        diff &&
+        (typeof diff !== "object" ||
+          Object.keys(diff).length > 0)
+      ) {
+        return current as any;
+      }
+    }
+
+    return {} as any;
+  }
+
+  // 🔥 Handle Objects
+  const result: any = {};
+
+  const currentKeys = Object.keys(current as any);
+  const originalKeys = Object.keys(original as any);
+
+  // 🔥 Detect removed keys
+  for (const key of originalKeys) {
+    if (!(key in (current as any))) {
+      result[key] = undefined;
+    }
+  }
+
+  for (const key of currentKeys) {
     const currVal = (current as any)[key];
     const origVal = (original as any)[key];
 
-    if (currVal === undefined || currVal === null) return; // skip undefined
+    const diff = getChangedFields(currVal, origVal);
 
-    if (typeof currVal === "string" && typeof origVal === "string") {
-      if (currVal.trim() !== origVal.trim()) {
-        (result as any)[key] = currVal;
-      }
-      return;
+    if (Array.isArray(diff)) {
+      // 🔥 If array diff detected → always assign
+      result[key] = currVal;
+    } else if (
+      diff &&
+      (typeof diff !== "object" ||
+        Object.keys(diff).length > 0)
+    ) {
+      result[key] = currVal;
     }
-
-    try {
-      if (JSON.stringify(currVal) !== JSON.stringify(origVal)) {
-        (result as any)[key] = currVal;
-      }
-    } catch {
-      // if stringify fails, include it anyway
-      (result as any)[key] = currVal;
-    }
-  });
+  }
 
   return result;
 }
@@ -391,7 +437,7 @@ export default function VicePublicSetting({
   );
 
   const [config, setConfig] = useState<PublicProfileConfig | null>(null);
-
+  console.log(config)
   /* ---------- Product search state ---------- */
   const [productSearch, setProductSearch] = useState("");
   const [productPage, setProductPage] = useState(1);
@@ -667,8 +713,20 @@ export default function VicePublicSetting({
     if (!validateBeforeSave()) return;
 
     // 2️⃣ Get only changed sections
-    const changedPayload = getChangedFields(config, originalConfig);
+    let changedPayload = getChangedFields(config, originalConfig);
 
+    // 🔥 Remove UI-only ids from card_buttons
+    if (changedPayload.card_buttons?.items) {
+      changedPayload = {
+        ...changedPayload,
+        card_buttons: {
+          ...changedPayload.card_buttons,
+          items: changedPayload.card_buttons.items.map(
+            ({ id, ...rest }: any) => rest
+          ),
+        },
+      };
+    }
     if (Object.keys(changedPayload).length === 0) {
       setResultSuccess(true);
       setResultMessage("No changes detected.");
@@ -1714,7 +1772,10 @@ export default function VicePublicSetting({
     }
 
     if (activeSection === "card_buttons") {
-      nextConfig = { ...nextConfig, card_buttons: sectionDraft };
+      nextConfig = {
+        ...structuredClone(nextConfig),
+        card_buttons: structuredClone(sectionDraft),
+      };
     }
     /* ================= APPLY UPDATE ================= */
     update(nextConfig);
@@ -2580,7 +2641,7 @@ export default function VicePublicSetting({
                     <SectionsReorder
                       sections={config.sections.items}
                       groupLocked={config.sections.locked}
-                      role={role}  
+                      role={role}
                       onChange={(items) => {
                         update({
                           ...config,

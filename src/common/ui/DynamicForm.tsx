@@ -292,6 +292,7 @@ export default function DynamicForm({
                   loading={field.showLoader}
                   disabled={disabled || field.disabled}
                   placeholder={`Select ${field.label}`}
+                   onScrollEnd={field.onScrollEnd}
                 />
                 {showError && (
                   <p className="text-xs text-red-500 mt-1">{error}</p>
