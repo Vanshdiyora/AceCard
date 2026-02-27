@@ -7,8 +7,9 @@ import {
   archiveVendor,
   markVendorUnpaid,
   updateSubscription,
+  markVendorPaid,
 } from "../slice";
-
+import ActionConfirmationModal from "../components/ActionConfirmationModal";
 import {
   updatePriceLocal,
   markUnpaidLocal,
@@ -78,7 +79,11 @@ export default function PaymentsPage() {
   };
 
   /* ------------------------------- modals ---------------------------------- */
-
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<{
+    type: "paid" | "unpaid";
+    paymentId: number;
+  } | null>(null);
   const [seatsOpen, setSeatsOpen] = useState(false);
   const [priceOpen, setPriceOpen] = useState(false);
 
@@ -338,8 +343,62 @@ export default function PaymentsPage() {
           setPaidFlowOpen(false);
           setSelectedVendor(null);
         }}
+        onAction={(payload) => {
+          setPaidFlowOpen(false); // close first modal
+          setConfirmAction(payload);
+          setConfirmOpen(true);
+        }}
       />
+      <ActionConfirmationModal
+        open={confirmOpen}
+        title={
+          confirmAction?.type === "paid"
+            ? "Mark as Paid"
+            : "Mark as Unpaid"
+        }
+        message={`Are you sure you want to mark ${selectedVendor?.vendor_name
+          } as ${confirmAction?.type === "paid" ? "Paid" : "Unpaid"
+          }?`}
+        loading={processing}
+        onCancel={() => {
+          setConfirmOpen(false);
+          setConfirmAction(null);
+        }}
+        onConfirm={async () => {
+          if (!confirmAction) return;
 
+          try {
+            setProcessing(true);
+
+            if (confirmAction.type === "paid") {
+              await dispatch(
+                markVendorPaid(confirmAction.paymentId)
+              ).unwrap();
+
+              showResult(true, "Vendor marked as Paid successfully.");
+            }
+
+            if (confirmAction.type === "unpaid") {
+              await dispatch(
+                markVendorUnpaid({
+                  payment_id: confirmAction.paymentId,
+                })
+              ).unwrap();
+
+              showResult(true, "Vendor marked as Unpaid successfully.");
+            }
+
+            setSelectedVendor(null);
+
+          } catch (err) {
+            showResult(false, getErrorMessage(err));
+          } finally {
+            setProcessing(false);
+            setConfirmOpen(false);
+            setConfirmAction(null);
+          }
+        }}
+      />
       {/* -------------------- UPDATE PRICE -------------------- */}
       <UpdatePricePerSeatModal
         vendor={selectedVendor}

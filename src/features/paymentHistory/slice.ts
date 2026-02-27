@@ -42,7 +42,8 @@ export const markVendorPaid = createAsyncThunk(
   "payments/mark-paid",
   async (paymentId: number, { rejectWithValue }) => {
     try {
-      return await markVendorPaidApi(paymentId);
+      const response = await markVendorPaidApi(paymentId);
+      return response; // return backend response
     } catch (err: any) {
       return rejectWithValue(
         err?.response?.data?.message || "Failed to mark paid"
@@ -142,7 +143,7 @@ const initialState: PaymentsState = {
   loading: false,
   error: null,
   listMeta: null,
-historyMeta: null,
+  historyMeta: null,
 };
 
 /* ============================= SLICE ============================= */
@@ -298,12 +299,26 @@ const paymentsSlice = createSlice({
       .addCase(markVendorPaid.fulfilled, (state, action) => {
         state.loading = false;
 
-        const paymentId = action.meta.arg; // the id you passed
+        const paymentId = action.meta.arg; // payment id
 
-        const item = state.list.find(v => v.id === paymentId);
+        // 1️⃣ Update payment history
+        const historyItem = state.history.find(h => h.id === paymentId);
 
-        if (item) {
-          item.status = "Paid";
+        if (historyItem) {
+          historyItem.status = "Paid";
+        }
+
+        // 2️⃣ Update vendor list using vendor_id
+        if (historyItem) {
+          const vendorId = historyItem.vendor_id;
+
+          const vendorItem = state.list.find(
+            v => v.vendor_id === vendorId
+          );
+
+          if (vendorItem) {
+            vendorItem.status = "Paid";
+          }
         }
       })
       .addCase(markVendorPaid.rejected, (state, action) => {
@@ -320,10 +335,24 @@ const paymentsSlice = createSlice({
 
         const paymentId = action.meta.arg.payment_id;
 
-        const item = state.list.find(v => v.id === paymentId);
+        // 1️⃣ Update history
+        const historyItem = state.history.find(h => h.id === paymentId);
 
-        if (item) {
-          item.status = "Not Paid";
+        if (historyItem) {
+          historyItem.status = "Not Paid";
+        }
+
+        // 2️⃣ Update vendor list using vendor_id
+        if (historyItem) {
+          const vendorId = historyItem.vendor_id;
+
+          const vendorItem = state.list.find(
+            v => v.vendor_id === vendorId
+          );
+
+          if (vendorItem) {
+            vendorItem.status = "Not Paid";
+          }
         }
       })
       .addCase(markVendorUnpaid.rejected, (state, action) => {

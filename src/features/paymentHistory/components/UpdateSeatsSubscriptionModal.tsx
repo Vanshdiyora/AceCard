@@ -142,8 +142,8 @@ const total =
     <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
       <BlockingLoader show={loading} />
 
-      <div className="bg-white rounded-xl w-[450px] p-6 space-y-5">
-        <h3 className="text-lg font-semibold">
+      <div className="bg-white rounded-xl w-[450px]">
+        <h3 className="text-lg font-semibold px-5 pt-5">
           Update Subscription
         </h3>
 
@@ -156,14 +156,14 @@ const total =
           submitAttempted={submitAttempted}
         />
 
-        <div className="bg-gray-50 p-3 rounded text-sm">
+        <div className="bg-gray-50 px-5 rounded text-sm">
           <span className="font-medium">
             Total Amount:
           </span>{" "}
           ₹{total.toLocaleString("en-IN")}
         </div>
 
-        <div className="flex justify-end gap-3">
+        <div className="flex justify-end gap-3 pb-5 px-5">
           <button
             className="px-4 py-2 rounded border"
             onClick={onClose}
