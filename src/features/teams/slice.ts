@@ -167,15 +167,16 @@ export const updateMember = createAsyncThunk(
     try {
       await teamService.updateMember(id, data);
 
-      // 👇 ALWAYS re-fetch full member
-      const fresh = await teamService.getMemberById(id);
-      return normalizeMember(fresh);
+      // 🔥 Return what we sent
+      return { id, data };
+
     } catch (err: any) {
-      return rejectWithValue(extractApiError(err, "Failed to update member"));
+      return rejectWithValue(
+        err?.response?.data?.message || "Failed to update member"
+      );
     }
   }
 );
-
 
 export const updatePermissions = createAsyncThunk(
   "team/permissions",
@@ -318,14 +319,30 @@ const teamSlice = createSlice({
       })
 
       .addCase(updateMember.fulfilled, (state, action) => {
-        const idx = state.members.findIndex((m) => m.id === action.payload.id);
-        if (idx !== -1) {
-          state.selectedMember = action.payload;
-          state.members[idx] = normalizeMember({
-            ...state.members[idx],
-            ...action.payload,
-          });
+        const { id, data } = action.payload;
+
+        // ✅ Update selectedMember
+        if (state.selectedMember?.id === id) {
+          state.selectedMember = {
+            ...state.selectedMember,
+            ...data,
+          };
         }
+
+        // ✅ Update members
+        state.members = state.members.map((m) =>
+          m.id === id ? { ...m, ...data } : m
+        );
+
+        // ✅ Update managers
+        state.managers = state.managers.map((m) =>
+          m.id === id ? { ...m, ...data } : m
+        );
+
+        // ✅ Update salesReps
+        state.salesReps = state.salesReps.map((m) =>
+          m.id === id ? { ...m, ...data } : m
+        );
       })
       .addCase(updatePermissions.fulfilled, (state, action) => {
         const idx = state.members.findIndex((m) => m.id === action.payload.id);

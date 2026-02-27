@@ -9,7 +9,7 @@ import { resetSettings } from "../../../features/settings/slice";
 import { eraseCookie } from "../../../utils/cookieUtils";
 import { LogOut } from "lucide-react";
 import GlobalSignOutConfirmationModal from "../../ui/GlobalSignOutConfirmationModal";
-
+import { Activity } from "lucide-react";
 type MenuItem = {
   label: string;
   path: string;
@@ -40,14 +40,13 @@ export default function Sidebar({ type }: SidebarProps) {
     { label: "Settings", path: `${adminBase}/settings`, icon: "/sidebar/settings.png" },
   ];
 
-  const superMenu: MenuItem[] = [
-    { label: "Vendors", path: `${superBase}/vendors`, icon: "/sidebar/vendors.png" },
-    { label: "Tickets & Support", path: `${superBase}/support`, icon: "/sidebar/support.png" },
-    // { label: "System Settings", path: `${superBase}/system-settings`, icon: "/sidebar/settings.png" },
-    { label: "Notifications", path: `${superBase}/notifications`, icon: IoNotifications },
-    { label: "Payments", path: `${superBase}/payments`, icon: CreditCard },
-
-  ];
+const superMenu: MenuItem[] = [
+  { label: "Vendors", path: `${superBase}/vendors`, icon: "/sidebar/vendors.png" },
+  { label: "Tickets & Support", path: `${superBase}/support`, icon: "/sidebar/support.png" },
+  { label: "Notifications", path: `${superBase}/notifications`, icon: IoNotifications },
+  { label: "Payments", path: `${superBase}/payments`, icon: CreditCard },
+  { label: "Live Logs", path: `${superBase}/live-logs`, icon: Activity },
+];
 
   const menu = type === "superadmin" ? superMenu : adminMenu;
   const handleLogout = async () => {

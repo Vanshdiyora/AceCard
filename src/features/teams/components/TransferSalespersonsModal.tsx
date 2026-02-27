@@ -120,7 +120,11 @@ export function TransferSalespersonsModal({
   const filteredManagers = useMemo(
     () =>
       managers
-        .filter((m) => m.id !== fromManagerId)
+        .filter(
+          (m) =>
+            m.id !== fromManagerId &&
+            m.status !== "suspended"   // ✅ exclude suspended managers
+        )
         .map((m) => ({
           label: m.name,
           value: m.id,
@@ -176,7 +180,7 @@ export function TransferSalespersonsModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
       <div className="w-[420px] max-w-[90vw] rounded-2xl bg-white shadow-2xl border p-6 space-y-5">
-        
+
         <div>
           <h3 className="text-lg font-semibold">
             Transfer Salespersons
@@ -209,11 +213,10 @@ export function TransferSalespersonsModal({
           <button
             disabled={!form.to_manager_id || transferSalespersonsLoading}
             onClick={handleConfirm}
-            className={`px-5 py-2 rounded-xl text-sm font-medium transition ${
-              !form.to_manager_id || transferSalespersonsLoading
+            className={`px-5 py-2 rounded-xl text-sm font-medium transition ${!form.to_manager_id || transferSalespersonsLoading
                 ? "bg-gray-200 text-gray-400"
                 : "bg-purple-600 text-white hover:bg-purple-700"
-            }`}
+              }`}
           >
             {transferSalespersonsLoading
               ? "Transferring..."
