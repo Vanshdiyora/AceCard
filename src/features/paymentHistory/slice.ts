@@ -17,6 +17,8 @@ import {
   getPaymentHistoryApi,
   archiveVendorApi,
   markVendorUnpaidApi,
+  markVendorPaidApi,
+  updateSeatsApi,
 } from "./services/paymentsApi";
 
 /* ============================= THUNKS ============================= */
@@ -35,14 +37,62 @@ export const fetchPayments = createAsyncThunk(
   }
 );
 
-/* UPDATE SUBSCRIPTION
-   🔑 API returns only { message }, so we return payload */
+/* MARK PAID */
+export const markVendorPaid = createAsyncThunk(
+  "payments/mark-paid",
+  async (paymentId: number, { rejectWithValue }) => {
+    try {
+      return await markVendorPaidApi(paymentId);
+    } catch (err: any) {
+      return rejectWithValue(
+        err?.response?.data?.message || "Failed to mark paid"
+      );
+    }
+  }
+);
+
+/* MARK UNPAID */
+export const markVendorUnpaid = createAsyncThunk(
+  "payments/mark-unpaid",
+  async (
+    payload: MarkUnpaidPayload,
+    { rejectWithValue }
+  ) => {
+    try {
+      const { payment_id } = payload;
+      return await markVendorUnpaidApi(payment_id);
+    } catch (err: any) {
+      return rejectWithValue(
+        err?.response?.data?.message || "Failed to mark unpaid"
+      );
+    }
+  }
+);
+
+/* UPDATE SEATS */
+export const updateSeats = createAsyncThunk(
+  "payments/update-seats",
+  async (
+    { vendor_id, seats }: { vendor_id: number; seats: number },
+    { rejectWithValue }
+  ) => {
+    try {
+      return await updateSeatsApi(vendor_id, seats);
+    } catch (err: any) {
+      return rejectWithValue(
+        err?.response?.data?.message || "Failed to update seats"
+      );
+    }
+  }
+);
+
+/* UPDATE SUBSCRIPTION */
 export const updateSubscription = createAsyncThunk(
-  "payments/update",
+  "payments/update-subscription",
   async (payload: UpdateSubscriptionPayload, { rejectWithValue }) => {
     try {
       await updateVendorSubscriptionApi(payload);
-      return payload; // ✅ return payload for local update
+      return payload; // backend returns only message
     } catch (err: any) {
       return rejectWithValue(
         err?.response?.data?.message || "Failed to update subscription"
@@ -70,7 +120,7 @@ export const fetchPaymentHistory = createAsyncThunk(
   }
 );
 
-/* ARCHIVE VENDOR */
+/* ARCHIVE */
 export const archiveVendor = createAsyncThunk(
   "payments/archive",
   async (vendorId: number, { rejectWithValue }) => {
@@ -84,20 +134,6 @@ export const archiveVendor = createAsyncThunk(
   }
 );
 
-/* MARK UNPAID */
-export const markVendorUnpaid = createAsyncThunk(
-  "payments/mark-unpaid",
-  async (payload: MarkUnpaidPayload, { rejectWithValue }) => {
-    try {
-      return await markVendorUnpaidApi(payload);
-    } catch (err: any) {
-      return rejectWithValue(
-        err?.response?.data?.message || "Failed to mark vendor unpaid"
-      );
-    }
-  }
-);
-
 /* ============================= STATE ============================= */
 
 const initialState: PaymentsState = {
@@ -105,7 +141,8 @@ const initialState: PaymentsState = {
   history: [],
   loading: false,
   error: null,
-  meta: null,
+  listMeta: null,
+historyMeta: null,
 };
 
 /* ============================= SLICE ============================= */
@@ -115,7 +152,6 @@ const paymentsSlice = createSlice({
   initialState,
 
   reducers: {
-    /* LOCAL SEATS UPDATE (optimistic) */
     updateSeatsLocal: (
       state,
       action: PayloadAction<{ vendor_id: number; seats: number }>
@@ -131,7 +167,6 @@ const paymentsSlice = createSlice({
       }
     },
 
-    /* LOCAL PRICE UPDATE (optimistic) */
     updatePriceLocal: (
       state,
       action: PayloadAction<{ vendor_id: number; price_per_card: number }>
@@ -147,63 +182,180 @@ const paymentsSlice = createSlice({
       }
     },
 
-    /* LOCAL UNPAID (optimistic) */
     markUnpaidLocal: (
       state,
-      action: PayloadAction<{ vendor_id: number }>
+      action: PayloadAction<{ payment_id: number }>
     ) => {
       const item = state.list.find(
-        v => v.vendor_id === action.payload.vendor_id
+        v => v.id === action.payload.payment_id
       );
 
       if (item) {
-        item.status = "NOT PAID";
+        item.status = "Not Paid";
       }
     },
   },
 
   extraReducers: (builder) => {
     builder
-      /* FETCH PAYMENTS */
+
+      /* ================= FETCH PAYMENTS ================= */
       .addCase(fetchPayments.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
       .addCase(fetchPayments.fulfilled, (state, action) => {
         state.loading = false;
-        state.list = action.payload.data;
-        state.meta = action.payload.meta;
+
+        const { data, meta } = action.payload;
+
+        state.list = (data || []).map((v: any) => ({
+          id: v.id,
+          vendor_id: v.vendor_id,
+          vendor_name: v.vendor_name ?? "-",
+          email: v.email ?? "-",
+
+          seats: v.seats ?? 0,
+          price_per_card: v.price_per_card ?? 0,
+          payment_amount_total: v.payment_amount_total ?? v.amount ?? 0,
+
+          days_left: v.days_left ?? 0,
+          payment_terms: v.payment_terms ?? "",
+          is_archived: v.is_archived ?? false,
+
+          status:
+            v.status === "Paid"
+              ? "Paid"
+              : v.status === "Pending"
+                ? "Pending"
+                : v.status === "Not Paid"
+                  ? "Not Paid"
+                  : "Not Paid",
+        }));
+
+        state.listMeta = meta ?? null;
       })
       .addCase(fetchPayments.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       })
 
-      /* PAYMENT HISTORY */
+      /* ================= HISTORY ================= */
       .addCase(fetchPaymentHistory.pending, (state) => {
         state.loading = true;
       })
       .addCase(fetchPaymentHistory.fulfilled, (state, action) => {
         state.loading = false;
 
-        const data = action.payload.data; // already normalized
-        const meta = action.payload.meta;
+        const { data, meta } = action.payload;
+
+        const normalizedData = data.map((p: any) => ({
+          id: p.id,
+          vendor_id: p.vendor_id,
+
+          // ✅ include missing fields
+          seats: p.seats ?? 0,
+          subject: p.subject ?? "",
+          price_per_card: p.price_per_card ?? 0,
+
+          payment_amount_total: p.amount ?? 0,
+          payment_terms: p.payment_terms ?? "",
+
+          subscription_start_date: p.subscription_start_date ?? null,
+          subscription_end_date: p.subscription_end_date ?? null,
+
+          payment_date: p.payment_date ?? null,
+          created_at: p.created_at,
+
+          // normalize status casing
+          status:
+            p.status === "paid"
+              ? "Paid"
+              : p.status === "pending"
+                ? "Pending"
+                : "Not Paid",
+
+          badge: p.badge ?? p.status?.toUpperCase() ?? "",
+        }));
 
         if (!meta || meta.page === 1) {
-          state.history = data;
+          state.history = normalizedData;
         } else {
-          state.history.push(...data);
+          state.history.push(...normalizedData);
         }
 
-        state.meta = meta;
+        state.historyMeta = meta ?? null;
       })
       .addCase(fetchPaymentHistory.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       })
 
-      /* UPDATE SUBSCRIPTION (LOCAL APPLY) */
+      /* ================= MARK PAID ================= */
+      .addCase(markVendorPaid.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(markVendorPaid.fulfilled, (state, action) => {
+        state.loading = false;
+
+        const paymentId = action.meta.arg; // the id you passed
+
+        const item = state.list.find(v => v.id === paymentId);
+
+        if (item) {
+          item.status = "Paid";
+        }
+      })
+      .addCase(markVendorPaid.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+
+      /* ================= MARK UNPAID ================= */
+      .addCase(markVendorUnpaid.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(markVendorUnpaid.fulfilled, (state, action) => {
+        state.loading = false;
+
+        const paymentId = action.meta.arg.payment_id;
+
+        const item = state.list.find(v => v.id === paymentId);
+
+        if (item) {
+          item.status = "Not Paid";
+        }
+      })
+      .addCase(markVendorUnpaid.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+
+      /* ================= UPDATE SEATS ================= */
+      .addCase(updateSeats.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(updateSeats.fulfilled, (state, action) => {
+        state.loading = false;
+
+        state.list = state.list.map(v =>
+          v.vendor_id === action.payload.vendor_id
+            ? action.payload
+            : v
+        );
+      })
+      .addCase(updateSeats.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+
+      /* ================= UPDATE SUBSCRIPTION ================= */
+      .addCase(updateSubscription.pending, (state) => {
+        state.loading = true;
+      })
       .addCase(updateSubscription.fulfilled, (state, action) => {
+        state.loading = false;
+
         const item = state.list.find(
           v => v.vendor_id === action.payload.vendor_id
         );
@@ -211,30 +363,36 @@ const paymentsSlice = createSlice({
         if (item) {
           item.seats = action.payload.seats;
           item.price_per_card = action.payload.price_per_card;
-          item.payment_amount_total =
-            action.payload.payment_amount_total;
+          item.payment_terms = action.payload.payment_terms;
 
-          // ✅ mark paid as part of flow
-          item.status = "PAID";
+          item.payment_amount_total =
+            action.payload.seats *
+            action.payload.price_per_card;
+
+          item.status = "Pending"; // safer default
         }
       })
+      .addCase(updateSubscription.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
 
-      /* ARCHIVE VENDOR (API RETURNS UPDATED OBJECT) */
+      /* ================= ARCHIVE ================= */
+      .addCase(archiveVendor.pending, (state) => {
+        state.loading = true;
+      })
       .addCase(archiveVendor.fulfilled, (state, action) => {
+        state.loading = false;
+
         state.list = state.list.map(v =>
           v.vendor_id === action.payload.vendor_id
             ? action.payload
             : v
         );
       })
-
-      /* MARK UNPAID (API RETURNS UPDATED OBJECT) */
-      .addCase(markVendorUnpaid.fulfilled, (state, action) => {
-        state.list = state.list.map(v =>
-          v.vendor_id === action.payload.vendor_id
-            ? action.payload
-            : v
-        );
+      .addCase(archiveVendor.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
       });
   },
 });

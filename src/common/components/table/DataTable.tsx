@@ -7,17 +7,17 @@ export type Column<T> = {
   align?: "left" | "center" | "right";
   render?: (row: T) => React.ReactNode;
 };
-
+import { AlertTriangle } from "lucide-react";
 type Props<T> = {
   columns: Column<T>[];
   data: T[];
   loading?: boolean;
   emptyText?: string;
   onRowClick?: (row: T) => void;
-
   page?: number;
   totalPages?: number;
   onPageChange?: (p: number) => void;
+  showAlert?: (row: T) => boolean;
 };
 const MAX_VISIBLE = 3;
 type AvatarLike = {
@@ -86,6 +86,7 @@ export default function DataTable<T>({
   page = 1,
   totalPages = 1,
   onPageChange,
+  showAlert,
 }: Props<T>) {
   const gridTemplate = columns.map((c) => c.width || "1fr").join(" ");
 
@@ -121,27 +122,36 @@ export default function DataTable<T>({
           {emptyText}
         </div>
       )}
-
       {!loading &&
-        data.map((row, i) => (
-          <div
-            key={i}
-            onClick={() => onRowClick?.(row)}
-            className={`grid bg-white border rounded-2xl px-4 py-3 items-center min-h-[60px]
-    ${onRowClick ? "hover:bg-gray-50 cursor-pointer" : ""}
-  `}
-            style={{ gridTemplateColumns: gridTemplate, columnGap: "15px" }}
-          >
-            {columns.map((c, j) => (
-              <div key={j} className="truncate flex items-center">
-                {c.render
-                  ? c.render(row)
-                  : String((row as any)[c.accessor!] ?? "—")}
-              </div>
-            ))}
-          </div>
-        ))}
+        data.map((row, i) => {
+          const hasAlert = showAlert?.(row);
 
+          return (
+            <div
+              key={i}
+              onClick={() => onRowClick?.(row)}
+              className={`relative grid bg-white border rounded-2xl px-4 py-3 items-center min-h-[60px]
+        ${onRowClick ? "hover:bg-gray-50 cursor-pointer" : ""}
+      `}
+              style={{ gridTemplateColumns: gridTemplate, columnGap: "15px" }}
+            >
+              {/* 🔴 Alert Above Entire Row */}
+              {hasAlert && (
+                <div className="absolute top-2 left-3">
+                  <AlertTriangle className="w-4 h-4 text-red-500" />
+                </div>
+              )}
+
+              {columns.map((c, j) => (
+                <div key={j} className="truncate flex items-center">
+                  {c.render
+                    ? c.render(row)
+                    : String((row as any)[c.accessor!] ?? "—")}
+                </div>
+              ))}
+            </div>
+          );
+        })}
       {onPageChange && totalPages > 1 && (
         <div className="flex justify-center items-center gap-2 mt-4">
           {/* Prev */}

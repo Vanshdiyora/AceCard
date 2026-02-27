@@ -43,10 +43,9 @@ export default function PaymentsPage() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
 
-  const { list, loading, meta, error } = useAppSelector(
+  const { list, loading, listMeta, error } = useAppSelector(
     (s: any) => s.payments
   );
-
   /* ------------------------------- query state ------------------------------ */
 
   const [page, setPage] = useState(1);
@@ -123,18 +122,35 @@ export default function PaymentsPage() {
       header: "Total Amount",
       width: "1.2fr",
       render: (v) =>
-        `₹${v.payment_amount_total.toLocaleString("en-IN")}`,
+        `₹${v.payment_amount_total}`,
     },
     { header: "Days Left", accessor: "days_left", width: "1fr" },
     {
       header: "Status",
       width: "1fr",
-      render: (v) =>
-        v.status === "PAID" ? (
-          <span className="text-green-600 font-medium">Paid</span>
-        ) : (
-          <span className="text-red-600 font-medium">Not Paid</span>
-        ),
+      render: (v) => {
+        if (v.status === "Paid") {
+          return (
+            <span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-700">
+              Paid
+            </span>
+          );
+        }
+
+        if (v.status === "Pending") {
+          return (
+            <span className="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-700">
+              Pending
+            </span>
+          );
+        }
+
+        return (
+          <span className="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-700">
+            Not Paid
+          </span>
+        );
+      },
     },
     {
       header: "Actions",
@@ -146,21 +162,56 @@ export default function PaymentsPage() {
               setSelectedVendor(v);
               setPaidFlowOpen(true);
             }}
-            onMarkUnpaid={() => {
-              setUnpaidVendor(v);
-              setUnpaidOpen(true);
+            onUpdateSubscription={() => {
+              setSeatsVendor(v);
+              setSeatsOpen(true);
             }}
             onArchive={() => {
               setArchiveVendorTarget(v);
               setArchiveOpen(true);
             }}
           />
-
         </div>
       ),
     },
   ];
+  const lockScroll = () => {
+    const scrollBarWidth =
+      window.innerWidth - document.documentElement.clientWidth;
 
+    document.documentElement.style.overflow = "hidden";
+    document.body.style.overflow = "hidden";
+
+    // only add padding if scrollbar exists
+    if (scrollBarWidth > 0) {
+      document.body.style.paddingRight = `${scrollBarWidth}px`;
+    }
+  };
+
+  const unlockScroll = () => {
+    document.documentElement.style.overflow = "";
+    document.body.style.overflow = "";
+    document.body.style.paddingRight = "";
+  };
+  const isAnyModalOpen =
+    seatsOpen ||
+    priceOpen ||
+    paidFlowOpen ||
+    unpaidOpen ||
+    archiveOpen ||
+    resultOpen;
+
+  useEffect(() => {
+    if (isAnyModalOpen) {
+      lockScroll();
+    } else {
+      unlockScroll();
+    }
+
+    return () => {
+      unlockScroll();
+    };
+  }, [isAnyModalOpen]);
   /* -------------------------------- render --------------------------------- */
 
   return (
@@ -230,7 +281,7 @@ export default function PaymentsPage() {
           data={list}
           loading={loading}
           page={page}
-          totalPages={meta?.total_pages ?? 1}
+          totalPages={listMeta?.total_pages ?? 1}
           onPageChange={setPage}
           emptyText="No payment records found"
           onRowClick={(v) =>
@@ -256,7 +307,7 @@ export default function PaymentsPage() {
           setSeatsOpen(false);
           setSeatsVendor(null);
         }}
-        onSubmit={async (newSeats) => {
+        onSubmit={async ({ seats, price_per_card, payment_terms }: any) => {
           if (!seatsVendor) return;
 
           try {
@@ -265,11 +316,9 @@ export default function PaymentsPage() {
             await dispatch(
               updateSubscription({
                 vendor_id: seatsVendor.vendor_id,
-                payment_terms: seatsVendor.payment_terms,
-                seats: newSeats,
-                price_per_card: seatsVendor.price_per_card,
-                payment_amount_total:
-                  newSeats * seatsVendor.price_per_card,
+                payment_terms,
+                seats,
+                price_per_card,
               })
             ).unwrap();
 
@@ -288,31 +337,6 @@ export default function PaymentsPage() {
         onClose={() => {
           setPaidFlowOpen(false);
           setSelectedVendor(null);
-        }}
-        onConfirmPaid={async (payload: any) => {
-          if (!selectedVendor) return;
-
-          try {
-            setProcessing(true);
-
-            await dispatch(
-              updateSubscription({
-                vendor_id: selectedVendor.vendor_id,
-                payment_terms: selectedVendor.payment_terms,
-                seats: payload.seats,
-                price_per_card: payload.price_per_card,
-                payment_amount_total: payload.payment_amount_total,
-              })
-            ).unwrap();
-
-            showResult(true, "Payment marked as paid successfully.");
-          } catch (err) {
-            showResult(false, getErrorMessage(err));
-          } finally {
-            setProcessing(false);
-            setPaidFlowOpen(false);
-            setSelectedVendor(null);
-          }
         }}
       />
 
@@ -355,11 +379,11 @@ export default function PaymentsPage() {
 
             // optimistic update
             dispatch(
-              markUnpaidLocal({ vendor_id: unpaidVendor.vendor_id })
+              markUnpaidLocal({ payment_id: unpaidVendor.id })
             );
 
             await dispatch(
-              markVendorUnpaid({ vendor_id: unpaidVendor.vendor_id })
+              markVendorUnpaid({ payment_id: unpaidVendor.id })
             ).unwrap();
 
             // close unpaid modal FIRST

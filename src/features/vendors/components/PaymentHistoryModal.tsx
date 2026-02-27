@@ -74,50 +74,46 @@ export default function PaymentHistoryModal({
                             key={item.id}
                             className="rounded-xl border border-gray-100 bg-gray-50/40 p-4 hover:bg-gray-50 transition"
                         >
-                            <div className="grid grid-cols-5 gap-4 items-center">
-                                {/* Amount */}
+                            <div className="grid grid-cols-6 gap-4 items-center">
+
                                 <Info
                                     label="Amount"
-                                    value={`₹${item.amount.toLocaleString("en-IN")}`}
+                                    value={`₹${Number(item.payment_amount_total ?? 0).toLocaleString("en-IN")}`}
                                     bold
                                 />
 
-                                {/* Seats */}
-                                <Info label="Seats" value={item.seats} />
-
-                                {/* Period */}
+                                <Info label="Seats" value={item.seats ?? "-"} />
+                                <Info label="Subject" value={item.subject || "-"} />
                                 <Info
                                     label="Period"
                                     value={
                                         <>
                                             <div>
-                                                {new Date(
-                                                    item.subscription_start_date
-                                                ).toDateString()}
+                                                {item.subscription_start_date
+                                                    ? new Date(item.subscription_start_date).toLocaleDateString("en-IN")
+                                                    : "-"}
                                             </div>
                                             <div className="text-gray-400">→</div>
                                             <div>
-                                                {new Date(
-                                                    item.subscription_end_date
-                                                ).toDateString()}
+                                                {item.subscription_end_date
+                                                    ? new Date(item.subscription_end_date).toLocaleDateString("en-IN")
+                                                    : "-"}
                                             </div>
                                         </>
                                     }
                                 />
 
-                                {/* Payment Date */}
                                 <Info
-                                    label="Payment Date"
+                                    label="Created"
                                     value={
-                                        item.payment_date
-                                            ? new Date(item.payment_date).toDateString()
-                                            : "—"
+                                        item.created_at
+                                            ? new Date(item.created_at).toLocaleDateString("en-IN")
+                                            : "-"
                                     }
                                 />
 
-                                {/* Status */}
                                 <div className="flex justify-end">
-                                    <StatusBadge badge={item.badge} />
+                                    <StatusBadge badge={item.status?.toUpperCase()} />
                                 </div>
                             </div>
                         </div>

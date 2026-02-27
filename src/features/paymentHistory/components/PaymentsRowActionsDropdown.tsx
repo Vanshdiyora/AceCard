@@ -4,19 +4,19 @@ import {
   SlidersHorizontal,
   CheckCircle,
   Archive,
-  AlertCircle,
+  RefreshCcw, // ✅ new icon
 } from "lucide-react";
 
 type Props = {
   onPaid: () => void;
-  onMarkUnpaid?: () => void; // ✅ NEW (optional for safety)
+  onMarkUnpaid?: () => void;
+  onUpdateSubscription?: () => void; // ✅ ADDED
   onArchive?: () => void;
 };
 
-
 export default function PaymentsRowActionsDropdown({
   onPaid,
-  onMarkUnpaid,
+  onUpdateSubscription,
   onArchive,
 }: Props) {
   const [open, setOpen] = useState(false);
@@ -29,27 +29,27 @@ export default function PaymentsRowActionsDropdown({
 
   /* ---------------------- calculate position ---------------------- */
   useEffect(() => {
-  if (!open || !buttonRef.current || !dropdownRef.current) return;
+    if (!open || !buttonRef.current || !dropdownRef.current) return;
 
-  const rect = buttonRef.current.getBoundingClientRect();
-  const dropdownHeight = dropdownRef.current.offsetHeight;
-  const viewportHeight = window.innerHeight;
+    const rect = buttonRef.current.getBoundingClientRect();
+    const dropdownHeight = dropdownRef.current.offsetHeight;
+    const viewportHeight = window.innerHeight;
 
-  const spaceBelow = viewportHeight - rect.bottom;
-  const spaceAbove = rect.top;
+    const spaceBelow = viewportHeight - rect.bottom;
+    const spaceAbove = rect.top;
 
-  const shouldOpenTop =
-    spaceBelow < dropdownHeight && spaceAbove > spaceBelow;
+    const shouldOpenTop =
+      spaceBelow < dropdownHeight && spaceAbove > spaceBelow;
 
-  setPlacement(shouldOpenTop ? "top" : "bottom");
+    setPlacement(shouldOpenTop ? "top" : "bottom");
 
-  setPos({
-    left: rect.right - 192, // match w-48 (12rem = 192px)
-    top: shouldOpenTop
-      ? rect.top - dropdownHeight - 6   // ⬅ PERFECT alignment
-      : rect.bottom + 6,
-  });
-}, [open]);
+    setPos({
+      left: rect.right - 192,
+      top: shouldOpenTop
+        ? rect.top - dropdownHeight - 6
+        : rect.bottom + 6,
+    });
+  }, [open]);
 
   /* ---------------------- outside click ---------------------- */
   useEffect(() => {
@@ -102,37 +102,36 @@ export default function PaymentsRowActionsDropdown({
               }}
             >
               <CheckCircle size={16} className="text-green-600" />
-              Mark as Paid
+              Update Payment
             </button>
 
-            {/* MARK UNPAID */}
-            {onMarkUnpaid && (
+            {/* UPDATE SUBSCRIPTION */}
+            {onUpdateSubscription && (
               <button
-                className="w-full px-4 py-2 flex items-center gap-2 text-orange-600 hover:bg-orange-50"
+                className="w-full px-4 py-2 flex items-center gap-2 hover:bg-gray-50"
                 onClick={() => {
-                  onMarkUnpaid();
+                  onUpdateSubscription();
                   setOpen(false);
                 }}
               >
-                <AlertCircle size={16} />
-                Mark as Unpaid
+                <RefreshCcw size={16} className="text-blue-600" />
+                Update Subscription
               </button>
             )}
 
             {/* ARCHIVE */}
-           {/* ARCHIVE */}
-{onArchive && (
-  <button
-    className="w-full px-4 py-2 flex items-center gap-2 text-red-600 hover:bg-red-50"
-    onClick={() => {
-      onArchive();
-      setOpen(false);
-    }}
-  >
-    <Archive size={16} />
-    Archive
-  </button>
-)}
+            {onArchive && (
+              <button
+                className="w-full px-4 py-2 flex items-center gap-2 text-red-600 hover:bg-red-50"
+                onClick={() => {
+                  onArchive();
+                  setOpen(false);
+                }}
+              >
+                <Archive size={16} />
+                Archive
+              </button>
+            )}
           </div>,
           document.body
         )}

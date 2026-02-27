@@ -51,7 +51,9 @@ interface TeamState {
 
   loading: boolean;
   error?: string;
-    selectedMember: TeamMember | null; 
+  selectedMember: TeamMember | null;
+  transferSalespersonsLoading: boolean;
+  transferSalespersonsError?: string;
 }
 
 const initialState: TeamState = {
@@ -63,6 +65,8 @@ const initialState: TeamState = {
   analytics: null,
   analyticsLoading: false,
   loading: false,
+  transferSalespersonsLoading: false,
+  transferSalespersonsError: undefined,
 };
 
 
@@ -190,6 +194,27 @@ export const updatePermissions = createAsyncThunk(
   }
 );
 
+
+export const transferSalespersons = createAsyncThunk(
+  "team/transferSalespersons",
+  async (
+    payload: {
+      from_manager_id: number;
+      to_manager_id: number;
+    },
+    { rejectWithValue }
+  ) => {
+    try {
+      const res = await teamService.transferSalespersons(payload);
+      return { ...payload, response: res };
+    } catch (err: any) {
+      return rejectWithValue(
+        err?.response?.data?.message || "Salesperson transfer failed"
+      );
+    }
+  }
+);
+
 export const transferLeads = createAsyncThunk(
   "team/transferLeads",
   async (
@@ -281,12 +306,12 @@ const teamSlice = createSlice({
         state.error = action.payload as string;
       })
 
-    .addCase(fetchMemberById.fulfilled, (state, action) => {
-  state.selectedMember = action.payload;
+      .addCase(fetchMemberById.fulfilled, (state, action) => {
+        state.selectedMember = action.payload;
 
-  const idx = state.members.findIndex((m) => m.id === action.payload.id);
-  if (idx !== -1) state.members[idx] = action.payload;
-})
+        const idx = state.members.findIndex((m) => m.id === action.payload.id);
+        if (idx !== -1) state.members[idx] = action.payload;
+      })
 
       .addCase(createMember.fulfilled, (state, action) => {
         state.members.unshift(action.payload);
@@ -322,6 +347,46 @@ const teamSlice = createSlice({
       })
       .addCase(fetchMemberAnalytics.rejected, (state) => {
         state.analyticsLoading = false;
+      })
+      .addCase(transferSalespersons.pending, (state) => {
+        state.transferSalespersonsLoading = true;
+        state.transferSalespersonsError = undefined;
+      })
+
+      .addCase(transferSalespersons.fulfilled, (state, action) => {
+        state.transferSalespersonsLoading = false;
+
+        const { from_manager_id, to_manager_id } = action.payload;
+
+        // Update members list
+        state.members = state.members.map((member) => {
+          if (
+            member.role === "sales_rep" &&
+            member.manager_id === from_manager_id
+          ) {
+            return {
+              ...member,
+              manager_id: to_manager_id,
+            };
+          }
+          return member;
+        });
+
+        // Update salesReps list
+        state.salesReps = state.salesReps.map((member) => {
+          if (member.manager_id === from_manager_id) {
+            return {
+              ...member,
+              manager_id: to_manager_id,
+            };
+          }
+          return member;
+        });
+      })
+
+      .addCase(transferSalespersons.rejected, (state, action) => {
+        state.transferSalespersonsLoading = false;
+        state.transferSalespersonsError = action.payload as string;
       });
 
   },

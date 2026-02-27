@@ -442,7 +442,7 @@ export default function VendorsPage() {
 
 
       <div className="mt-6">
-        <DataTable<VendorItem>
+        <DataTable<VendorItem> 
           columns={columns}
           data={finalVendors}
           loading={loading}
@@ -451,6 +451,7 @@ export default function VendorsPage() {
           onPageChange={setPage}
           emptyText="No vendors found"
           onRowClick={(v) => navigate(`/super/vendors/${v.id}`, { state: { vendor: v } })}
+          showAlert={(v) => v.status === "archived"}   // ✅ HERE
         />
       </div>
 

@@ -3,23 +3,8 @@ import type {
   UpdateSubscriptionPayload,
   PaymentsQuery,
 } from "../types";
-import type { MarkUnpaidPayload } from "../types";
 
 /* -------------------- GET PAYMENTS (PAGINATED) -------------------- */
-
-export const markVendorUnpaidApi = async (
-  payload: MarkUnpaidPayload
-) => {
-  const { vendor_id, ...body } = payload;
-
-  const res = await axiosClient.post(
-    `/admin/payments/${vendor_id}/unpaid`,
-    body 
-  );
-
-  return res.data;
-};
-
 export const getPaymentsSummaryApi = async (
   params: PaymentsQuery
 ) => {
@@ -40,13 +25,43 @@ export const getPaymentsSummaryApi = async (
   return res.data;
 };
 
+/* -------------------- MARK PAID -------------------- */
+export const markVendorPaidApi = async (paymentId: number) => {
+  const res = await axiosClient.post(
+    `/admin/payments/${paymentId}/mark-paid`
+  );
+  return res.data;
+};
+
+/* -------------------- MARK UNPAID -------------------- */
+export const markVendorUnpaidApi = async (
+  paymentId: number
+) => {
+  const res = await axiosClient.post(
+    `/admin/payments/${paymentId}/mark-unpaid`
+  );
+  return res.data;
+};
+
 /* -------------------- UPDATE SUBSCRIPTION -------------------- */
 export const updateVendorSubscriptionApi = async (
   payload: UpdateSubscriptionPayload
 ) => {
   const res = await axiosClient.post(
-    "/admin/payments/update",
+    "/admin/payments/update-subscription",
     payload
+  );
+  return res.data;
+};
+
+/* -------------------- UPDATE SEATS -------------------- */
+export const updateSeatsApi = async (
+  vendorId: number,
+  seats: number
+) => {
+  const res = await axiosClient.patch(
+    `/admin/vendors/${vendorId}/seats`,
+    { seats }
   );
   return res.data;
 };

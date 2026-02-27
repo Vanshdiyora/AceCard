@@ -24,6 +24,7 @@ import {
   denormalizeProfile,
 } from "../../publicProfile/utils/normalizeProfile";
 import VicePublicSetting from "../../settings/components/vice/VicePublicSetting";
+import { TransferSalespersonsModal } from "../components/TransferSalespersonsModal";
 
 const TABS = [
   "overview",
@@ -66,7 +67,7 @@ const member = useAppSelector((s) => s.team.selectedMember);
   const [suspendMode, setSuspendMode] = useState<"suspend" | "activate">("suspend");
   const [processing, setProcessing] = useState(false);
   const [hasFetched, setHasFetched] = useState(false);
-
+const [transferSalesOpen, setTransferSalesOpen] = useState(false);
   const [resultOpen, setResultOpen] = useState(false);
   const [resultSuccess, setResultSuccess] = useState(true);
   const [resultMessage, setResultMessage] = useState("");
@@ -177,47 +178,75 @@ const member = useAppSelector((s) => s.team.selectedMember);
   }
 
   /* ---------------- ACTIONS ---------------- */
-  const handleStatusChange = async () => {
-    try {
-      setProcessing(true);
-      await dispatch(
-        updateMember({
-          id: member.id,
-          data: { status: suspendMode === "suspend" ? "suspended" : "active" },
-        })
-      ).unwrap();
+const handleStatusChange = async () => {
+  try {
+    setProcessing(true);
+
+    await dispatch(
+      updateMember({
+        id: member.id,
+        data: {
+          status: suspendMode === "suspend" ? "suspended" : "active",
+        },
+      })
+    ).unwrap();
+
+    // ✅ ALWAYS open sales transfer if manager + suspend
+    if (suspendMode === "suspend" && member.role === "manager") {
+      setTransferSalesOpen(true);
+    } else {
       showResult(
         true,
         suspendMode === "suspend"
           ? "Member suspended successfully."
           : "Member activated successfully."
       );
-    } catch {
-      showResult(false, "Failed to update member status.");
-    } finally {
-      setProcessing(false);
-      setConfirmOpen(false);
     }
-  };
+
+  } catch {
+    showResult(false, "Failed to update member status.");
+  } finally {
+    setProcessing(false);
+    setConfirmOpen(false);
+  }
+};
 
   const handleTransferAndSuspend = async (toId: number) => {
-    try {
-      setProcessing(true);
-      await dispatch(
-        transferLeads({ from_rep_id: member.id, to_rep_id: toId, lead_ids: leadIds })
-      ).unwrap();
-      await dispatch(
-        updateMember({ id: member.id, data: { status: "suspended" } })
-      ).unwrap();
+  try {
+    setProcessing(true);
+
+    // 1️⃣ Transfer Leads
+    await dispatch(
+      transferLeads({
+        from_rep_id: member.id,
+        to_rep_id: toId,
+        lead_ids: leadIds,
+      })
+    ).unwrap();
+
+    // 2️⃣ Suspend Member
+    await dispatch(
+      updateMember({
+        id: member.id,
+        data: { status: "suspended" },
+      })
+    ).unwrap();
+
+    // 3️⃣ If manager → open Salesperson Transfer
+    if (member.role === "manager") {
+      setTransferSalesOpen(true);
+    } else {
       showResult(true, "Leads transferred & member suspended.");
-    } catch {
-      showResult(false, "Transfer failed.");
-    } finally {
-      setProcessing(false);
-      setTransferOpen(false);
-      setLeadIds([]);
     }
-  };
+
+  } catch {
+    showResult(false, "Transfer failed.");
+  } finally {
+    setProcessing(false);
+    setTransferOpen(false);
+    setLeadIds([]);
+  }
+};
 
   const avatarUrl = member.avatar || null;
 
@@ -449,6 +478,15 @@ const member = useAppSelector((s) => s.team.selectedMember);
       </div>
 
       {/* ── MODALS ── */}
+      <TransferSalespersonsModal
+  open={transferSalesOpen}
+  fromManagerId={member.id}
+  onClose={() => setTransferSalesOpen(false)}
+  onSuccess={() => {
+    setTransferSalesOpen(false);
+    showResult(true, "Manager suspended & salespersons transferred.");
+  }}
+/>
       <EditMemberModal
         open={editOpen}
         member={member}

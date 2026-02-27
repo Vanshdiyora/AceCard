@@ -90,5 +90,14 @@ export const teamService = {
     });
     return res.data;
   },
-
+async transferSalespersons(payload: {
+  from_manager_id: number;
+  to_manager_id: number;
+}) {
+  const res = await axios.post(
+    `${BASE_URL}/transfer-salespersons`,
+    payload
+  );
+  return res.data;
+}
 };

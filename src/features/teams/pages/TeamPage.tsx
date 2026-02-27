@@ -395,6 +395,7 @@ export default function TeamPage() {
           onRowClick={(m) =>
             navigate(`/admin/team/${m.id}`, { state: { member: m } })
           }
+          showAlert={(v) => v.status === "suspended"}
         />
       </div>
 
