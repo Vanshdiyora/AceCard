@@ -30,7 +30,7 @@ import type { TeamMember } from "../types";
 
 type UserRole = "vendor_admin" | "manager" | "sales_rep";
 type RoleFilter = "all" | "manager" | "sales_rep";
-type StatusFilter = "all" | "active" | "suspended";
+type StatusFilter = "all" | "active" | "suspended" | "unassigned";
 type SortBy = "total_leads" | "total_deal_amount" | "meeting_booked" | null;
 type SortOrder = "asc" | "desc" | null;
 
@@ -133,8 +133,13 @@ export default function TeamPage() {
     if (sortBy) params.sort_by = sortBy;
     if (sortOrder) params.sort_order = sortOrder;
     if (search) params.search = search;
-    if (roleFilter !== "all") params.role = roleFilter;
-    if (statusFilter !== "all") params.status = statusFilter;
+
+    if (roleFilter !== "all") {
+      params.role = roleFilter;
+    }
+    else if (statusFilter !== "all") {
+      params.status = statusFilter;
+    }
 
     return params;
   }, [
@@ -146,7 +151,6 @@ export default function TeamPage() {
     sortBy,
     sortOrder,
   ]);
-
   /* ======================================================
      FETCH TEAM
   ====================================================== */
@@ -329,16 +333,23 @@ export default function TeamPage() {
           { label: "All", value: "all" },
           { label: "Active", value: "active" },
           { label: "Suspended", value: "suspended" },
+          { label: "Unassigned", value: "unassigned" }
         ]}
         activeTab={roleFilter !== "all" ? roleFilter : statusFilter}
         onTabChange={(v) => {
           if (v === "manager" || v === "sales_rep") {
             setRoleFilter(v as RoleFilter);
             setStatusFilter("all");
-          } else if (v === "active" || v === "suspended") {
+          }
+          else if (
+            v === "active" ||
+            v === "suspended" ||
+            v === "unassigned"
+          ) {
             setStatusFilter(v as StatusFilter);
             setRoleFilter("all");
-          } else {
+          }
+          else {
             setRoleFilter("all");
             setStatusFilter("all");
           }
@@ -395,7 +406,7 @@ export default function TeamPage() {
           onRowClick={(m) =>
             navigate(`/admin/team/${m.id}`, { state: { member: m } })
           }
-          // showAlert={(v) => v.status === "suspended"}
+          showAlert={(v) => v.status === "unassigned"}
         />
       </div>
 

@@ -451,7 +451,7 @@ export default function VendorsPage() {
           onPageChange={setPage}
           emptyText="No vendors found"
           onRowClick={(v) => navigate(`/super/vendors/${v.id}`, { state: { vendor: v } })}
-          // showAlert={(v) => v.status === "archived"} 
+          // showAlert={(v) => v.status === "unassigned"} 
         />
       </div>
 
