@@ -344,12 +344,32 @@ const teamSlice = createSlice({
           m.id === id ? { ...m, ...data } : m
         );
       })
-      .addCase(updatePermissions.fulfilled, (state, action) => {
-        const idx = state.members.findIndex((m) => m.id === action.payload.id);
-        if (idx !== -1) {
-          state.members[idx].permissions = action.payload.permissions;
-        }
-      })
+     .addCase(updatePermissions.fulfilled, (state, action) => {
+  const { id, permissions } = action.payload;
+
+  // ✅ Update selectedMember instantly
+  if (state.selectedMember?.id === id) {
+    state.selectedMember = {
+      ...state.selectedMember,
+      permissions,
+    };
+  }
+
+  // ✅ Update members list
+  state.members = state.members.map((m) =>
+    m.id === id ? { ...m, permissions } : m
+  );
+
+  // ✅ Update managers list
+  state.managers = state.managers.map((m) =>
+    m.id === id ? { ...m, permissions } : m
+  );
+
+  // ✅ Update salesReps list
+  state.salesReps = state.salesReps.map((m) =>
+    m.id === id ? { ...m, permissions } : m
+  );
+})
 
 
       .addCase(deleteMember.fulfilled, (state, action) => {
