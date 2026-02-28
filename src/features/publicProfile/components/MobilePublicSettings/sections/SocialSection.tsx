@@ -73,6 +73,57 @@ const ALL_SOCIALS = [
 ];
 
 /* ================= VALIDATION ================= */
+function isValidUrl(url: string) {
+  if (!url || !url.trim()) return false;
+
+  try {
+    const parsed = new URL(url.trim());
+    return parsed.protocol === "http:" || parsed.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+function validateSocialLink(id: string, value: string): string | null {
+  if (!value || !value.trim()) {
+    return "This field is required.";
+  }
+
+  const v = value.trim();
+
+  switch (id) {
+    case "email":
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)
+        ? null
+        : "Invalid email address.";
+
+    case "phone":
+    case "sms":
+      return /^[0-9+\-\s()]{6,}$/.test(v)
+        ? null
+        : "Invalid phone number.";
+
+    case "website":
+    case "instagram":
+    case "linkedin":
+    case "twitter":
+    case "youtube":
+    case "facebook":
+    case "snapchat":
+    case "tiktok":
+    case "whatsapp":
+    case "threads":
+    case "telegram":
+    case "calendly":
+    case "appstore":
+    case "playstore":
+      return isValidUrl(v)
+        ? null
+        : "Link must start with https:// or http://";
+
+    default:
+      return null;
+  }
+}
 
 export function hasEmptySocialLink(items: any[]) {
   return items.some(
@@ -212,15 +263,19 @@ function SocialLinksModal({
 
   if (!open) return null;
 
-  const handleDone = () => {
-    if (hasEmptySocialLink(items)) {
-      setError("Please fill in all social links before saving.");
+const handleDone = () => {
+  for (const item of items) {
+    const validationError = validateSocialLink(item.id, item.url);
+
+    if (validationError) {
+      setError(`${item.label}: ${validationError}`);
       return;
     }
+  }
 
-    setError(null);
-    onCloseAll(); // fully close flow
-  };
+  setError(null);
+  onCloseAll();
+};
 
   return createPortal(
     <div className="fixed inset-0 z-[999] bg-black/40 flex items-center justify-center px-3">

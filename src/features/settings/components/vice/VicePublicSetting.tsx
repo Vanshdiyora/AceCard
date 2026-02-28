@@ -80,32 +80,55 @@ export function isYoutubeRowComplete(item: any) {
 }
 
 export function isPhotoRowComplete(item?: any) {
-  if (!item) return true; // allow first row
+  if (!item) return true;
   if (!item.title || item.title.trim() === "") return false;
-  // if (!item.img_url || item.img_url.trim() === "") return false;
+
+  // if link is provided, it must be a valid URL
+  if (item.link && item.link.trim() !== "") {
+    if (!isValidUrl(item.link.trim())) return false;
+  }
+
   return true;
 }
 
 export function isLinkFileRowComplete(item?: any) {
   if (!item) return true;
-
-  if (!item.title || item.title.trim() === "") return false;
+  if (!item.title || !item.title.trim()) return false;
 
   if (item.type === "link") {
-    return Boolean(item.url && item.url.trim());
+    if (!item.url || !item.url.trim()) return false;
+    return isValidUrl(item.url.trim());
   }
 
   if (item.type === "file") {
-    return Boolean(item.file_url && item.file_url.trim());
+    if (!item.file_url || !item.file_url.trim()) return false;
+    return isValidUrl(item.file_url.trim());
   }
 
   return true;
+}
+
+function isValidUrl(url: string): boolean {
+  if (!url || !url.trim()) return false;
+  try {
+    const parsed = new URL(url.trim());
+    return parsed.protocol === "http:" || parsed.protocol === "https:";
+  } catch {
+    return false;
+  }
 }
 
 export function isContactFieldComplete(field?: ContactField) {
   if (!field) return true;
   if (!field.label || field.label.trim() === "") return false;
   if (!field.type) return false;
+
+  // if dropdown, must have at least one option and no empty options
+  if (field.type === "dropdown") {
+    if (!field.options || field.options.length === 0) return false;
+    if (field.options.some((opt) => !opt || opt.trim() === "")) return false;
+  }
+
   return true;
 }
 
@@ -113,10 +136,11 @@ export function canAddContactField(fields: ContactField[]) {
   if (!fields.length) return true;
   return isContactFieldComplete(fields[fields.length - 1]);
 }
-
 function hasInvalidSocialLinks(items: any[] = []) {
   return items.some(
-    (i) => i.enabled === true && (!i.url || i.url.trim() === "")
+    (i) =>
+      i.enabled === true &&
+      (!i.url || i.url.trim() === "" || !isValidUrl(i.url.trim()))
   );
 }
 
@@ -345,19 +369,21 @@ function getChangedFields<T>(current: T, original: T): Partial<T> {
 
   // 🔥 Handle Arrays
   if (Array.isArray(current) && Array.isArray(original)) {
-    // Length changed
     if (current.length !== original.length) {
       return current as any;
     }
 
-    // Deep compare each element
     for (let i = 0; i < current.length; i++) {
       const diff = getChangedFields(current[i], original[i]);
-      if (
-        diff &&
-        (typeof diff !== "object" ||
-          Object.keys(diff).length > 0)
-      ) {
+
+      const hasChange =
+        typeof diff !== "object"        // primitive that changed
+          ? true
+          : Array.isArray(diff)         // array that changed
+            ? diff.length > 0
+            : Object.keys(diff).length > 0; // object that changed
+
+      if (hasChange) {
         return current as any;
       }
     }
@@ -385,20 +411,21 @@ function getChangedFields<T>(current: T, original: T): Partial<T> {
     const diff = getChangedFields(currVal, origVal);
 
     if (Array.isArray(diff)) {
-      // 🔥 If array diff detected → always assign
+      // array returned as-is when changed
       result[key] = currVal;
-    } else if (
-      diff &&
-      (typeof diff !== "object" ||
-        Object.keys(diff).length > 0)
-    ) {
+    } else if (typeof diff !== "object") {
+      // 🔥 primitive diff — assign regardless of truthiness
+      // this fixes: false, 0, "" being skipped by a falsy check
+      result[key] = currVal;
+    } else if (Object.keys(diff).length > 0) {
+      // nested object had changes
       result[key] = currVal;
     }
+    // empty object {} means no change → skip
   }
 
   return result;
 }
-
 /* ================= COMPONENT ================= */
 
 export default function VicePublicSetting({
@@ -598,16 +625,12 @@ export default function VicePublicSetting({
   }, [publicProfile]);
 
   const validateBeforeSave = () => {
-    // if (!config?.profile.description?.trim()) {
-    //   setResultSuccess(false);
-    //   setResultMessage("Profile description is required.");
-    //   setResultOpen(true);
-    //   return false;
-    // }
 
     if (hasInvalidSocialLinks(config?.social_links.items)) {
       setResultSuccess(false);
-      setResultMessage("Please fill all enabled social links.");
+      setResultMessage(
+        "One or more social links have an invalid URL. Make sure all links start with https:// or http://"
+      );
       setResultOpen(true);
       return false;
     }
@@ -1619,21 +1642,75 @@ export default function VicePublicSetting({
   const validateSectionDraft = (): boolean => {
     if (!activeSection || !sectionDraft) return false;
 
-    // YouTube
-    if (activeSection === "youtube") {
-      for (const item of sectionDraft.items) {
-        if (!isYoutubeRowComplete(item)) {
-          setModalError("Please enter valid YouTube URLs for all videos.");
+    if (activeSection === "card_buttons") {
+      for (const btn of sectionDraft.items || []) {
+        if (!btn.title?.trim()) {
+          setModalError("Each button must have a title.");
+          return false;
+        }
+        if (!btn.link?.trim()) {
+          setModalError(`Button "${btn.title}" is missing a link.`);
+          return false;
+        }
+        if (!isValidUrl(btn.link.trim())) {
+          setModalError(
+            `Button "${btn.title}" has an invalid URL. Make sure it starts with https:// or http://`
+          );
           return false;
         }
       }
     }
 
+    if (activeSection === "banner") {
+      if (sectionDraft.enabled && sectionDraft.cta_url?.trim()) {
+        if (!isValidUrl(sectionDraft.cta_url.trim())) {
+          setModalError(
+            "CTA URL is invalid. Make sure it starts with https:// or http://"
+          );
+          return false;
+        }
+      }
+    }
+    if (activeSection === "meeting") {
+      if (sectionDraft.enabled) {
+        if (!sectionDraft.meeting_url?.trim()) {
+          setModalError("Please enter a meeting URL.");
+          return false;
+        }
+        if (!isValidUrl(sectionDraft.meeting_url.trim())) {
+          setModalError(
+            "Meeting URL is invalid. Make sure it starts with https:// or http://"
+          );
+          return false;
+        }
+      }
+    }
+    // YouTube
+    if (activeSection === "youtube") {
+      for (const item of sectionDraft.items) {
+        if (!item.url?.trim()) {
+          setModalError("Please enter a YouTube URL for all videos.");
+          return false;
+        }
+        if (!isYoutubeRowComplete(item)) {
+          setModalError(
+            `"${item.url}" is not a valid YouTube URL (e.g. https://youtube.com/watch?v=...)`
+          );
+          return false;
+        }
+      }
+    }
     // Photo Gallery
     if (activeSection === "photo_gallery") {
       for (const item of sectionDraft.items) {
-        if (!isPhotoRowComplete(item)) {
-          setModalError("Please complete all photo entries.");
+        if (!item.title?.trim()) {
+          setModalError("Each photo must have a title.");
+          return false;
+        }
+        if (item.link?.trim() && !isValidUrl(item.link.trim())) {
+          setModalError(
+            `Photo "${item.title}" has an invalid URL. Make sure it starts with https:// or http://`
+          );
           return false;
         }
       }
@@ -1642,17 +1719,42 @@ export default function VicePublicSetting({
     // Social Links
     if (activeSection === "social_links") {
       if (hasInvalidSocialLinks(sectionDraft.items)) {
-        setModalError("Please fill all enabled social links.");
+        setModalError(
+          "One or more social links have an invalid URL. Make sure all links start with https:// or http://"
+        );
         return false;
       }
     }
-
     // Links & Files
     if (activeSection === "links_files") {
       for (const item of sectionDraft.items) {
-        if (!isLinkFileRowComplete(item)) {
-          setModalError("Please complete all link/file entries.");
+        if (!item.title?.trim()) {
+          setModalError("Each link/file must have a title.");
           return false;
+        }
+        if (item.type === "link") {
+          if (!item.url?.trim()) {
+            setModalError(`"${item.title}" is missing a URL.`);
+            return false;
+          }
+          if (!isValidUrl(item.url.trim())) {
+            setModalError(
+              `"${item.title}" has an invalid URL. Make sure it starts with https:// or http://`
+            );
+            return false;
+          }
+        }
+        if (item.type === "file") {
+          if (!item.file_url?.trim()) {
+            setModalError(`"${item.title}" is missing an uploaded file.`);
+            return false;
+          }
+          if (!isValidUrl(item.file_url.trim())) {
+            setModalError(
+              `"${item.title}" has an invalid file URL. Make sure it starts with https:// or http://`
+            );
+            return false;
+          }
         }
       }
     }
@@ -1662,16 +1764,6 @@ export default function VicePublicSetting({
       for (const field of sectionDraft.fields || []) {
         if (!isContactFieldComplete(field)) {
           setModalError("Please complete all contact fields.");
-          return false;
-        }
-      }
-    }
-
-    // Card Buttons
-    if (activeSection === "card_buttons") {
-      for (const btn of sectionDraft.items || []) {
-        if (!btn.title?.trim() || !btn.link?.trim()) {
-          setModalError("Each card button must have title and link.");
           return false;
         }
       }
@@ -1746,7 +1838,9 @@ export default function VicePublicSetting({
 
     if (activeSection === "social_links") {
       if (hasInvalidSocialLinks(sectionDraft.items)) {
-        setSocialError("Please fill all enabled social links before saving.");
+        setSocialError(
+          "One or more social links have an invalid URL. Make sure all links start with https:// or http://"
+        );
         return;
       }
       nextConfig = { ...nextConfig, social_links: sectionDraft };

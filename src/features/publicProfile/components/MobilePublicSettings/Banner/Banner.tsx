@@ -1,9 +1,18 @@
 import { useRef, useState, useEffect } from "react";
 import { uploadImage } from "../../../../publicProfile/services/publicProfile.api";
 import CoverCropModal from "../../../../../common/ui/CoverCropModal";
-import { resolveTheme } from "../MobilePublicSettings";
+import { resolveTheme, EditModal } from "../MobilePublicSettings";
 import { Pencil } from "lucide-react";
-import { EditModal } from "../MobilePublicSettings";
+
+type Props = {
+  image?: string;
+  ctaText?: string;
+  ctaUrl?: string;
+  theme: any;
+  onBannerChange: (updater: any) => void;
+  editable?: boolean;
+  autoOpen?: boolean;
+};
 
 export function Banner({
   image,
@@ -13,13 +22,14 @@ export function Banner({
   onBannerChange,
   editable = false,
   autoOpen = false,
-}: any) {
+}: Props) {
   const t = resolveTheme(theme);
 
   const fileRef = useRef<File | null>(null);
 
   const [isEditing, setIsEditing] = useState(false);
   const [isCropping, setIsCropping] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const [draftImage, setDraftImage] = useState<string | null>(null);
   const [draft, setDraft] = useState<{
@@ -27,14 +37,23 @@ export function Banner({
     cta_url: string;
   } | null>(null);
 
+  /* ---------------- URL VALIDATION ---------------- */
+  const isValidUrl = (url: string) => {
+    if (!url || !url.trim()) return false;
+    try {
+      const parsed = new URL(url.trim());
+      return parsed.protocol === "http:" || parsed.protocol === "https:";
+    } catch {
+      return false;
+    }
+  };
+
   /* ---------------- AUTO OPEN ---------------- */
   useEffect(() => {
-    if (autoOpen) {
-      setIsEditing(true);
-    }
+    if (autoOpen) setIsEditing(true);
   }, [autoOpen]);
 
-  /* ---------------- INIT DRAFT ON OPEN ---------------- */
+  /* ---------------- INIT DRAFT ---------------- */
   useEffect(() => {
     if (!isEditing) return;
 
@@ -43,7 +62,8 @@ export function Banner({
       cta_url: ctaUrl || "",
     });
 
-    setDraftImage(image); // initialize preview with committed image
+    setDraftImage(image ?? null);
+    setError(null);
   }, [isEditing, ctaText, ctaUrl, image]);
 
   /* ---------------- IMAGE UPLOAD ---------------- */
@@ -51,7 +71,7 @@ export function Banner({
     const file = new File([blob], "banner.jpg", { type: "image/jpeg" });
     const res = await uploadImage(file);
 
-    setDraftImage(res.data.url); // only update preview
+    setDraftImage(res.data.url);
     setIsCropping(false);
   };
 
@@ -59,11 +79,22 @@ export function Banner({
   const saveBanner = () => {
     if (!draft) return;
 
+    if (draft.cta_url?.trim()) {
+      if (!isValidUrl(draft.cta_url)) {
+        setError(
+          "CTA link is invalid. Make sure it starts with https:// or http://"
+        );
+        return;
+      }
+    }
+
+    setError(null);
+
     onBannerChange((prev: any) => ({
       ...prev,
       banner: {
         ...prev.banner,
-        image_url: draftImage, // commit image
+        image_url: draftImage,
         cta_text: draft.cta_text,
         cta_url: draft.cta_url,
       },
@@ -77,10 +108,7 @@ export function Banner({
     <div className="relative">
       {/* CTA TEXT */}
       {ctaText && (
-        <p
-          className="text-sm font-semibold pb-2"
-          style={{ color: t.text }}
-        >
+        <p className="text-sm font-semibold pb-2" style={{ color: t.text }}>
           {ctaText}
         </p>
       )}
@@ -88,6 +116,7 @@ export function Banner({
       {/* EDIT BUTTON */}
       {editable && (
         <button
+          type="button"
           onClick={() => setIsEditing(true)}
           className="absolute top-2 right-0 z-20 h-9 w-9 rounded-full shadow
                      flex items-center justify-center transition hover:scale-105
@@ -97,10 +126,14 @@ export function Banner({
         </button>
       )}
 
-      {/* OUTSIDE BANNER (ONLY COMMITTED IMAGE) */}
+      {/* BANNER DISPLAY */}
       <div
         className="cursor-pointer"
-        onClick={() => ctaUrl && window.open(ctaUrl, "_blank")}
+        onClick={() => {
+          if (ctaUrl && isValidUrl(ctaUrl)) {
+            window.open(ctaUrl, "_blank");
+          }
+        }}
       >
         <img
           src={image}
@@ -112,19 +145,19 @@ export function Banner({
       {/* ---------------- EDIT MODAL ---------------- */}
       <EditModal
         open={isEditing}
+        errorMessage={error}
         onClose={() => {
-          setIsEditing(false); // discard draft automatically
+          setIsEditing(false);
+          setDraft(null);
+          setError(null);
         }}
         onSave={saveBanner}
       >
-        <h3 className="text-lg font-semibold">
-          Edit Banner
-        </h3>
+        <h3 className="text-lg font-semibold">Edit Banner</h3>
 
         {draft && (
           <div className="space-y-4">
-
-            {/* PREVIEW IMAGE INSIDE MODAL */}
+            {/* IMAGE PREVIEW */}
             <div className="w-full h-32 rounded-2xl overflow-hidden bg-gray-100">
               <img
                 src={draftImage || image}
@@ -133,8 +166,9 @@ export function Banner({
               />
             </div>
 
-            {/* CHANGE IMAGE BUTTON */}
+            {/* CHANGE IMAGE */}
             <button
+              type="button"
               onClick={() =>
                 document.getElementById("bannerInput")?.click()
               }
@@ -179,14 +213,16 @@ export function Banner({
                 CTA Link
               </label>
               <input
-                className="w-full border rounded-lg p-2 text-sm"
+                className={`w-full border rounded-lg p-2 text-sm ${error ? "border-red-400 focus:ring-red-400" : ""
+                  }`}
                 placeholder="https://your-link.com"
                 value={draft.cta_url}
-                onChange={(e) =>
+                onChange={(e) => {
+                  setError(null);
                   setDraft((d) =>
                     d ? { ...d, cta_url: e.target.value } : d
-                  )
-                }
+                  );
+                }}
               />
             </div>
           </div>

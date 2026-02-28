@@ -104,7 +104,6 @@ export default function EditAccountModal({ open, onClose }: Props) {
       name: "name",
       label: "Name",
       type: "text" as const,
-
       disabled: true,
       minLength: 2,
     },
@@ -117,8 +116,9 @@ export default function EditAccountModal({ open, onClose }: Props) {
     {
       name: "phone",
       label: "Phone",
-      type: "text" as const,
-      pattern: /^[0-9+\-()\s]{7,15}$/,
+      type: "number",
+      min:10,
+      max:15,
       disabled: true,   // 🔒 disable
     },
     // {

@@ -278,97 +278,107 @@ export default function MobilePublicSettings({
         return "font-inter";
     }
   };
-
+  function isValidUrl(url: string): boolean {
+    if (!url || !url.trim()) return false;
+    try {
+      const parsed = new URL(url.trim());
+      return parsed.protocol === "http:" || parsed.protocol === "https:";
+    } catch {
+      return false;
+    }
+  }
   type ValidatorFn = (draft: any) => string | null;
+
   const isYoutubeRowComplete = (item: any) =>
     item.url?.trim() && getYouTubeId(item.url);
 
-  const isPhotoRowComplete = (item: any) =>
-    item.title?.trim() &&
-    item.img_url?.trim() &&
-    item.description?.trim() &&
-    item.link?.trim();
-
-  const isContactFieldComplete = (field: any) =>
-    field.label?.trim();
-
   const hasInvalidSocialLinks = (items: any[]) =>
-    items.some((i) => i.enabled && !i.url?.trim());
+    items.some(
+      (i) => i.enabled === true && (!i.url || i.url.trim() === "" || !isValidUrl(i.url.trim()))
+    );
+
   const sectionValidators: Record<string, ValidatorFn> = {
     youtube: (draft) => {
-      const invalid = (draft.items || []).some(
-        (item: any) => !isYoutubeRowComplete(item)
-      );
-
-      return invalid
-        ? "Please enter valid YouTube URLs for all videos."
-        : null;
+      for (const item of draft.items || []) {
+        if (!item.url?.trim()) return "Please enter a YouTube URL for all videos.";
+        if (!isYoutubeRowComplete(item))
+          return `"${item.url}" is not a valid URL`;
+      }
+      return null;
     },
 
     photo_gallery: (draft) => {
       const items = draft?.items || [];
-
-      // 🚨 No photos
-      if (items.length === 0) {
-        return "Please add at least one photo.";
+      if (items.length === 0) return "Please add at least one photo.";
+      for (const item of items) {
+        if (!item.title?.trim()) return "Each photo must have a title.";
+        if (item.link?.trim() && !isValidUrl(item.link.trim()))
+          return `Photo "${item.title}" has an invalid URL. Make sure it starts with https:// or http://`;
       }
-
-      // 🚨 Incomplete rows
-      const invalid = items.some(
-        (item: any) => !isPhotoRowComplete(item)
-      );
-
-      if (invalid) {
-        return "Please complete all photo entries.";
-      }
-
       return null;
     },
 
     social_links: (draft) => {
       return hasInvalidSocialLinks(draft.items || [])
-        ? "Please fill all enabled social links."
+        ? "One or more social links have an invalid URL. Make sure all links start with https:// or http://"
         : null;
     },
 
     links_files: (draft) => {
       const items = draft?.items || [];
-      console.log("Validating links_files with items:", items);
-      // 🚨 Case 1: No links added
-      if (items.length === 0) {
-        return "Please add at least one link or file.";
+      if (items.length === 0) return "Please add at least one link or file.";
+      for (const item of items) {
+        if (!item.title?.trim()) return "Each link/file must have a title.";
+        if (item.type === "link") {
+          if (!item.url?.trim()) return `"${item.title}" is missing a URL.`;
+          if (!isValidUrl(item.url.trim()))
+            return `"${item.title}" has an invalid URL. Make sure it starts with https:// or http://`;
+        }
+        if (item.type === "file") {
+          if (!item.file_url?.trim()) return `"${item.title}" is missing an uploaded file.`;
+          if (!isValidUrl(item.file_url.trim()))
+            return `"${item.title}" has an invalid file URL. Make sure it starts with https:// or http://`;
+        }
       }
-
-      // 🚨 Case 2: Incomplete rows
-      const invalid = items.some(
-        (item: any) => !item.title?.trim() || !item.url?.trim()
-      );
-
-      if (invalid) {
-        return "Please complete all link/file entries.";
-      }
-
       return null;
     },
 
     contact: (draft) => {
-      const invalid = (draft.fields || []).some(
-        (field: any) => !isContactFieldComplete(field)
-      );
+      for (const field of draft.fields || []) {
+        if (!field.label?.trim()) return "Each contact field must have a label.";
+        if (field.type === "dropdown") {
+          if (!field.options || field.options.length === 0)
+            return `Dropdown field "${field.label}" must have at least one option.`;
+          if (field.options.some((opt: string) => !opt || !opt.trim()))
+            return `Dropdown field "${field.label}" has an empty option. Please fill it in or remove it.`;
+        }
+      }
+      return null;
+    },
 
-      return invalid
-        ? "Please complete all contact fields."
-        : null;
+    meeting: (draft) => {
+      if (!draft.enabled) return null;
+      if (!draft.meeting_url?.trim()) return "Please enter a meeting URL.";
+      if (!isValidUrl(draft.meeting_url.trim()))
+        return "Meeting URL is invalid. Make sure it starts with https:// or http://";
+      return null;
+    },
+
+    banner: (draft) => {
+      if (!draft.enabled) return null;
+      if (draft.cta_url?.trim() && !isValidUrl(draft.cta_url.trim()))
+        return "CTA URL is invalid. Make sure it starts with https:// or http://";
+      return null;
     },
 
     card_buttons: (draft) => {
-      const invalid = (draft.items || []).some(
-        (btn: any) => !btn.title?.trim() || !btn.link?.trim()
-      );
-
-      return invalid
-        ? "Each card button must have title and link."
-        : null;
+      for (const btn of draft.items || []) {
+        if (!btn.title?.trim()) return "Each card button must have a title.";
+        if (!btn.link?.trim()) return `Button "${btn.title}" is missing a link.`;
+        if (!isValidUrl(btn.link.trim()))
+          return `Button "${btn.title}" has an invalid URL. Make sure it starts with https:// or http://`;
+      }
+      return null;
     },
   };
 
@@ -535,7 +545,20 @@ export default function MobilePublicSettings({
             theme={draft.theme}
             autoOpen={autoEditSection === "links_files"}
             editable={!draft.links_files?.locked}
-            onChange={(next: { section_title: string; items: any[] }) =>
+            onChange={(next: { section_title: string; items: any[] }) => {
+              // validate before saving to draft
+              for (const item of next.items || []) {
+                if (!item.title?.trim()) return;
+
+                if (item.type === "link") {
+                  if (item.url?.trim() && !isValidUrl(item.url.trim())) return;
+                }
+
+                if (item.type === "file") {
+                  if (item.file_url?.trim() && !isValidUrl(item.file_url.trim())) return;
+                }
+              }
+
               setDraft((prev: any) => ({
                 ...prev,
                 links_files: {
@@ -543,9 +566,8 @@ export default function MobilePublicSettings({
                   section_title: next.section_title,
                   items: next.items,
                 },
-              }))
-            }
-
+              }));
+            }}
           />
         );
 
@@ -563,7 +585,6 @@ export default function MobilePublicSettings({
               )
             }
           />
-
         ) : null;
 
       case "banner":
@@ -616,6 +637,7 @@ export default function MobilePublicSettings({
             onEdit={() => openSectionEditor("card_buttons")}
           />
         );
+
       default:
         return null;
     }
@@ -1651,12 +1673,13 @@ export function EditModal({
       <div
         onClick={(e) => e.stopPropagation()}
         className="
-          w-full max-w-md
-          bg-white rounded-2xl shadow-xl
-          max-h-[85vh]
-          flex flex-col
-          animate-slide-from-bottom
-        "
+  w-full max-w-md
+  bg-white rounded-2xl shadow-xl
+  max-h-[85vh]
+  flex flex-col
+  overflow-hidden
+  animate-slide-from-bottom
+"
       >
         <div className="relative">
           <button
@@ -1676,9 +1699,7 @@ export function EditModal({
 
 
         {showFooter && (
-          <div className="sticky bottom-0 bg-white border-t">
-
-            {/* Error ABOVE buttons */}
+          <div className="sticky bottom-0 bg-white border-t">            {/* Error ABOVE buttons */}
             {errorMessage && (
               <div className="px-4 pt-3">
                 <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-2 text-sm text-red-600">

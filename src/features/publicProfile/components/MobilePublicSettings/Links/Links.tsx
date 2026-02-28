@@ -142,6 +142,16 @@ function LinksFilesModal({
 }) {
   const [error, setError] = useState<string | null>(null);
 
+  const isValidUrl = (url: string) => {
+    if (!url || !url.trim()) return false;
+    try {
+      const parsed = new URL(url.trim());
+      return parsed.protocol === "http:" || parsed.protocol === "https:";
+    } catch {
+      return false;
+    }
+  };
+
   const validate = () => {
     const items = buffer.items || [];
 
@@ -151,16 +161,36 @@ function LinksFilesModal({
       return false;
     }
 
-    // Case 2: Incomplete rows
-    const invalid = items.some(
-      (item: any) =>
-        !item.title?.trim() ||
-        !(item.url?.trim() || item.file_url?.trim())
-    );
+    for (const item of items) {
+      // Case 2: Missing title
+      if (!item.title?.trim()) {
+        setError("Each link or file must have a title.");
+        return false;
+      }
 
-    if (invalid) {
-      setError("Please complete all link/file entries.");
-      return false;
+      // Case 3: Link type — must have a URL and it must be valid
+      if (item.type === "link") {
+        if (!item.url?.trim()) {
+          setError(`"${item.title}" is missing a URL.`);
+          return false;
+        }
+        if (!isValidUrl(item.url.trim())) {
+          setError(`"${item.title}" has an invalid URL. Make sure it starts with https:// or http://`);
+          return false;
+        }
+      }
+
+      // Case 4: File type — must have a file_url and it must be valid
+      if (item.type === "file") {
+        if (!item.file_url?.trim()) {
+          setError(`"${item.title}" is missing an uploaded file.`);
+          return false;
+        }
+        if (!isValidUrl(item.file_url.trim())) {
+          setError(`"${item.title}" has an invalid file URL. Make sure it starts with https:// or http://`);
+          return false;
+        }
+      }
     }
 
     setError(null);
