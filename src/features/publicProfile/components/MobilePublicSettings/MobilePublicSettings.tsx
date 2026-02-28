@@ -290,7 +290,7 @@ export default function MobilePublicSettings({
   type ValidatorFn = (draft: any) => string | null;
 
   const isYoutubeRowComplete = (item: any) =>
-    item.url?.trim() && getYouTubeId(item.url);
+    item.url?.trim() && isValidUrl(item.url.trim());
 
   const hasInvalidSocialLinks = (items: any[]) =>
     items.some(
@@ -919,7 +919,8 @@ export default function MobilePublicSettings({
 
                 // 🚨 Check incomplete rows
                 const hasInvalid = items.some(
-                  (item: any) => !isYoutubeRowComplete(item)
+                  (item: any) =>
+                    !item.url?.trim() || !isValidUrl(item.url.trim())
                 );
 
                 if (hasInvalid) {

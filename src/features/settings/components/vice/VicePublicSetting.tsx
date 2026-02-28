@@ -62,13 +62,6 @@ export function canAddNewRow<T>(
   return isComplete(last);
 }
 
-function extractYoutubeId(url: string) {
-  if (!url) return "";
-  const match =
-    url.match(/(?:youtube\.com\/.*v=|youtu\.be\/)([^&]+)/);
-  return match?.[1] ?? "";
-}
-
 export function isYoutubeRowComplete(item: any) {
   if (!item) return false;
 
@@ -76,7 +69,7 @@ export function isYoutubeRowComplete(item: any) {
   if (!item.url || item.url.trim() === "") return false;
 
   // must be a valid youtube link
-  return Boolean(extractYoutubeId(item.url));
+  return Boolean(isValidUrl(item.url));
 }
 
 export function isPhotoRowComplete(item?: any) {
@@ -308,6 +301,19 @@ export interface PhotoGalleryConfig extends LockMeta {
   items: PhotoGalleryItem[];
 }
 
+export interface SocialLinkItem {
+  id: string;
+  platform: string;
+  url: string;
+  enabled: boolean;
+  rank: number;        // ✅ ADD THIS
+}
+
+export interface SocialLinksConfig extends LockMeta {
+  locked_by: string;
+  items: SocialLinkItem[];
+}
+
 interface PublicProfileConfig {
   role: string;
   layout: LayoutConfig;
@@ -319,10 +325,7 @@ interface PublicProfileConfig {
 
   meeting: MeetingConfig;
 
-  social_links: LockMeta & {
-    locked_by: string;
-    items: any[];
-  };
+  social_links: SocialLinksConfig;
 
   card_buttons: CardButtonsConfig;
   products: ProductsConfig;
@@ -1300,20 +1303,26 @@ export default function VicePublicSetting({
         )}
 
         <SocialSection
-          items={sectionDraft.items}
-          disabled={isReadOnly(sectionDraft)}
-          onChange={(items: any) => {
-            setSocialError(null);
-            setSectionDraft({
-              ...sectionDraft,
-              items,
-            });
-          }}
-          onAddClick={() => {
-            setActiveSection(null);     // 🔥 close section editor
-            setIsAddSocialOpen(true);   // 🔥 open add modal
-          }}
-        />
+  items={sectionDraft.items}
+  disabled={isReadOnly(sectionDraft)}
+  onChange={(items: any[]) => {
+    setSocialError(null);
+
+    const normalized = items.map((item, index) => ({
+      ...item,
+      rank: index + 1, // ✅ normalize after drag
+    }));
+
+    setSectionDraft({
+      ...sectionDraft,
+      items: normalized,
+    });
+  }}
+  onAddClick={() => {
+    setActiveSection(null);
+    setIsAddSocialOpen(true);
+  }}
+/>
         {socialError && (
           <p className="text-sm text-red-600">
             {socialError}
@@ -1837,14 +1846,28 @@ export default function VicePublicSetting({
     }
 
     if (activeSection === "social_links") {
-      if (hasInvalidSocialLinks(sectionDraft.items)) {
-        setSocialError(
-          "One or more social links have an invalid URL. Make sure all links start with https:// or http://"
-        );
-        return;
-      }
-      nextConfig = { ...nextConfig, social_links: sectionDraft };
-    }
+  if (hasInvalidSocialLinks(sectionDraft.items)) {
+    setSocialError(
+      "One or more social links have an invalid URL. Make sure all links start with https:// or http://"
+    );
+    return;
+  }
+
+  const normalizedItems = sectionDraft.items
+    .sort((a: any, b: any) => a.rank - b.rank)
+    .map((item: any, index: number) => ({
+      ...item,
+      rank: index + 1, // ✅ enforce correct rank
+    }));
+
+  nextConfig = {
+    ...nextConfig,
+    social_links: {
+      ...sectionDraft,
+      items: normalizedItems,
+    },
+  };
+}
 
     if (activeSection === "meeting") {
       nextConfig = { ...nextConfig, meeting: sectionDraft };
@@ -3238,35 +3261,38 @@ export default function VicePublicSetting({
           setAddSectionOpen(false);
           openSectionEditor(type);
         }}
-        onToggle={(type: string) => {
-          const exists = config.sections.items.find(
-            (s) => s.type === type
+        onToggle={(s: any) => {
+          const index = sectionDraft.items.findIndex(
+            (i: any) => i.id === s.id
           );
 
           let updated;
 
-          if (exists) {
-            updated = config.sections.items.map((s) =>
-              s.type === type ? { ...s, enabled: !s.enabled } : s
+          if (index !== -1) {
+            updated = sectionDraft.items.map((i: any, idx: number) =>
+              idx === index ? { ...i, enabled: !i.enabled } : i
             );
           } else {
             updated = [
-              ...config.sections.items,
+              ...sectionDraft.items,
               {
-                id: type,
-                type,
-                rank: config.sections.items.length + 1,
+                ...s,
+                url: "",
                 enabled: true,
+                rank: sectionDraft.items.length + 1, // ✅ ADD RANK
               },
             ];
           }
 
-          update({
-            ...config,
-            sections: {
-              ...config.sections,
-              items: updated,
-            },
+          // ✅ ALWAYS NORMALIZE RANK AFTER CHANGE
+          updated = updated.map((item: any, idx: number) => ({
+            ...item,
+            rank: idx + 1,
+          }));
+
+          setSectionDraft({
+            ...sectionDraft,
+            items: updated,
           });
         }}
       />
@@ -3940,8 +3966,11 @@ export function Switch({
   disabled?: boolean;
 }) {
   return (
-    <div className="flex items-center gap-10">
-      <span className={`text-sm font-medium ${disabled ? "text-gray-400" : "text-gray-700"}`}>
+    <div className="flex items-center justify-between w-full">
+      <span
+        className={`text-sm font-medium ${disabled ? "text-gray-400" : "text-gray-700"
+          }`}
+      >
         {label}
       </span>
 

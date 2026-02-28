@@ -2,9 +2,9 @@ import { useState, useEffect } from "react";
 import { Trash2, ArrowLeft } from "lucide-react";
 import { createPortal } from "react-dom";
 import AddSocialModal from "./AddSocialModal";
+import CommonItemsReorder from "../../../../settings/components/vice/sections/CommonItemsReorder";
 
 // Icons
-// Existing
 import {
   SiInstagram,
   SiLinkedin,
@@ -20,7 +20,13 @@ import {
   SiGoogleplay,
 } from "react-icons/si";
 
-import { FiPhone, FiGlobe, FiMail, FiMapPin, FiMessageCircle } from "react-icons/fi";
+import {
+  FiPhone,
+  FiGlobe,
+  FiMail,
+  FiMapPin,
+  FiMessageCircle,
+} from "react-icons/fi";
 
 /* ================= ICON MAP ================= */
 
@@ -37,7 +43,6 @@ const ICONS: Record<string, any> = {
   phone: FiPhone,
   website: FiGlobe,
 
-  // 🔥 NEW ONES
   email: FiMail,
   address: FiMapPin,
   threads: SiThreads,
@@ -57,11 +62,8 @@ const ALL_SOCIALS = [
   { id: "snapchat", label: "Snapchat" },
   { id: "tiktok", label: "TikTok" },
   { id: "whatsapp", label: "WhatsApp" },
-
   { id: "phone", label: "Phone" },
   { id: "website", label: "Website" },
-
-  // 🔥 NEW ONES
   { id: "email", label: "Email" },
   { id: "address", label: "Address" },
   { id: "threads", label: "Threads" },
@@ -73,9 +75,9 @@ const ALL_SOCIALS = [
 ];
 
 /* ================= VALIDATION ================= */
+
 function isValidUrl(url: string) {
   if (!url || !url.trim()) return false;
-
   try {
     const parsed = new URL(url.trim());
     return parsed.protocol === "http:" || parsed.protocol === "https:";
@@ -83,11 +85,9 @@ function isValidUrl(url: string) {
     return false;
   }
 }
-function validateSocialLink(id: string, value: string): string | null {
-  if (!value || !value.trim()) {
-    return "This field is required.";
-  }
 
+function validateSocialLink(id: string, value: string): string | null {
+  if (!value || !value.trim()) return "This field is required.";
   const v = value.trim();
 
   switch (id) {
@@ -102,34 +102,20 @@ function validateSocialLink(id: string, value: string): string | null {
         ? null
         : "Invalid phone number.";
 
-    case "website":
-    case "instagram":
-    case "linkedin":
-    case "twitter":
-    case "youtube":
-    case "facebook":
-    case "snapchat":
-    case "tiktok":
-    case "whatsapp":
-    case "threads":
-    case "telegram":
-    case "calendly":
-    case "appstore":
-    case "playstore":
+    default:
       return isValidUrl(v)
         ? null
         : "Link must start with https:// or http://";
-
-    default:
-      return null;
   }
 }
 
-export function hasEmptySocialLink(items: any[]) {
-  return items.some(
-    (i) => i.enabled === true && (!i.url || i.url.trim() === "")
-  );
-}
+/* ================= RANK HELPER ================= */
+
+const normalizeRank = (items: any[]) =>
+  items.map((item, index) => ({
+    ...item,
+    rank: index + 1,
+  }));
 
 /* ================= MAIN ================= */
 
@@ -137,7 +123,7 @@ export default function SocialSection({
   items = [],
   onChange,
   locked,
-  autoOpen = false, // NEW PROP
+  autoOpen = false,
 }: any) {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [formOpen, setFormOpen] = useState(false);
@@ -146,9 +132,7 @@ export default function SocialSection({
   const isAnyOpen = pickerOpen || formOpen;
 
   useEffect(() => {
-    if (autoOpen) {
-      setPickerOpen(true);
-    }
+    if (autoOpen) setPickerOpen(true);
   }, [autoOpen]);
 
   /* ================= MUTATIONS ================= */
@@ -158,25 +142,35 @@ export default function SocialSection({
 
     onChange((prev: any[]) => {
       const idx = prev.findIndex((i) => i.id === s.id);
+      let updated;
 
       if (idx !== -1) {
-        return prev.map((i, index) =>
+        updated = prev.map((i, index) =>
           index === idx ? { ...i, enabled: !i.enabled } : i
         );
+      } else {
+        updated = [
+          ...prev,
+          { ...s, url: "", enabled: true, rank: prev.length + 1 },
+        ];
       }
 
-      return [...prev, { ...s, url: "", enabled: true }];
+      return normalizeRank(updated);
     });
   };
 
   const update = (id: string, val: string) => {
     onChange((prev: any[]) =>
-      prev.map((i) => (i.id === id ? { ...i, url: val } : i))
+      normalizeRank(
+        prev.map((i) => (i.id === id ? { ...i, url: val } : i))
+      )
     );
   };
 
   const remove = (id: string) => {
-    onChange((prev: any[]) => prev.filter((i) => i.id !== id));
+    onChange((prev: any[]) =>
+      normalizeRank(prev.filter((i) => i.id !== id))
+    );
   };
 
   /* ================= LOCK SCROLL ================= */
@@ -202,7 +196,6 @@ export default function SocialSection({
 
   return (
     <>
-      {/* ADD BUTTON */}
       <button
         disabled={locked}
         onClick={() => {
@@ -210,15 +203,15 @@ export default function SocialSection({
           setFormOpen(false);
           setPickerOpen(true);
         }}
-        className={`mt-3 px-4 py-2 rounded-lg text-sm font-semibold ${locked
-          ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-          : "bg-purple-600 text-white"
-          }`}
+        className={`mt-3 px-4 py-2 rounded-lg text-sm font-semibold ${
+          locked
+            ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+            : "bg-purple-600 text-white"
+        }`}
       >
         + Add Social
       </button>
 
-      {/* STEP 1 — PICK SOCIAL */}
       <AddSocialModal
         open={pickerOpen}
         all={ALL_SOCIALS}
@@ -231,7 +224,6 @@ export default function SocialSection({
         }}
       />
 
-      {/* STEP 2 — ADD LINKS */}
       <SocialLinksModal
         open={formOpen}
         items={enabled}
@@ -245,12 +237,16 @@ export default function SocialSection({
         }}
         onUpdate={update}
         onRemove={remove}
+        onReorder={(newItems: any[]) => {
+          onChange(normalizeRank(newItems));
+        }}
       />
     </>
   );
 }
 
 /* ================= LINKS MODAL ================= */
+
 function SocialLinksModal({
   open,
   items,
@@ -258,33 +254,28 @@ function SocialLinksModal({
   onCloseAll,
   onUpdate,
   onRemove,
+  onReorder,
 }: any) {
   const [error, setError] = useState<string | null>(null);
 
   if (!open) return null;
 
-const handleDone = () => {
-  for (const item of items) {
-    const validationError = validateSocialLink(item.id, item.url);
-
-    if (validationError) {
-      setError(`${item.label}: ${validationError}`);
-      return;
+  const handleDone = () => {
+    for (const item of items) {
+      const validationError = validateSocialLink(item.id, item.url);
+      if (validationError) {
+        setError(`${item.label}: ${validationError}`);
+        return;
+      }
     }
-  }
-
-  setError(null);
-  onCloseAll();
-};
+    setError(null);
+    onCloseAll();
+  };
 
   return createPortal(
     <div className="fixed inset-0 z-[999] bg-black/40 flex items-center justify-center px-3">
       <div className="bg-white w-full max-w-md rounded-2xl shadow-xl max-h-[85vh] flex flex-col">
-
-        {/* HEADER */}
         <div className="flex items-center justify-between px-4 py-3 border-b">
-
-          {/* 🔙 BACK BUTTON */}
           <button
             onClick={onBack}
             className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-purple-600"
@@ -292,11 +283,8 @@ const handleDone = () => {
             <ArrowLeft size={18} />
           </button>
 
-          <h3 className="text-base font-semibold">
-            Add your links
-          </h3>
+          <h3 className="text-base font-semibold">Add your links</h3>
 
-          {/* ❌ CLOSE ICON */}
           <button
             onClick={onCloseAll}
             className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-gray-100"
@@ -305,52 +293,53 @@ const handleDone = () => {
           </button>
         </div>
 
-        {/* BODY */}
         <div className="flex-1 overflow-y-auto p-4 space-y-3">
-
           {error && (
             <div className="rounded-lg bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-600">
               {error}
             </div>
           )}
 
-          {items.map((s: any) => {
-            const Icon = ICONS[s.id] || FiGlobe;
+          <CommonItemsReorder
+            items={[...items].sort((a, b) => a.rank - b.rank)}
+            onChange={onReorder}
+            renderItem={(s: any) => {
+              const Icon = ICONS[s.id] || FiGlobe;
 
-            return (
-              <div
-                key={s.id}
-                className="flex items-center gap-3 p-3 rounded-xl border bg-white shadow-sm"
-              >
-                <div className="h-10 w-10 rounded-xl bg-gray-900 flex items-center justify-center text-white">
-                  <Icon size={18} />
-                </div>
-
-                <input
-                  className="flex-1 rounded-lg border px-3 py-2 text-sm"
-                  placeholder={`Enter ${s.label} link`}
-                  value={s.url}
-                  onChange={(e) => {
-                    setError(null);
-                    onUpdate(s.id, e.target.value);
-                  }}
-                />
-
-                <button
-                  onClick={() => {
-                    setError(null);
-                    onRemove(s.id);
-                  }}
-                  className="text-red-500 hover:text-red-700"
+              return (
+                <div
+                  key={s.id}
+                  className="flex items-center gap-3 p-3 rounded-xl border bg-white shadow-sm"
                 >
-                  <Trash2 size={18} />
-                </button>
-              </div>
-            );
-          })}
+                  <div className="h-10 w-10 rounded-xl bg-gray-900 flex items-center justify-center text-white">
+                    <Icon size={18} />
+                  </div>
+
+                  <input
+                    className="flex-1 rounded-lg border px-3 py-2 text-sm"
+                    placeholder={`Enter ${s.label} link`}
+                    value={s.url}
+                    onChange={(e) => {
+                      setError(null);
+                      onUpdate(s.id, e.target.value);
+                    }}
+                  />
+
+                  <button
+                    onClick={() => {
+                      setError(null);
+                      onRemove(s.id);
+                    }}
+                    className="text-red-500 hover:text-red-700"
+                  >
+                    <Trash2 size={18} />
+                  </button>
+                </div>
+              );
+            }}
+          />
         </div>
 
-        {/* FOOTER */}
         <div className="p-4 border-t">
           <button
             onClick={handleDone}

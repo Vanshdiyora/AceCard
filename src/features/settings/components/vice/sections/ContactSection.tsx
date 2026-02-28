@@ -485,13 +485,27 @@ export default function ContactSection({
               />
             )}
 
-            {/* REQUIRED */}
-            <Switch
-              label="Required"
-              value={field.required}
-              disabled={disabled}
-              onChange={(v) => updateField(index, { required: v })}
-            />
+            <div className="space-y-3">
+              {/* ENABLED */}
+              <div className="flex items-center justify-between">
+                <Switch
+                  label="Enabled"
+                  value={field.enabled}
+                  disabled={disabled}
+                  onChange={(v) => updateField(index, { enabled: v })}
+                />
+              </div>
+
+              {/* REQUIRED */}
+              <div className="flex items-center justify-between">
+                <Switch
+                  label="Required"
+                  value={field.required}
+                  disabled={disabled || !field.enabled}
+                  onChange={(v) => updateField(index, { required: v })}
+                />
+              </div>
+            </div>
           </div>
         )}
       />

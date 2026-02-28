@@ -135,14 +135,23 @@ export function normalizeProfile(api: any) {
     meeting: normalizeMeeting(api),
 
     /* ================= SOCIAL ================= */
-    social_links: {
-      locked: Boolean(cfg.social_links?.locked),
-      lock_mode: cfg.social_links?.lock_mode ?? undefined,
-      locked_by: cfg?.social_links?.locked_by ?? "",
-      items: Array.isArray(cfg.social_links?.items)
-        ? cfg.social_links.items
-        : [],
-    },
+social_links: {
+  locked: Boolean(cfg.social_links?.locked),
+  lock_mode: cfg.social_links?.lock_mode ?? undefined,
+  locked_by: cfg?.social_links?.locked_by ?? "",
+
+  items: Array.isArray(cfg.social_links?.items)
+    ? [...cfg.social_links.items]
+        .sort((a: any, b: any) => (a.rank ?? 0) - (b.rank ?? 0))
+        .map((s: any, i: number) => ({
+          id: s.id ?? crypto.randomUUID(),
+          platform: s.platform ?? s.type ?? "",
+          url: s.url ?? "",
+          enabled: s.enabled ?? true,
+          rank: s.rank ?? i + 1,   // ✅ normalize rank
+        }))
+    : [],
+},
 
 
     /* ================= PRODUCTS ================= */
@@ -430,11 +439,20 @@ export function denormalizeProfile(
 
       /* ================= SOCIAL LINKS ================= */
       social_links: {
-        locked: cfg.social_links.locked,
-        lock_mode: cfg.social_links.lock_mode ?? null,
-        locked_by: cfg.social_links.locked_by,
-        items: cfg.social_links.items,
-      },
+  locked: cfg.social_links.locked,
+  lock_mode: cfg.social_links.lock_mode ?? null,
+  locked_by: cfg.social_links.locked_by,
+
+  items: [...cfg.social_links.items]
+    .sort((a: any, b: any) => a.rank - b.rank)
+    .map((s: any) => ({
+      id: s.id,
+      platform: s.platform,
+      url: s.url,
+      rank: s.rank,
+      enabled: s.enabled ?? true,
+    })),
+},
 
       /* ================= PRODUCTS ================= */
       products: {
