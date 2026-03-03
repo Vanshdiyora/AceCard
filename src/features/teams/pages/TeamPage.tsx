@@ -251,7 +251,9 @@ export default function TeamPage() {
       header: "Manager",
       align: "right",
       render: (m) =>
-        managers.find((mgr) => mgr.id === m.manager_id)?.name ?? "NA",
+        m.role === "sales_rep"
+          ? m.assigned_manager?.name ?? "Unassigned"
+          : "NA",
     },
     { header: "Leads", align: "right", render: (m) => m.leads ?? 0 },
     {
