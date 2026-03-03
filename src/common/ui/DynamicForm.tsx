@@ -10,6 +10,7 @@ import AvatarCropModal from "./AvatarCropModal";
 export interface FieldConfig {
   name: string;
   label: string;
+  disablePast?: boolean; // 👈 ADD THIS
   type:
   | "text"
   | "number"
@@ -141,8 +142,30 @@ export default function DynamicForm({
               )}
             </label>
 
+              {field.type === "date" && (
+  <>
+    <input
+      type="date"
+      className={`${baseInputClass} ${showError ? "border-red-500" : ""}`}
+      disabled={disabled || field.disabled}
+      placeholder={field.placeholder}
+      value={form[field.name] ?? ""}
+      min={
+        field.disablePast
+          ? new Date().toISOString().split("T")[0]
+          : undefined
+      }
+      onChange={(e) => handleChange(field, e.target.value)}
+      onBlur={() => handleBlur(field.name)}
+    />
+    {showError && (
+      <p className="text-xs text-red-500 mt-1">{error}</p>
+    )}
+  </>
+)}
+
             {/* ---------- TEXT / EMAIL / DATE ---------- */}
-            {["text", "email", "date"].includes(field.type) && (
+            {["text", "email"].includes(field.type) && (
               <>
                 <input
                   type={field.type}

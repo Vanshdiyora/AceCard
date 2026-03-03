@@ -99,5 +99,13 @@ async transferSalespersons(payload: {
     payload
   );
   return res.data;
+},
+async unassignManager(payload: { member_id: number }) {
+  const res = await axios.post(
+    `/vendor/team/unassign`,
+    payload
+  );
+  return res.data;
 }
+
 };

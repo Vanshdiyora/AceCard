@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { useAppDispatch, useAppSelector } from "../../../app/hooks";
-import { fetchTeam, transferSalespersons } from "../slice";
+import { fetchTeam } from "../slice";
 import DynamicForm, { type FieldConfig } from "../../../common/ui/DynamicForm";
 
 export function TransferSalespersonsModal({
@@ -12,7 +12,7 @@ export function TransferSalespersonsModal({
   open: boolean;
   fromManagerId: number;
   onClose: () => void;
-  onSuccess: () => void;
+  onSuccess: (toManagerId: number) => void; // ✅ CHANGED
 }) {
   const dispatch = useAppDispatch();
 
@@ -20,7 +20,6 @@ export function TransferSalespersonsModal({
     managers,
     meta,
     loading: teamLoading,
-    transferSalespersonsLoading,
   } = useAppSelector((s) => s.team);
 
   const [form, setForm] = useState<any>({});
@@ -157,21 +156,11 @@ export function TransferSalespersonsModal({
   /* =============================
      CONFIRM HANDLER
   ============================== */
-  const handleConfirm = async () => {
+  const handleConfirm = () => {
     if (!form.to_manager_id) return;
 
-    try {
-      await dispatch(
-        transferSalespersons({
-          from_manager_id: fromManagerId,
-          to_manager_id: form.to_manager_id,
-        })
-      ).unwrap();
-
-      onSuccess();
-    } catch {
-      // optional: show toast if needed
-    }
+    // ❌ NO API CALL HERE
+    onSuccess(form.to_manager_id);
   };
 
   /* =============================
@@ -211,16 +200,14 @@ export function TransferSalespersonsModal({
           </button>
 
           <button
-            disabled={!form.to_manager_id || transferSalespersonsLoading}
+            disabled={!form.to_manager_id}
             onClick={handleConfirm}
-            className={`px-5 py-2 rounded-xl text-sm font-medium transition ${!form.to_manager_id || transferSalespersonsLoading
+            className={`px-5 py-2 rounded-xl text-sm font-medium transition ${!form.to_manager_id
                 ? "bg-gray-200 text-gray-400"
                 : "bg-purple-600 text-white hover:bg-purple-700"
               }`}
           >
-            {transferSalespersonsLoading
-              ? "Transferring..."
-              : "Transfer & Finish"}
+            Transfer & Finish
           </button>
         </div>
       </div>

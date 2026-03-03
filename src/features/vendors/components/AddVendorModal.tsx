@@ -162,6 +162,7 @@ useEffect(() => {
       label: "Subscription End Date",
       type: "date",
       required: true,
+      disablePast:true,
       placeholder: "Select subscription end date",
     },
     {

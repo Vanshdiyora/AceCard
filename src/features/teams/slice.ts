@@ -216,6 +216,23 @@ export const transferSalespersons = createAsyncThunk(
   }
 );
 
+export const unassignManager = createAsyncThunk(
+  "team/unassignManager",
+  async (
+    payload: { member_id: number },
+    { rejectWithValue }
+  ) => {
+    try {
+      const res = await teamService.unassignManager(payload);
+      return { ...payload, response: res };
+    } catch (err: any) {
+      return rejectWithValue(
+        err?.response?.data?.message || "Unassign failed"
+      );
+    }
+  }
+);
+
 export const transferLeads = createAsyncThunk(
   "team/transferLeads",
   async (
@@ -344,32 +361,32 @@ const teamSlice = createSlice({
           m.id === id ? { ...m, ...data } : m
         );
       })
-     .addCase(updatePermissions.fulfilled, (state, action) => {
-  const { id, permissions } = action.payload;
+      .addCase(updatePermissions.fulfilled, (state, action) => {
+        const { id, permissions } = action.payload;
 
-  // ✅ Update selectedMember instantly
-  if (state.selectedMember?.id === id) {
-    state.selectedMember = {
-      ...state.selectedMember,
-      permissions,
-    };
-  }
+        // ✅ Update selectedMember instantly
+        if (state.selectedMember?.id === id) {
+          state.selectedMember = {
+            ...state.selectedMember,
+            permissions,
+          };
+        }
 
-  // ✅ Update members list
-  state.members = state.members.map((m) =>
-    m.id === id ? { ...m, permissions } : m
-  );
+        // ✅ Update members list
+        state.members = state.members.map((m) =>
+          m.id === id ? { ...m, permissions } : m
+        );
 
-  // ✅ Update managers list
-  state.managers = state.managers.map((m) =>
-    m.id === id ? { ...m, permissions } : m
-  );
+        // ✅ Update managers list
+        state.managers = state.managers.map((m) =>
+          m.id === id ? { ...m, permissions } : m
+        );
 
-  // ✅ Update salesReps list
-  state.salesReps = state.salesReps.map((m) =>
-    m.id === id ? { ...m, permissions } : m
-  );
-})
+        // ✅ Update salesReps list
+        state.salesReps = state.salesReps.map((m) =>
+          m.id === id ? { ...m, permissions } : m
+        );
+      })
 
 
       .addCase(deleteMember.fulfilled, (state, action) => {
@@ -424,6 +441,39 @@ const teamSlice = createSlice({
       .addCase(transferSalespersons.rejected, (state, action) => {
         state.transferSalespersonsLoading = false;
         state.transferSalespersonsError = action.payload as string;
+      })
+      .addCase(unassignManager.fulfilled, (state, action) => {
+        const { member_id } = action.payload;
+
+        // When manager is unassigned,
+        // all their sales reps should lose manager_id
+
+        state.members = state.members.map((member) => {
+          if (
+            member.role === "sales_rep" &&
+            member.manager_id === member_id
+          ) {
+            return {
+              ...member,
+              manager_id: null,
+            };
+          }
+          return member;
+        });
+
+        state.salesReps = state.salesReps.map((member) => {
+          if (member.manager_id === member_id) {
+            return {
+              ...member,
+              manager_id: null,
+            };
+          }
+          return member;
+        });
+      })
+
+      .addCase(unassignManager.rejected, (state, action) => {
+        state.error = action.payload as string;
       });
 
   },

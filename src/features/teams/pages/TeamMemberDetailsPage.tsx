@@ -3,7 +3,7 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import { ArrowLeft, Edit, Shield, UserX, CheckCircle2 } from "lucide-react";
 import PublicMobileWebsite from "../../publicProfile/components/MobileWebsite";
 import { useAppDispatch, useAppSelector } from "../../../app/hooks";
-import { updateMember, fetchMemberById, updatePermissions, transferLeads } from "../slice";
+import { updateMember, fetchMemberById, updatePermissions, transferLeads, unassignManager, transferSalespersons } from "../slice";
 import EditMemberModal from "../components/EditMemberModal";
 import PermissionsModal from "../components/PermissionsModal";
 import { loadProfileViewByUsername } from "../../publicProfile/slice";
@@ -58,7 +58,7 @@ export default function TeamMemberDetailsPage() {
     [members]
   );
 
-const member = useAppSelector((s) => s.team.selectedMember);
+  const member = useAppSelector((s) => s.team.selectedMember);
 
   const [activeTab, setActiveTab] = useState<typeof TABS[number]>("overview");
   const [editOpen, setEditOpen] = useState(false);
@@ -67,11 +67,15 @@ const member = useAppSelector((s) => s.team.selectedMember);
   const [suspendMode, setSuspendMode] = useState<"suspend" | "activate">("suspend");
   const [processing, setProcessing] = useState(false);
   const [hasFetched, setHasFetched] = useState(false);
-const [transferSalesOpen, setTransferSalesOpen] = useState(false);
+  const [transferSalesOpen, setTransferSalesOpen] = useState(false);
   const [resultOpen, setResultOpen] = useState(false);
   const [resultSuccess, setResultSuccess] = useState(true);
   const [resultMessage, setResultMessage] = useState("");
   const { data: publicProfile } = useAppSelector((s) => s.publicProfile);
+  const [pendingLeadTransfer, setPendingLeadTransfer] = useState<{
+    toId: number | null;
+    leadIds: number[];
+  } | null>(null);
 
   const [transferOpen, setTransferOpen] = useState(false);
 
@@ -177,76 +181,127 @@ const [transferSalesOpen, setTransferSalesOpen] = useState(false);
     );
   }
 
+  const executeFinalSuspend = async (
+    salespersonTransferToId: number | null
+  ) => {
+    if (!pendingLeadTransfer) return;
+
+    try {
+      setProcessing(true);
+
+      // 1️⃣ Transfer Leads
+      if (pendingLeadTransfer.leadIds.length > 0) {
+        await dispatch(
+          transferLeads({
+            from_rep_id: member.id,
+            to_rep_id: pendingLeadTransfer.toId!,
+            lead_ids: pendingLeadTransfer.leadIds,
+          })
+        ).unwrap();
+      }
+
+      // 2️⃣ Suspend Member
+      await dispatch(
+        updateMember({
+          id: member.id,
+          data: { status: "suspended" },
+        })
+      ).unwrap();
+
+      // 3️⃣ If transferring salespersons
+      if (salespersonTransferToId) {
+        await dispatch(
+          transferSalespersons({
+            from_manager_id: member.id,
+            to_manager_id: salespersonTransferToId,
+          })
+        ).unwrap();
+
+        showResult(true, "Manager suspended & salespersons transferred.");
+      } else {
+        // 4️⃣ Call Unassign API
+        await dispatch(
+          unassignManager({
+            member_id: member.id,
+          })
+        ).unwrap();
+
+        showResult(true, "Manager suspended & salespersons unassigned.");
+      }
+
+    } catch (err: any) {
+      showResult(false, err || "Operation failed.");
+    } finally {
+      setProcessing(false);
+      setPendingLeadTransfer(null);
+      setTransferSalesOpen(false);
+    }
+  };
   /* ---------------- ACTIONS ---------------- */
-const handleStatusChange = async () => {
-  try {
-    setProcessing(true);
+  const handleStatusChange = async () => {
+    if (suspendMode === "activate") {
+      // ✅ Activation can execute immediately
+      try {
+        setProcessing(true);
 
-    await dispatch(
-      updateMember({
-        id: member.id,
-        data: {
-          status: suspendMode === "suspend" ? "suspended" : "active",
-        },
-      })
-    ).unwrap();
+        await dispatch(
+          updateMember({
+            id: member.id,
+            data: { status: "active" },
+          })
+        ).unwrap();
 
-    // ✅ ALWAYS open sales transfer if manager + suspend
-    if (suspendMode === "suspend" && member.role === "manager") {
-      setTransferSalesOpen(true);
-    } else {
-      showResult(
-        true,
-        suspendMode === "suspend"
-          ? "Member suspended successfully."
-          : "Member activated successfully."
-      );
+        showResult(true, "Member activated successfully.");
+      } catch {
+        showResult(false, "Failed to activate member.");
+      } finally {
+        setProcessing(false);
+        setConfirmOpen(false);
+      }
+
+      return;
     }
 
-  } catch {
-    showResult(false, "Failed to update member status.");
-  } finally {
-    setProcessing(false);
+    // 🔥 IF SUSPEND → DO NOT CALL API
+    // Just move to Leads modal
+
     setConfirmOpen(false);
-  }
-};
 
-  const handleTransferAndSuspend = async (toId: number) => {
-  try {
-    setProcessing(true);
+    try {
+      setProcessing(true);
 
-    // 1️⃣ Transfer Leads
-    await dispatch(
-      transferLeads({
-        from_rep_id: member.id,
-        to_rep_id: toId,
-        lead_ids: leadIds,
-      })
-    ).unwrap();
+      const res = await dispatch(
+        fetchLeads({
+          page: 1,
+          pageSize: 1000000,
+          memberId: member.id,
+        })
+      ).unwrap();
 
-    // 2️⃣ Suspend Member
-    await dispatch(
-      updateMember({
-        id: member.id,
-        data: { status: "suspended" },
-      })
-    ).unwrap();
+      const ids = res.data.map((l: any) => l.id);
 
-    // 3️⃣ If manager → open Salesperson Transfer
-    if (member.role === "manager") {
-      setTransferSalesOpen(true);
-    } else {
-      showResult(true, "Leads transferred & member suspended.");
+      if (ids.length > 0) {
+        setLeadIds(ids);
+        setTransferOpen(true);
+      } else {
+        // No leads → go directly to sales modal
+        setPendingLeadTransfer({
+          toId: null,
+          leadIds: [],
+        });
+
+        if (member.role === "manager") {
+          setTransferSalesOpen(true);
+        } else {
+          executeFinalSuspend(null);
+        }
+      }
+    } catch {
+      showResult(false, "Failed to load leads.");
+    } finally {
+      setProcessing(false);
     }
-
-  } catch {
-    showResult(false, "Transfer failed.");
-  } finally {
-    setProcessing(false);
-    setTransferOpen(false);
-    setLeadIds([]);
-  }
-};
+  };
 
   const avatarUrl = member.avatar || null;
 
@@ -327,30 +382,11 @@ const handleStatusChange = async () => {
                       : <CheckCircle2 size={16} />
                   }
                   label={member.status === "active" ? "Suspend" : "Activate"}
-                  onClick={async () => {
-                    if (member.status === "active") {
-                      try {
-                        setProcessing(true);
-                        const res = await dispatch(
-                          fetchLeads({ page: 1, pageSize: 1000000, memberId: member.id })
-                        ).unwrap();
-                        const ids = res.data.map((l: any) => l.id);
-                        if (ids.length > 0) {
-                          setLeadIds(ids);
-                          setTransferOpen(true);
-                        } else {
-                          setSuspendMode("suspend");
-                          setConfirmOpen(true);
-                        }
-                      } catch {
-                        showResult(false, "Failed to load leads");
-                      } finally {
-                        setProcessing(false);
-                      }
-                    } else {
-                      setSuspendMode("activate");
-                      setConfirmOpen(true);
-                    }
+                  onClick={() => {
+                    setSuspendMode(
+                      member.status === "active" ? "suspend" : "activate"
+                    );
+                    setConfirmOpen(true);
                   }}
                   danger={member.status === "active"}
                   disabled={processing}
@@ -479,14 +515,17 @@ const handleStatusChange = async () => {
 
       {/* ── MODALS ── */}
       <TransferSalespersonsModal
-  open={transferSalesOpen}
-  fromManagerId={member.id}
-  onClose={() => setTransferSalesOpen(false)}
-  onSuccess={() => {
-    setTransferSalesOpen(false);
-    showResult(true, "Manager suspended & salespersons transferred.");
-  }}
-/>
+        open={transferSalesOpen}
+        fromManagerId={member.id}
+
+        onClose={() => {
+          executeFinalSuspend(null); // ✅ Unassign flow
+        }}
+
+        onSuccess={(toManagerId) => {
+          executeFinalSuspend(toManagerId); // ✅ Transfer flow
+        }}
+      />
       <EditMemberModal
         open={editOpen}
         member={member}
@@ -547,7 +586,55 @@ const handleStatusChange = async () => {
         currentId={member.id}
         loading={processing}
         onClose={() => setTransferOpen(false)}
-        onConfirm={handleTransferAndSuspend}
+        onConfirm={async (toId) => {
+          setTransferOpen(false);
+
+          // =========================
+          // SALES REP FLOW
+          // =========================
+          if (member.role === "sales_rep") {
+            try {
+              setProcessing(true);
+
+              // 1️⃣ Transfer Leads
+              if (leadIds.length > 0) {
+                await dispatch(
+                  transferLeads({
+                    from_rep_id: member.id,
+                    to_rep_id: toId,
+                    lead_ids: leadIds,
+                  })
+                ).unwrap();
+              }
+
+              // 2️⃣ Suspend Immediately
+              await dispatch(
+                updateMember({
+                  id: member.id,
+                  data: { status: "suspended" },
+                })
+              ).unwrap();
+
+              showResult(true, "Sales person suspended & leads transferred.");
+            } catch {
+              showResult(false, "Operation failed.");
+            } finally {
+              setProcessing(false);
+            }
+
+            return;
+          }
+
+          // =========================
+          // MANAGER FLOW (unchanged)
+          // =========================
+          setPendingLeadTransfer({
+            toId,
+            leadIds,
+          });
+
+          setTransferSalesOpen(true);
+        }}
       />
 
       <ResultModal
