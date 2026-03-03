@@ -55,24 +55,24 @@ export default function Topbar({ type }: TopbarProps) {
   }, [token, dispatch]);
 
   const name = useMemo(() => {
-    if (profile?.role === "vendor_admin") {
-      return (
-        profile?.vendor_name ||
-        jwtUser?.name ||
-        jwtUser?.email?.split("@")[0] ||
-        ""
-      );
-    }
-
+  if (profile?.role === "vendor_admin") {
     return (
-      profile?.name ||
+      profile?.vendor_name ||
       jwtUser?.name ||
       jwtUser?.email?.split("@")[0] ||
-      ""
+      "User"
     );
-  }, [profile, jwtUser]);
+  }
 
-  const isLoadingUser = profileLoading || !name;
+  return (
+    profile?.name ||
+    jwtUser?.name ||
+    jwtUser?.email?.split("@")[0] ||
+    "User"
+  );
+}, [profile, jwtUser]);
+
+  const isLoadingUser = profileLoading;
 
   const initials = name
     .split(" ")
@@ -156,42 +156,42 @@ export default function Topbar({ type }: TopbarProps) {
   if (type === "super_admin") {
     return (
       <>
-      <header className="h-20 bg-[#E6E4F2] border-b px-4 sm:px-6 flex items-center justify-between min-w-0 relative">
-        <div className="flex-1 min-w-0 max-w-md">
-          <GlobalSearch mode="super_admin" />
-        </div>
-
-        <div className="flex items-center gap-4 shrink-0">
-          <NotificationBell />
-
-          <div
-            className="relative flex items-center gap-2 cursor-pointer"
-            onClick={() => !isLoadingUser && setOpen((p) => !p)}
-            ref={menuRef}
-            >
-            {isLoadingUser ? SkeletonAvatar : (
-              <div className="w-10 h-10 bg-purple-600 text-white rounded-full flex items-center justify-center font-medium">
-                {initials}
-              </div>
-            )}
-
-            {isLoadingUser ? SkeletonName : (
-              <span className="hidden sm:block text-gray-700 font-medium">
-                {name}
-              </span>
-            )}
-
-            {!isLoadingUser && open && Dropdown}
+        <header className="h-20 bg-[#E6E4F2] border-b px-4 sm:px-6 flex items-center justify-between min-w-0 relative">
+          <div className="flex-1 min-w-0 max-w-md">
+            <GlobalSearch mode="super_admin" />
           </div>
-        </div>
-      </header>
-       <GlobalSignOutConfirmationModal
-        open={signOutOpen}
-        loading={signingOut}
-        onCancel={() => setSignOutOpen(false)}
-        onConfirm={confirmLogout}
-      />
-        </>
+
+          <div className="flex items-center gap-4 shrink-0">
+            <NotificationBell />
+
+            <div
+              className="relative flex items-center gap-2 cursor-pointer"
+              onClick={() => setOpen((p) => !p)}
+              ref={menuRef}
+            >
+              {isLoadingUser ? SkeletonAvatar : (
+                <div className="w-10 h-10 bg-purple-600 text-white rounded-full flex items-center justify-center font-medium">
+                  {initials}
+                </div>
+              )}
+
+              {isLoadingUser ? SkeletonName : (
+                <span className="hidden sm:block text-gray-700 font-medium">
+                  {name}
+                </span>
+              )}
+
+              {!isLoadingUser && open && Dropdown}
+            </div>
+          </div>
+        </header>
+        <GlobalSignOutConfirmationModal
+          open={signOutOpen}
+          loading={signingOut}
+          onCancel={() => setSignOutOpen(false)}
+          onConfirm={confirmLogout}
+        />
+      </>
     );
   }
 

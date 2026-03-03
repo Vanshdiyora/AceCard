@@ -107,7 +107,19 @@ export const login = createAsyncThunk(
     try {
       return await loginRequest(payload);
     } catch (err: any) {
-      return rejectWithValue(err?.response?.data?.message || "Login failed");
+      const backendMessage =
+        err?.response?.data?.message ||
+        err?.response?.data?.error ||
+        "";
+
+      // ✅ Custom subscription expired handling
+      if (backendMessage.toLowerCase().includes("subscription")) {
+        return rejectWithValue(
+          "Login failed. Your subscription has expired! Please contact Acecard at info@theacecard.co"
+        );
+      }
+
+      return rejectWithValue(backendMessage || "Login failed");
     }
   }
 );
