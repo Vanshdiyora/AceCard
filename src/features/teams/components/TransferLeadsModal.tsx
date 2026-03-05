@@ -114,16 +114,26 @@ export function TransferLeadsModal({
      ✅ loadMore is now stable so useMemo won't rebuild on every fetch
      ✅ Removed teamLoading from deps — SearchableSelect reads it via prop
   ------------------------------ */
-  const filteredMembers = useMemo(
-    () =>
-      members
-        .filter((m) => m.id !== currentId && m.status !== "suspended")
-        .map((m) => ({
-          label: `${m.name} • ${m.role.replace("_", " ")}`,
+const roleMap: Record<string, string> = {
+  sales_rep: "Sales Person",
+};
+
+const filteredMembers = useMemo(
+  () =>
+    members
+      .filter((m) => m.id !== currentId && m.status !== "suspended")
+      .map((m) => {
+        const formattedRole =
+          roleMap[m.role] ||
+          m.role.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+
+        return {
+          label: `${m.name} • ${formattedRole}`,
           value: m.id,
-        })),
-    [members, currentId]
-  );
+        };
+      }),
+  [members, currentId]
+);
 
   const fields: FieldConfig[] = useMemo(
     () => [

@@ -12,12 +12,6 @@ type Props = {
   setProcessing?: (v: boolean) => void;
 };
 
-function getErrorMessage(err: unknown): string {
-  if (typeof err === "string") return err;
-  if (err instanceof Error) return err.message;
-  return "Failed to send notification";
-}
-
 export default function NotifyVendorModal({
   open,
   onClose,
@@ -27,15 +21,28 @@ export default function NotifyVendorModal({
   setProcessing,
 }: Props) {
   const dispatch = useAppDispatch();
+
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const [touched, setTouched] = useState({
+    title: false,
+    body: false,
+  });
+
+  const [errors, setErrors] = useState({
+    title: "",
+    body: "",
+  });
 
   /* Reset form */
   useEffect(() => {
     if (open) {
       setTitle("");
       setBody("");
+      setTouched({ title: false, body: false });
+      setErrors({ title: "", body: "" });
     }
   }, [open, vendor?.id]);
 
@@ -49,11 +56,24 @@ export default function NotifyVendorModal({
 
   if (!open) return null;
 
+  const validate = () => {
+    const newErrors = {
+      title: "",
+      body: "",
+    };
+
+    if (!title.trim()) newErrors.title = "Title is required";
+    if (!body.trim()) newErrors.body = "Message is required";
+
+    setErrors(newErrors);
+
+    return !newErrors.title && !newErrors.body;
+  };
+
   const handleSend = async () => {
-    if (!title.trim() || !body.trim()) {
-      onError?.("Title and message are required");
-      return;
-    }
+    setTouched({ title: true, body: true });
+
+    if (!validate()) return;
 
     if (!vendor?.id) {
       onError?.("No vendor selected");
@@ -73,10 +93,9 @@ export default function NotifyVendorModal({
       ).unwrap();
 
       onClose();
-      onSuccess?.();   // ✅ THIS WAS MISSING
-
-    } catch (err) {
-      onError?.(getErrorMessage(err));   // ✅ Use parent ResultModal
+      onSuccess?.();
+    } catch (err: any) {
+      onError?.(err?.message || "Failed to send notification");
     } finally {
       setLoading(false);
       setProcessing?.(false);
@@ -97,27 +116,53 @@ export default function NotifyVendorModal({
         </div>
 
         <div className="px-6 py-4 space-y-4">
+
+          {/* Title */}
           <div>
             <label className="text-xs text-gray-500">Title</label>
+
             <input
-              className="w-full border rounded-lg px-3 py-2 mt-1 outline-none"
+              className={`w-full border rounded-lg px-3 py-2 mt-1 outline-none ${
+                errors.title && touched.title ? "border-red-500" : ""
+              }`}
               placeholder="Enter message title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
+              onBlur={() => {
+                setTouched((prev) => ({ ...prev, title: true }));
+                validate();
+              }}
               disabled={loading}
             />
+
+            {errors.title && touched.title && (
+              <p className="text-red-500 text-xs mt-1">{errors.title}</p>
+            )}
           </div>
 
+          {/* Message */}
           <div>
             <label className="text-xs text-gray-500">Message</label>
+
             <textarea
-              className="w-full border rounded-lg px-3 py-2 mt-1 h-28 resize-none outline-none"
+              className={`w-full border rounded-lg px-3 py-2 mt-1 h-28 resize-none outline-none ${
+                errors.body && touched.body ? "border-red-500" : ""
+              }`}
               placeholder="Type your message here..."
               value={body}
               onChange={(e) => setBody(e.target.value)}
+              onBlur={() => {
+                setTouched((prev) => ({ ...prev, body: true }));
+                validate();
+              }}
               disabled={loading}
             />
+
+            {errors.body && touched.body && (
+              <p className="text-red-500 text-xs mt-1">{errors.body}</p>
+            )}
           </div>
+
         </div>
 
         <div className="px-6 py-4 border-t flex justify-end gap-3">

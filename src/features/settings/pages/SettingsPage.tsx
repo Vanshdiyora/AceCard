@@ -25,7 +25,7 @@ export default function SettingsPage() {
 
   return (
     <div className="">
-      <div className="max-w-7xl mx-auto">
+      <div className="mx-auto">
 
         {/* Hide header in profile mode if you want */}
         {!isProfile && (
