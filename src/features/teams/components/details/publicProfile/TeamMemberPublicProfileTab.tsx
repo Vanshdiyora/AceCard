@@ -15,7 +15,7 @@ import SectionsReorder from "./sections/SectionsReorder";
 import { normalizeProfile } from "../../../../publicProfile/utils/normalizeProfile";
 import { ProColorPicker } from "../../../../../common/utils/ColorPicker";
 import DynamicForm, { type FieldConfig } from "../../../../../common/ui/DynamicForm";
-import MeetingSection from "./sections/MeetingSections";
+// import MeetingSection from "./sections/MeetingSections";
 import ProfileSection from "./sections/ProfileSection";
 import SocialSection from "./sections/SocialSection";
 import { fetchProducts } from "../../../../products/slice";
@@ -243,7 +243,7 @@ interface PublicProfileConfig {
   contact: ContactConfig;
   banner: BannerConfig;
 
-  meeting: MeetingConfig;
+  // meeting: MeetingConfig;
 
   social_links: LockMeta & {
     locked_by: string;
@@ -2286,7 +2286,7 @@ export default function TeamMemberPublicProfileTab({
         </CommonModal>
       </Card>
 
-      <Card title="Meeting Button" desc="Book a call / meeting link">
+      {/* <Card title="Meeting Button" desc="Book a call / meeting link">
         {showLockable && (
           <LockControl
             value={config.meeting}
@@ -2305,7 +2305,7 @@ export default function TeamMemberPublicProfileTab({
           value={config.meeting}
           onChange={(m: any) => update({ ...config, meeting: m })}
         />
-      </Card>
+      </Card> */}
 
       <Card title="Links & Files" desc="Add external links or downloadable files">
         {showLockable && (

@@ -132,26 +132,26 @@ export function normalizeProfile(api: any) {
     },
 
     /* ================= MEETING ================= */
-    meeting: normalizeMeeting(api),
+    // meeting: normalizeMeeting(api),
 
     /* ================= SOCIAL ================= */
-social_links: {
-  locked: Boolean(cfg.social_links?.locked),
-  lock_mode: cfg.social_links?.lock_mode ?? undefined,
-  locked_by: cfg?.social_links?.locked_by ?? "",
+    social_links: {
+      locked: Boolean(cfg.social_links?.locked),
+      lock_mode: cfg.social_links?.lock_mode ?? undefined,
+      locked_by: cfg?.social_links?.locked_by ?? "",
 
-  items: Array.isArray(cfg.social_links?.items)
-    ? [...cfg.social_links.items]
-        .sort((a: any, b: any) => (a.rank ?? 0) - (b.rank ?? 0))
-        .map((s: any, i: number) => ({
-          id: s.id ?? crypto.randomUUID(),
-          platform: s.platform ?? s.type ?? "",
-          url: s.url ?? "",
-          enabled: s.enabled ?? true,
-          rank: s.rank ?? i + 1,   // ✅ normalize rank
-        }))
-    : [],
-},
+      items: Array.isArray(cfg.social_links?.items)
+        ? [...cfg.social_links.items]
+          .sort((a: any, b: any) => (a.rank ?? 0) - (b.rank ?? 0))
+          .map((s: any, i: number) => ({
+            id: s.id ?? crypto.randomUUID(),
+            platform: s.platform ?? s.type ?? "",
+            url: s.url ?? "",
+            enabled: s.enabled ?? true,
+            rank: s.rank ?? i + 1,   // ✅ normalize rank
+          }))
+        : [],
+    },
 
 
     /* ================= PRODUCTS ================= */
@@ -206,18 +206,18 @@ social_links: {
 
 
 /* ================= SUB NORMALIZERS ================= */
-const normalizeMeeting = (api: any) => {
-  const m = api.configuration?.meeting ?? {};
-  return {
-    locked: Boolean(m.locked),
-    lock_mode: m.lock_mode ?? undefined,
-    locked_by: m?.locked_by ?? "",
-    enabled: Boolean(m.enabled),
-    type: m.type ?? "",
-    meeting_url: m.meeting_url ?? "",
-    button_text: m.button_text ?? "",
-  };
-};
+// const normalizeMeeting = (api: any) => {
+//   const m = api.configuration?.meeting ?? {};
+//   return {
+//     locked: Boolean(m.locked),
+//     lock_mode: m.lock_mode ?? undefined,
+//     locked_by: m?.locked_by ?? "",
+//     enabled: Boolean(m.enabled),
+//     type: m.type ?? "",
+//     meeting_url: m.meeting_url ?? "",
+//     button_text: m.button_text ?? "",
+//   };
+// };
 
 const normalizeYoutube = (api: any) => {
   const y = api.configuration?.youtube ?? {};
@@ -426,33 +426,33 @@ export function denormalizeProfile(
           })),
       },
       /* ================= MEETING ================= */
-      meeting: {
-        locked: cfg.meeting.locked,
-        lock_mode: cfg.meeting.lock_mode ?? null,
-        locked_by: cfg.meeting.locked_by,
+      // meeting: {
+      //   locked: cfg.meeting.locked,
+      //   lock_mode: cfg.meeting.lock_mode ?? null,
+      //   locked_by: cfg.meeting.locked_by,
 
-        enabled: cfg.meeting.enabled,
-        type: cfg.meeting.type,
-        meeting_url: cfg.meeting.meeting_url,
-        button_text: cfg.meeting.button_text,
-      },
+      //   enabled: cfg.meeting.enabled,
+      //   type: cfg.meeting.type,
+      //   meeting_url: cfg.meeting.meeting_url,
+      //   button_text: cfg.meeting.button_text,
+      // },
 
       /* ================= SOCIAL LINKS ================= */
       social_links: {
-  locked: cfg.social_links.locked,
-  lock_mode: cfg.social_links.lock_mode ?? null,
-  locked_by: cfg.social_links.locked_by,
+        locked: cfg.social_links.locked,
+        lock_mode: cfg.social_links.lock_mode ?? null,
+        locked_by: cfg.social_links.locked_by,
 
-  items: [...cfg.social_links.items]
-    .sort((a: any, b: any) => a.rank - b.rank)
-    .map((s: any) => ({
-      id: s.id,
-      platform: s.platform,
-      url: s.url,
-      rank: s.rank,
-      enabled: s.enabled ?? true,
-    })),
-},
+        items: [...cfg.social_links.items]
+          .sort((a: any, b: any) => a.rank - b.rank)
+          .map((s: any) => ({
+            id: s.id,
+            platform: s.platform,
+            url: s.url,
+            rank: s.rank,
+            enabled: s.enabled ?? true,
+          })),
+      },
 
       /* ================= PRODUCTS ================= */
       products: {

@@ -117,6 +117,7 @@ export interface UpdateMyAccountProfilePayload {
 export interface SuggestedQuestion {
   id: number;
   question: string;
+  rank: number;   // ✅ add this
   created_at?: string;
   updated_at?: string;
 }

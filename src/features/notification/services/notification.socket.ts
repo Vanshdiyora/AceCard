@@ -1,7 +1,6 @@
 let socket: WebSocket | null = null;
 
-const BASE_URL =
-  (import.meta as any).env?.VITE_API_BASE_URL || "http://localhost:8080";
+const BASE_URL = window.location.origin.replace(/^http/, "ws");
 
 export function connectNotificationSocket(
   token: string,

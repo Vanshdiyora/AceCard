@@ -6,7 +6,12 @@ import BrandLoader from "../../../common/ui/BrandLoader";
 import BlockingLoader from "../../../common/ui/BlockingLoader";
 import ResultModal from "../../../common/ui/ResultModal";
 import type { TeamMember } from "../../teams/types";
-
+import NotificationHistoryModal from "../components/NotificationHistoryModal";
+import { History } from "lucide-react";
+import {
+  fetchSentNotifications,
+  resetSentNotifications
+} from "../slice";
 import JoditEditor from "jodit-react";
 import "jodit/es2021/jodit.min.css";
 
@@ -35,7 +40,12 @@ export default function NotificationTeamPage() {
   const [resultOpen, setResultOpen] = useState(false);
   const [resultSuccess, setResultSuccess] = useState(false);
   const [resultMessage, setResultMessage] = useState("");
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [historySearch, setHistorySearch] = useState("");
 
+  const sentNotifications = useAppSelector((s) => s.notifications.sentList);
+  const historyLoading = useAppSelector((s) => s.notifications.sentLoading);
+  const historyMeta = useAppSelector((s) => s.notifications.sentMeta);
   const listRef = useRef<HTMLDivElement>(null);
 
   const isInitialLoading =
@@ -70,6 +80,31 @@ export default function NotificationTeamPage() {
     return () => clearTimeout(t);
   }, [search, dispatch]);
 
+  const loadMoreHistory = () => {
+    if (!historyMeta?.has_next || historyLoading) return;
+
+    dispatch(
+      fetchSentNotifications({
+        page: historyMeta.page + 1,
+        page_size: historyMeta.page_size,
+        search: historySearch,
+      })
+    );
+  };
+
+  useEffect(() => {
+    if (!historyOpen) return;
+
+    dispatch(resetSentNotifications());
+
+    dispatch(
+      fetchSentNotifications({
+        page: 1,
+        page_size: 10,
+        search: historySearch,
+      })
+    );
+  }, [historyOpen, historySearch, dispatch]);
   /* ======================================================
      FILTERED LIST
   ====================================================== */
@@ -271,6 +306,13 @@ export default function NotificationTeamPage() {
             </h1>
 
             <div className="flex gap-3">
+
+              <button
+                onClick={() => setHistoryOpen(true)}
+                className="px-1 py-2 rounded-lg flex items-center"
+              >
+                <History size={22} />
+              </button>
               <button
                 onClick={selectAll}
                 disabled={selectAllLoading}
@@ -279,8 +321,8 @@ export default function NotificationTeamPage() {
                 {allSelected
                   ? "Unselect All"
                   : selectAllLoading
-                  ? "Selecting..."
-                  : "Select All"}
+                    ? "Selecting..."
+                    : "Select All"}
               </button>
 
               <button
@@ -351,11 +393,10 @@ export default function NotificationTeamPage() {
                     <div
                       key={m.id}
                       onClick={() => !isSelected && toggleMember(m)}
-                      className={`px-4 py-3 text-sm ${
-                        isSelected
+                      className={`px-4 py-3 text-sm ${isSelected
                           ? "bg-gray-100 text-gray-400 cursor-not-allowed"
                           : "hover:bg-purple-50 cursor-pointer"
-                      }`}
+                        }`}
                     >
                       <div className="font-medium">{m.name}</div>
                       <div className="text-xs text-gray-500">{m.email}</div>
@@ -379,6 +420,15 @@ export default function NotificationTeamPage() {
           )}
         </div>
       </div>
+      <NotificationHistoryModal
+        open={historyOpen}
+        notifications={sentNotifications}
+        loading={historyLoading}
+        hasNext={historyMeta?.has_next}
+        onLoadMore={loadMoreHistory}
+        onSearch={(value) => setHistorySearch(value)}
+        onClose={() => setHistoryOpen(false)}
+      />
     </>
   );
 }

@@ -150,12 +150,6 @@ useEffect(() => {
       type: "email",
       required: true,
       placeholder: "poc@company.com",
-      validate: (value, form) => {
-        if (value && form.primary_email && value.trim().toLowerCase() === form.primary_email.trim().toLowerCase()) {
-          return "Vendor POC Email must be different from Primary Email";
-        }
-        return null;
-      },
     },
     {
       name: "subscription_end_date",
@@ -175,6 +169,7 @@ useEffect(() => {
         { label: "HubSpot", value: "hubspot" },
         { label: "Salesforce", value: "salesforce" },
         { label: "Odoo", value: "odoo" },
+        // { label: "Custom", value: "custom" },
       ],
       hideValues: false, // optional
     },

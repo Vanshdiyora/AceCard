@@ -23,7 +23,6 @@ const SECTION_LABELS: Record<string, string> = {
   links_files: "Links & Files",
   photo_gallery: "Photo Gallery",
   social_links: "Social Links",
-  meeting: "Meeting Button",
   contact: "Lead Capture",
 };
 

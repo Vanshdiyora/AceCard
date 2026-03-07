@@ -9,7 +9,14 @@ interface Props {
   positive?: boolean;
   icon?: React.ReactNode;
   color?: Theme;
+  period?: "day" | "week" | "month" | "year";
 }
+const periodLabelMap = {
+  day: "vs. prior day",
+  week: "vs. prior week",
+  month: "vs. prior month",
+  year: "vs. prior year",
+};
 
 const colorMap = {
   green: {
@@ -39,7 +46,6 @@ const colorMap = {
   },
 };
 
-
 export default function StatCard({
   title,
   value,
@@ -47,19 +53,18 @@ export default function StatCard({
   positive,
   icon,
   color = "blue",
+  period
 }: Props) {
   const percent =
     typeof change === "number"
       ? Math.min(Math.abs(change), 100)
       : 0;
 
-  // const strokeDash = 2 * Math.PI * 20;
-  // const dashOffset = strokeDash - (strokeDash * percent) / 100;
-
   return (
-    <div className="group relative bg-white/80 backdrop-blur p-5 rounded-2xl border shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5">
-      <div className="flex items-center justify-between">
-        {/* LEFT */}
+    <div className="group relative bg-white/80 backdrop-blur p-5 rounded-2xl border shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 flex flex-col h-full">
+      
+      {/* TOP CONTENT */}
+      <div className="flex items-start justify-between">
         <div className="space-y-2">
           <div
             className={`inline-flex p-2.5 rounded-xl shadow-sm ring-1 ${colorMap[color].ring} ${colorMap[color].bg}`}
@@ -67,53 +72,38 @@ export default function StatCard({
             <span className={colorMap[color].text}>{icon}</span>
           </div>
 
-
-
           <p className="text-sm text-gray-500">{title}</p>
 
           <h2 className="text-3xl font-semibold tracking-tight">
             {typeof value === "number" ? value.toLocaleString() : value}
           </h2>
         </div>
-
-        {/* RIGHT - PROGRESS */}
-        {change !== undefined && (
-          <div className="relative w-20 h-20">
-            <svg className="w-full h-full rotate-[-90deg]">
-              <circle
-                cx="40"
-                cy="40"
-                r="30"
-                stroke="#E5E7EB"
-                strokeWidth="5"
-                fill="none"
-              />
-              <circle
-                cx="40"
-                cy="40"
-                r="30"
-                stroke={positive ? "#16A34A" : "#DC2626"}
-                strokeWidth="5"
-                fill="none"
-                strokeDasharray={2 * Math.PI * 30}
-                strokeDashoffset={
-                  2 * Math.PI * 30 -
-                  ((2 * Math.PI * 30) * percent) / 100
-                }
-                strokeLinecap="round"
-              />
-            </svg>
-
-            <span
-              className={`absolute inset-0 flex items-center justify-center text-base ${positive ? "text-green-600" : "text-red-600"
-                }`}
-            >
-              {percent}%
-            </span>
-          </div>
-        )}
-
       </div>
+
+      {/* CHANGE INDICATOR - BOTTOM */}
+    {change !== undefined && (
+  <div className="flex items-center gap-1 text-sm mt-auto pt-4">
+    <span
+      className={`text-xs ${
+        positive ? "text-green-600" : "text-red-600"
+      }`}
+    >
+      {positive ? "▲" : "▼"}
+    </span>
+
+    <span
+      className={`font-medium ${
+        positive ? "text-green-600" : "text-red-600"
+      }`}
+    >
+      {percent}%
+    </span>
+
+    <span className="text-gray-400">
+      {periodLabelMap[period ?? "month"]}
+    </span>
+  </div>
+)}
     </div>
   );
 }

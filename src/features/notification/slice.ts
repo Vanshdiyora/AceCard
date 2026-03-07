@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { notificationService } from "./services/notification.service";
-import type { Notification } from "./types";
+import type { Notification, SentNotification } from "./types";
 
 export const fetchNotifications = createAsyncThunk(
   "notifications/fetch",
@@ -74,6 +74,27 @@ export const archiveAllNotifications = createAsyncThunk(
   }
 );
 
+export const fetchSentNotifications = createAsyncThunk(
+  "notifications/fetchSent",
+  async ({
+    page = 1,
+    page_size = 10,
+    search,
+  }: {
+    page?: number;
+    page_size?: number;
+    search?: string;
+  }) => {
+    const res = await notificationService.getSentNotifications(
+      page,
+      page_size,
+      search
+    );
+
+    return res;
+  }
+);
+
 export const sendTeamNotification = createAsyncThunk(
   "notifications/sendTeam",
   async (payload: {
@@ -99,6 +120,16 @@ interface State {
     total_pages: number;
     has_next: boolean;
   };
+  sentList: SentNotification[];
+  sentLoading: boolean;
+  sentMeta?: {
+    total_count: number;
+    page: number;
+    page_size: number;
+    total_pages: number;
+    has_next: boolean;
+    has_previous: boolean;
+  };
 }
 
 const initialState: State = {
@@ -107,6 +138,9 @@ const initialState: State = {
   sending: false,
   archiving: false,
   meta: undefined,
+  sentList: [],
+  sentLoading: false,
+  sentMeta: undefined,
 };
 
 const notificationSlice = createSlice({
@@ -122,6 +156,10 @@ const notificationSlice = createSlice({
     clearArchiveError: (state) => {
       state.archiveError = undefined;
     },
+    resetSentNotifications: (state) => {
+  state.sentList = [];
+  state.sentMeta = undefined;
+}
   },
   extraReducers: (builder) => {
     builder
@@ -150,67 +188,87 @@ const notificationSlice = createSlice({
         }
       })
 
-    .addCase(markAll.fulfilled, (state) => {
-      state.list.forEach((n) => {
-        n.is_read = true;
-        n.status = "read";
-      });
-    })
+      .addCase(markAll.fulfilled, (state) => {
+        state.list.forEach((n) => {
+          n.is_read = true;
+          n.status = "read";
+        });
+      })
 
-    .addCase(sendVendorNotification.pending, (state) => {
-      state.sending = true;
-    })
-    .addCase(sendVendorNotification.fulfilled, (state) => {
-      state.sending = false;
-    })
-    .addCase(sendVendorNotification.rejected, (state) => {
-      state.sending = false;
-    })
+      .addCase(sendVendorNotification.pending, (state) => {
+        state.sending = true;
+      })
+      .addCase(sendVendorNotification.fulfilled, (state) => {
+        state.sending = false;
+      })
+      .addCase(sendVendorNotification.rejected, (state) => {
+        state.sending = false;
+      })
 
-    .addCase(archiveNotification.pending, (state) => {
-      state.archiving = true;
-      state.archiveError = undefined;
-    })
+      .addCase(archiveNotification.pending, (state) => {
+        state.archiving = true;
+        state.archiveError = undefined;
+      })
 
-    .addCase(archiveNotification.fulfilled, (state, action) => {
-      state.archiving = false;
-      state.list = state.list.filter((n) => n.id !== action.payload);
-    })
+      .addCase(archiveNotification.fulfilled, (state, action) => {
+        state.archiving = false;
+        state.list = state.list.filter((n) => n.id !== action.payload);
+      })
 
-    .addCase(archiveNotification.rejected, (state, action) => {
-      state.archiving = false;
-      state.archiveError = action.payload as string;
-    })
+      .addCase(archiveNotification.rejected, (state, action) => {
+        state.archiving = false;
+        state.archiveError = action.payload as string;
+      })
 
-    .addCase(archiveAllNotifications.pending, (state) => {
-      state.archiving = true;
-      state.archiveError = undefined;
-    })
+      .addCase(archiveAllNotifications.pending, (state) => {
+        state.archiving = true;
+        state.archiveError = undefined;
+      })
 
-    .addCase(archiveAllNotifications.fulfilled, (state) => {
-      state.archiving = false;
-      state.list = []; // clear all notifications
-    })
+      .addCase(archiveAllNotifications.fulfilled, (state) => {
+        state.archiving = false;
+        state.list = []; // clear all notifications
+      })
 
-    .addCase(archiveAllNotifications.rejected, (state, action) => {
-      state.archiving = false;
-      state.archiveError = action.payload as string;
-    })
+      .addCase(archiveAllNotifications.rejected, (state, action) => {
+        state.archiving = false;
+        state.archiveError = action.payload as string;
+      })
 
-    .addCase(sendTeamNotification.pending, (state) => {
-      state.sending = true;
-    })
-    .addCase(sendTeamNotification.fulfilled, (state) => {
-      state.sending = false;
-    })
-    .addCase(sendTeamNotification.rejected, (state) => {
-      state.sending = false;
-    })
+      .addCase(sendTeamNotification.pending, (state) => {
+        state.sending = true;
+      })
+      .addCase(sendTeamNotification.fulfilled, (state) => {
+        state.sending = false;
+      })
+      .addCase(sendTeamNotification.rejected, (state) => {
+        state.sending = false;
+      })
 
+      .addCase(fetchSentNotifications.pending, (state) => {
+        state.sentLoading = true;
+      })
 
+.addCase(fetchSentNotifications.fulfilled, (state, action) => {
+  const { data, meta } = action.payload;
 
-},
+  const safeData = data ?? [];
+
+  if (meta.page === 1) {
+    state.sentList = safeData;
+  } else {
+    state.sentList.push(...safeData);
+  }
+
+  state.sentMeta = meta;
+  state.sentLoading = false;
+})
+      .addCase(fetchSentNotifications.rejected, (state) => {
+        state.sentLoading = false;
+      })
+
+  },
 });
 
-export const { pushNotification, clearArchiveError } = notificationSlice.actions;
+export const { pushNotification, clearArchiveError, resetSentNotifications  } = notificationSlice.actions;
 export default notificationSlice.reducer;

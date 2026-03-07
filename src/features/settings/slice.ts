@@ -285,6 +285,10 @@ const settingsSlice = createSlice({
   initialState,
   reducers: {
     resetSettings: () => initialState,
+
+    reorderSuggestedQuestions: (state, action) => {
+      state.suggestedQuestions.data = action.payload;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -509,5 +513,5 @@ const settingsSlice = createSlice({
   },
 });
 
-export const { resetSettings } = settingsSlice.actions;
+export const { resetSettings,reorderSuggestedQuestions  } = settingsSlice.actions;
 export default settingsSlice.reducer;

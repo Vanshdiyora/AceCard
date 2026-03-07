@@ -46,6 +46,7 @@ export default function DashboardPage() {
             positive={data.pipeline.percentage >= 0}
             icon={<TrendingUp size={18} />}
             color="green"
+              period={period}
           />
           <StatCard
             title="Total Visits"
@@ -54,6 +55,7 @@ export default function DashboardPage() {
             positive={data.card_taps.percentage >= 0}
             icon={<MousePointerClick size={18} />}
             color="blue"
+              period={period}
           />
 
           <StatCard
@@ -63,6 +65,7 @@ export default function DashboardPage() {
             positive={data.leads_captured.percentage >= 0}
             icon={<Users size={18} />}
             color="purple"
+              period={period}
           />
 
           <StatCard
@@ -72,6 +75,7 @@ export default function DashboardPage() {
             positive={data.tap_lead_ratio.percentage >= 0}
             icon={<Percent size={18} />}
             color="orange"
+              period={period}
           />
 
         </div>

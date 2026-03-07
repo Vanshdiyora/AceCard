@@ -11,7 +11,7 @@ export function BudgetProgressBar({
         <div className="flex items-center gap-4 rounded-2xl border border-blue-100 bg-gradient-to-br from-white to-blue-50 px-4 py-2 shadow-sm">
             <div className="flex flex-col leading-tight">
                 <span className="text-[11px] uppercase tracking-wide text-gray-500">
-                    Target used
+                    Target
                 </span>
                 <span className="text-sm font-semibold text-gray-800">
                     ₹{used.toLocaleString()}

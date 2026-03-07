@@ -18,4 +18,13 @@ export interface Notification {
   category?: NotificationCategory;
   reference_id?: number;
   reference_slug?: string;
+    sent_to?: string[];
+}
+
+export interface SentNotification {
+  id: number;
+  message_title: string;
+  message_body: string;
+  created_at: string;
+  sent_to: string[];
 }

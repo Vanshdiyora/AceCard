@@ -60,87 +60,87 @@ export default function AvatarCropModal({ file, onCancel, onSave }: Props) {
     );
   };
 
-return createPortal(
-  <div className="fixed inset-0 z-[9999] flex items-center justify-center animate-fadeIn">
-    {/* BACKDROP */}
-    <div
-      className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-      onClick={onCancel}
-    />
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center animate-fadeIn">
+      {/* BACKDROP */}
+      <div
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        onClick={onCancel}
+      />
 
-    {/* MODAL */}
-    <div
-      className="relative w-[720px] max-w-[95vw] rounded-3xl overflow-hidden
+      {/* MODAL */}
+      <div
+        className="relative w-[720px] max-w-[95vw] rounded-3xl overflow-hidden
       bg-white/90 backdrop-blur-xl shadow-[0_20px_80px_rgba(0,0,0,0.45)]
       border border-white/30 animate-scaleIn"
-    >
-      {/* HEADER */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-white/20 bg-white/70">
-        <h3 className="text-lg font-semibold tracking-wide">
-          Adjust your profile photo
-        </h3>
-        <button
-          onClick={onCancel}
-          className="w-9 h-9 rounded-full flex items-center justify-center
-          hover:bg-black/10 transition"
-        >
-          ✕
-        </button>
-      </div>
-
-      {/* CROPPER */}
-      <div className="relative w-full h-[60vh] max-h-[420px] bg-black">
-        {imageUrl && (
-          <Cropper
-            image={imageUrl}
-            crop={crop}
-            zoom={zoom}
-            aspect={1}
-            cropShape="round"
-            showGrid={false}
-            objectFit="horizontal-cover"
-            onCropChange={setCrop}
-            onZoomChange={setZoom}
-            onCropComplete={onCropComplete}
-          />
-        )}
-      </div>
-
-      {/* FOOTER */}
-      <div className="px-6 py-5 flex flex-col sm:flex-row gap-4 sm:items-center sm:justify-between bg-white/70">
-        {/* ZOOM */}
-        <div className="flex items-center gap-3 w-full sm:w-auto">
-          <span className="text-sm text-gray-500">Zoom</span>
-          <input
-            type="range"
-            min={1}
-            max={3}
-            step={0.01}
-            value={zoom}
-            onChange={(e) => setZoom(Number(e.target.value))}
-            className="w-full sm:w-48 accent-black cursor-pointer"
-          />
-        </div>
-
-        {/* ACTIONS */}
-        <div className="flex justify-end gap-3">
+      >
+        {/* HEADER */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-white/20 bg-white/70">
+          <h3 className="text-lg font-semibold tracking-wide">
+            Adjust your profile photo
+          </h3>
           <button
             onClick={onCancel}
-            className="px-5 py-2 rounded-xl border bg-white hover:bg-gray-50 transition"
+            className="w-9 h-9 rounded-full flex items-center justify-center
+          hover:bg-black/10 transition"
           >
-            Cancel
-          </button>
-          <button
-            onClick={async () => onSave(await getCroppedBlob())}
-            className="px-6 py-2 rounded-xl text-white bg-gradient-to-r from-black to-gray-800 shadow-md hover:opacity-90 transition"
-          >
-            Save Photo
+            ✕
           </button>
         </div>
+
+        {/* CROPPER */}
+        <div className="relative w-full h-[60vh] max-h-[420px] bg-black">
+          {imageUrl && (
+            <Cropper
+              image={imageUrl}
+              crop={crop}
+              zoom={zoom}
+              aspect={1}
+              cropShape="round"
+              showGrid={false}
+              objectFit="contain"
+              onCropChange={setCrop}
+              onZoomChange={setZoom}
+              onCropComplete={onCropComplete}
+            />
+          )}
+        </div>
+
+        {/* FOOTER */}
+        <div className="px-6 py-5 flex flex-col sm:flex-row gap-4 sm:items-center sm:justify-between bg-white/70">
+          {/* ZOOM */}
+          <div className="flex items-center gap-3 w-full sm:w-auto">
+            <span className="text-sm text-gray-500">Zoom</span>
+           <input
+  type="range"
+  min={0.5}
+  max={3}
+  step={0.01}
+  value={zoom}
+  onChange={(e) => setZoom(Number(e.target.value))}
+  className="w-full sm:w-48 accent-black cursor-pointer"
+/>
+          </div>
+
+          {/* ACTIONS */}
+          <div className="flex justify-end gap-3">
+            <button
+              onClick={onCancel}
+              className="px-5 py-2 rounded-xl border bg-white hover:bg-gray-50 transition"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={async () => onSave(await getCroppedBlob())}
+              className="px-6 py-2 rounded-xl text-white bg-gradient-to-r from-black to-gray-800 shadow-md hover:opacity-90 transition"
+            >
+              Save Photo
+            </button>
+          </div>
+        </div>
       </div>
-    </div>
-  </div>,
-  document.body
-);
+    </div>,
+    document.body
+  );
 
 }

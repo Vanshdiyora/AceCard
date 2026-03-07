@@ -1,15 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { useAppDispatch, useAppSelector } from "../../../../app/hooks";
 import { fetchMemberAnalytics } from "../../slice";
-import {
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  CartesianGrid,
-  BarChart,
-  Bar,
-} from "recharts";
 import PipelineAreaChart from "../../../../common/components/cards/PipelineAreaChart";
 import {
   Users,
@@ -200,36 +191,53 @@ export default function TeamMemberAnalyticsTab({
 
       </div>
 
-      {/* CAMPAIGN */}
       {a.campaign_contribution?.length > 0 && (
         <div className="bg-white rounded-2xl p-6 shadow-lg">
-          <h3 className="font-medium mb-3 text-gray-700">
+          <h3 className="font-medium mb-5 text-gray-700">
             Campaign Contribution
           </h3>
 
-          <ResponsiveContainer width="100%" height={260}>
-            <BarChart data={a.campaign_contribution}>
-              <XAxis dataKey="campaign_name" />
-              <YAxis tickFormatter={formatAxis} />
-              <Tooltip
-                formatter={(value: number | undefined) => [
-                  `${(formatRupees(value) ?? 0).toLocaleString()}`,
-                  "Amount",
-                ]}
-                contentStyle={{
-                  borderRadius: "12px",
-                  border: "1px solid #e5e7eb",
-                }}
-              />
+          <div className="space-y-6">
+            {(() => {
+              const total = a.campaign_contribution.reduce(
+                (sum: number, item: any) => sum + item.value,
+                0
+              );
 
-              <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-              <Bar
-                dataKey="value"
-                fill="#8b5cf6"
-                radius={[6, 6, 0, 0]}
-              />
-            </BarChart>
-          </ResponsiveContainer>
+              return a.campaign_contribution.map((item: any) => {
+                const percent = total ? (item.value / total) * 100 : 0;
+
+                return (
+                  <div key={item.employee_name} className="space-y-1">
+
+                    <div className="flex justify-between text-sm">
+                      <div>
+                        <p className="font-medium text-gray-700">
+                          {item.employee_name}
+                        </p>
+
+                        <p className="text-xs text-gray-400">
+                          {formatRupees(item.value)}
+                        </p>
+                      </div>
+
+                      <span className="font-semibold text-gray-600">
+                        {percent.toFixed(0)}%
+                      </span>
+                    </div>
+
+                    <div className="w-full h-2.5 bg-gray-200 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-purple-500 rounded-full"
+                        style={{ width: `${percent}%` }}
+                      />
+                    </div>
+
+                  </div>
+                );
+              });
+            })()}
+          </div>
         </div>
       )}
     </div>

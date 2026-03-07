@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import type { TeamPermissions } from "../types";
+import { Check } from "lucide-react";
 
 const ALL_KEYS: (keyof TeamPermissions)[] = [
   "manage_team",
@@ -31,6 +32,17 @@ const EMPTY_PERMISSIONS: TeamPermissions = {
   view_analytics: false,
 };
 
+const LABELS: Record<keyof TeamPermissions, string> = {
+  manage_team: "Manage team",
+  manage_products: "Manage products",
+  manage_campaigns: "Manage campaigns",
+  view_leads: "View leads",
+  edit_leads: "Edit leads",
+  archive_leads: "Archive leads",
+  send_notifications: "Send notifications",
+  view_analytics: "View analytics",
+};
+
 export default function PermissionsModal({
   open,
   permissions,
@@ -60,41 +72,68 @@ export default function PermissionsModal({
 
   if (!open) return null;
 
+  const toggle = (key: keyof TeamPermissions) => {
+    setForm((prev) => ({
+      ...prev,
+      [key]: !prev[key],
+    }));
+  };
+
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-      <div className="bg-white p-6 rounded-xl w-96 shadow-lg">
-        <h2 className="text-xl font-semibold mb-4">Update Permissions</h2>
+      <div className="bg-white w-[420px] rounded-3xl shadow-xl overflow-hidden">
 
-        <div className="space-y-2">
-          {visibleKeys.map((key) => (
-            <label key={key} className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={form[key]}
-                onChange={(e) =>
-                  setForm((prev) => ({
-                    ...prev,
-                    [key]: e.target.checked,
-                  }))
-                }
-              />
-              {key.replace(/_/g, " ")}
-            </label>
-          ))}
+        {/* HEADER */}
+        <div className="px-6 py-4 border-b">
+          <h2 className="text-lg font-semibold">Update Permissions</h2>
         </div>
 
-        <div className="flex justify-end gap-2 mt-5">
+        {/* LIST */}
+        <div className="divide-y">
+
+          {visibleKeys.map((key) => {
+            const active = form[key];
+
+            return (
+              <button
+                key={key}
+                onClick={() => toggle(key)}
+                className="group w-full flex items-center gap-4 px-6 py-4 text-left hover:bg-gray-50 transition"
+              >
+                {/* CIRCLE ICON */}
+                {active ? (
+                  <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center">
+                    <Check size={14} className="text-white" />
+                  </div>
+                ) : (
+                  <div className="w-6 h-6 rounded-full border-2 border-dashed border-gray-300 group-hover:border-yellow-500 transition" />
+                )}
+
+                {/* TEXT */}
+                <span
+                  className={`text-sm ${
+                    active ? "text-gray-400" : "text-gray-900"
+                  }`}
+                >
+                  {LABELS[key]}
+                </span>
+              </button>
+            );
+          })}
+
+        </div>
+
+        {/* ACTIONS */}
+        <div className="flex justify-end gap-2 p-4 border-t">
           <button
-            type="button"
-            className="px-4 py-2 border rounded"
+            className="px-4 py-2 text-sm border rounded-lg"
             onClick={onClose}
           >
             Cancel
           </button>
 
           <button
-            type="button"
-            className="px-4 py-2 bg-purple-600 text-white rounded"
+            className="px-4 py-2 text-sm bg-purple-600 text-white rounded-lg hover:bg-purple-700"
             onClick={() => onSubmit(form)}
           >
             Save

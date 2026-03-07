@@ -167,7 +167,7 @@ export default function MobileWebsite({
     theme,
     contact,
     banner,
-    meeting,
+    // meeting,
     social_links,
     youtube,
     links_files,
@@ -226,16 +226,18 @@ export default function MobileWebsite({
 
       case "about":
         return profile.description ? (
-          <Section title="About" theme={theme}>
+          <Section title="" theme={theme}>
             <p
               className="text-sm leading-relaxed"
-              style={{ color: theme.card_text }}
+              style={{
+                color: theme.card_text,
+                textAlign: layout?.card_alignment || "left"
+              }}
             >
               {profile.description}
             </p>
           </Section>
         ) : null;
-
 
       case "social_links":
         return (
@@ -295,10 +297,10 @@ export default function MobileWebsite({
           />
         );
 
-      case "meeting":
-        return meeting?.enabled ? (
-          <MeetingCTA meeting={meeting} theme={theme} shapeClass={shapeClass} />
-        ) : null;
+      // case "meeting":
+      //   return meeting?.enabled ? (
+      //     <MeetingCTA meeting={meeting} theme={theme} shapeClass={shapeClass} />
+      //   ) : null;
 
       case "banner":
         return banner?.enabled && banner?.image_url ? (
@@ -563,22 +565,22 @@ export const formatRole = (role?: string) => {
 
 /* ================= MEETING ================= */
 
-function MeetingCTA({ meeting, theme, shapeClass }: any) {
-  const t = resolveTheme(theme);
+// function MeetingCTA({ meeting, theme, shapeClass }: any) {
+//   const t = resolveTheme(theme);
 
-  return (
-    <div className="">
-      <a
-        href={meeting.meeting_url}
-        className={`w-full block text-center py-3 text-sm font-semibold shadow-md ${shapeClass}`}
-        style={{ backgroundColor: t.buttonBg, color: t.buttonText }}
-      >
+//   return (
+//     <div className="">
+//       <a
+//         href={meeting.meeting_url}
+//         className={`w-full block text-center py-3 text-sm font-semibold shadow-md ${shapeClass}`}
+//         style={{ backgroundColor: t.buttonBg, color: t.buttonText }}
+//       >
 
-        {meeting.button_text || "BOOK A MEETING NOW!"}
-      </a>
-    </div>
-  );
-}
+//         {meeting.button_text || "BOOK A MEETING NOW!"}
+//       </a>
+//     </div>
+//   );
+// }
 
 /* ================= PRODUCTS ================= */
 export function Products({
@@ -740,11 +742,11 @@ function Social({ items, theme, shapeClass }: any) {
   }
 
   return (
-    <div className="flex flex-col items-center gap-4">
+    <div className="flex flex-col items-center gap-3">
       {rows.map((row, rIdx) => (
         <div
           key={rIdx}
-          className={`flex gap-4 ${row.length < 3 ? "justify-center" : "justify-between"
+          className={`flex gap-3 ${row.length < 3 ? "justify-center" : "justify-between"
             } w-full`}
         >
           {row.map((s: any) => (
@@ -753,34 +755,33 @@ function Social({ items, theme, shapeClass }: any) {
               href={s.url}
               target="_blank"
               rel="noopener noreferrer"
-              className={`h-20 w-20 flex items-center justify-center shadow-md transition hover:scale-105 overflow-hidden ${shapeClass}`}
+              className={`h-16 w-16 flex items-center justify-center shadow-md transition hover:scale-105 overflow-hidden ${shapeClass}`}
               style={{
                 backgroundColor: t.buttonBg,
                 color: t.buttonText,
               }}
             >
-              {s.id === "instagram" && <SiInstagram size={30} />}
-              {s.id === "linkedin" && <SiLinkedin size={30} />}
-              {s.id === "youtube" && <SiYoutube size={30} />}
-              {s.id === "twitter" && <SiX size={30} />}
-              {s.id === "facebook" && <SiFacebook size={30} />}
-              {s.id === "whatsapp" && <SiWhatsapp size={30} />}
-              {s.id === "phone" && <FiPhone size={30} />}
-              {s.id === "website" && <FiGlobe size={30} />}
-              {s.id === "snapchat" && <SiSnapchat size={30} />}
-              {s.id === "tiktok" && <SiTiktok size={30} />}
-              {s.id === "address" && <FiMapPin size={30} />}
-              {s.id === "email" && <FiMail size={30} />}
-              {s.id === "telegram" && <SiTelegram size={30} />}
-              {s.id === "pinterest" && <SiPinterest size={30} />}
-              {s.id === "threads" && <SiThreads size={30} />}
-              {s.id === "github" && <SiGithub size={30} />}
-              {s.id === "discord" && <SiDiscord size={30} />}
-              {s.id === "calendly" && <SiCalendly size={30} />}
-              {s.id === "appstore" && <SiAppstore size={30} />}
-              {s.id === "playstore" && <SiGoogleplay size={30} />}
-              {s.id === "sms" && <FiMessageSquare size={30} />}
-
+              {s.id === "instagram" && <SiInstagram size={40} />}
+              {s.id === "linkedin" && <SiLinkedin size={40} />}
+              {s.id === "youtube" && <SiYoutube size={40} />}
+              {s.id === "twitter" && <SiX size={40} />}
+              {s.id === "facebook" && <SiFacebook size={40} />}
+              {s.id === "whatsapp" && <SiWhatsapp size={40} />}
+              {s.id === "phone" && <FiPhone size={40} />}
+              {s.id === "website" && <FiGlobe size={40} />}
+              {s.id === "snapchat" && <SiSnapchat size={40} />}
+              {s.id === "tiktok" && <SiTiktok size={40} />}
+              {s.id === "address" && <FiMapPin size={40} />}
+              {s.id === "email" && <FiMail size={40} />}
+              {s.id === "telegram" && <SiTelegram size={40} />}
+              {s.id === "pinterest" && <SiPinterest size={40} />}
+              {s.id === "threads" && <SiThreads size={40} />}
+              {s.id === "github" && <SiGithub size={40} />}
+              {s.id === "discord" && <SiDiscord size={40} />}
+              {s.id === "calendly" && <SiCalendly size={40} />}
+              {s.id === "appstore" && <SiAppstore size={40} />}
+              {s.id === "playstore" && <SiGoogleplay size={40} />}
+              {s.id === "sms" && <FiMessageSquare size={40} />}
             </a>
           ))}
         </div>

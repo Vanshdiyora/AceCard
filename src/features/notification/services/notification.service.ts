@@ -19,6 +19,16 @@ export const notificationService = {
     return res.data;
   },
 
+getSentNotifications: async (
+  page = 1,
+  page_size = 10,
+  search?: string
+) => {
+  const res = await axiosClient.get("/admin/notifications/sent", {
+    params: { page, page_size, search },
+  });
+  return res.data;
+},
 
   markAsRead: async (id: number) => {
     await axiosClient.put(`${BASE}/${id}/read`);

@@ -6,7 +6,7 @@ const ALL_SECTIONS = [
   { id: "photo_gallery", label: "Photo Gallery" },
   { id: "youtube", label: "Videos" },
   { id: "links_files", label: "Links & Files" },
-  { id: "meeting", label: "Meeting Button" },
+  // { id: "meeting", label: "Meeting Button" },
   { id: "banner", label: "Banner" },
   { id: "social_links", label: "Social Links" },
   { id: "contact", label: "Contact" },

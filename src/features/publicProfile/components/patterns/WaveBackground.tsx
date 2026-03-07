@@ -17,21 +17,19 @@ export function WaveBackground({
       preserveAspectRatio="none"
     >
       <defs>
-        {/* Gradient A */}
         <linearGradient id={g0} gradientTransform="rotate(90)">
           <stop offset="5%" stopColor={color} stopOpacity="0.9" />
-          <stop offset="95%" stopColor={color} stopOpacity="0.5" />
+          <stop offset="95%" stopColor={color} stopOpacity="1" />
         </linearGradient>
 
-        {/* Gradient B */}
         <linearGradient id={g1} gradientTransform="rotate(90)">
-          <stop offset="5%" stopColor={color} stopOpacity="0.5" />
+          <stop offset="1%" stopColor={color} stopOpacity="0.5" />
           <stop offset="95%" stopColor={color} stopOpacity="0.9" />
         </linearGradient>
       </defs>
 
       {/* Base Background */}
-      <rect width="100%" height="100%" fill={color} opacity={0.3} />
+      <rect width="100%" height="100%" fill={color} opacity={0.12} />
 
       <g transform="translate(0 90)">
         <g>

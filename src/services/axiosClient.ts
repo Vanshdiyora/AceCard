@@ -5,7 +5,7 @@ const BASE_URL = "https://api.theacecard.co";
 
 const axiosClient = axios.create({
   baseURL: BASE_URL,
-  timeout: 10000,
+  timeout: 30000,
   withCredentials: true,
 });
 

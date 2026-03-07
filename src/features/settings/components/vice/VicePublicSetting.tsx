@@ -14,7 +14,7 @@ import SectionsReorder from "./sections/SectionsReorder";
 import { normalizeProfile } from "../../../publicProfile/utils/normalizeProfile";
 import { ProColorPicker } from "../../../../common/utils/ColorPicker";
 import DynamicForm, { type FieldConfig } from "../../../../common/ui/DynamicForm";
-import MeetingSection from "./sections/MeetingSections";
+// import MeetingSection from "./sections/MeetingSections";
 import ProfileSection from "./sections/ProfileSection";
 import SocialSection, { ALL_SOCIALS } from "./sections/SocialSection";
 import { fetchProducts } from "../../../products/slice";
@@ -273,13 +273,13 @@ export interface ProductsConfig extends LockMeta {
 }
 
 
-export interface MeetingConfig extends LockMeta {
-  enabled: boolean;
-  type: string;
-  meeting_url: string;
-  button_text: string;
-  locked_by: string;
-}
+// export interface MeetingConfig extends LockMeta {
+//   enabled: boolean;
+//   type: string;
+//   meeting_url: string;
+//   button_text: string;
+//   locked_by: string;
+// }
 export interface CoverConfig extends LockMeta {
   cover_url?: string;
   locked_by: string;
@@ -323,7 +323,7 @@ interface PublicProfileConfig {
   contact: ContactConfig;
   banner: BannerConfig;
 
-  meeting: MeetingConfig;
+  // meeting: MeetingConfig;
 
   social_links: SocialLinksConfig;
 
@@ -819,30 +819,30 @@ export default function VicePublicSetting({
     meta?.locked === true && role !== "vendor_admin";
 
   const SECTION_COMPONENTS: Record<string, React.ReactNode> = {
-    meeting: sectionDraft && (
-      <div className="space-y-6">
+    // meeting: sectionDraft && (
+    //   <div className="space-y-6">
 
-        {showLockable && (
-          <LockControl
-            value={sectionDraft}
-            role={config.role}
-            currentUser={username}
-            onChange={(v) =>
-              setSectionDraft({
-                ...sectionDraft,
-                ...v,
-              })
-            }
-          />
-        )}
+    //     {showLockable && (
+    //       <LockControl
+    //         value={sectionDraft}
+    //         role={config.role}
+    //         currentUser={username}
+    //         onChange={(v) =>
+    //           setSectionDraft({
+    //             ...sectionDraft,
+    //             ...v,
+    //           })
+    //         }
+    //       />
+    //     )}
 
-        <MeetingSection
-          disabled={isReadOnly(sectionDraft)}
-          value={sectionDraft}
-          onChange={(v) => setSectionDraft(v)}
-        />
-      </div>
-    ),
+    //     <MeetingSection
+    //       disabled={isReadOnly(sectionDraft)}
+    //       value={sectionDraft}
+    //       onChange={(v) => setSectionDraft(v)}
+    //     />
+    //   </div>
+    // ),
 
     youtube: sectionDraft && (
       <div className="space-y-6">
@@ -1303,26 +1303,26 @@ export default function VicePublicSetting({
         )}
 
         <SocialSection
-  items={sectionDraft.items}
-  disabled={isReadOnly(sectionDraft)}
-  onChange={(items: any[]) => {
-    setSocialError(null);
+          items={sectionDraft.items}
+          disabled={isReadOnly(sectionDraft)}
+          onChange={(items: any[]) => {
+            setSocialError(null);
 
-    const normalized = items.map((item, index) => ({
-      ...item,
-      rank: index + 1, // ✅ normalize after drag
-    }));
+            const normalized = items.map((item, index) => ({
+              ...item,
+              rank: index + 1, // ✅ normalize after drag
+            }));
 
-    setSectionDraft({
-      ...sectionDraft,
-      items: normalized,
-    });
-  }}
-  onAddClick={() => {
-    setActiveSection(null);
-    setIsAddSocialOpen(true);
-  }}
-/>
+            setSectionDraft({
+              ...sectionDraft,
+              items: normalized,
+            });
+          }}
+          onAddClick={() => {
+            setActiveSection(null);
+            setIsAddSocialOpen(true);
+          }}
+        />
         {socialError && (
           <p className="text-sm text-red-600">
             {socialError}
@@ -1636,7 +1636,7 @@ export default function VicePublicSetting({
   };
 
   const SECTION_LABELS: Record<string, string> = {
-    meeting: "Meeting Button",
+    // meeting: "Meeting Button",
     youtube: "Videos",
     links_files: "Links & Files",
     photo_gallery: "Photo Gallery",
@@ -1680,20 +1680,20 @@ export default function VicePublicSetting({
         }
       }
     }
-    if (activeSection === "meeting") {
-      if (sectionDraft.enabled) {
-        if (!sectionDraft.meeting_url?.trim()) {
-          setModalError("Please enter a meeting URL.");
-          return false;
-        }
-        if (!isValidUrl(sectionDraft.meeting_url.trim())) {
-          setModalError(
-            "Meeting URL is invalid. Make sure it starts with https:// or http://"
-          );
-          return false;
-        }
-      }
-    }
+    // if (activeSection === "meeting") {
+    //   if (sectionDraft.enabled) {
+    //     if (!sectionDraft.meeting_url?.trim()) {
+    //       setModalError("Please enter a meeting URL.");
+    //       return false;
+    //     }
+    //     if (!isValidUrl(sectionDraft.meeting_url.trim())) {
+    //       setModalError(
+    //         "Meeting URL is invalid. Make sure it starts with https:// or http://"
+    //       );
+    //       return false;
+    //     }
+    //   }
+    // }
     // YouTube
     if (activeSection === "youtube") {
       for (const item of sectionDraft.items) {
@@ -1846,32 +1846,32 @@ export default function VicePublicSetting({
     }
 
     if (activeSection === "social_links") {
-  if (hasInvalidSocialLinks(sectionDraft.items)) {
-    setSocialError(
-      "One or more social links have an invalid URL. Make sure all links start with https:// or http://"
-    );
-    return;
-  }
+      if (hasInvalidSocialLinks(sectionDraft.items)) {
+        setSocialError(
+          "One or more social links have an invalid URL. Make sure all links start with https:// or http://"
+        );
+        return;
+      }
 
-  const normalizedItems = sectionDraft.items
-    .sort((a: any, b: any) => a.rank - b.rank)
-    .map((item: any, index: number) => ({
-      ...item,
-      rank: index + 1, // ✅ enforce correct rank
-    }));
+      const normalizedItems = sectionDraft.items
+        .sort((a: any, b: any) => a.rank - b.rank)
+        .map((item: any, index: number) => ({
+          ...item,
+          rank: index + 1, // ✅ enforce correct rank
+        }));
 
-  nextConfig = {
-    ...nextConfig,
-    social_links: {
-      ...sectionDraft,
-      items: normalizedItems,
-    },
-  };
-}
-
-    if (activeSection === "meeting") {
-      nextConfig = { ...nextConfig, meeting: sectionDraft };
+      nextConfig = {
+        ...nextConfig,
+        social_links: {
+          ...sectionDraft,
+          items: normalizedItems,
+        },
+      };
     }
+
+    // if (activeSection === "meeting") {
+    //   nextConfig = { ...nextConfig, meeting: sectionDraft };
+    // }
 
     if (activeSection === "contact") {
       nextConfig = { ...nextConfig, contact: sectionDraft };
@@ -2083,7 +2083,7 @@ export default function VicePublicSetting({
     setActiveSection(type);
 
     const sectionMap: Record<string, any> = {
-      meeting: config.meeting,
+      // meeting: config.meeting,
       youtube: config.youtube,
       products: config.products,
       links_files: config.links_files,
@@ -2796,7 +2796,7 @@ export default function VicePublicSetting({
                         setActiveSection(type);
 
                         const sectionMap: Record<string, any> = {
-                          meeting: config.meeting,
+                          // meeting: config.meeting,
                           youtube: config.youtube,
                           products: config.products,
                           links_files: config.links_files,

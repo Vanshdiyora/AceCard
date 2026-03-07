@@ -29,18 +29,19 @@ export default function PublicProfilePage({ handle: propHandle }: Props) {
           dispatch(
             loadPublicProfile({
               handle,
+              type: "direct",
               lat: pos.coords.latitude,
               lng: pos.coords.longitude,
             })
           );
         },
         () => {
-          dispatch(loadPublicProfile({ handle }));
+          dispatch(loadPublicProfile({ handle, type: "direct" }));
         },
         { enableHighAccuracy: true, timeout: 8000 }
       );
     } else {
-      dispatch(loadPublicProfile({ handle }));
+      dispatch(loadPublicProfile({ handle, type: "direct" }));
     }
   }, [handle, dispatch]);
 

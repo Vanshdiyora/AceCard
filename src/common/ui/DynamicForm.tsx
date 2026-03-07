@@ -142,27 +142,27 @@ export default function DynamicForm({
               )}
             </label>
 
-              {field.type === "date" && (
-  <>
-    <input
-      type="date"
-      className={`${baseInputClass} ${showError ? "border-red-500" : ""}`}
-      disabled={disabled || field.disabled}
-      placeholder={field.placeholder}
-      value={form[field.name] ?? ""}
-      min={
-        field.disablePast
-          ? new Date().toISOString().split("T")[0]
-          : undefined
-      }
-      onChange={(e) => handleChange(field, e.target.value)}
-      onBlur={() => handleBlur(field.name)}
-    />
-    {showError && (
-      <p className="text-xs text-red-500 mt-1">{error}</p>
-    )}
-  </>
-)}
+            {field.type === "date" && (
+              <>
+                <input
+                  type="date"
+                  className={`${baseInputClass} ${showError ? "border-red-500" : ""}`}
+                  disabled={disabled || field.disabled}
+                  placeholder={field.placeholder}
+                  value={form[field.name] ?? ""}
+                  min={
+                    field.disablePast
+                      ? new Date().toISOString().split("T")[0]
+                      : undefined
+                  }
+                  onChange={(e) => handleChange(field, e.target.value)}
+                  onBlur={() => handleBlur(field.name)}
+                />
+                {showError && (
+                  <p className="text-xs text-red-500 mt-1">{error}</p>
+                )}
+              </>
+            )}
 
             {/* ---------- TEXT / EMAIL / DATE ---------- */}
             {["text", "email"].includes(field.type) && (
@@ -222,20 +222,18 @@ export default function DynamicForm({
                   disabled={disabled || field.disabled}
                   rows={3}
                   placeholder={field.placeholder}
-                  className={`${baseInputClass} ${showError ? "border-red-500" : ""
+                  className={`${baseInputClass} whitespace-pre-wrap break-words overflow-y-auto ${showError ? "border-red-500" : ""
                     }`}
                   value={form[field.name] ?? ""}
-                  onChange={(e) =>
-                    handleChange(field, e.target.value)
-                  }
+                  onChange={(e) => handleChange(field, e.target.value)}
                   onBlur={() => handleBlur(field.name)}
                 />
+
                 {showError && (
                   <p className="text-xs text-red-500 mt-1">{error}</p>
                 )}
               </>
             )}
-
             {field.type === "select" && (
               <>
                 <CustomSelect
@@ -315,7 +313,7 @@ export default function DynamicForm({
                   loading={field.showLoader}
                   disabled={disabled || field.disabled}
                   placeholder={`Select ${field.label}`}
-                   onScrollEnd={field.onScrollEnd}
+                  onScrollEnd={field.onScrollEnd}
                 />
                 {showError && (
                   <p className="text-xs text-red-500 mt-1">{error}</p>

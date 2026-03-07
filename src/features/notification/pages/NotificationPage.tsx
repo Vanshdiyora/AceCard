@@ -1,14 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../../app/hooks";
 import { fetchVendors } from "../../vendors/slice";
-import { sendVendorNotification } from "../slice";
+import { sendVendorNotification, fetchSentNotifications, resetSentNotifications } from "../slice";
 import BrandLoader from "../../../common/ui/BrandLoader";
 import BlockingLoader from "../../../common/ui/BlockingLoader";
 import ResultModal from "../../../common/ui/ResultModal";
 import type { VendorItem } from "../../vendors/types";
-
+import NotificationHistoryModal from "../components/NotificationHistoryModal";
 import JoditEditor from "jodit-react";
 import "jodit/es2021/jodit.min.css";
+import { History } from "lucide-react";
 
 const PAGE_SIZE = 10;
 
@@ -32,7 +33,7 @@ export default function NotificationsPage() {
   const [resultOpen, setResultOpen] = useState(false);
   const [resultSuccess, setResultSuccess] = useState(false);
   const [resultMessage, setResultMessage] = useState("");
-
+  const [historyOpen, setHistoryOpen] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
 
   const isInitialLoading =
@@ -196,7 +197,36 @@ export default function NotificationsPage() {
       setResultOpen(true);
     }
   };
+  const [historySearch, setHistorySearch] = useState("");
+  const sentNotifications = useAppSelector((s) => s.notifications.sentList);
+  const historyLoading = useAppSelector((s) => s.notifications.sentLoading);
+  const historyMeta = useAppSelector((s) => s.notifications.sentMeta);
 
+  const loadMoreHistory = () => {
+    if (!historyMeta?.has_next || historyLoading) return;
+
+    dispatch(
+      fetchSentNotifications({
+        page: historyMeta.page + 1,
+        page_size: historyMeta.page_size,
+        search: historySearch,
+      })
+    );
+  };
+
+useEffect(() => {
+  if (!historyOpen) return;
+
+  dispatch(resetSentNotifications());
+
+  dispatch(
+    fetchSentNotifications({
+      page: 1,
+      page_size: 10,
+      search: historySearch,
+    })
+  );
+}, [historyOpen, historySearch, dispatch]);
 
   const editorConfig = {
     readonly: false,
@@ -227,6 +257,13 @@ export default function NotificationsPage() {
             </h1>
 
             <div className="flex gap-3">
+
+              <button
+                onClick={() => setHistoryOpen(true)}
+                className="px-1 py-2 rounded-lg  text-sm flex items-center"
+              >
+                <History size={22} />
+              </button>
               <button
                 onClick={selectAll}
                 disabled={selectAllLoading}
@@ -310,8 +347,8 @@ export default function NotificationsPage() {
                       key={v.id}
                       onClick={() => !isSelected && toggleVendor(v)}
                       className={`px-4 py-3 text-sm ${isSelected
-                          ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                          : "hover:bg-purple-50 cursor-pointer"
+                        ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                        : "hover:bg-purple-50 cursor-pointer"
                         }`}
                     >
                       <div className="font-medium">{v.legal_name}</div>
@@ -338,6 +375,15 @@ export default function NotificationsPage() {
           )}
         </div>
       </div>
+      <NotificationHistoryModal
+        open={historyOpen}
+        notifications={sentNotifications}
+        loading={historyLoading}
+        hasNext={historyMeta?.has_next}
+        onLoadMore={loadMoreHistory}
+        onSearch={(value) => setHistorySearch(value)}
+        onClose={() => setHistoryOpen(false)}
+      />
     </>
   );
 }

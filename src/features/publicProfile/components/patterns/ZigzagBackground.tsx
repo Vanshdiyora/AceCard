@@ -10,8 +10,42 @@ export function ZigzagBackground({
   const id = useId();
   const patternId = `${id}-zigzag-bg`;
   const pathId = `${id}-zigzag-path`;
+function isDark(hex: string): boolean {
+  const clean = hex.replace("#", "");
+  const normalized =
+    clean.length === 3
+      ? clean.split("").map((c) => c + c).join("")
+      : clean;
 
-  const strokeColor = darkenHex(color, 0.15);
+  const num = parseInt(normalized, 16);
+
+  const r = (num >> 16) & 255;
+  const g = (num >> 8) & 255;
+  const b = num & 255;
+
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+
+  return luminance < 0.4;
+}
+
+function lightenHex(hex: string, ratio: number): string {
+  const clean = hex.replace("#", "");
+  const normalized =
+    clean.length === 3
+      ? clean.split("").map((c) => c + c).join("")
+      : clean;
+
+  const num = parseInt(normalized, 16);
+
+  const r = Math.min(255, Math.floor(((num >> 16) & 255) + 255 * ratio));
+  const g = Math.min(255, Math.floor(((num >> 8) & 255) + 255 * ratio));
+  const b = Math.min(255, Math.floor((num & 255) + 255 * ratio));
+
+  return `rgb(${r}, ${g}, ${b})`;
+}
+const strokeColor = isDark(color)
+  ? lightenHex(color, 0.35)
+  : darkenHex(color, 0.15);
 
   return (
     <svg
