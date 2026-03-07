@@ -794,50 +794,52 @@ function Social({ items, theme, shapeClass }: any) {
 
 function Links({ title, items, theme }: any) {
   if (!items?.length) return null;
-
-  const t = resolveTheme(theme)
+  const t = resolveTheme(theme);
 
   return (
     <Section title={title} theme={theme}>
       <div className="flex flex-col gap-4">
-        {items.map((l: any) => (
-          <a
-            key={l.id}
-            href={l.url || l.file_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-3 rounded-xl p-2 transition hover:scale-[1.01]"
-            style={{ backgroundColor: "transparent" }}
-          >
-            {/* ICON */}
-            <div
-              className="h-9 w-9 rounded-full flex items-center justify-center shadow"
-              style={{
-                backgroundColor: t.buttonBg,
-                color: t.buttonText,
-              }}
-            >
-              {l.type === "file" ? (
-                <FileText size={16} />
-              ) : (
-                <Link2 size={16} />
-              )}
-            </div>
+        {items.map((l: any) => {
+          const href = l.url;
 
-            {/* TEXT */}
-            <p
-              className="text-sm font-semibold truncate"
-              style={{ color: t.text }}
+          return (
+            <a
+              key={l.id}
+              href={href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-3 rounded-xl p-2 transition hover:scale-[1.01]"
+              style={{ backgroundColor: "transparent" }}
             >
-              {l.title}
-            </p>
-          </a>
-        ))}
+              {/* ICON */}
+              <div
+                className="h-9 w-9 rounded-full flex items-center justify-center shadow"
+                style={{
+                  backgroundColor: t.buttonBg,
+                  color: t.buttonText,
+                }}
+              >
+                {l.type === "file" ? (
+                  <FileText size={16} />
+                ) : (
+                  <Link2 size={16} />
+                )}
+              </div>
+
+              {/* TEXT */}
+              <p
+                className="text-sm font-semibold truncate"
+                style={{ color: t.text }}
+              >
+                {l.title}
+              </p>
+            </a>
+          );
+        })}
       </div>
     </Section>
   );
 }
-
 export function useIsMobile(breakpoint = 768) {
   const [isMobile, setIsMobile] = useState(
     typeof window !== "undefined" ? window.innerWidth < breakpoint : false

@@ -105,7 +105,7 @@ function isValidUrl(url: string): boolean {
   if (!url || !url.trim()) return false;
   try {
     const parsed = new URL(url.trim());
-    return parsed.protocol === "http:" || parsed.protocol === "https:";
+    return parsed.protocol === "https:";
   } catch {
     return false;
   }
@@ -467,7 +467,7 @@ export default function VicePublicSetting({
   );
 
   const [config, setConfig] = useState<PublicProfileConfig | null>(null);
-  console.log(config)
+
   /* ---------- Product search state ---------- */
   const [productSearch, setProductSearch] = useState("");
   const [productPage, setProductPage] = useState(1);
@@ -632,7 +632,7 @@ export default function VicePublicSetting({
     if (hasInvalidSocialLinks(config?.social_links.items)) {
       setResultSuccess(false);
       setResultMessage(
-        "One or more social links have an invalid URL. Make sure all links start with https:// or http://"
+        "One or more social links have an invalid URL. Make sure all links start with https:// "
       );
       setResultOpen(true);
       return false;
@@ -1663,7 +1663,7 @@ export default function VicePublicSetting({
         }
         if (!isValidUrl(btn.link.trim())) {
           setModalError(
-            `Button "${btn.title}" has an invalid URL. Make sure it starts with https:// or http://`
+            `Button "${btn.title}" has an invalid URL. Make sure it starts with https:// `
           );
           return false;
         }
@@ -1674,7 +1674,7 @@ export default function VicePublicSetting({
       if (sectionDraft.enabled && sectionDraft.cta_url?.trim()) {
         if (!isValidUrl(sectionDraft.cta_url.trim())) {
           setModalError(
-            "CTA URL is invalid. Make sure it starts with https:// or http://"
+            "CTA URL is invalid. Make sure it starts with https:// "
           );
           return false;
         }
@@ -1688,7 +1688,7 @@ export default function VicePublicSetting({
     //     }
     //     if (!isValidUrl(sectionDraft.meeting_url.trim())) {
     //       setModalError(
-    //         "Meeting URL is invalid. Make sure it starts with https:// or http://"
+    //         "Meeting URL is invalid. Make sure it starts with https:// "
     //       );
     //       return false;
     //     }
@@ -1718,7 +1718,7 @@ export default function VicePublicSetting({
         }
         if (item.link?.trim() && !isValidUrl(item.link.trim())) {
           setModalError(
-            `Photo "${item.title}" has an invalid URL. Make sure it starts with https:// or http://`
+            `Photo "${item.title}" has an invalid URL. Make sure it starts with https:// `
           );
           return false;
         }
@@ -1729,7 +1729,7 @@ export default function VicePublicSetting({
     if (activeSection === "social_links") {
       if (hasInvalidSocialLinks(sectionDraft.items)) {
         setModalError(
-          "One or more social links have an invalid URL. Make sure all links start with https:// or http://"
+          "One or more social links have an invalid URL. Make sure all links start with https://"
         );
         return false;
       }
@@ -1748,7 +1748,7 @@ export default function VicePublicSetting({
           }
           if (!isValidUrl(item.url.trim())) {
             setModalError(
-              `"${item.title}" has an invalid URL. Make sure it starts with https:// or http://`
+              `"${item.title}" has an invalid URL. Make sure it starts with https:// `
             );
             return false;
           }
@@ -1760,7 +1760,7 @@ export default function VicePublicSetting({
           }
           if (!isValidUrl(item.file_url.trim())) {
             setModalError(
-              `"${item.title}" has an invalid file URL. Make sure it starts with https:// or http://`
+              `"${item.title}" has an invalid file URL. Make sure it starts with https:// `
             );
             return false;
           }
@@ -1848,7 +1848,7 @@ export default function VicePublicSetting({
     if (activeSection === "social_links") {
       if (hasInvalidSocialLinks(sectionDraft.items)) {
         setSocialError(
-          "One or more social links have an invalid URL. Make sure all links start with https:// or http://"
+          "One or more social links have an invalid URL. Make sure all links start with https:// "
         );
         return;
       }
@@ -3261,40 +3261,35 @@ export default function VicePublicSetting({
           setAddSectionOpen(false);
           openSectionEditor(type);
         }}
-        onToggle={(s: any) => {
-          const index = sectionDraft.items.findIndex(
-            (i: any) => i.id === s.id
-          );
+     onToggle={(type: string) => {
+  const exists = config.sections.items.find((s) => s.type === type);
 
-          let updated;
+  let updated;
 
-          if (index !== -1) {
-            updated = sectionDraft.items.map((i: any, idx: number) =>
-              idx === index ? { ...i, enabled: !i.enabled } : i
-            );
-          } else {
-            updated = [
-              ...sectionDraft.items,
-              {
-                ...s,
-                url: "",
-                enabled: true,
-                rank: sectionDraft.items.length + 1, // ✅ ADD RANK
-              },
-            ];
-          }
+  if (exists) {
+    updated = config.sections.items.map((s) =>
+      s.type === type ? { ...s, enabled: !s.enabled } : s
+    );
+  } else {
+    updated = [
+      ...config.sections.items,
+      {
+        id: type,
+        type,
+        rank: config.sections.items.length + 1,
+        enabled: true,
+      },
+    ];
+  }
 
-          // ✅ ALWAYS NORMALIZE RANK AFTER CHANGE
-          updated = updated.map((item: any, idx: number) => ({
-            ...item,
-            rank: idx + 1,
-          }));
-
-          setSectionDraft({
-            ...sectionDraft,
-            items: updated,
-          });
-        }}
+  update({
+    ...config,
+    sections: {
+      ...config.sections,
+      items: updated,
+    },
+  });
+}}
       />
       <AppModal
         open={!!activeSection}

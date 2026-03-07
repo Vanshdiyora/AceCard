@@ -175,7 +175,7 @@ function LinksFilesModal({
           return false;
         }
         if (!isValidUrl(item.url.trim())) {
-          setError(`"${item.title}" has an invalid URL. Make sure it starts with https:// or http://`);
+          setError(`"${item.title}" has an invalid URL. Make sure it starts with https:// `);
           return false;
         }
       }
@@ -187,7 +187,7 @@ function LinksFilesModal({
           return false;
         }
         if (!isValidUrl(item.file_url.trim())) {
-          setError(`"${item.title}" has an invalid file URL. Make sure it starts with https:// or http://`);
+          setError(`"${item.title}" has an invalid file URL. Make sure it starts with https:// `);
           return false;
         }
       }

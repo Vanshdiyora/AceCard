@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { uploadImage } from "../../../../../publicProfile/services/publicProfile.api";
 import CommonItemsReorder from "../../../../../settings/components/vice/sections/CommonItemsReorder";
 /* ================= TYPES ================= */
 
@@ -42,10 +43,11 @@ export default function LinksFilesSection({
   onChange: (v: { items: Item[] }) => void;
   disabled?: boolean;
 }) {
-const items = useMemo(
-  () => [...value.items].sort((a, b) => a.rank - b.rank),
-  [value.items]
-);
+  const items = useMemo(
+    () => [...value.items].sort((a, b) => a.rank - b.rank),
+    [value.items]
+  );
+  const [uploadingId, setUploadingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   /* ================= ADD ================= */
@@ -132,8 +134,8 @@ const items = useMemo(
               onClick={() => removeItem(item.id)}
               disabled={disabled}
               className={`hidden md:flex absolute top-2 right-2 font-bold ${disabled
-                  ? "text-gray-300 cursor-not-allowed"
-                  : "text-red-500 hover:text-red-700"
+                ? "text-gray-300 cursor-not-allowed"
+                : "text-red-500 hover:text-red-700"
                 }`}
             >
               ✕
@@ -220,29 +222,72 @@ const items = useMemo(
                 </div>
               )}
 
-              {/* FILE URL */}
+              {/* FILE UPLOAD */}
               {item.type === "file" && (
-                <div className="md:col-span-4">
+                <div className="md:col-span-7">
                   <label className="block text-xs font-semibold text-gray-500 mb-1">
-                    File URL
+                    Upload File
                   </label>
-                  <input
-                    disabled={disabled}
-                    value={item.file_url}
-                    placeholder="https://file.pdf"
-                    className="border rounded p-3 text-sm w-full"
-                    onChange={(e) => {
-                      setError(null);
-                      onChange({
-                        ...value,
-                        items: items.map((i) =>
-                          i.id === item.id
-                            ? { ...i, file_url: e.target.value }
-                            : i
-                        ),
-                      });
-                    }}
-                  />
+
+                  <div className="flex gap-2 items-center">
+                    <input
+                      type="file"
+                      disabled={disabled}
+                      className="hidden"
+                      id={`file-${item.id}`}
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+
+                        setError(null);
+                        setUploadingId(item.id);
+
+                        try {
+                          const res = await uploadImage(file);
+                          const url = res?.data?.url;
+
+                          if (!url) throw new Error("Upload failed");
+
+                          onChange({
+                            ...value,
+                            items: items.map((i) =>
+                              i.id === item.id
+                                ? {
+                                  ...i,
+                                  file_url: url,
+                                  file_type: file.type,
+                                }
+                                : i
+                            ),
+                          });
+                        } catch (err) {
+                          setError("File upload failed. Please try again.");
+                        } finally {
+                          setUploadingId(null);
+                        }
+                      }}
+                    />
+
+                    <label
+                      htmlFor={`file-${item.id}`}
+                      className="px-3 py-2 bg-purple-600 text-white text-sm rounded cursor-pointer hover:bg-purple-500"
+                    >
+                      Upload
+                    </label>
+
+                    <span className="text-sm text-gray-500 truncate flex items-center gap-2">
+                      {uploadingId === item.id ? (
+                        <>
+                          <span className="h-4 w-4 border-2 border-purple-600 border-t-transparent rounded-full animate-spin"></span>
+                          Uploading...
+                        </>
+                      ) : item.file_url ? (
+                        "File uploaded"
+                      ) : (
+                        "No file selected"
+                      )}
+                    </span>
+                  </div>
                 </div>
               )}
             </div>

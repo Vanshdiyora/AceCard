@@ -67,7 +67,7 @@ export function EditableMeetingCTA({
 
     if (!isValidUrl(draft.meeting_url)) {
       setError(
-        "Meeting URL is invalid. Make sure it starts with https:// or http://"
+        "Meeting URL is invalid. Make sure it starts with https:// "
       );
       return;
     }

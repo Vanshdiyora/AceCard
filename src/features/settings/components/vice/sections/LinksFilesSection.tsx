@@ -2,6 +2,7 @@ import { ChevronDown } from "lucide-react";
 import CommonItemsReorder from "./CommonItemsReorder";
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
+import { uploadImage } from "../../../../publicProfile/services/publicProfile.api";
 
 /* ================= TYPES ================= */
 interface Item {
@@ -55,6 +56,34 @@ export default function LinksFilesSection({
   const [error, setError] = useState<string | null>(null);
 
   /* ================= ADD ================= */
+  const handleFileUpload = async (file: File, itemId: string) => {
+    try {
+      setError(null);
+
+      const res = await uploadImage(file);
+
+      const fileUrl = res?.data?.url;
+
+      if (!fileUrl) throw new Error("Upload failed");
+
+      const updatedItems = value.items.map((i) =>
+        i.id === itemId
+          ? {
+            ...i,
+            file_url: fileUrl,
+            file_type: file.type,
+          }
+          : i
+      );
+
+      onChange({
+        ...value,
+        items: updatedItems,
+      });
+    } catch (err) {
+      setError("File upload failed. Please try again.");
+    }
+  };
 
   const addItem = () => {
     if (disabled) return;
@@ -260,23 +289,100 @@ export default function LinksFilesSection({
                   <label className="block text-xs font-semibold text-gray-500 mb-1">
                     File URL
                   </label>
-                  <input
-                    disabled={disabled}
-                    value={item.file_url}
-                    placeholder="https://file.pdf"
-                    className="border rounded-xl p-3 text-sm w-full"
-                    onChange={(e) => {
-                      setError(null);
-                      onChange({
-                        ...value,
-                        items: items.map((i) =>
-                          i.id === item.id
-                            ? { ...i, file_url: e.target.value }
-                            : i
-                        ),
-                      });
-                    }}
-                  />
+                  {!item.file_url ? (
+                    /* UPLOAD UI */
+                    <div
+                      className={`border-2 border-dashed rounded-xl p-4 text-center transition
+    ${disabled
+                          ? "bg-gray-100 border-gray-200"
+                          : "border-gray-300 hover:border-indigo-400 hover:bg-indigo-50/30"
+                        }`}
+                    >
+                      <input
+                        type="file"
+                        disabled={disabled}
+                        className="hidden"
+                        id={`file-upload-${item.id}`}
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) handleFileUpload(file, item.id);
+                          e.target.value = "";
+                        }}
+                      />
+
+                      <label
+                        htmlFor={`file-upload-${item.id}`}
+                        className={`cursor-pointer flex flex-col items-center gap-1 text-sm
+      ${disabled ? "text-gray-400" : "text-gray-600"}`}
+                      >
+                        <span className="font-medium text-indigo-600">
+                          Click to upload
+                        </span>
+                        <span className="text-xs text-gray-400">
+                          PDF, DOC, Images etc
+                        </span>
+                      </label>
+                    </div>
+                  ) : (
+                    /* FILE PREVIEW UI */
+                    <div className="flex items-center justify-between border rounded-xl px-3 py-3 bg-gray-50">
+                      <div className="flex items-center gap-2 text-sm text-gray-700 truncate">
+                        📄
+                        <span className="truncate max-w-[200px]">
+                          {item.file_url.split("/").pop()}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-3 text-xs">
+                        <a
+                          href={item.file_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-indigo-600 hover:underline"
+                        >
+                          View
+                        </a>
+
+                        {!disabled && (
+                          <>
+                            <label
+                              htmlFor={`file-upload-${item.id}`}
+                              className="text-indigo-600 cursor-pointer hover:underline"
+                            >
+                              Replace
+                            </label>
+
+                            <button
+                              onClick={() =>
+                                onChange({
+                                  ...value,
+                                  items: value.items.map((i) =>
+                                    i.id === item.id
+                                      ? { ...i, file_url: "", file_type: "" }
+                                      : i
+                                  ),
+                                })
+                              }
+                              className="text-red-500 hover:text-red-700"
+                            >
+                              Remove
+                            </button>
+                          </>
+                        )}
+                      </div>
+
+                      <input
+                        type="file"
+                        className="hidden"
+                        id={`file-upload-${item.id}`}
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) handleFileUpload(file, item.id);
+                          e.target.value = "";
+                        }}
+                      />
+                    </div>
+                  )}
                 </div>
               )}
             </div>

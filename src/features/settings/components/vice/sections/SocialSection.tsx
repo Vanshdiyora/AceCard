@@ -88,19 +88,15 @@ export default function SocialSection({
 
   const update = (id: string, val: string) => {
     if (disabled) return;
-
     const updated = items.map((i: any) =>
-      i.id === id ? { ...i, url: val } : i
+      (i.id === id || i.platform === id) ? { ...i, url: val } : i  // 👈
     );
-
     onChange(normalizeRank(updated));
   };
 
   const remove = (id: string) => {
     if (disabled) return;
-
-    const updated = items.filter((i: any) => i.id !== id);
-
+    const updated = items.filter((i: any) => i.id !== id && i.platform !== id);  // 👈
     onChange(normalizeRank(updated));
   };
 
@@ -113,9 +109,8 @@ export default function SocialSection({
   return (
     <>
       <div
-        className={`space-y-3 ${
-          disabled ? "opacity-60 pointer-events-none" : ""
-        }`}
+        className={`space-y-3 ${disabled ? "opacity-60 pointer-events-none" : ""
+          }`}
       >
         <CommonItemsReorder
           items={items
@@ -126,7 +121,10 @@ export default function SocialSection({
             onChange(normalizeRank(reordered));
           }}
           renderItem={(s: any) => {
-            const Icon = ICONS[s.id] || FiGlobe;
+            const platform = s.platform || s.id;           // 👈 support both
+            const Icon = ICONS[platform] || FiGlobe;
+            const meta = ALL_SOCIALS.find((a) => a.id === platform);  // 👈 lookup label
+            const label = meta?.label || platform;
 
             return (
               <div
@@ -139,12 +137,9 @@ export default function SocialSection({
 
                 <input
                   disabled={disabled}
-                  className={`flex-1 rounded-lg border px-3 py-2 text-sm ${
-                    disabled
-                      ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                      : ""
-                  }`}
-                  placeholder={`Enter ${s.label} link`}
+                  className={`flex-1 rounded-lg border px-3 py-2 text-sm ${disabled ? "bg-gray-100 text-gray-400 cursor-not-allowed" : ""
+                    }`}
+                  placeholder={`Enter ${label} link`}   // 👈 now shows correct label
                   value={s.url}
                   onChange={(e) => update(s.id, e.target.value)}
                 />
@@ -152,11 +147,8 @@ export default function SocialSection({
                 <button
                   disabled={disabled}
                   onClick={() => remove(s.id)}
-                  className={`${
-                    disabled
-                      ? "text-gray-300 cursor-not-allowed"
-                      : "text-red-500 hover:text-red-700"
-                  }`}
+                  className={`${disabled ? "text-gray-300 cursor-not-allowed" : "text-red-500 hover:text-red-700"
+                    }`}
                 >
                   <Trash2 size={18} />
                 </button>
@@ -171,11 +163,10 @@ export default function SocialSection({
         <button
           disabled={disabled}
           onClick={() => !disabled && onAddClick?.()}
-          className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${
-            disabled
+          className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${disabled
               ? "bg-gray-300 text-gray-500 cursor-not-allowed"
               : "bg-purple-600 text-white hover:opacity-90"
-          }`}
+            }`}
         >
           + Add Social
         </button>

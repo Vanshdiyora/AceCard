@@ -1,19 +1,29 @@
 import { createPortal } from "react-dom";
-import { Plus, Check } from "lucide-react";
+import {
+  Plus,
+  Check,
+  Package,
+  Image,
+  VideoIcon,
+  Link,
+  Layout,
+  Share2,
+  Phone,
+  User,
+  SquareStack
+} from "lucide-react";
 
 const ALL_SECTIONS = [
-  { id: "products", label: "Products" },
-  { id: "photo_gallery", label: "Photo Gallery" },
-  { id: "youtube", label: "Videos" },
-  { id: "links_files", label: "Links & Files" },
-  // { id: "meeting", label: "Meeting Button" },
-  { id: "banner", label: "Banner" },
-  { id: "social_links", label: "Social Links" },
-  { id: "contact", label: "Contact" },
-  { id: "about", label: "About" },
-  { id: "card_buttons", label: "Card Buttons" },
+  { id: "products", label: "Products", icon: Package },
+  { id: "photo_gallery", label: "Photo Gallery", icon: Image },
+  { id: "youtube", label: "Videos", icon: VideoIcon },
+  { id: "links_files", label: "Links & Files", icon: Link },
+  { id: "banner", label: "Banner", icon: Layout },
+  { id: "social_links", label: "Social Links", icon: Share2 },
+  { id: "contact", label: "Contact", icon: Phone },
+  { id: "about", label: "About", icon: User },
+  { id: "card_buttons", label: "Card Buttons", icon: SquareStack },
 ];
-
 export default function AddSectionModal({
   open,
   sections,
@@ -23,9 +33,9 @@ export default function AddSectionModal({
 }: any) {
   if (!open) return null;
 
-  const enabledIds = new Set(
-    sections.filter((s: any) => s.enabled).map((s: any) => s.type)
-  );
+const enabledIds = new Set(
+  sections.filter((s: any) => s.enabled).map((s: any) => s.type)
+);
 
   return createPortal(
     <div className="fixed inset-0 z-[9999] bg-black/40 flex items-center justify-center px-3">
@@ -43,14 +53,16 @@ export default function AddSectionModal({
               <div
                 key={s.id}
                 className={`flex items-center justify-between px-3 py-3 rounded-xl border transition text-sm cursor-pointer
-                  ${
-                    added
-                      ? "bg-purple-50 border-purple-500 text-purple-700"
-                      : "bg-gray-50 border-gray-200 hover:bg-gray-100"
+                  ${added
+                    ? "bg-purple-50 border-purple-500 text-purple-700"
+                    : "bg-gray-50 border-gray-200 hover:bg-gray-100"
                   }`}
                 onClick={() => onAdd(s.id)} // 👈 OPEN EDITOR
               >
-                <span>{s.label}</span>
+                <div className="flex items-center gap-2">
+                  <s.icon size={20} />
+                  <span>{s.label}</span>
+                </div>
 
                 {/* 🔥 TOGGLE BUTTON */}
                 <div
@@ -59,10 +71,9 @@ export default function AddSectionModal({
                     onToggle(s.id);      // 👈 ENABLE / DISABLE
                   }}
                   className={`h-7 w-7 flex items-center justify-center rounded-full border transition
-                    ${
-                      added
-                        ? "bg-purple-600 border-purple-600 text-white"
-                        : "border-gray-300 hover:bg-gray-200"
+                    ${added
+                      ? "bg-purple-600 border-purple-600 text-white"
+                      : "border-gray-300 hover:bg-gray-200"
                     }`}
                 >
                   {added ? <Check size={14} /> : <Plus size={14} />}
