@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
 import Cropper from "react-easy-crop";
 import { createPortal } from "react-dom";
+
 type Props = {
   file: File;
   onCancel: () => void;
@@ -39,8 +40,10 @@ export default function AvatarCropModal({ file, onCancel, onSave }: Props) {
     await new Promise((res) => (img.onload = res));
 
     const canvas = document.createElement("canvas");
-    canvas.width = croppedArea.width;
-    canvas.height = croppedArea.height;
+    // Output at a fixed size so very small images still produce a decent avatar
+    const OUTPUT_SIZE = 400;
+    canvas.width = OUTPUT_SIZE;
+    canvas.height = OUTPUT_SIZE;
 
     const ctx = canvas.getContext("2d")!;
     ctx.drawImage(
@@ -51,8 +54,8 @@ export default function AvatarCropModal({ file, onCancel, onSave }: Props) {
       croppedArea.height,
       0,
       0,
-      croppedArea.width,
-      croppedArea.height
+      OUTPUT_SIZE,
+      OUTPUT_SIZE
     );
 
     return new Promise<Blob>((resolve) =>
@@ -71,8 +74,8 @@ export default function AvatarCropModal({ file, onCancel, onSave }: Props) {
       {/* MODAL */}
       <div
         className="relative w-[720px] max-w-[95vw] rounded-3xl overflow-hidden
-      bg-white/90 backdrop-blur-xl shadow-[0_20px_80px_rgba(0,0,0,0.45)]
-      border border-white/30 animate-scaleIn"
+        bg-white/90 backdrop-blur-xl shadow-[0_20px_80px_rgba(0,0,0,0.45)]
+        border border-white/30 animate-scaleIn"
       >
         {/* HEADER */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-white/20 bg-white/70">
@@ -81,8 +84,7 @@ export default function AvatarCropModal({ file, onCancel, onSave }: Props) {
           </h3>
           <button
             onClick={onCancel}
-            className="w-9 h-9 rounded-full flex items-center justify-center
-          hover:bg-black/10 transition"
+            className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-black/10 transition"
           >
             ✕
           </button>
@@ -99,6 +101,14 @@ export default function AvatarCropModal({ file, onCancel, onSave }: Props) {
               cropShape="round"
               showGrid={false}
               objectFit="contain"
+              // ✅ Allow zooming out to 20% so small/logo images can sit
+              // smaller inside the crop circle (white padding around them)
+              minZoom={0.2}
+              maxZoom={10}
+              // ✅ CRITICAL: restrictPosition=true clamps movement to zero
+              // when the image is smaller than the crop area (zoom < 1),
+              // making drag feel completely frozen. false = free movement always.
+              restrictPosition={false}
               onCropChange={setCrop}
               onZoomChange={setZoom}
               onCropComplete={onCropComplete}
@@ -110,16 +120,17 @@ export default function AvatarCropModal({ file, onCancel, onSave }: Props) {
         <div className="px-6 py-5 flex flex-col sm:flex-row gap-4 sm:items-center sm:justify-between bg-white/70">
           {/* ZOOM */}
           <div className="flex items-center gap-3 w-full sm:w-auto">
-            <span className="text-sm text-gray-500">Zoom</span>
-           <input
-  type="range"
-  min={0.5}
-  max={3}
-  step={0.01}
-  value={zoom}
-  onChange={(e) => setZoom(Number(e.target.value))}
-  className="w-full sm:w-48 accent-black cursor-pointer"
-/>
+            <span className="text-sm text-gray-500 shrink-0">Zoom</span>
+            <input
+              type="range"
+              // ✅ Slider min matches minZoom — no invisible dead zone
+              min={0.2}
+              max={10}
+              step={0.01}
+              value={zoom}
+              onChange={(e) => setZoom(Number(e.target.value))}
+              className="w-full sm:w-48 accent-black cursor-pointer"
+            />
           </div>
 
           {/* ACTIONS */}
@@ -142,5 +153,4 @@ export default function AvatarCropModal({ file, onCancel, onSave }: Props) {
     </div>,
     document.body
   );
-
 }

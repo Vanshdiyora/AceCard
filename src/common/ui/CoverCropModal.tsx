@@ -38,12 +38,10 @@ export default function CoverCropModal({ file, onCancel, onSave }: Props) {
     await new Promise((r) => (img.onload = r));
 
     const canvas = document.createElement("canvas");
-
     canvas.width = 1500;
     canvas.height = 500;
 
     const ctx = canvas.getContext("2d")!;
-
     ctx.drawImage(
       img,
       croppedArea.x,
@@ -62,8 +60,7 @@ export default function CoverCropModal({ file, onCancel, onSave }: Props) {
   };
 
   return createPortal(
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center">
-      
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center animate-fadeIn">
       {/* BACKDROP */}
       <div
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
@@ -71,81 +68,78 @@ export default function CoverCropModal({ file, onCancel, onSave }: Props) {
       />
 
       {/* MODAL */}
-      <div className="relative bg-white rounded-2xl w-[820px] max-w-[96vw] shadow-2xl overflow-hidden">
-
+      <div
+        className="relative w-[820px] max-w-[96vw] rounded-3xl overflow-hidden
+        bg-white/90 backdrop-blur-xl shadow-[0_20px_80px_rgba(0,0,0,0.45)]
+        border border-white/30 animate-scaleIn"
+      >
         {/* HEADER */}
-        <div className="flex items-center justify-between px-6 py-4 border-b">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-white/20 bg-white/70">
           <div className="flex items-center gap-3">
             <button onClick={onCancel} className="text-lg">←</button>
-            <h3 className="font-semibold text-lg">Drag to Reposition</h3>
+            <h3 className="font-semibold text-lg tracking-wide">Drag to Reposition</h3>
           </div>
-          <button onClick={onCancel} className="text-xl">✕</button>
+          <button
+            onClick={onCancel}
+            className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-black/10 transition"
+          >
+            ✕
+          </button>
         </div>
 
         {/* CROPPER */}
-        <div className="relative w-full aspect-[3/1] bg-black overflow-hidden">
-
+        <div className="relative w-full bg-black" style={{ aspectRatio: "3/1" }}>
           {imageUrl && (
-            <>
-              <Cropper
-                image={imageUrl}
-                crop={crop}
-                zoom={zoom}
-                aspect={3 / 1}
-                cropShape="rect"
-                showGrid={false}
-                objectFit="cover"
-                onCropChange={setCrop}
-                onZoomChange={setZoom}
-                onCropComplete={onCropComplete}
-              />
-
-              {/* MOBILE SAFE AREA */}
-              <div className="pointer-events-none absolute inset-0 flex justify-center items-center">
-                
-                <div className="w-[70%] h-full border-2 border-white/80 rounded-md shadow-[0_0_0_9999px_rgba(0,0,0,0.4)]">
-                </div>
-
-              </div>
-            </>
+            <Cropper
+              image={imageUrl}
+              crop={crop}
+              zoom={zoom}
+              aspect={3 / 1}
+              cropShape="rect"
+              showGrid={false}
+              objectFit="cover"
+              minZoom={0.2}
+              maxZoom={10}
+              restrictPosition={false}
+              onCropChange={setCrop}
+              onZoomChange={setZoom}
+              onCropComplete={onCropComplete}
+            />
           )}
-
         </div>
 
         {/* FOOTER */}
-        <div className="px-6 py-4 flex items-center justify-between">
-          
-          <div className="flex items-center gap-3">
-            <span>−</span>
+        <div className="px-6 py-5 flex flex-col sm:flex-row gap-4 sm:items-center sm:justify-between bg-white/70">
+          {/* ZOOM */}
+          <div className="flex items-center gap-3 w-full sm:w-auto">
+            <span className="text-sm text-gray-500 shrink-0">Zoom</span>
             <input
               type="range"
-              min={0.8}
-              max={3}
+              min={0.2}
+              max={10}
               step={0.01}
               value={zoom}
               onChange={(e) => setZoom(Number(e.target.value))}
-              className="w-28 sm:w-40 md:w-48"
+              className="w-full sm:w-48 accent-black cursor-pointer"
             />
-            <span>＋</span>
           </div>
 
-          <div className="flex gap-3">
+          {/* ACTIONS */}
+          <div className="flex justify-end gap-3">
             <button
               onClick={onCancel}
-              className="px-5 py-2 rounded-full border bg-white"
+              className="px-5 py-2 rounded-xl border bg-white hover:bg-gray-50 transition"
             >
               Cancel
             </button>
             <button
               onClick={async () => onSave(await getCroppedBlob())}
-              className="px-6 py-2 rounded-full bg-gray-900 text-white"
+              className="px-6 py-2 rounded-xl text-white bg-gradient-to-r from-black to-gray-800 shadow-md hover:opacity-90 transition"
             >
               Save
             </button>
           </div>
-
         </div>
-
       </div>
     </div>,
     document.body

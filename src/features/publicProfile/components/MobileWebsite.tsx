@@ -283,7 +283,7 @@ export default function MobileWebsite({
             theme={theme}
             contact={contact}
             layout={layout}
-            onConnect={() => isMobile && setOpen(true)}
+            onConnect={() => setOpen(true)}
 
           />
         );
@@ -730,6 +730,25 @@ function YouTube({ title, items, theme }: any) {
   );
 }
 
+function getSocialHref(platform: string, url: string): string {
+  const val = url?.trim();
+  if (!val) return "#";
+
+  switch (platform) {
+    case "whatsapp":
+      // strip everything except digits
+      return `https://wa.me/${val.replace(/\D/g, "")}`;
+    case "phone":
+      return `tel:${val.replace(/[\s\-()]/g, "")}`;
+    case "sms":
+      return `sms:${val.replace(/[\s\-()]/g, "")}`;
+    case "email":
+      return `mailto:${val}`;
+    default:
+      return val;
+  }
+}
+
 /* ================= SOCIAL ================= */
 function Social({ items, theme, shapeClass }: any) {
   if (!items?.length) return null;
@@ -752,8 +771,9 @@ function Social({ items, theme, shapeClass }: any) {
           {row.map((s: any) => (
             <a
               key={s.id}
-              href={s.url}
+              href={getSocialHref(s.platform || s.id, s.url)}
               target="_blank"
+
               rel="noopener noreferrer"
               className={`h-16 w-16 flex items-center justify-center shadow-md transition hover:scale-105 overflow-hidden ${shapeClass}`}
               style={{

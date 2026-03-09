@@ -129,14 +129,49 @@ export function canAddContactField(fields: ContactField[]) {
   if (!fields.length) return true;
   return isContactFieldComplete(fields[fields.length - 1]);
 }
+
+// platforms that take a phone number
+export const PHONE_PLATFORMS = ["whatsapp", "phone", "sms"];
+
+// platforms that take an email
+export const EMAIL_PLATFORMS = ["email"];
+
+// platforms that take free text (no URL validation)
+export const TEXT_PLATFORMS = ["address"];
+
+export function getSocialInputType(platform: string): "phone" | "email" | "text" | "url" {
+  if (PHONE_PLATFORMS.includes(platform)) return "phone";
+  if (EMAIL_PLATFORMS.includes(platform)) return "email";
+  if (TEXT_PLATFORMS.includes(platform)) return "text";
+  return "url";
+}
+
+function isValidPhone(val: string): boolean {
+  // digits only after stripping spaces/dashes/parens, must be 10–15 digits
+  const digits = val.trim().replace(/[\s\-()+]/g, "");
+  return /^\d{10,15}$/.test(digits);
+}
+
+function isValidEmail(val: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val.trim());
+}
+
+export function isValidSocialValue(platform: string, value: string): boolean {
+  if (!value || !value.trim()) return false;
+  const type = getSocialInputType(platform);
+  if (type === "phone") return isValidPhone(value);
+  if (type === "email") return isValidEmail(value);
+  if (type === "text") return value.trim().length > 0;
+  return isValidUrl(value); // url
+}
+
 function hasInvalidSocialLinks(items: any[] = []) {
   return items.some(
     (i) =>
       i.enabled === true &&
-      (!i.url || i.url.trim() === "" || !isValidUrl(i.url.trim()))
+      (!i.url || i.url.trim() === "" || !isValidSocialValue(i.platform || i.id, i.url))
   );
 }
-
 /* ================= TYPES ================= */
 export type LockMode = "global" | "individual";
 
@@ -1727,13 +1762,24 @@ export default function VicePublicSetting({
 
     // Social Links
     if (activeSection === "social_links") {
-      if (hasInvalidSocialLinks(sectionDraft.items)) {
-        setModalError(
-          "One or more social links have an invalid URL. Make sure all links start with https://"
-        );
-        return false;
+      for (const item of sectionDraft.items ?? []) {
+        if (!item.enabled) continue;
+        if (!item.url?.trim()) {
+          setModalError(`Please enter a value for ${item.platform || item.id}.`);
+          return false;
+        }
+        if (!isValidSocialValue(item.platform || item.id, item.url)) {
+          const type = getSocialInputType(item.platform || item.id);
+          const hint =
+            type === "phone" ? "Enter a valid phone number (e.g. 1234567890)." :
+              type === "email" ? "Enter a valid email address." :
+                "Make sure the URL starts with https://";
+          setModalError(`Invalid value for ${item.platform || item.id}: ${hint}`);
+          return false;
+        }
       }
     }
+
     // Links & Files
     if (activeSection === "links_files") {
       for (const item of sectionDraft.items) {
@@ -3261,35 +3307,35 @@ export default function VicePublicSetting({
           setAddSectionOpen(false);
           openSectionEditor(type);
         }}
-     onToggle={(type: string) => {
-  const exists = config.sections.items.find((s) => s.type === type);
+        onToggle={(type: string) => {
+          const exists = config.sections.items.find((s) => s.type === type);
 
-  let updated;
+          let updated;
 
-  if (exists) {
-    updated = config.sections.items.map((s) =>
-      s.type === type ? { ...s, enabled: !s.enabled } : s
-    );
-  } else {
-    updated = [
-      ...config.sections.items,
-      {
-        id: type,
-        type,
-        rank: config.sections.items.length + 1,
-        enabled: true,
-      },
-    ];
-  }
+          if (exists) {
+            updated = config.sections.items.map((s) =>
+              s.type === type ? { ...s, enabled: !s.enabled } : s
+            );
+          } else {
+            updated = [
+              ...config.sections.items,
+              {
+                id: type,
+                type,
+                rank: config.sections.items.length + 1,
+                enabled: true,
+              },
+            ];
+          }
 
-  update({
-    ...config,
-    sections: {
-      ...config.sections,
-      items: updated,
-    },
-  });
-}}
+          update({
+            ...config,
+            sections: {
+              ...config.sections,
+              items: updated,
+            },
+          });
+        }}
       />
       <AppModal
         open={!!activeSection}

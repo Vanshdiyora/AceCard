@@ -1,5 +1,5 @@
 import { Trash2 } from "lucide-react";
-
+import { getSocialInputType } from "../VicePublicSetting";
 // 🔥 Latest official brand icons
 import {
   SiInstagram,
@@ -134,12 +134,25 @@ export default function SocialSection({
                 <div className="h-10 w-10 rounded-xl bg-gray-900 flex items-center justify-center text-white shadow">
                   <Icon size={18} />
                 </div>
-
                 <input
                   disabled={disabled}
-                  className={`flex-1 rounded-lg border px-3 py-2 text-sm ${disabled ? "bg-gray-100 text-gray-400 cursor-not-allowed" : ""
-                    }`}
-                  placeholder={`Enter ${label} link`}   // 👈 now shows correct label
+                  className={`flex-1 rounded-lg border px-3 py-2 text-sm ${disabled ? "bg-gray-100 text-gray-400 cursor-not-allowed" : ""}`}
+                  placeholder={
+                    getSocialInputType(platform) === "phone" ? "e.g. 2345678900" :
+                      getSocialInputType(platform) === "email" ? "e.g. hello@example.com" :
+                        getSocialInputType(platform) === "text" ? "Enter address" :
+                          `Enter ${label} link`
+                  }
+                  type={
+                    getSocialInputType(platform) === "phone" ? "tel" :
+                      getSocialInputType(platform) === "email" ? "email" :
+                        "text"
+                  }
+                  inputMode={
+                    getSocialInputType(platform) === "phone" ? "tel" :
+                      getSocialInputType(platform) === "email" ? "email" :
+                        "url"
+                  }
                   value={s.url}
                   onChange={(e) => update(s.id, e.target.value)}
                 />
@@ -164,8 +177,8 @@ export default function SocialSection({
           disabled={disabled}
           onClick={() => !disabled && onAddClick?.()}
           className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${disabled
-              ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-              : "bg-purple-600 text-white hover:opacity-90"
+            ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+            : "bg-purple-600 text-white hover:opacity-90"
             }`}
         >
           + Add Social
