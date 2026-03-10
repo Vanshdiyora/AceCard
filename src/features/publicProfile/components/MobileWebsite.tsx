@@ -761,11 +761,11 @@ function Social({ items, theme, shapeClass }: any) {
   }
 
   return (
-    <div className="flex flex-col items-center gap-2 px-2">
+    <div className="flex flex-col items-center gap-4 px-10">
       {rows.map((row, rIdx) => (
         <div
           key={rIdx}
-          className={`flex gap-2 ${
+          className={`flex gap-4 ${
             row.length < 3 ? "justify-center" : "justify-between"
           } w-full`}
         >
@@ -775,7 +775,7 @@ function Social({ items, theme, shapeClass }: any) {
               href={getSocialHref(s.platform || s.id, s.url)}
               target="_blank"
               rel="noopener noreferrer"
-              className={`h-18 w-18 p-4 flex items-center justify-center shadow-md transition hover:scale-105 overflow-hidden ${shapeClass}`}
+              className={`h-20 w-20 p-2 flex items-center justify-center shadow-md transition hover:scale-105 overflow-hidden ${shapeClass}`}
               style={{
                 backgroundColor: t.buttonBg,
                 color: t.buttonText,
