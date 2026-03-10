@@ -1,6 +1,6 @@
 /* ============================= ENUMS ============================= */
 
-export type PaymentStatus = "Paid" | "Not Paid" | "Pending";
+export type PaymentStatus = "Paid" | "Pending";
 
 /* ============================= MAIN LIST ============================= */
 /* This is for the main payments table */
@@ -42,7 +42,7 @@ export interface PaymentHistory {
   payment_date?: string | null;
   created_at: string;
 
-  status: "Paid" | "Pending" | "Not Paid";
+  status: "Paid" | "Pending";
   badge: string;
 }
 

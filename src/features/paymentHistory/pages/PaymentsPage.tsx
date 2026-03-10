@@ -142,19 +142,17 @@ export default function PaymentsPage() {
           );
         }
 
-        if (v.status === "Pending") {
           return (
             <span className="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-700">
               Pending
             </span>
           );
-        }
 
-        return (
-          <span className="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-700">
-            Not Paid
-          </span>
-        );
+        // return (
+        //   <span className="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-700">
+        //     Not Paid
+        //   </span>
+        // );
       },
     },
     {
@@ -351,14 +349,9 @@ export default function PaymentsPage() {
       />
       <ActionConfirmationModal
         open={confirmOpen}
-        title={
-          confirmAction?.type === "paid"
-            ? "Mark as Paid"
-            : "Mark as Unpaid"
-        }
+        title="Mark as Paid"
         message={`Are you sure you want to mark ${selectedVendor?.vendor_name
-          } as ${confirmAction?.type === "paid" ? "Paid" : "Unpaid"
-          }?`}
+          } as Paid?`}
         loading={processing}
         onCancel={() => {
           setConfirmOpen(false);
@@ -378,15 +371,15 @@ export default function PaymentsPage() {
               showResult(true, "Vendor marked as Paid successfully.");
             }
 
-            if (confirmAction.type === "unpaid") {
-              await dispatch(
-                markVendorUnpaid({
-                  payment_id: confirmAction.paymentId,
-                })
-              ).unwrap();
+            // if (confirmAction.type === "unpaid") {
+            //   await dispatch(
+            //     markVendorUnpaid({
+            //       payment_id: confirmAction.paymentId,
+            //     })
+            //   ).unwrap();
 
-              showResult(true, "Vendor marked as Unpaid successfully.");
-            }
+            //   showResult(true, "Vendor marked as Unpaid successfully.");
+            // }
 
             setSelectedVendor(null);
 

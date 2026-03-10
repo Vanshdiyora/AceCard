@@ -105,7 +105,7 @@ function validateSocialLink(id: string, value: string): string | null {
     default:
       return isValidUrl(v)
         ? null
-        : "Link must start with https:// ";
+        : "Link must start with https:// or http:// ";
   }
 }
 

@@ -192,7 +192,7 @@ const paymentsSlice = createSlice({
       );
 
       if (item) {
-        item.status = "Not Paid";
+        item.status = "Pending";
       }
     },
   },
@@ -339,7 +339,7 @@ const paymentsSlice = createSlice({
         const historyItem = state.history.find(h => h.id === paymentId);
 
         if (historyItem) {
-          historyItem.status = "Not Paid";
+          historyItem.status = "Pending";
         }
 
         // 2️⃣ Update vendor list using vendor_id
@@ -351,7 +351,7 @@ const paymentsSlice = createSlice({
           );
 
           if (vendorItem) {
-            vendorItem.status = "Not Paid";
+            vendorItem.status = "Pending";
           }
         }
       })

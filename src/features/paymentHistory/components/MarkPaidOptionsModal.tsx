@@ -132,22 +132,7 @@ export default function MarkPaidOptionsModal({
           Cancel
         </button>
 
-        <button
-          disabled={hasHistory && !selectedPaymentId}
-          className="px-4 py-2 text-sm rounded bg-red-600 text-white disabled:opacity-50"
-          onClick={() => {
-            const paymentId = resolvePaymentId();
-            if (!paymentId) return;
-
-            onAction({
-              type: "unpaid",
-              paymentId,
-            });
-          }}
-        >
-          Mark as Unpaid
-        </button>
-
+     
         <button
           disabled={hasHistory && !selectedPaymentId}
           className="px-4 py-2 text-sm rounded bg-green-600 text-white disabled:opacity-50"
@@ -170,12 +155,14 @@ export default function MarkPaidOptionsModal({
 
 /* Status Badge */
 function StatusBadge({ status }: { status?: string }) {
-  const normalized = status?.toUpperCase();
+  const normalized =
+    status?.toUpperCase() === "NOT PAID"
+      ? "PENDING"
+      : status?.toUpperCase();
 
   const styles: Record<string, string> = {
     PAID: "bg-green-100 text-green-700",
     PENDING: "bg-yellow-100 text-yellow-700",
-    "NOT PAID": "bg-red-100 text-red-700",
   };
 
   return (
@@ -185,7 +172,7 @@ function StatusBadge({ status }: { status?: string }) {
         "bg-gray-100 text-gray-600"
       }`}
     >
-      {status}
+      {normalized === "PENDING" ? "Pending" : status}
     </span>
   );
 }

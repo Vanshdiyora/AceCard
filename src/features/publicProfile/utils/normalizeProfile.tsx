@@ -149,6 +149,7 @@ export function normalizeProfile(api: any) {
             url: s.url ?? "",
             enabled: s.enabled ?? true,
             rank: s.rank ?? i + 1,   // ✅ normalize rank
+            country_code: s.country_code ?? "+91",
           }))
         : [],
     },
@@ -451,6 +452,7 @@ export function denormalizeProfile(
             id: s.id,
             platform: s.platform,
             url: s.url,
+            country_code: s.country_code ?? "+91",   // ✅ NEW
             rank: s.rank,
             enabled: s.enabled ?? true,
           })),

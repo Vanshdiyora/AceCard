@@ -15,7 +15,7 @@ interface Item {
   rank: number;
   enabled: boolean;
 }
-
+const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
 /* ================= VALIDATION ================= */
 
 function isLinkFileRowComplete(item?: Item) {
@@ -54,11 +54,12 @@ export default function LinksFilesSection({
 }) {
   const items = [...value.items].sort((a, b) => a.rank - b.rank);
   const [error, setError] = useState<string | null>(null);
-
+  const [uploadingId, setUploadingId] = useState<string | null>(null);
   /* ================= ADD ================= */
   const handleFileUpload = async (file: File, itemId: string) => {
     try {
       setError(null);
+      setUploadingId(itemId);
 
       const res = await uploadImage(file);
 
@@ -82,6 +83,8 @@ export default function LinksFilesSection({
       });
     } catch (err) {
       setError("File upload failed. Please try again.");
+    } finally {
+      setUploadingId(null);
     }
   };
 
@@ -287,44 +290,17 @@ export default function LinksFilesSection({
               {item.type === "file" && (
                 <div className="md:col-span-7">
                   <label className="block text-xs font-semibold text-gray-500 mb-1">
-                    File URL
+                    File
                   </label>
-                  {!item.file_url ? (
-                    /* UPLOAD UI */
-                    <div
-                      className={`border-2 border-dashed rounded-xl p-4 text-center transition
-    ${disabled
-                          ? "bg-gray-100 border-gray-200"
-                          : "border-gray-300 hover:border-indigo-400 hover:bg-indigo-50/30"
-                        }`}
-                    >
-                      <input
-                        type="file"
-                        disabled={disabled}
-                        className="hidden"
-                        id={`file-upload-${item.id}`}
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) handleFileUpload(file, item.id);
-                          e.target.value = "";
-                        }}
-                      />
 
-                      <label
-                        htmlFor={`file-upload-${item.id}`}
-                        className={`cursor-pointer flex flex-col items-center gap-1 text-sm
-      ${disabled ? "text-gray-400" : "text-gray-600"}`}
-                      >
-                        <span className="font-medium text-indigo-600">
-                          Click to upload
-                        </span>
-                        <span className="text-xs text-gray-400">
-                          PDF, DOC, Images etc
-                        </span>
-                      </label>
+                  {/* UPLOADING */}
+                  {uploadingId === item.id ? (
+                    <div className="flex flex-col items-center gap-2 text-sm text-gray-500 border rounded-xl pt-2">
+                      <div className="h-5 w-5 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+                      <span>Uploading file...</span>
                     </div>
-                  ) : (
-                    /* FILE PREVIEW UI */
+                  ) : item.file_url ? (
+                    /* FILE PREVIEW */
                     <div className="flex items-center justify-between border rounded-xl px-3 py-3 bg-gray-50">
                       <div className="flex items-center gap-2 text-sm text-gray-700 truncate">
                         📄
@@ -377,10 +353,61 @@ export default function LinksFilesSection({
                         id={`file-upload-${item.id}`}
                         onChange={(e) => {
                           const file = e.target.files?.[0];
-                          if (file) handleFileUpload(file, item.id);
+
+                          if (!file) return;
+
+                          if (file.size > MAX_FILE_SIZE) {
+                            setError("File size must be less than 20 MB.");
+                            e.target.value = "";
+                            return;
+                          }
+
+                          handleFileUpload(file, item.id);
                           e.target.value = "";
                         }}
                       />
+                    </div>
+                  ) : (
+                    /* UPLOAD UI */
+                    <div
+                      className={`border-2 border-dashed rounded-xl px-4 pt-2 text-center transition ${disabled
+                        ? "bg-gray-100 border-gray-200"
+                        : "border-gray-300 hover:border-indigo-400 hover:bg-indigo-50/30"
+                        }`}
+                    >
+                      <input
+                        type="file"
+                        disabled={disabled}
+                        className="hidden"
+                        id={`file-upload-${item.id}`}
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+
+                          if (!file) return;
+
+                          if (file.size > MAX_FILE_SIZE) {
+                            setError("File size must be less than 20 MB.");
+                            e.target.value = "";
+                            return;
+                          }
+
+                          handleFileUpload(file, item.id);
+                          e.target.value = "";
+                        }}
+                      />
+
+                      <label
+                        htmlFor={`file-upload-${item.id}`}
+                        className={`pb-2 cursor-pointer flex flex-col items-center gap-1 text-sm ${disabled ? "text-gray-400" : "text-gray-600"
+                          }`}
+                      >
+                        <span className="font-medium text-indigo-600">
+                          Click to upload
+                        </span>
+                        <span className="text-xs text-gray-400">
+                          PDF, DOC, Images etc (Max 20 MB)
+                        </span>
+                      </label>
                     </div>
                   )}
                 </div>

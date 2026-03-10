@@ -105,7 +105,7 @@ function isValidUrl(url: string): boolean {
   if (!url || !url.trim()) return false;
   try {
     const parsed = new URL(url.trim());
-    return parsed.protocol === "https:";
+    return parsed.protocol === "http:" || parsed.protocol === "https:";
   } catch {
     return false;
   }
@@ -342,6 +342,7 @@ export interface SocialLinkItem {
   url: string;
   enabled: boolean;
   rank: number;        // ✅ ADD THIS
+  country_code?: string;
 }
 
 export interface SocialLinksConfig extends LockMeta {
@@ -667,7 +668,7 @@ export default function VicePublicSetting({
     if (hasInvalidSocialLinks(config?.social_links.items)) {
       setResultSuccess(false);
       setResultMessage(
-        "One or more social links have an invalid URL. Make sure all links start with https:// "
+        "One or more social links have an invalid URL. Make sure all links start with https:// or http:// "
       );
       setResultOpen(true);
       return false;
@@ -1343,10 +1344,31 @@ export default function VicePublicSetting({
           onChange={(items: any[]) => {
             setSocialError(null);
 
-            const normalized = items.map((item, index) => ({
-              ...item,
-              rank: index + 1, // ✅ normalize after drag
-            }));
+            const normalized = items.map((item, index) => {
+              const inputType = getSocialInputType(item.platform || item.id);
+              let url = item.url ?? "";
+
+              // Auto-prefix https:// or http:// for URL-type socials
+              // Auto-prefix https:// or http:// only if value looks like a real domain (has a TLD)
+              const looksLikeDomain = /^[^\s]+\.[a-zA-Z]{2,}(\/.*)?$/.test(url.trim());
+
+              if (
+                inputType === "url" &&
+                url.trim() !== "" &&
+                !url.startsWith("http://") &&
+                !url.startsWith("https://") &&
+                looksLikeDomain
+              ) {
+                url = "https://" + url.trim();
+              }
+
+              return {
+                ...item,
+                url,
+                rank: index + 1,
+                country_code: item.country_code || "+91",
+              };
+            });
 
             setSectionDraft({
               ...sectionDraft,
@@ -1698,7 +1720,7 @@ export default function VicePublicSetting({
         }
         if (!isValidUrl(btn.link.trim())) {
           setModalError(
-            `Button "${btn.title}" has an invalid URL. Make sure it starts with https:// `
+            `Button "${btn.title}" has an invalid URL. Make sure it starts with https:// or http:// `
           );
           return false;
         }
@@ -1709,7 +1731,7 @@ export default function VicePublicSetting({
       if (sectionDraft.enabled && sectionDraft.cta_url?.trim()) {
         if (!isValidUrl(sectionDraft.cta_url.trim())) {
           setModalError(
-            "CTA URL is invalid. Make sure it starts with https:// "
+            "CTA URL is invalid. Make sure it starts with https:// or http:// "
           );
           return false;
         }
@@ -1723,7 +1745,7 @@ export default function VicePublicSetting({
     //     }
     //     if (!isValidUrl(sectionDraft.meeting_url.trim())) {
     //       setModalError(
-    //         "Meeting URL is invalid. Make sure it starts with https:// "
+    //         "Meeting URL is invalid. Make sure it starts with https:// or http:// "
     //       );
     //       return false;
     //     }
@@ -1738,7 +1760,7 @@ export default function VicePublicSetting({
         }
         if (!isYoutubeRowComplete(item)) {
           setModalError(
-            `"${item.url}" is not a valid YouTube URL (e.g. https://youtube.com/watch?v=...)`
+            `"${item.url}" is not a valid YouTube URL (e.g. https:// or http://youtube.com/watch?v=...)`
           );
           return false;
         }
@@ -1753,7 +1775,7 @@ export default function VicePublicSetting({
         }
         if (item.link?.trim() && !isValidUrl(item.link.trim())) {
           setModalError(
-            `Photo "${item.title}" has an invalid URL. Make sure it starts with https:// `
+            `Photo "${item.title}" has an invalid URL. Make sure it starts with https:// or http:// `
           );
           return false;
         }
@@ -1762,7 +1784,27 @@ export default function VicePublicSetting({
 
     // Social Links
     if (activeSection === "social_links") {
-      for (const item of sectionDraft.items ?? []) {
+      // Normalize URLs before validating (auto-prefix https:// or http://)
+      const normalizedItems = (sectionDraft.items ?? []).map((item: any) => {
+        const inputType = getSocialInputType(item.platform || item.id);
+        let url = item.url ?? "";
+        const looksLikeDomain = /^[^\s]+\.[a-zA-Z]{2,}(\/.*)?$/.test(url.trim());
+        if (
+          inputType === "url" &&
+          url.trim() !== "" &&
+          !url.startsWith("http://") &&
+          !url.startsWith("https://") &&
+          looksLikeDomain
+        ) {
+          url = "https://" + url.trim();
+        }
+        return { ...item, url };
+      });
+
+      // Update the draft with normalized URLs before saving
+      setSectionDraft({ ...sectionDraft, items: normalizedItems });
+
+      for (const item of normalizedItems) {
         if (!item.enabled) continue;
         if (!item.url?.trim()) {
           setModalError(`Please enter a value for ${item.platform || item.id}.`);
@@ -1773,7 +1815,7 @@ export default function VicePublicSetting({
           const hint =
             type === "phone" ? "Enter a valid phone number (e.g. 1234567890)." :
               type === "email" ? "Enter a valid email address." :
-                "Make sure the URL starts with https://";
+                "Make sure the URL starts with https:// or http://";
           setModalError(`Invalid value for ${item.platform || item.id}: ${hint}`);
           return false;
         }
@@ -1794,7 +1836,7 @@ export default function VicePublicSetting({
           }
           if (!isValidUrl(item.url.trim())) {
             setModalError(
-              `"${item.title}" has an invalid URL. Make sure it starts with https:// `
+              `"${item.title}" has an invalid URL. Make sure it starts with https:// or http:// `
             );
             return false;
           }
@@ -1806,7 +1848,7 @@ export default function VicePublicSetting({
           }
           if (!isValidUrl(item.file_url.trim())) {
             setModalError(
-              `"${item.title}" has an invalid file URL. Make sure it starts with https:// `
+              `"${item.title}" has an invalid file URL. Make sure it starts with https:// or http:// `
             );
             return false;
           }
@@ -1894,7 +1936,7 @@ export default function VicePublicSetting({
     if (activeSection === "social_links") {
       if (hasInvalidSocialLinks(sectionDraft.items)) {
         setSocialError(
-          "One or more social links have an invalid URL. Make sure all links start with https:// "
+          "One or more social links have an invalid URL. Make sure all links start with https:// or http:// "
         );
         return;
       }
@@ -1903,7 +1945,8 @@ export default function VicePublicSetting({
         .sort((a: any, b: any) => a.rank - b.rank)
         .map((item: any, index: number) => ({
           ...item,
-          rank: index + 1, // ✅ enforce correct rank
+          rank: index + 1,
+          country_code: item.country_code || "+91", // ✅ ensure saved
         }));
 
       nextConfig = {

@@ -313,14 +313,14 @@ export default function MobilePublicSettings({
       for (const item of items) {
         if (!item.title?.trim()) return "Each photo must have a title.";
         if (item.link?.trim() && !isValidUrl(item.link.trim()))
-          return `Photo "${item.title}" has an invalid URL. Make sure it starts with https:// `;
+          return `Photo "${item.title}" has an invalid URL. Make sure it starts with https:// or http:// `;
       }
       return null;
     },
 
     social_links: (draft) => {
       return hasInvalidSocialLinks(draft.items || [])
-        ? "One or more social links have an invalid URL. Make sure all links start with https://"
+        ? "One or more social links have an invalid URL. Make sure all links start with https:// or http://"
         : null;
     },
 
@@ -332,12 +332,12 @@ export default function MobilePublicSettings({
         if (item.type === "link") {
           if (!item.url?.trim()) return `"${item.title}" is missing a URL.`;
           if (!isValidUrl(item.url.trim()))
-            return `"${item.title}" has an invalid URL. Make sure it starts with https://`;
+            return `"${item.title}" has an invalid URL. Make sure it starts with https:// or http://`;
         }
         if (item.type === "file") {
           if (!item.file_url?.trim()) return `"${item.title}" is missing an uploaded file.`;
           if (!isValidUrl(item.file_url.trim()))
-            return `"${item.title}" has an invalid file URL. Make sure it starts with https://`;
+            return `"${item.title}" has an invalid file URL. Make sure it starts with https:// or http://`;
         }
       }
       return null;
@@ -360,14 +360,14 @@ export default function MobilePublicSettings({
       if (!draft.enabled) return null;
       if (!draft.meeting_url?.trim()) return "Please enter a meeting URL.";
       if (!isValidUrl(draft.meeting_url.trim()))
-        return "Meeting URL is invalid. Make sure it starts with https://";
+        return "Meeting URL is invalid. Make sure it starts with https:// or http://";
       return null;
     },
 
     banner: (draft) => {
       if (!draft.enabled) return null;
       if (draft.cta_url?.trim() && !isValidUrl(draft.cta_url.trim()))
-        return "CTA URL is invalid. Make sure it starts with https://";
+        return "CTA URL is invalid. Make sure it starts with https:// or http://";
       return null;
     },
 
@@ -376,7 +376,7 @@ export default function MobilePublicSettings({
         if (!btn.title?.trim()) return "Each card button must have a title.";
         if (!btn.link?.trim()) return `Button "${btn.title}" is missing a link.`;
         if (!isValidUrl(btn.link.trim()))
-          return `Button "${btn.title}" has an invalid URL. Make sure it starts with https://`;
+          return `Button "${btn.title}" has an invalid URL. Make sure it starts with https:// or http://`;
       }
       return null;
     },

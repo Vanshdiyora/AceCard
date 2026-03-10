@@ -82,7 +82,7 @@ export function Banner({
     if (draft.cta_url?.trim()) {
       if (!isValidUrl(draft.cta_url)) {
         setError(
-          "CTA link is invalid. Make sure it starts with https:// "
+          "CTA link is invalid. Make sure it starts with https:// or http:// "
         );
         return;
       }

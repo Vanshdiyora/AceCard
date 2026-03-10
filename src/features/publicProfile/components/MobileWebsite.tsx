@@ -761,47 +761,47 @@ function Social({ items, theme, shapeClass }: any) {
   }
 
   return (
-    <div className="flex flex-col items-center gap-3">
+    <div className="flex flex-col items-center gap-2 px-2">
       {rows.map((row, rIdx) => (
         <div
           key={rIdx}
-          className={`flex gap-3 ${row.length < 3 ? "justify-center" : "justify-between"
-            } w-full`}
+          className={`flex gap-2 ${
+            row.length < 3 ? "justify-center" : "justify-between"
+          } w-full`}
         >
           {row.map((s: any) => (
             <a
               key={s.id}
               href={getSocialHref(s.platform || s.id, s.url)}
               target="_blank"
-
               rel="noopener noreferrer"
-              className={`h-16 w-16 flex items-center justify-center shadow-md transition hover:scale-105 overflow-hidden ${shapeClass}`}
+              className={`h-18 w-18 p-4 flex items-center justify-center shadow-md transition hover:scale-105 overflow-hidden ${shapeClass}`}
               style={{
                 backgroundColor: t.buttonBg,
                 color: t.buttonText,
               }}
             >
-              {s.id === "instagram" && <SiInstagram size={40} />}
-              {s.id === "linkedin" && <SiLinkedin size={40} />}
-              {s.id === "youtube" && <SiYoutube size={40} />}
-              {s.id === "twitter" && <SiX size={40} />}
-              {s.id === "facebook" && <SiFacebook size={40} />}
-              {s.id === "whatsapp" && <SiWhatsapp size={40} />}
-              {s.id === "phone" && <FiPhone size={40} />}
-              {s.id === "website" && <FiGlobe size={40} />}
-              {s.id === "snapchat" && <SiSnapchat size={40} />}
-              {s.id === "tiktok" && <SiTiktok size={40} />}
-              {s.id === "address" && <FiMapPin size={40} />}
-              {s.id === "email" && <FiMail size={40} />}
-              {s.id === "telegram" && <SiTelegram size={40} />}
-              {s.id === "pinterest" && <SiPinterest size={40} />}
-              {s.id === "threads" && <SiThreads size={40} />}
-              {s.id === "github" && <SiGithub size={40} />}
-              {s.id === "discord" && <SiDiscord size={40} />}
-              {s.id === "calendly" && <SiCalendly size={40} />}
-              {s.id === "appstore" && <SiAppstore size={40} />}
-              {s.id === "playstore" && <SiGoogleplay size={40} />}
-              {s.id === "sms" && <FiMessageSquare size={40} />}
+              {s.id === "instagram" && <SiInstagram size={44} />}
+              {s.id === "linkedin" && <SiLinkedin size={44} />}
+              {s.id === "youtube" && <SiYoutube size={44} />}
+              {s.id === "twitter" && <SiX size={44} />}
+              {s.id === "facebook" && <SiFacebook size={44} />}
+              {s.id === "whatsapp" && <SiWhatsapp size={44} />}
+              {s.id === "phone" && <FiPhone size={44} />}
+              {s.id === "website" && <FiGlobe size={44} />}
+              {s.id === "snapchat" && <SiSnapchat size={44} />}
+              {s.id === "tiktok" && <SiTiktok size={44} />}
+              {s.id === "address" && <FiMapPin size={44} />}
+              {s.id === "email" && <FiMail size={44} />}
+              {s.id === "telegram" && <SiTelegram size={44} />}
+              {s.id === "pinterest" && <SiPinterest size={44} />}
+              {s.id === "threads" && <SiThreads size={44} />}
+              {s.id === "github" && <SiGithub size={44} />}
+              {s.id === "discord" && <SiDiscord size={44} />}
+              {s.id === "calendly" && <SiCalendly size={44} />}
+              {s.id === "appstore" && <SiAppstore size={44} />}
+              {s.id === "playstore" && <SiGoogleplay size={44} />}
+              {s.id === "sms" && <FiMessageSquare size={44} />}
             </a>
           ))}
         </div>
@@ -820,7 +820,7 @@ function Links({ title, items, theme }: any) {
     <Section title={title} theme={theme}>
       <div className="flex flex-col gap-4">
         {items.map((l: any) => {
-          const href = l.url;
+          const href = l.type === "file" ? l.file_url : l.url;
 
           return (
             <a
