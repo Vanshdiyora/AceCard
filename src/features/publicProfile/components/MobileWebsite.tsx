@@ -730,7 +730,7 @@ function YouTube({ title, items, theme }: any) {
   );
 }
 
-function getSocialHref(platform: string, url: string): string {
+export function getSocialHref(platform: string, url: string): string {
   const val = url?.trim();
   if (!val) return "#";
 

@@ -50,16 +50,26 @@ export function ProfileClassic({
 
   /* ================= AVATAR UPLOAD ================= */
   const uploadAvatar = async (blob: Blob) => {
-    const file = new File([blob], "avatar.jpg", { type: "image/jpeg" });
-    const res = await uploadImage(file);
-    const url = res.data.url;
+    try {
+      const file = new File([blob], "avatar.jpg", { type: "image/jpeg" });
 
-    const next = profile.custom_profile
-      ? { ...profile, custom_profile_url: url }
-      : { ...profile, avatar_url: url };
+      const res = await uploadImage(file);
+      const url = res.data.url;
 
-    onProfileChange(next);
-    setCropFile(null);
+      const updatedProfile = {
+        ...profile,
+        avatar_url: !profile.custom_profile
+          ? url
+          : profile.avatar_url,
+      };
+
+      onProfileChange(updatedProfile);
+      console.log(updatedProfile)
+
+      setCropFile(null);
+    } catch (err) {
+      console.error("Avatar upload failed:", err);
+    }
   };
 
   /* ================= COVER UPLOAD ================= */
@@ -73,11 +83,13 @@ export function ProfileClassic({
     const res = await uploadImage(file);
     const url = res.data.url;
 
-    onProfileChange((prev: any) => ({
-      ...prev,
-      cover: { ...prev.cover, cover_url: url },
-      profile: { ...prev.profile },
-    }));
+    onProfileChange({
+      ...profile,
+      cover: {
+        ...cover,
+        cover_url: url,
+      },
+    });
 
     setIsCoverCropping(false);
   };

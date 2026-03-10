@@ -3,7 +3,8 @@ import { formatRole } from "../../MobilePublicSettings";
 import { uploadImage } from "../../../../services/publicProfile.api";
 import AvatarCropModal from "../../../../../../common/ui/AvatarCropModal";
 import { Camera as ImageIcon } from "lucide-react";
-/* helper */
+
+/* ================= THEME HELPER ================= */
 const resolveTheme = (theme: any) => ({
   cardBg: theme.card_background || "#6B6E93",
   buttonBg: theme.button_color || "#A5A6AB",
@@ -19,18 +20,17 @@ export function ProfileCenter({
   onProfileChange,
 }: any) {
   const t = resolveTheme(theme);
-
-  /* ================= AVATAR SIZE LOGIC ================= */
+  console.log(profile)
+  /* ================= AVATAR SIZE ================= */
   const sizeBase = layout?.profile_radius ?? 40;
 
-  // avatar size derived ONLY from profile_radius
   const avatarSize = Math.min(
-    Math.max(sizeBase * 2, 48), // min
-    160                        // max
+    Math.max(sizeBase * 2, 48),
+    160
   );
 
-  const ring = layout?.profile_width ?? 6;
-  const BORDER_RADIUS = 999; // always circular outer ring
+  const ring = Number(layout?.profile_width ?? 6);
+  const BORDER_RADIUS = 999;
 
   /* ================= ALIGNMENT ================= */
   const align =
@@ -47,22 +47,32 @@ export function ProfileCenter({
         ? "justify-end"
         : "justify-center";
 
+  /* ================= STATE ================= */
   const [cropFile, setCropFile] = useState<File | null>(null);
 
   /* ================= UPLOAD HANDLER ================= */
   const uploadCropped = async (blob: Blob) => {
-    const file = new File([blob], "avatar.jpg", { type: "image/jpeg" });
-    const res = await uploadImage(file);
-    const url = res.data.url;
+    try {
+      const file = new File([blob], "avatar.jpg", { type: "image/jpeg" });
 
-    const next = profile.custom_profile
-      ? { ...profile, custom_profile_url: url }
-      : { ...profile, avatar_url: url };
+      const res = await uploadImage(file);
+      const url = res.data.url;
+      
+      const updatedProfile = {
+        ...profile,
+        avatar_url: !profile.custom_profile
+        ? url
+        : profile.avatar_url,
+      };
+      
+      onProfileChange(updatedProfile);
+      console.log(updatedProfile)
 
-    onProfileChange(next);
-    setCropFile(null);
+      setCropFile(null);
+    } catch (err) {
+      console.error("Avatar upload failed:", err);
+    }
   };
-
   return (
     <div className="flex justify-center mt-6">
       <div
@@ -70,7 +80,7 @@ export function ProfileCenter({
       >
         {/* ================= AVATAR ================= */}
         <div className={`w-full flex ${avatarAlign} relative`}>
-          {/* Outer ring */}
+          {/* OUTER RING */}
           <div
             className="flex items-center justify-center transition-all duration-300"
             style={{
@@ -79,7 +89,7 @@ export function ProfileCenter({
               borderRadius: BORDER_RADIUS,
             }}
           >
-            {/* Inner background */}
+            {/* INNER */}
             <div
               className="relative"
               style={{
@@ -87,6 +97,7 @@ export function ProfileCenter({
                 borderRadius: BORDER_RADIUS,
               }}
             >
+              {/* AVATAR IMAGE */}
               {profile?.avatar_url ? (
                 <img
                   src={profile.avatar_url}
@@ -95,7 +106,7 @@ export function ProfileCenter({
                     width: avatarSize,
                     height: avatarSize,
                     objectFit: "cover",
-                    borderRadius: "100%", // always circle
+                    borderRadius: "100%",
                     transition: "width 150ms ease, height 150ms ease",
                   }}
                 />
@@ -107,7 +118,7 @@ export function ProfileCenter({
                     height: avatarSize,
                     backgroundColor: t.cardBg,
                     color: t.text,
-                    borderRadius: "100%", // always circle
+                    borderRadius: "100%",
                     transition: "width 150ms ease, height 150ms ease",
                   }}
                 >
@@ -115,15 +126,16 @@ export function ProfileCenter({
                 </div>
               )}
 
-              {/* 📸 CAMERA BUTTON */}
+              {/* CAMERA BUTTON */}
               <label
                 className="
-    absolute -bottom-3 left-1/2 -translate-x-1/2
-    bg-orange-500 text-white p-2 rounded-full
-    shadow-lg cursor-pointer
-    hover:scale-105 active:scale-95 transition
-    flex items-center justify-center
-  "
+                  absolute -bottom-3 left-1/2 -translate-x-1/2
+                  bg-orange-500 text-white p-2 rounded-full
+                  shadow-lg cursor-pointer
+                  hover:scale-105 active:scale-95 transition
+                  flex items-center justify-center
+                "
+                title="Change avatar"
               >
                 <ImageIcon size={18} strokeWidth={2} />
 
@@ -131,9 +143,15 @@ export function ProfileCenter({
                   type="file"
                   hidden
                   accept="image/*"
-                  onChange={(e) =>
-                    e.target.files && setCropFile(e.target.files[0])
-                  }
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+
+                    setCropFile(file);
+
+                    // allow re-uploading the same file again
+                    e.target.value = "";
+                  }}
                 />
               </label>
             </div>
@@ -141,13 +159,18 @@ export function ProfileCenter({
         </div>
 
         {/* ================= TEXT ================= */}
-        <h2 className="mt-3 text-base font-semibold" style={{ color: t.text }}>
+        <h2
+          className="mt-3 text-base font-semibold"
+          style={{ color: t.text }}
+        >
           {user?.name}
         </h2>
 
         <p className="text-xs opacity-90" style={{ color: t.text }}>
           {formatRole(
-            profile.custom_job_role || user?.job_title || user?.role
+            profile?.custom_job_role ||
+            user?.job_title ||
+            user?.role
           )}{" "}
           at {user?.vendor_name}
         </p>

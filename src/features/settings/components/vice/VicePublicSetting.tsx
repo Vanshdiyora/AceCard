@@ -142,17 +142,16 @@ export const TEXT_PLATFORMS = ["address"];
 export function getSocialInputType(platform: string): "phone" | "email" | "text" | "url" {
   if (PHONE_PLATFORMS.includes(platform)) return "phone";
   if (EMAIL_PLATFORMS.includes(platform)) return "email";
-  if (TEXT_PLATFORMS.includes(platform)) return "text";
   return "url";
 }
 
-function isValidPhone(val: string): boolean {
+export function isValidPhone(val: string): boolean {
   // digits only after stripping spaces/dashes/parens, must be 10–15 digits
   const digits = val.trim().replace(/[\s\-()+]/g, "");
   return /^\d{10,15}$/.test(digits);
 }
 
-function isValidEmail(val: string): boolean {
+export function isValidEmail(val: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val.trim());
 }
 
@@ -165,7 +164,7 @@ export function isValidSocialValue(platform: string, value: string): boolean {
   return isValidUrl(value); // url
 }
 
-function hasInvalidSocialLinks(items: any[] = []) {
+export function hasInvalidSocialLinks(items: any[] = []) {
   return items.some(
     (i) =>
       i.enabled === true &&

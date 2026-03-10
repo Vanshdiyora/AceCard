@@ -3,7 +3,7 @@ import { Trash2, ArrowLeft } from "lucide-react";
 import { createPortal } from "react-dom";
 import AddSocialModal from "./AddSocialModal";
 import CommonItemsReorder from "../../../../settings/components/vice/sections/CommonItemsReorder";
-
+import { CountryCodeDropdown, isPhoneType } from "../../../../settings/components/vice/sections/SocialSection";
 // Icons
 import {
   SiInstagram,
@@ -97,10 +97,14 @@ function validateSocialLink(id: string, value: string): string | null {
         : "Invalid email address.";
 
     case "phone":
+    case "whatsapp":
     case "sms":
       return /^[0-9+\-\s()]{6,}$/.test(v)
         ? null
         : "Invalid phone number.";
+
+    case "address":
+      return v.length > 0 ? null : "Address is required.";
 
     default:
       return isValidUrl(v)
@@ -203,11 +207,10 @@ export default function SocialSection({
           setFormOpen(false);
           setPickerOpen(true);
         }}
-        className={`mt-3 px-4 py-2 rounded-lg text-sm font-semibold ${
-          locked
+        className={`mt-3 px-4 py-2 rounded-lg text-sm font-semibold ${locked
             ? "bg-gray-300 text-gray-500 cursor-not-allowed"
             : "bg-purple-600 text-white"
-        }`}
+          }`}
       >
         + Add Social
       </button>
@@ -261,13 +264,39 @@ function SocialLinksModal({
   if (!open) return null;
 
   const handleDone = () => {
-    for (const item of items) {
+    // Auto-prefix https:// for URL-type items that look like domains
+    const PHONE_IDS = ["whatsapp", "phone", "sms"];
+    const EMAIL_IDS = ["email"];
+    const TEXT_IDS = ["address"];
+
+    const normalizedItems = items.map((item: any) => {
+      const isUrl = !PHONE_IDS.includes(item.id) && !EMAIL_IDS.includes(item.id) && !TEXT_IDS.includes(item.id);
+      let url = item.url ?? "";
+      const looksLikeDomain = /^[^\s]+\.[a-zA-Z]{2,}(\/.*)?$/.test(url.trim());
+
+      if (
+        isUrl &&
+        url.trim() !== "" &&
+        !url.startsWith("http://") &&
+        !url.startsWith("https://") &&
+        looksLikeDomain
+      ) {
+        url = "https://" + url.trim();
+        onUpdate(item.id, url); // update the parent state with prefixed URL
+      }
+
+      return { ...item, url };
+    });
+
+    for (const item of normalizedItems) {
       const validationError = validateSocialLink(item.id, item.url);
       if (validationError) {
-        setError(`${item.label}: ${validationError}`);
+        const label = ALL_SOCIALS.find((s) => s.id === item.id)?.label || item.id;
+        setError(`${label}: ${validationError}`);
         return;
       }
     }
+
     setError(null);
     onCloseAll();
   };
@@ -315,15 +344,39 @@ function SocialLinksModal({
                     <Icon size={18} />
                   </div>
 
-                  <input
-                    className="flex-1 rounded-lg border px-3 py-2 text-sm"
-                    placeholder={`Enter ${s.label} link`}
-                    value={s.url}
-                    onChange={(e) => {
-                      setError(null);
-                      onUpdate(s.id, e.target.value);
-                    }}
-                  />
+                  {isPhoneType(s.id) ? (
+                    <div className="flex flex-1 border rounded-lg overflow-hidden">
+
+                      <CountryCodeDropdown
+                        value={s.country_code || "+91"}
+                        onChange={(code) => {
+                          onUpdate(s.id, `${code}${s.url || ""}`);
+                        }}
+                      />
+
+                      <input
+                        type="tel"
+                        className="flex-1 px-3 py-2 text-sm outline-none"
+                        placeholder="9876543210"
+                        value={s.url}
+                        onChange={(e) => {
+                          setError(null);
+                          onUpdate(s.id, e.target.value);
+                        }}
+                      />
+
+                    </div>
+                  ) : (
+                    <input
+                      className="flex-1 rounded-lg border px-3 py-2 text-sm"
+                      placeholder={`Enter ${s.label} link`}
+                      value={s.url}
+                      onChange={(e) => {
+                        setError(null);
+                        onUpdate(s.id, e.target.value);
+                      }}
+                    />
+                  )}
 
                   <button
                     onClick={() => {

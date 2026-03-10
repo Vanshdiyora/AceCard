@@ -72,7 +72,7 @@ export const ALL_SOCIALS = [
 ];
 
 /* ---------------- COUNTRY CODES ---------------- */
-const COUNTRY_CODES = [
+export const COUNTRY_CODES = [
   { code: "+91", country: "India", flag: "🇮🇳" },
   { code: "+1", country: "USA / Canada", flag: "🇺🇸" },
   { code: "+44", country: "United Kingdom", flag: "🇬🇧" },
@@ -113,7 +113,7 @@ const COUNTRY_CODES = [
 
 /* ---------------- HELPERS ---------------- */
 
-const isPhoneType = (platform: string) =>
+export const isPhoneType = (platform: string) =>
   ["phone", "whatsapp", "sms"].includes(platform);
 
 /* ---------------- COMPONENT ---------------- */
@@ -279,7 +279,7 @@ export default function SocialSection({
 }
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
-function CountryCodeDropdown({
+export function CountryCodeDropdown({
   value,
   onChange,
   disabled,

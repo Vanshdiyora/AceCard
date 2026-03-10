@@ -3,6 +3,7 @@ import Links from "./Links/Links";
 import { Pencil } from "lucide-react";
 import { X } from "lucide-react";
 import { createPortal } from "react-dom";
+import { getSocialInputType } from "../../../settings/components/vice/VicePublicSetting";
 import {
   SiInstagram,
   SiLinkedin,
@@ -23,7 +24,7 @@ import {
   SiAppstore,
   SiGoogleplay,
 } from "react-icons/si";
-
+import { isValidSocialValue } from "../../../settings/components/vice/VicePublicSetting";
 import { FiMail, FiMapPin, FiMessageSquare } from "react-icons/fi";
 import { ProfileLayoutModal } from "./Profile/ProfileLayoutModal";
 import { ProfileLayoutEditor } from "./Profile/ProfileLayoutEditor";
@@ -50,6 +51,7 @@ import AddSectionModal from "../../../settings/components/vice/sections/AddSecti
 import ContactSection from "../../../settings/components/vice/sections/ContactSection";
 import CardButtonsSection from "../../../settings/components/vice/sections/CardButtonsSection";
 import CommonItemsReorder from "../../../settings/components/vice/sections/CommonItemsReorder";
+import { getSocialHref } from "../MobileWebsite";
 
 /* ================= HELPERS ================= */
 
@@ -282,7 +284,7 @@ export default function MobilePublicSettings({
     if (!url || !url.trim()) return false;
     try {
       const parsed = new URL(url.trim());
-      return parsed.protocol === "https:";
+      return parsed.protocol === "http:" || parsed.protocol === "https:";
     } catch {
       return false;
     }
@@ -292,10 +294,13 @@ export default function MobilePublicSettings({
   const isYoutubeRowComplete = (item: any) =>
     item.url?.trim() && isValidUrl(item.url.trim());
 
-  const hasInvalidSocialLinks = (items: any[]) =>
-    items.some(
-      (i) => i.enabled === true && (!i.url || i.url.trim() === "" || !isValidUrl(i.url.trim()))
+  function hasInvalidSocialLinks(items: any[] = []) {
+    return items.some(
+      (i) =>
+        i.enabled === true &&
+        (!i.url || i.url.trim() === "" || !isValidSocialValue(i.id, i.url))
     );
+  }
 
   const sectionValidators: Record<string, ValidatorFn> = {
     youtube: (draft) => {
@@ -319,8 +324,26 @@ export default function MobilePublicSettings({
     },
 
     social_links: (draft) => {
-      return hasInvalidSocialLinks(draft.items || [])
-        ? "One or more social links have an invalid URL. Make sure all links start with https:// or http://"
+      const normalized = (draft.items || []).map((item: any) => {
+        const inputType = getSocialInputType(item.id);
+        let url = item.url ?? "";
+        const looksLikeDomain = /^[^\s]+\.[a-zA-Z]{2,}(\/.*)?$/.test(url.trim());
+        if (
+          inputType === "url" &&
+          url.trim() !== "" &&
+          !url.startsWith("http://") &&
+          !url.startsWith("https://") &&
+          looksLikeDomain
+        ) {
+          url = "https://" + url.trim();
+        }
+        return { ...item, url };
+      });
+
+      draft.items = normalized;
+
+      return hasInvalidSocialLinks(normalized)
+        ? "One or more social links have an invalid value. Check your URLs, phone numbers, and email addresses."
         : null;
     },
 
@@ -430,7 +453,14 @@ export default function MobilePublicSettings({
                 setOpenLayoutEditor(true);
               }}
 
-              onProfileChange={updateDraft}
+              onProfileChange={(nextProfile: any) =>
+                updateDraft((prev: any) => ({
+                  ...prev,
+                  profile: nextProfile,
+                  cover: nextProfile?.cover ?? prev.cover,
+
+                }))
+              }
 
             />
           </div>
@@ -1185,12 +1215,14 @@ export default function MobilePublicSettings({
           setEditProducts(false);
         }}
       />
+
       <ResultModal
         open={!!resultModal}
         type={resultModal?.type || "success"}
         message={resultModal?.message || ""}
         onClose={() => setResultModal(null)}
       />
+
       {/* BOTTOM ACTION BAR */}
       <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur border-t shadow px-4 py-3 flex gap-3 justify-center">
         <button
@@ -1580,7 +1612,7 @@ function Social({ items, theme, shapeClass }: any) {
   }
 
   return (
-    <div className="flex flex-col items-center gap-4 pb-5">
+    <div className="flex flex-col items-center gap-4 px-6 pb-4">
       {rows.map((row, rIdx) => (
         <div
           key={rIdx}
@@ -1590,36 +1622,36 @@ function Social({ items, theme, shapeClass }: any) {
           {row.map((s: any) => (
             <a
               key={s.id}
-              href={s.url}
+              href={getSocialHref(s.id, s.url)}
               target="_blank"
               rel="noopener noreferrer"
-              className={`h-20 w-20 flex items-center justify-center shadow-md transition hover:scale-105 overflow-hidden ${shapeClass}`}
+              className={`h-20 w-20 p-4 flex items-center justify-center shadow-md transition hover:scale-105 overflow-hidden ${shapeClass}`}
               style={{
                 backgroundColor: t.buttonBg,
                 color: t.buttonText,
               }}
             >
-              {s.id === "instagram" && <SiInstagram size={30} />}
-              {s.id === "linkedin" && <SiLinkedin size={30} />}
-              {s.id === "youtube" && <SiYoutube size={30} />}
-              {s.id === "twitter" && <SiX size={30} />}
-              {s.id === "facebook" && <SiFacebook size={30} />}
-              {s.id === "whatsapp" && <SiWhatsapp size={30} />}
-              {s.id === "phone" && <FiPhone size={30} />}
-              {s.id === "website" && <FiGlobe size={30} />}
-              {s.id === "snapchat" && <SiSnapchat size={30} />}
-              {s.id === "tiktok" && <SiTiktok size={30} />}
-              {s.id === "address" && <FiMapPin size={30} />}
-              {s.id === "email" && <FiMail size={30} />}
-              {s.id === "telegram" && <SiTelegram size={30} />}
-              {s.id === "pinterest" && <SiPinterest size={30} />}
-              {s.id === "threads" && <SiThreads size={30} />}
-              {s.id === "github" && <SiGithub size={30} />}
-              {s.id === "discord" && <SiDiscord size={30} />}
-              {s.id === "calendly" && <SiCalendly size={30} />}
-              {s.id === "appstore" && <SiAppstore size={30} />}
-              {s.id === "playstore" && <SiGoogleplay size={30} />}
-              {s.id === "sms" && <FiMessageSquare size={30} />}
+              {s.id === "instagram" && <SiInstagram size={44} />}
+              {s.id === "linkedin" && <SiLinkedin size={44} />}
+              {s.id === "youtube" && <SiYoutube size={44} />}
+              {s.id === "twitter" && <SiX size={44} />}
+              {s.id === "facebook" && <SiFacebook size={44} />}
+              {s.id === "whatsapp" && <SiWhatsapp size={44} />}
+              {s.id === "phone" && <FiPhone size={44} />}
+              {s.id === "website" && <FiGlobe size={44} />}
+              {s.id === "snapchat" && <SiSnapchat size={44} />}
+              {s.id === "tiktok" && <SiTiktok size={44} />}
+              {s.id === "address" && <FiMapPin size={44} />}
+              {s.id === "email" && <FiMail size={44} />}
+              {s.id === "telegram" && <SiTelegram size={44} />}
+              {s.id === "pinterest" && <SiPinterest size={44} />}
+              {s.id === "threads" && <SiThreads size={44} />}
+              {s.id === "github" && <SiGithub size={44} />}
+              {s.id === "discord" && <SiDiscord size={44} />}
+              {s.id === "calendly" && <SiCalendly size={44} />}
+              {s.id === "appstore" && <SiAppstore size={44} />}
+              {s.id === "playstore" && <SiGoogleplay size={44} />}
+              {s.id === "sms" && <FiMessageSquare size={44} />}
             </a>
           ))}
         </div>

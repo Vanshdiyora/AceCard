@@ -11,7 +11,7 @@ type Props = {
 export default function AvatarCropModal({ file, onCancel, onSave }: Props) {
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
-  const [croppedArea, setCroppedArea] = useState<any>(null);
+const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
   const [imageUrl, setImageUrl] = useState<string>("");
 
   /* create blob URL once */
@@ -30,9 +30,9 @@ export default function AvatarCropModal({ file, onCancel, onSave }: Props) {
     };
   }, []);
 
-  const onCropComplete = useCallback((_: any, area: any) => {
-    setCroppedArea(area);
-  }, []);
+  const onCropComplete = useCallback((_: any, areaPixels: any) => {
+  setCroppedAreaPixels(areaPixels);
+}, []);
 
   const getCroppedBlob = async () => {
     const img = new Image();
@@ -46,17 +46,19 @@ export default function AvatarCropModal({ file, onCancel, onSave }: Props) {
     canvas.height = OUTPUT_SIZE;
 
     const ctx = canvas.getContext("2d")!;
-    ctx.drawImage(
-      img,
-      croppedArea.x,
-      croppedArea.y,
-      croppedArea.width,
-      croppedArea.height,
-      0,
-      0,
-      OUTPUT_SIZE,
-      OUTPUT_SIZE
-    );
+   if (!croppedAreaPixels) return;
+
+ctx.drawImage(
+  img,
+  croppedAreaPixels.x,
+  croppedAreaPixels.y,
+  croppedAreaPixels.width,
+  croppedAreaPixels.height,
+  0,
+  0,
+  OUTPUT_SIZE,
+  OUTPUT_SIZE
+);
 
     return new Promise<Blob>((resolve) =>
       canvas.toBlob((b) => resolve(b!), "image/jpeg", 0.95)
@@ -94,25 +96,21 @@ export default function AvatarCropModal({ file, onCancel, onSave }: Props) {
         <div className="relative w-full h-[60vh] max-h-[420px] bg-black">
           {imageUrl && (
             <Cropper
-              image={imageUrl}
-              crop={crop}
-              zoom={zoom}
-              aspect={1}
-              cropShape="round"
-              showGrid={false}
-              objectFit="contain"
-              // ✅ Allow zooming out to 20% so small/logo images can sit
-              // smaller inside the crop circle (white padding around them)
-              minZoom={0.2}
-              maxZoom={10}
-              // ✅ CRITICAL: restrictPosition=true clamps movement to zero
-              // when the image is smaller than the crop area (zoom < 1),
-              // making drag feel completely frozen. false = free movement always.
-              restrictPosition={false}
-              onCropChange={setCrop}
-              onZoomChange={setZoom}
-              onCropComplete={onCropComplete}
-            />
+  image={imageUrl}
+  crop={crop}
+  zoom={zoom}
+  aspect={1}
+  cropShape="round"
+  showGrid={false}
+  objectFit="contain"
+  minZoom={0.2}
+  maxZoom={10}
+  restrictPosition={false}
+  zoomWithScroll
+  onCropChange={setCrop}
+  onZoomChange={setZoom}
+  onCropComplete={onCropComplete}
+/>
           )}
         </div>
 
@@ -142,7 +140,10 @@ export default function AvatarCropModal({ file, onCancel, onSave }: Props) {
               Cancel
             </button>
             <button
-              onClick={async () => onSave(await getCroppedBlob())}
+              onClick={async () => {
+  const blob = await getCroppedBlob();
+  if (blob) onSave(blob);
+}}
               className="px-6 py-2 rounded-xl text-white bg-gradient-to-r from-black to-gray-800 shadow-md hover:opacity-90 transition"
             >
               Save Photo
