@@ -97,7 +97,10 @@ export default function LoginPage() {
     }
   }, [hydrated, token, role, subdomain]);
 
-
+  const capitalizeFirst = (text: string) => {
+    if (!text) return text;
+    return text.charAt(0).toUpperCase() + text.slice(1);
+  };
   return (
     <>
       <BlockerLoader show={loading} />
@@ -117,7 +120,7 @@ export default function LoginPage() {
 
           {(error || localError) && (
             <p className="text-red-500 text-xs sm:text-sm text-center">
-              {localError || error}
+              {capitalizeFirst(localError || error || "")}
             </p>
           )}
 
