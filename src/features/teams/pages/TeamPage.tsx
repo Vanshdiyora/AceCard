@@ -335,7 +335,7 @@ export default function TeamPage() {
           { label: "All", value: "all" },
           { label: "Active", value: "active" },
           { label: "Suspended", value: "suspended" },
-          { label: "Unassigned", value: "unassigned" }
+          // { label: "Unassigned", value: "unassigned" }
         ]}
         activeTab={roleFilter !== "all" ? roleFilter : statusFilter}
         onTabChange={(v) => {
