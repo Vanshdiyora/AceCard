@@ -250,9 +250,10 @@ const normalizeLinksFiles = (api: any) => {
         id: l.id,
         type: l.type || "link",
         title: l.title || "",
-        url: l.url || l.file_url || "",
+        url: l.url || "",
         file_url: l.file_url || "",
         file_type: l.file_type || "",
+        avatar_url: l.avatar_url || "",   // ✅ NEW
         rank: l.rank ?? i + 1,
         enabled: l.enabled ?? true,
       }))
@@ -506,9 +507,10 @@ export function denormalizeProfile(
           url: l.url || "",
           file_url: l.file_url || "",
           file_type: l.file_type || "",
+          avatar_url: l.avatar_url || "",   // ✅ NEW
           rank: l.rank,
           enabled: l.enabled,
-        })),
+        }))
       },
 
       /* ================= PHOTO GALLERY ================= */

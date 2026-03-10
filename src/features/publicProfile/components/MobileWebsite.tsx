@@ -761,13 +761,12 @@ function Social({ items, theme, shapeClass }: any) {
   }
 
   return (
-    <div className="flex flex-col items-center gap-4 px-10">
+    <div className="flex flex-col items-center gap-4 px-6">
       {rows.map((row, rIdx) => (
         <div
           key={rIdx}
-          className={`flex gap-4 ${
-            row.length < 3 ? "justify-center" : "justify-between"
-          } w-full`}
+          className={`flex gap-4 ${row.length < 3 ? "justify-center" : "justify-between"
+            } w-full`}
         >
           {row.map((s: any) => (
             <a
@@ -831,21 +830,26 @@ function Links({ title, items, theme }: any) {
               className="flex items-center gap-3 rounded-xl p-2 transition hover:scale-[1.01]"
               style={{ backgroundColor: "transparent" }}
             >
-              {/* ICON */}
+              {/* ICON / AVATAR */}
               <div
-                className="h-9 w-9 rounded-full flex items-center justify-center shadow"
+                className="h-9 w-9 rounded-full flex items-center justify-center shadow overflow-hidden"
                 style={{
                   backgroundColor: t.buttonBg,
                   color: t.buttonText,
                 }}
               >
-                {l.type === "file" ? (
+                {l.avatar_url ? (
+                  <img
+                    src={l.avatar_url}
+                    alt={l.title}
+                    className="w-full h-full object-cover"
+                  />
+                ) : l.type === "file" ? (
                   <FileText size={16} />
                 ) : (
                   <Link2 size={16} />
                 )}
               </div>
-
               {/* TEXT */}
               <p
                 className="text-sm font-semibold truncate"

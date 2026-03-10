@@ -3,12 +3,13 @@ import CommonItemsReorder from "./CommonItemsReorder";
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { uploadImage } from "../../../../publicProfile/services/publicProfile.api";
-
+import AvatarCropModal from "../../../../../common/ui/AvatarCropModal";
 /* ================= TYPES ================= */
 interface Item {
   id: string;
   type: "link" | "file";
   title: string;
+  avatar_url?: string;
   url: string;
   file_url: string;
   file_type: string;
@@ -55,7 +56,35 @@ export default function LinksFilesSection({
   const items = [...value.items].sort((a, b) => a.rank - b.rank);
   const [error, setError] = useState<string | null>(null);
   const [uploadingId, setUploadingId] = useState<string | null>(null);
+  const [cropFile, setCropFile] = useState<File | null>(null);
+  const [cropItemId, setCropItemId] = useState<string | null>(null);
   /* ================= ADD ================= */
+  const uploadAvatar = async (blob: Blob, itemId: string) => {
+    try {
+      setError(null);
+      setUploadingId(itemId);
+
+      const file = new File([blob], "avatar.jpg", { type: "image/jpeg" });
+
+      const res = await uploadImage(file);
+      const avatarUrl = res?.data?.url;
+
+      if (!avatarUrl) throw new Error("Upload failed");
+
+      const updatedItems = value.items.map((i) =>
+        i.id === itemId ? { ...i, avatar_url: avatarUrl } : i
+      );
+
+      onChange({
+        ...value,
+        items: updatedItems,
+      });
+    } catch {
+      setError("Avatar upload failed");
+    } finally {
+      setUploadingId(null);
+    }
+  };
   const handleFileUpload = async (file: File, itemId: string) => {
     try {
       setError(null);
@@ -111,6 +140,7 @@ export default function LinksFilesSection({
           url: "",
           file_url: "",
           file_type: "",
+          avatar_url: "", // ✅ NEW
           rank: items.length + 1,
           enabled: true,
         },
@@ -208,6 +238,98 @@ export default function LinksFilesSection({
             {/* FORM GRID */}
             <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
 
+              {/* AVATAR */}
+              <div className="md:col-span-2">
+                <label className="block text-xs font-semibold text-gray-500 mb-1">
+                  Avatar
+                </label>
+
+                {uploadingId === item.id ? (
+                  <div className="flex items-center justify-center border rounded-xl h-[46px]">
+                    <div className="h-4 w-4 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+                  </div>
+                ) : item.avatar_url ? (
+                  <div className="flex items-center gap-2">
+                    <img
+                      src={item.avatar_url}
+                      className="w-10 h-10 rounded-full object-cover border"
+                    />
+
+                    {!disabled && (
+                      <>
+                        <label
+                          htmlFor={`avatar-upload-${item.id}`}
+                          className="text-xs text-indigo-600 cursor-pointer hover:underline"
+                        >
+                          Replace
+                        </label>
+
+                        <button
+                          onClick={() =>
+                            onChange({
+                              ...value,
+                              items: value.items.map((i) =>
+                                i.id === item.id ? { ...i, avatar_url: "" } : i
+                              ),
+                            })
+                          }
+                          className="text-xs text-red-500"
+                        >
+                          Remove
+                        </button>
+                      </>
+                    )}
+
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      id={`avatar-upload-${item.id}`}
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+
+                        if (file.size > MAX_FILE_SIZE) {
+                          setError("Avatar must be less than 20MB");
+                          return;
+                        }
+
+                        setCropFile(file);
+                        setCropItemId(item.id);
+                      }}
+                    />
+                  </div>
+                ) : (
+                  <div className="border rounded-xl text-center py-2 text-xs bg-gray-50">
+                    <label
+                      htmlFor={`avatar-upload-${item.id}`}
+                      className="cursor-pointer text-indigo-600"
+                    >
+                      Upload
+                    </label>
+
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      id={`avatar-upload-${item.id}`}
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+
+                        if (file.size > MAX_FILE_SIZE) {
+                          setError("Avatar must be less than 20MB");
+                          return;
+                        }
+
+                        setCropFile(file);
+                        setCropItemId(item.id);
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
+
               {/* TYPE */}
               <div className="md:col-span-2">
                 <label className="block text-xs font-semibold text-gray-500 mb-1">
@@ -262,7 +384,7 @@ export default function LinksFilesSection({
 
               {/* LINK */}
               {item.type === "link" && (
-                <div className="md:col-span-7">
+                <div className="md:col-span-5">
                   <label className="block text-xs font-semibold text-gray-500 mb-1">
                     Link URL
                   </label>
@@ -288,7 +410,7 @@ export default function LinksFilesSection({
 
               {/* FILE */}
               {item.type === "file" && (
-                <div className="md:col-span-7">
+                <div className="md:col-span-5">
                   <label className="block text-xs font-semibold text-gray-500 mb-1">
                     File
                   </label>
@@ -416,6 +538,20 @@ export default function LinksFilesSection({
           </div>
         )}
       />
+      {cropFile && cropItemId && (
+        <AvatarCropModal
+          file={cropFile}
+          onCancel={() => {
+            setCropFile(null);
+            setCropItemId(null);
+          }}
+          onSave={async (blob) => {
+            await uploadAvatar(blob, cropItemId);
+            setCropFile(null);
+            setCropItemId(null);
+          }}
+        />
+      )}
     </div>
   );
 }
