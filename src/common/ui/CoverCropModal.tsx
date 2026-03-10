@@ -5,21 +5,23 @@ import { createPortal } from "react-dom";
 type Props = {
   file: File;
   onCancel: () => void;
-  onSave: (blob: Blob) => void;
+  onSave: (blob: Blob) => Promise<void> | void;
 };
 
 export default function CoverCropModal({ file, onCancel, onSave }: Props) {
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
-  const [croppedArea, setCroppedArea] = useState<any>(null);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
   const [imageUrl, setImageUrl] = useState("");
 
+  /* Load image */
   useEffect(() => {
     const url = URL.createObjectURL(file);
     setImageUrl(url);
     return () => URL.revokeObjectURL(url);
   }, [file]);
 
+  /* Lock body scroll */
   useEffect(() => {
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -28,78 +30,104 @@ export default function CoverCropModal({ file, onCancel, onSave }: Props) {
     };
   }, []);
 
-  const onCropComplete = useCallback((_: any, area: any) => {
-    setCroppedArea(area);
+  /* Crop complete */
+  const onCropComplete = useCallback((_: any, croppedPixels: any) => {
+    setCroppedAreaPixels(croppedPixels);
   }, []);
 
-  const getCroppedBlob = async () => {
-    const img = new Image();
-    img.src = imageUrl;
-    await new Promise((r) => (img.onload = r));
+  /* Create cropped image */
+const getCroppedBlob = async (): Promise<Blob | undefined> => {
+  if (!croppedAreaPixels) return;
 
-    const canvas = document.createElement("canvas");
-    canvas.width = 1500;
-    canvas.height = 500;
+  const img = new Image();
+  img.src = imageUrl;
 
-    const ctx = canvas.getContext("2d")!;
-    ctx.drawImage(
-      img,
-      croppedArea.x,
-      croppedArea.y,
-      croppedArea.width,
-      croppedArea.height,
-      0,
-      0,
-      canvas.width,
-      canvas.height
-    );
+  await new Promise((resolve) => {
+    img.onload = resolve;
+  });
 
-    return new Promise<Blob>((resolve) =>
-      canvas.toBlob((b) => resolve(b!), "image/jpeg", 0.95)
-    );
-  };
+  // create canvas with crop size first
+  const cropCanvas = document.createElement("canvas");
+  cropCanvas.width = croppedAreaPixels.width;
+  cropCanvas.height = croppedAreaPixels.height;
 
+  const ctx = cropCanvas.getContext("2d")!;
+
+  ctx.drawImage(
+    img,
+    croppedAreaPixels.x,
+    croppedAreaPixels.y,
+    croppedAreaPixels.width,
+    croppedAreaPixels.height,
+    0,
+    0,
+    croppedAreaPixels.width,
+    croppedAreaPixels.height
+  );
+
+  // resize to banner output
+  const finalCanvas = document.createElement("canvas");
+  finalCanvas.width = 800;
+  finalCanvas.height = 500;
+
+  const finalCtx = finalCanvas.getContext("2d")!;
+
+  finalCtx.drawImage(
+    cropCanvas,
+    0,
+    0,
+    cropCanvas.width,
+    cropCanvas.height,
+    0,
+    0,
+    finalCanvas.width,
+    finalCanvas.height
+  );
+
+  return new Promise((resolve) =>
+    finalCanvas.toBlob((blob) => resolve(blob!), "image/jpeg", 0.95)
+  );
+};
   return createPortal(
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center animate-fadeIn">
-      {/* BACKDROP */}
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center">
+
+      {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
         onClick={onCancel}
       />
 
-      {/* MODAL */}
-      <div
-        className="relative w-[820px] max-w-[96vw] rounded-3xl overflow-hidden
-        bg-white/90 backdrop-blur-xl shadow-[0_20px_80px_rgba(0,0,0,0.45)]
-        border border-white/30 animate-scaleIn"
-      >
-        {/* HEADER */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-white/20 bg-white/70">
+      {/* Modal */}
+      <div className="relative w-[900px] max-w-[95vw] rounded-3xl overflow-hidden bg-white shadow-2xl">
+
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b">
           <div className="flex items-center gap-3">
-            <button onClick={onCancel} className="text-lg">←</button>
-            <h3 className="font-semibold text-lg tracking-wide">Drag to Reposition</h3>
+            <button onClick={onCancel}>←</button>
+            <h3 className="font-semibold text-lg">Drag to Reposition</h3>
           </div>
+
           <button
             onClick={onCancel}
-            className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-black/10 transition"
+            className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-gray-200"
           >
             ✕
           </button>
         </div>
 
-        {/* CROPPER */}
-        <div className="relative w-full bg-black" style={{ aspectRatio: "3/1" }}>
+        {/* Crop Area */}
+        <div className="relative w-full h-[360px] bg-black">
           {imageUrl && (
             <Cropper
               image={imageUrl}
               crop={crop}
               zoom={zoom}
-              aspect={3 / 1}
+              aspect={1.2/1}
               cropShape="rect"
               showGrid={false}
               objectFit="cover"
-              minZoom={0.2}
-              maxZoom={10}
+              minZoom={1}
+              maxZoom={5}
               restrictPosition={false}
               onCropChange={setCrop}
               onZoomChange={setZoom}
@@ -108,38 +136,47 @@ export default function CoverCropModal({ file, onCancel, onSave }: Props) {
           )}
         </div>
 
-        {/* FOOTER */}
-        <div className="px-6 py-5 flex flex-col sm:flex-row gap-4 sm:items-center sm:justify-between bg-white/70">
-          {/* ZOOM */}
-          <div className="flex items-center gap-3 w-full sm:w-auto">
-            <span className="text-sm text-gray-500 shrink-0">Zoom</span>
+        {/* Footer */}
+        <div className="px-6 py-5 flex items-center justify-between">
+
+          {/* Zoom */}
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-gray-500">Zoom</span>
+
             <input
               type="range"
-              min={0.2}
-              max={10}
+              min={1}
+              max={5}
               step={0.01}
               value={zoom}
               onChange={(e) => setZoom(Number(e.target.value))}
-              className="w-full sm:w-48 accent-black cursor-pointer"
+              className="w-48"
             />
           </div>
 
-          {/* ACTIONS */}
-          <div className="flex justify-end gap-3">
+          {/* Actions */}
+          <div className="flex gap-3">
             <button
               onClick={onCancel}
-              className="px-5 py-2 rounded-xl border bg-white hover:bg-gray-50 transition"
+              className="px-5 py-2 rounded-lg border"
             >
               Cancel
             </button>
+
             <button
-              onClick={async () => onSave(await getCroppedBlob())}
-              className="px-6 py-2 rounded-xl text-white bg-gradient-to-r from-black to-gray-800 shadow-md hover:opacity-90 transition"
+            onClick={async () => {
+  const blob = await getCroppedBlob();
+  if (!blob) return;
+  onSave(blob);
+}}
+              className="px-6 py-2 rounded-lg bg-black text-white"
             >
               Save
             </button>
           </div>
+
         </div>
+
       </div>
     </div>,
     document.body

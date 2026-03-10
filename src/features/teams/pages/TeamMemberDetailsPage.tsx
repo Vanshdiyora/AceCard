@@ -395,67 +395,69 @@ export default function TeamMemberDetailsPage() {
             }
           />
         )}
+        <div className="mb-6">
 
-        {/* Tab bar — hidden on public-profile (pullout handles it) */}
-        {!isPublicProfile && (
-          <div className="flex gap-6 border-b text-sm mt-6">
-            {TABS.filter((t) => t !== "total-leads" || member.role === "manager").map((t) => (
-              <button
-                key={t}
-                onClick={() => setActiveTab(t)}
-                className={`pb-2 capitalize ${activeTab === t
-                  ? "border-b-2 border-purple-600 text-purple-600 font-medium"
-                  : "text-gray-500"
-                  }`}
-              >
-                {t.replace("-", " ")}
-              </button>
-            ))}
-          </div>
-        )}
+          {/* Tab bar — hidden on public-profile (pullout handles it) */}
+          {!isPublicProfile && (
+            <div className="flex gap-6 border-b text-sm mt-6">
+              {TABS.filter((t) => t !== "total-leads" || member.role === "manager").map((t) => (
+                <button
+                  key={t}
+                  onClick={() => setActiveTab(t)}
+                  className={`pb-2 capitalize ${activeTab === t
+                    ? "border-b-2 border-purple-600 text-purple-600 font-medium"
+                    : "text-gray-500"
+                    }`}
+                >
+                  {t.replace("-", " ")}
+                </button>
+              ))}
+            </div>
+          )}
 
-        {/* Pullout nav shown only on public-profile tab */}
-        {isPublicProfile && (
-          <LeftPulloutTabs
-            tabs={TABS}
-            activeTab={activeTab}
-            onChange={setActiveTab}
-            allowTotalLeads={member.role === "manager"}
-            navigate={navigate}
-          />
-        )}
+          {/* Pullout nav shown only on public-profile tab */}
+          {isPublicProfile && (
+            <LeftPulloutTabs
+              tabs={TABS}
+              activeTab={activeTab}
+              onChange={setActiveTab}
+              allowTotalLeads={member.role === "manager"}
+              navigate={navigate}
+            />
+          )}
 
-        {/* ── TAB CONTENT ── */}
-        {activeTab === "overview" && <TeamMemberOverviewTab member={member} />}
+          {/* ── TAB CONTENT ── */}
+          {activeTab === "overview" && <TeamMemberOverviewTab member={member} />}
 
-        {activeTab === "leads" && <TeamMemberLeadsTab memberId={member.id} />}
+          {activeTab === "leads" && <TeamMemberLeadsTab memberId={member.id} />}
 
-        {activeTab === "total-leads" && member.role === "manager" && (
-          <TeamMemberTotalLeadsTab managerId={member.id} />
-        )}
+          {activeTab === "total-leads" && member.role === "manager" && (
+            <TeamMemberTotalLeadsTab managerId={member.id} />
+          )}
 
-        {activeTab === "analytics" && <TeamMemberAnalyticsTab memberId={member.id} />}
+          {activeTab === "analytics" && <TeamMemberAnalyticsTab memberId={member.id} />}
 
-        {/* Public-profile editor — fills remaining height and scrolls internally */}
-        {isPublicProfile && (
-          <div
-            className="w-full flex gap-8"
-
-          >
+          {/* Public-profile editor — fills remaining height and scrolls internally */}
+          {isPublicProfile && (
             <div
-              className="w-full xl:w-[480px] bg-white rounded-2xl shadow-md overflow-hidden flex flex-col"
-              style={{ height: "calc(100vh - 84px)" }}
+              className="w-full flex gap-8"
+
             >
-              <div className="flex-1 overflow-y-auto overscroll-contain">
-                <VicePublicSetting
-                  key={member.username}
-                  onLiveChange={(cfg) => setLivePreviewConfig(cfg)}
-                  onCropToggle={setIsCropping}
-                />
+              <div
+                className="w-full xl:w-[480px] bg-white rounded-2xl shadow-md overflow-hidden flex flex-col"
+                style={{ height: "calc(100vh - 84px)" }}
+              >
+                <div className="flex-1 overflow-y-auto overscroll-contain">
+                  <VicePublicSetting
+                    key={member.username}
+                    onLiveChange={(cfg) => setLivePreviewConfig(cfg)}
+                    onCropToggle={setIsCropping}
+                  />
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {/* ── RIGHT COLUMN — MOBILE PREVIEW ── */}

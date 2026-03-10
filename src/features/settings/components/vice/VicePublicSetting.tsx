@@ -2350,16 +2350,32 @@ export default function VicePublicSetting({
                 )}
 
                 <div
-                  className={`relative h-40 w-full rounded-xl border border-dashed border-gray-300 bg-gray-50 transition ${isReadOnly(config.cover)
+                  className={`group relative h-40 w-full rounded-xl border border-dashed border-gray-300 bg-gray-50 transition ${isReadOnly(config.cover)
                     ? "opacity-60 pointer-events-none"
                     : "hover:bg-gray-100"
                     }`}
                 >
+                  {/* IMAGE */}
                   {config.cover.cover_url ? (
-                    <img
-                      src={config.cover.cover_url}
-                      className="absolute inset-0 w-full h-full object-cover rounded-xl"
-                    />
+                    <>
+                      <img
+                        src={config.cover.cover_url}
+                        className="absolute inset-0 w-full h-full object-cover rounded-xl"
+                      />
+
+                      {/* HOVER OVERLAY */}
+                      <div className="absolute inset-0 flex items-center justify-center 
+                  bg-black/35 backdrop-blur-[2px]
+                  opacity-0 group-hover:opacity-100 transition rounded-xl">
+
+                        <span className="px-5 py-1.5 text-sm text-white border border-white/70
+                     rounded-full bg-white/10 backdrop-blur-md
+                     hover:bg-white/20 transition">
+                          Change
+                        </span>
+
+                      </div>
+                    </>
                   ) : (
                     <div className="h-full flex flex-col items-center justify-center text-sm text-gray-500 text-center px-4">
                       <p>Drag file here for upload or</p>
@@ -2369,15 +2385,21 @@ export default function VicePublicSetting({
                     </div>
                   )}
 
+                  {/* FILE INPUT */}
                   {!isReadOnly(config.cover) && (
                     <input
                       type="file"
                       accept="image/*"
                       className="absolute inset-0 opacity-0 cursor-pointer"
                       onChange={(e) => {
-                        if (!e.target.files) return;
-                        coverFileRef.current = e.target.files[0];
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+
+                        coverFileRef.current = file;
                         setIsCropping(true);
+
+                        // allow same image upload again
+                        e.target.value = "";
                       }}
                     />
                   )}

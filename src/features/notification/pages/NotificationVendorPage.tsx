@@ -6,12 +6,8 @@ import BrandLoader from "../../../common/ui/BrandLoader";
 import BlockingLoader from "../../../common/ui/BlockingLoader";
 import ResultModal from "../../../common/ui/ResultModal";
 import type { TeamMember } from "../../teams/types";
-import NotificationHistoryModal from "../components/NotificationHistoryModal";
 import { History } from "lucide-react";
-import {
-  fetchSentNotifications,
-  resetSentNotifications
-} from "../slice";
+import { useNavigate } from "react-router-dom";
 import JoditEditor from "jodit-react";
 import "jodit/es2021/jodit.min.css";
 
@@ -19,13 +15,14 @@ const PAGE_SIZE = 10;
 
 export default function NotificationTeamPage() {
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
 
-  /* ✅ STATE FROM REDUX */
+  /* REDUX STATE */
   const members = useAppSelector((s) => s.team.members);
   const membersMeta = useAppSelector((s) => s.team.meta.members);
   const loading = useAppSelector((s) => s.team.loading);
 
-  /* ---------- UI STATE ---------- */
+  /* UI STATE */
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<Record<number, TeamMember>>({});
   const [loadingMore, setLoadingMore] = useState(false);
@@ -40,34 +37,24 @@ export default function NotificationTeamPage() {
   const [resultOpen, setResultOpen] = useState(false);
   const [resultSuccess, setResultSuccess] = useState(false);
   const [resultMessage, setResultMessage] = useState("");
-  const [historyOpen, setHistoryOpen] = useState(false);
-  const [historySearch, setHistorySearch] = useState("");
 
-  const sentNotifications = useAppSelector((s) => s.notifications.sentList);
-  const historyLoading = useAppSelector((s) => s.notifications.sentLoading);
-  const historyMeta = useAppSelector((s) => s.notifications.sentMeta);
   const listRef = useRef<HTMLDivElement>(null);
 
   const isInitialLoading =
     loading && !loadingMore && !isSearching && !selectAllLoading;
 
-  /* ======================================================
-     INITIAL LOAD
-  ====================================================== */
-
+  /* INITIAL LOAD */
   useEffect(() => {
     if (!membersMeta || members.length === 0) {
       dispatch(fetchTeam({ page: 1, page_size: PAGE_SIZE }));
     }
   }, [dispatch, membersMeta, members.length]);
 
-  /* ======================================================
-     SEARCH (DEBOUNCED)
-  ====================================================== */
-
+  /* SEARCH */
   useEffect(() => {
     const t = setTimeout(() => {
       setIsSearching(true);
+
       dispatch(
         fetchTeam({
           page: 1,
@@ -80,37 +67,10 @@ export default function NotificationTeamPage() {
     return () => clearTimeout(t);
   }, [search, dispatch]);
 
-  const loadMoreHistory = () => {
-    if (!historyMeta?.has_next || historyLoading) return;
-
-    dispatch(
-      fetchSentNotifications({
-        page: historyMeta.page + 1,
-        page_size: historyMeta.page_size,
-        search: historySearch,
-      })
-    );
-  };
-
-  useEffect(() => {
-    if (!historyOpen) return;
-
-    dispatch(resetSentNotifications());
-
-    dispatch(
-      fetchSentNotifications({
-        page: 1,
-        page_size: 10,
-        search: historySearch,
-      })
-    );
-  }, [historyOpen, historySearch, dispatch]);
-  /* ======================================================
-     FILTERED LIST
-  ====================================================== */
-
+  /* FILTER */
   const filtered = useMemo(() => {
     if (!search) return members;
+
     return members.filter(
       (m) =>
         m.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -118,12 +78,13 @@ export default function NotificationTeamPage() {
     );
   }, [members, search]);
 
-  /* ======================================================
-     SELECTION
-  ====================================================== */
-
+  /* SELECTION */
   const toggleMember = (m: TeamMember) => {
-    setSelected((prev) => ({ ...prev, [m.id]: m }));
+    setSelected((prev) => ({
+      ...prev,
+      [m.id]: m,
+    }));
+
     setAllSelected(false);
     setSearch("");
   };
@@ -134,13 +95,11 @@ export default function NotificationTeamPage() {
       delete copy[id];
       return copy;
     });
+
     setAllSelected(false);
   };
 
-  /* ======================================================
-     INFINITE SCROLL
-  ====================================================== */
-
+  /* INFINITE SCROLL */
   const handleScroll = () => {
     if (!listRef.current || loadingMore || !membersMeta) return;
 
@@ -151,6 +110,7 @@ export default function NotificationTeamPage() {
       membersMeta.page < membersMeta.total_pages
     ) {
       setLoadingMore(true);
+
       dispatch(
         fetchTeam({
           page: membersMeta.page + 1,
@@ -162,10 +122,7 @@ export default function NotificationTeamPage() {
     }
   };
 
-  /* ======================================================
-     SELECT ALL
-  ====================================================== */
-
+  /* SELECT ALL */
   const selectAll = async () => {
     if (!membersMeta) return;
 
@@ -186,26 +143,31 @@ export default function NotificationTeamPage() {
     ).unwrap();
 
     const all: Record<number, TeamMember> = {};
-    res.members.forEach((m: TeamMember) => (all[m.id] = m));
+
+    res.members.forEach((m: TeamMember) => {
+      all[m.id] = m;
+    });
 
     setSelected(all);
     setAllSelected(true);
     setSelectAllLoading(false);
   };
 
-  /* ======================================================
-     VALIDATION & SEND
-  ====================================================== */
-
+  /* VALIDATION */
   const validate = (): string | null => {
     if (!Object.keys(selected).length)
       return "Please select at least one recipient.";
-    if (!title.trim()) return "Notification title is required.";
+
+    if (!title.trim())
+      return "Notification title is required.";
+
     if (!body || !body.replace(/<[^>]*>/g, "").trim())
       return "Notification body is required.";
+
     return null;
   };
 
+  /* SEND */
   const send = async () => {
     const error = validate();
 
@@ -237,6 +199,7 @@ export default function NotificationTeamPage() {
 
       setResultSuccess(true);
       setResultMessage("Notification sent successfully!");
+
       setSelected({});
       setTitle("");
       setBody("");
@@ -250,10 +213,7 @@ export default function NotificationTeamPage() {
     }
   };
 
-  /* ======================================================
-     EDITOR CONFIG
-  ====================================================== */
-
+  /* EDITOR CONFIG */
   const editorConfig = {
     readonly: false,
     height: 280,
@@ -262,35 +222,12 @@ export default function NotificationTeamPage() {
     statusbar: false,
     buttons:
       "bold,italic,underline,strikethrough,ul,ol,link,paragraph,fontsize,brush,undo,redo",
-    uploader: { insertImageAsBase64URI: false },
-    enableDragAndDropFileToEditor: false,
-    cleanHTML: {
-      fillEmptyParagraph: false,
-      removeEmptyElements: true,
-      removeSpans: true,
-    },
-    askBeforePasteHTML: false,
-    askBeforePasteFromWord: false,
-    events: {
-      beforePaste: (event: ClipboardEvent) => {
-        const items = event.clipboardData?.items;
-        if (!items) return;
-        for (const item of items) {
-          if (item.type.startsWith("image/")) {
-            event.preventDefault();
-          }
-        }
-      },
-    },
   };
-
-  /* ======================================================
-     RENDER
-  ====================================================== */
 
   return (
     <>
       <BlockingLoader show={sending} />
+
       <ResultModal
         open={resultOpen}
         success={resultSuccess}
@@ -299,7 +236,10 @@ export default function NotificationTeamPage() {
       />
 
       <div className="h-[calc(100dvh-var(--app-header-height))] p-6 overflow-hidden">
+
         <div className="mx-auto space-y-5">
+
+          {/* HEADER */}
           <div className="flex items-center justify-between">
             <h1 className="text-3xl font-bold text-gray-800">
               Team Notification
@@ -307,12 +247,16 @@ export default function NotificationTeamPage() {
 
             <div className="flex gap-3">
 
+              {/* HISTORY PAGE */}
               <button
-                onClick={() => setHistoryOpen(true)}
+                onClick={() =>
+                  navigate("/admin/notifications/history")
+                }
                 className="px-1 py-2 rounded-lg flex items-center"
               >
                 <History size={22} />
               </button>
+
               <button
                 onClick={selectAll}
                 disabled={selectAllLoading}
@@ -321,8 +265,8 @@ export default function NotificationTeamPage() {
                 {allSelected
                   ? "Unselect All"
                   : selectAllLoading
-                    ? "Selecting..."
-                    : "Select All"}
+                  ? "Selecting..."
+                  : "Select All"}
               </button>
 
               <button
@@ -331,11 +275,16 @@ export default function NotificationTeamPage() {
               >
                 Send
               </button>
+
             </div>
           </div>
 
+          {/* LAYOUT */}
           <div className="grid grid-cols-[2fr_1fr] gap-5">
+
+            {/* MESSAGE */}
             <div className="bg-white rounded-2xl shadow p-5 space-y-4">
+
               <input
                 className="w-full border rounded-lg px-4 py-2"
                 placeholder="Notification title"
@@ -350,28 +299,35 @@ export default function NotificationTeamPage() {
                   onBlur={(v) => setBody(v)}
                 />
               </div>
+
             </div>
 
+            {/* RECIPIENTS */}
             <div className="bg-white rounded-2xl shadow p-5 space-y-4">
+
               <h2 className="font-medium text-gray-700">
                 Recipients ({Object.keys(selected).length})
               </h2>
 
               <div className="flex flex-wrap gap-2 max-h-24 overflow-y-auto">
+
                 {Object.values(selected).map((m) => (
                   <span
                     key={m.id}
                     className="flex items-center gap-1 bg-purple-100 text-purple-700 px-2 py-1 rounded-full text-sm"
                   >
                     {m.name}
+
                     <button
                       onClick={() => removeMember(m.id)}
                       className="hover:text-purple-900"
                     >
                       ×
                     </button>
+
                   </span>
                 ))}
+
               </div>
 
               <input
@@ -386,6 +342,7 @@ export default function NotificationTeamPage() {
                 onScroll={handleScroll}
                 className="border rounded-xl h-72 overflow-y-auto divide-y"
               >
+
                 {filtered.map((m) => {
                   const isSelected = Boolean(selected[m.id]);
 
@@ -393,13 +350,21 @@ export default function NotificationTeamPage() {
                     <div
                       key={m.id}
                       onClick={() => !isSelected && toggleMember(m)}
-                      className={`px-4 py-3 text-sm ${isSelected
+                      className={`px-4 py-3 text-sm ${
+                        isSelected
                           ? "bg-gray-100 text-gray-400 cursor-not-allowed"
                           : "hover:bg-purple-50 cursor-pointer"
-                        }`}
+                      }`}
                     >
-                      <div className="font-medium">{m.name}</div>
-                      <div className="text-xs text-gray-500">{m.email}</div>
+
+                      <div className="font-medium">
+                        {m.name}
+                      </div>
+
+                      <div className="text-xs text-gray-500">
+                        {m.email}
+                      </div>
+
                     </div>
                   );
                 })}
@@ -409,8 +374,11 @@ export default function NotificationTeamPage() {
                     <BrandLoader />
                   </div>
                 )}
+
               </div>
+
             </div>
+
           </div>
 
           {isInitialLoading && (
@@ -418,17 +386,10 @@ export default function NotificationTeamPage() {
               <BrandLoader />
             </div>
           )}
+
         </div>
+
       </div>
-      <NotificationHistoryModal
-        open={historyOpen}
-        notifications={sentNotifications}
-        loading={historyLoading}
-        hasNext={historyMeta?.has_next}
-        onLoadMore={loadMoreHistory}
-        onSearch={(value) => setHistorySearch(value)}
-        onClose={() => setHistoryOpen(false)}
-      />
     </>
   );
 }

@@ -66,7 +66,7 @@ export default function VicePublicPage() {
 
 
             {/* Phone Wrapper */}
-            <div className="w-full max-w-[400px] aspect-[10/19] xl:h-[80vh] xl:max-h-[600px]">
+            <div className="w-full max-w-[400px] aspect-[10/19] xl:h-[85vh] xl:max-h-[650px] scale-90">
 
 
               <div className="

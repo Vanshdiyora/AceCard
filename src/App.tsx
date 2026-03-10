@@ -45,6 +45,7 @@ import LeadConfiguration from "./features/settings/components/LeadConfiguration"
 import CRMIntegration from "./features/settings/components/CRMIntegration";
 import AccountSettings from "./features/settings/components/AccountSettings";
 import LiveServerLogsPage from "./features/livelogs/pages/LiveServerLogsPage";
+import NotificationHistoryPage from "./features/notification/pages/HistoryPage";
 
 export default function App() {
   const dispatch = useAppDispatch();
@@ -95,6 +96,7 @@ export default function App() {
           <Route path="vendors/:id/team" element={<VendorTeamActivityPage />} />
           <Route path="support" element={<SupportAdmin />} />
           <Route path="notifications" element={<NotificationsPage />} />
+          <Route path="notifications/history" element={<NotificationHistoryPage />} />
           <Route path="payments" element={<PaymentsPage />} />
           <Route path="live-logs" element={<LiveServerLogsPage />} />
           <Route path="*" element={<Navigate to="/not-found" replace />} />
@@ -127,6 +129,7 @@ export default function App() {
           </Route>
           <Route path="support" element={<SupportPage />} />
           <Route path="notifications" element={<NotificationVendorPage />} />
+                    <Route path="notifications/history" element={<NotificationHistoryPage />} />
           <Route path="*" element={<Navigate to="/not-found" replace />} />
         </Route>
 

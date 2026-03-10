@@ -126,13 +126,20 @@ function ImageBox({ url, onSelect }: any) {
           <span className="px-4 py-1.5 rounded-full bg-white/20 backdrop-blur border border-white/30 text-sm">
             Change
           </span>
+
           <input
             type="file"
             hidden
             accept="image/*"
-            onChange={(e) =>
-              e.target.files && onSelect(e.target.files[0])
-            }
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (!file) return;
+
+              onSelect(file);
+
+              // ✅ Fix: reset input so same file can be uploaded again
+              e.target.value = "";
+            }}
           />
         </label>
       </div>

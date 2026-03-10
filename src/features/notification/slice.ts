@@ -251,13 +251,14 @@ const notificationSlice = createSlice({
 
 .addCase(fetchSentNotifications.fulfilled, (state, action) => {
   const { data, meta } = action.payload;
+  const page = action.meta.arg.page; // 🔑 page requested
 
   const safeData = data ?? [];
 
-  if (meta.page === 1) {
+  if (page === 1) {
     state.sentList = safeData;
   } else {
-    state.sentList.push(...safeData);
+    state.sentList = [...state.sentList, ...safeData];
   }
 
   state.sentMeta = meta;

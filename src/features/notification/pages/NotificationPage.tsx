@@ -1,20 +1,22 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../../app/hooks";
 import { fetchVendors } from "../../vendors/slice";
-import { sendVendorNotification, fetchSentNotifications, resetSentNotifications } from "../slice";
+import { sendVendorNotification } from "../slice";
 import BrandLoader from "../../../common/ui/BrandLoader";
 import BlockingLoader from "../../../common/ui/BlockingLoader";
 import ResultModal from "../../../common/ui/ResultModal";
 import type { VendorItem } from "../../vendors/types";
-import NotificationHistoryModal from "../components/NotificationHistoryModal";
 import JoditEditor from "jodit-react";
 import "jodit/es2021/jodit.min.css";
 import { History } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const PAGE_SIZE = 10;
 
 export default function NotificationsPage() {
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
+
   const vendors = useAppSelector((s) => s.vendors.vendors);
   const meta = useAppSelector((s) => s.vendors.meta);
   const loading = useAppSelector((s) => s.vendors.loading);
@@ -33,7 +35,7 @@ export default function NotificationsPage() {
   const [resultOpen, setResultOpen] = useState(false);
   const [resultSuccess, setResultSuccess] = useState(false);
   const [resultMessage, setResultMessage] = useState("");
-  const [historyOpen, setHistoryOpen] = useState(false);
+
   const listRef = useRef<HTMLDivElement>(null);
 
   const isInitialLoading =
@@ -50,10 +52,16 @@ export default function NotificationsPage() {
   useEffect(() => {
     const t = setTimeout(() => {
       setIsSearching(true);
-      dispatch(fetchVendors({ page: 1, page_size: PAGE_SIZE, search })).finally(
-        () => setIsSearching(false)
-      );
+
+      dispatch(
+        fetchVendors({
+          page: 1,
+          page_size: PAGE_SIZE,
+          search,
+        })
+      ).finally(() => setIsSearching(false));
     }, 300);
+
     return () => clearTimeout(t);
   }, [search, dispatch]);
 
@@ -83,6 +91,7 @@ export default function NotificationsPage() {
 
   const filtered = useMemo(() => {
     if (!search) return vendors;
+
     return vendors.filter(
       (v) =>
         v.legal_name.toLowerCase().includes(search.toLowerCase()) ||
@@ -91,7 +100,11 @@ export default function NotificationsPage() {
   }, [vendors, search]);
 
   const toggleVendor = (vendor: VendorItem) => {
-    setSelected((prev) => ({ ...prev, [vendor.id]: vendor }));
+    setSelected((prev) => ({
+      ...prev,
+      [vendor.id]: vendor,
+    }));
+
     setAllSelected(false);
     setSearch("");
   };
@@ -102,6 +115,7 @@ export default function NotificationsPage() {
       delete copy[id];
       return copy;
     });
+
     setAllSelected(false);
   };
 
@@ -115,6 +129,7 @@ export default function NotificationsPage() {
       meta.page < meta.total_pages
     ) {
       const next = meta.page + 1;
+
       setLoadingMore(true);
 
       dispatch(
@@ -142,24 +157,35 @@ export default function NotificationsPage() {
     const pageSize = totalCount ?? meta.total_pages * PAGE_SIZE;
 
     const res = await dispatch(
-      fetchVendors({ page: 1, page_size: pageSize, search })
+      fetchVendors({
+        page: 1,
+        page_size: pageSize,
+        search,
+      })
     ).unwrap();
 
     const all: Record<number, VendorItem> = {};
-    res.data.forEach((v) => (all[v.id] = v));
+
+    res.data.forEach((v) => {
+      all[v.id] = v;
+    });
 
     setSelected(all);
     setAllSelected(true);
     setSelectAllLoading(false);
   };
+
   const validate = (): string | null => {
-    if (!Object.keys(selected).length) return "Please select at least one vendor.";
+    if (!Object.keys(selected).length)
+      return "Please select at least one vendor.";
+
     if (!title.trim()) return "Notification title is required.";
+
     if (!body || !body.replace(/<[^>]*>/g, "").trim())
       return "Notification body is required.";
+
     return null;
   };
-
 
   const send = async () => {
     const error = validate();
@@ -172,6 +198,7 @@ export default function NotificationsPage() {
     }
 
     setSending(true);
+
     try {
       await dispatch(
         sendVendorNotification({
@@ -185,6 +212,7 @@ export default function NotificationsPage() {
 
       setResultSuccess(true);
       setResultMessage("Notification sent successfully!");
+
       setSelected({});
       setTitle("");
       setBody("");
@@ -197,36 +225,6 @@ export default function NotificationsPage() {
       setResultOpen(true);
     }
   };
-  const [historySearch, setHistorySearch] = useState("");
-  const sentNotifications = useAppSelector((s) => s.notifications.sentList);
-  const historyLoading = useAppSelector((s) => s.notifications.sentLoading);
-  const historyMeta = useAppSelector((s) => s.notifications.sentMeta);
-
-  const loadMoreHistory = () => {
-    if (!historyMeta?.has_next || historyLoading) return;
-
-    dispatch(
-      fetchSentNotifications({
-        page: historyMeta.page + 1,
-        page_size: historyMeta.page_size,
-        search: historySearch,
-      })
-    );
-  };
-
-useEffect(() => {
-  if (!historyOpen) return;
-
-  dispatch(resetSentNotifications());
-
-  dispatch(
-    fetchSentNotifications({
-      page: 1,
-      page_size: 10,
-      search: historySearch,
-    })
-  );
-}, [historyOpen, historySearch, dispatch]);
 
   const editorConfig = {
     readonly: false,
@@ -241,6 +239,7 @@ useEffect(() => {
   return (
     <>
       <BlockingLoader show={sending} />
+
       <ResultModal
         open={resultOpen}
         success={resultSuccess}
@@ -249,8 +248,9 @@ useEffect(() => {
       />
 
       <div className="h-[calc(100dvh-var(--app-header-height))] p-6 overflow-hidden">
-
         <div className="mx-auto space-y-5">
+
+          {/* Header */}
           <div className="flex items-center justify-between">
             <h1 className="text-3xl font-bold text-gray-800">
               Notification
@@ -259,11 +259,12 @@ useEffect(() => {
             <div className="flex gap-3">
 
               <button
-                onClick={() => setHistoryOpen(true)}
-                className="px-1 py-2 rounded-lg  text-sm flex items-center"
+                onClick={() => navigate("/super/notifications/history")}
+                className="px-1 py-2 rounded-lg text-sm flex items-center"
               >
                 <History size={22} />
               </button>
+
               <button
                 onClick={selectAll}
                 disabled={selectAllLoading}
@@ -272,8 +273,8 @@ useEffect(() => {
                 {allSelected
                   ? "Unselect All"
                   : selectAllLoading
-                    ? "Selecting..."
-                    : "Select All"}
+                  ? "Selecting..."
+                  : "Select All"}
               </button>
 
               <button
@@ -282,12 +283,19 @@ useEffect(() => {
               >
                 Send
               </button>
+
             </div>
           </div>
 
+          {/* Layout */}
           <div className="grid grid-cols-[2fr_1fr] gap-5">
+
+            {/* Message */}
             <div className="bg-white rounded-2xl shadow p-5 space-y-4">
-              <h2 className="font-medium text-gray-700">Message</h2>
+
+              <h2 className="font-medium text-gray-700">
+                Message
+              </h2>
 
               <input
                 className="w-full border rounded-lg px-4 py-2"
@@ -303,8 +311,10 @@ useEffect(() => {
                   onBlur={(newContent) => setBody(newContent)}
                 />
               </div>
+
             </div>
 
+            {/* Vendors */}
             <div className="bg-white rounded-2xl shadow p-5 space-y-4">
               <h2 className="font-medium text-gray-700">
                 Recipients ({Object.keys(selected).length})
@@ -317,6 +327,7 @@ useEffect(() => {
                     className="flex items-center gap-1 bg-purple-100 text-purple-700 px-2 py-1 rounded-full text-sm"
                   >
                     {v.legal_name}
+
                     <button
                       onClick={() => removeVendor(v.id)}
                       className="hover:text-purple-900"
@@ -339,6 +350,7 @@ useEffect(() => {
                 onScroll={handleScroll}
                 className="border rounded-xl h-72 overflow-y-auto divide-y"
               >
+
                 {filtered.map((v) => {
                   const isSelected = Boolean(selected[v.id]);
 
@@ -346,12 +358,16 @@ useEffect(() => {
                     <div
                       key={v.id}
                       onClick={() => !isSelected && toggleVendor(v)}
-                      className={`px-4 py-3 text-sm ${isSelected
-                        ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                        : "hover:bg-purple-50 cursor-pointer"
-                        }`}
+                      className={`px-4 py-3 text-sm ${
+                        isSelected
+                          ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                          : "hover:bg-purple-50 cursor-pointer"
+                      }`}
                     >
-                      <div className="font-medium">{v.legal_name}</div>
+                      <div className="font-medium">
+                        {v.legal_name}
+                      </div>
+
                       <div className="text-xs text-gray-500">
                         {v.primary_email}
                       </div>
@@ -364,8 +380,11 @@ useEffect(() => {
                     <BrandLoader />
                   </div>
                 )}
+
               </div>
+
             </div>
+
           </div>
 
           {isInitialLoading && (
@@ -373,17 +392,9 @@ useEffect(() => {
               <BrandLoader />
             </div>
           )}
+
         </div>
       </div>
-      <NotificationHistoryModal
-        open={historyOpen}
-        notifications={sentNotifications}
-        loading={historyLoading}
-        hasNext={historyMeta?.has_next}
-        onLoadMore={loadMoreHistory}
-        onSearch={(value) => setHistorySearch(value)}
-        onClose={() => setHistoryOpen(false)}
-      />
     </>
   );
 }
