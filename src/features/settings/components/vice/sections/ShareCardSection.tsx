@@ -2,24 +2,24 @@ import QRCode from "qrcode";
 import { Copy, Download } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 
-export function ShareCardSection({ username }: { username?: string }) {
+export function ShareCardSection({ username, vendor }: { username?: string, vendor?: string }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [copied, setCopied] = useState(false);
 
   if (!username) return null;
 
-const baseUrl = window.location.origin;
-const cardUrl = `${baseUrl}/profile/${username}`;
+  const baseUrl = window.location.origin;
+  const cardUrl = `${baseUrl}/profile/${vendor}/${username}`;
 
   // 🔥 Generate QR
   useEffect(() => {
-  if (!canvasRef.current) return;
+    if (!canvasRef.current) return;
 
-  QRCode.toCanvas(canvasRef.current, cardUrl, {
-    width: 100,      // 👈 Reduce size here (try 120–160)
-    margin: 2,       // optional (default is 4)
-  });
-}, [cardUrl]);
+    QRCode.toCanvas(canvasRef.current, cardUrl, {
+      width: 100,      // 👈 Reduce size here (try 120–160)
+      margin: 2,       // optional (default is 4)
+    });
+  }, [cardUrl]);
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(cardUrl);

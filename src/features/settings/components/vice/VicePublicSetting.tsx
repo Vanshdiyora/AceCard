@@ -3327,7 +3327,7 @@ export default function VicePublicSetting({
         title="Share Your Digital Card"
         desc="Share your digital card in multiple ways, including links, QR codes, and wallet passes."
       >
-        <ShareCardSection username={publicProfile?.username} />
+        <ShareCardSection username={publicProfile?.username} vendor={publicProfile?.vendor_name} />
       </Card>
 
 

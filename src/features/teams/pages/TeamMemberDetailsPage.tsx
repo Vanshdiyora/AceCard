@@ -57,7 +57,9 @@ export default function TeamMemberDetailsPage() {
     () => members.filter((m) => m.role === "manager"),
     [members]
   );
-
+  const vendor = useAppSelector(
+  (state) => state.settings.account.data?.vendor_name
+);
   const member = useAppSelector((s) => s.team.selectedMember);
 
   const [activeTab, setActiveTab] = useState<typeof TABS[number]>("overview");
@@ -481,7 +483,7 @@ export default function TeamMemberDetailsPage() {
           {/* Live Preview label */}
           <div className="absolute -top-8 text-xs text-gray-400 bg-gray-50 tracking-wide border border-[#D5d5d5] rounded-xl px-2 py-1 shadow-md hover:shadow-lg transition-shadow duration-200">
             <a
-              href={`${window.location.origin}/profile/${member.username}`}
+              href={`${window.location.origin}/profile/${vendor}/${member.username}`}
               target="_blank"
               rel="noopener noreferrer"
             >

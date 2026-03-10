@@ -69,8 +69,8 @@ export default function App() {
         <Route path="/reset-password" element={<ResetPasswordPage />} />
 
         {/* PUBLIC PROFILE */}
-        <Route path="/profile/:username" element={<PublicProfilePage />} />
-
+        <Route path="/profile/:vendorname/:username" element={<PublicProfilePage />} />
+        
         {/* PROFILE SETTINGS (TENANT → SUBDOMAIN ONLY) */}
         <Route
           path="/profile-settings"

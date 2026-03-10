@@ -13,6 +13,9 @@ export default function VicePublicPage() {
     (state) => state.settings.account.data?.username
   );
 
+  const vendor = useAppSelector(
+  (state) => state.settings.account.data?.vendor_name
+);
   const { data, loading } = useAppSelector((s) => s.publicProfile);
 
   // 👇 LOCAL live preview state
@@ -43,7 +46,7 @@ export default function VicePublicPage() {
           <div className="flex flex-col items-center">
 
             <a
-              href={`/profile/${username}`}
+  href={`/profile/${vendor}/${username}`}
               target="_blank"
               rel="noopener noreferrer"
               className="text-xs text-gray-400 bg-gray-50

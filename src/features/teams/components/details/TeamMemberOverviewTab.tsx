@@ -18,9 +18,11 @@ export default function TeamMemberOverviewTab({
 
   const { items, loading } = useAppSelector((s) => s.campaigns);
   const allCampaigns = items ?? [];
-
+  const vendor = useAppSelector(
+  (state) => state.settings.account.data?.vendor_name
+);
   const profileUrl = member?.username
-    ? `${window.location.origin}/profile/${member.username}`
+    ? `${window.location.origin}/profile/${vendor}/${member.username}`
     : "";
   const directUrl = `${profileUrl}?type=direct`;
   const qrUrl = `${profileUrl}?type=qr`;

@@ -145,7 +145,7 @@ const getCroppedBlob = async (): Promise<Blob | undefined> => {
 
             <input
               type="range"
-              min={1}
+              min={0.3}
               max={5}
               step={0.01}
               value={zoom}
