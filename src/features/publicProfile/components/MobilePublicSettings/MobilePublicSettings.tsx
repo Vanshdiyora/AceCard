@@ -807,9 +807,9 @@ export default function MobilePublicSettings({
   // bgPositionClass no longer used here; background is handled by BackgroundLayer
   const sectionsLocked = draft.sections?.locked;
   return (
-<div
-  className={`relative w-full max-h-[calc(100vh-110px)] overflow-x-hidden ${fontClass}`}
->
+    <div
+      className={`relative w-full max-h-[calc(100vh-110px)] overflow-x-hidden ${fontClass}`}
+    >
 
       {/* BACKGROUND: only here on real mobile. On desktop preview,
           BackgroundLayer is a sibling outside the scroll container. */}
@@ -1273,46 +1273,46 @@ export default function MobilePublicSettings({
 
       <div className="flex-1 relative overflow-x-hidden p-4">
 
-  <span className="wave-3 absolute inset-0" />
-  <span className="wave-fade" />
+        <span className="wave-3 absolute inset-0" />
+        <span className="wave-fade" />
 
-  <div className="relative z-10 space-y-6">
+        <div className="relative z-10">
 
-        {orderedSections.map((s: any) =>
-          s?.enabled ? (
-            <div key={s.id}>{renderSection(s.type)}</div>
-          ) : null
-        )}
+          {orderedSections.map((s: any) =>
+            s?.enabled ? (
+              <div key={s.id}>{renderSection(s.type)}</div>
+            ) : null
+          )}
 
-        {/* 👇 SECTION ACTION BUTTONS */}
-        <div className="flex gap-3 pt-6">
-          <button
-            onClick={() => setOpenSectionsEditor(true)}
-            disabled={sectionsLocked}
-            className={`flex-1 py-3 rounded-xl border font-semibold
+          {/* 👇 SECTION ACTION BUTTONS */}
+          <div className="flex gap-3 pt-6 pb-0">
+            <button
+              onClick={() => setOpenSectionsEditor(true)}
+              disabled={sectionsLocked}
+              className={`flex-1 py-3 rounded-xl border font-semibold
     bg-white/90 backdrop-blur shadow-sm
     transition
     ${sectionsLocked
-                ? "opacity-50 cursor-not-allowed"
-                : "hover:bg-gray-50"
-              }`}
-          >
-            Edit Sections
-          </button>
+                  ? "opacity-50 cursor-not-allowed"
+                  : "hover:bg-gray-50"
+                }`}
+            >
+              Edit Sections
+            </button>
 
-          <button
-            onClick={() => setOpenAddSection(true)}
-            disabled={sectionsLocked}
-            className={`flex-1 py-3 rounded-xl font-semibold text-white shadow transition
+            <button
+              onClick={() => setOpenAddSection(true)}
+              disabled={sectionsLocked}
+              className={`flex-1 py-3 rounded-xl font-semibold text-white shadow transition
     ${sectionsLocked
-                ? "bg-gray-400 cursor-not-allowed"
-                : "bg-purple-600 hover:bg-purple-700"
-              }`}
-          >
-            Add Section
-          </button>
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-purple-600 hover:bg-purple-700"
+                }`}
+            >
+              Add Section
+            </button>
           </div>
-</div>
+        </div>
 
       </div>
     </div>
