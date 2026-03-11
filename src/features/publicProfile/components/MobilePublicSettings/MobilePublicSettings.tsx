@@ -807,7 +807,9 @@ export default function MobilePublicSettings({
   // bgPositionClass no longer used here; background is handled by BackgroundLayer
   const sectionsLocked = draft.sections?.locked;
   return (
-    <div className={`relative w-full min-h-full overflow-x-hidden p-4 pb-24 ${fontClass}`}>
+<div
+  className={`relative w-full max-h-[calc(100vh-80px)] overflow-x-hidden ${fontClass}`}
+>
 
       {/* BACKGROUND: only here on real mobile. On desktop preview,
           BackgroundLayer is a sibling outside the scroll container. */}
@@ -1224,10 +1226,8 @@ export default function MobilePublicSettings({
       />
 
       {/* BOTTOM ACTION BAR */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 
-bg-white/95 backdrop-blur border-t shadow 
-px-4 pt-3 pb-[calc(env(safe-area-inset-bottom)+12px)] 
-flex gap-3 justify-center">      <button
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur border-t shadow px-4 py-3 flex gap-3 justify-center">
+        <button
           onClick={onLogout}
           className="flex-1 py-3 rounded-xl font-semibold border border-red-200 text-red-600 hover:bg-red-50 transition"
         >
@@ -1271,9 +1271,12 @@ flex gap-3 justify-center">      <button
       </div>
 
 
-      <span className="wave-3 absolute inset-0" />
-      <span className="wave-fade" />
-      <div className="relative z-10 space-y-6">
+      <div className="flex-1 relative overflow-x-hidden p-4">
+
+  <span className="wave-3 absolute inset-0" />
+  <span className="wave-fade" />
+
+  <div className="relative z-10 space-y-6">
 
         {orderedSections.map((s: any) =>
           s?.enabled ? (
@@ -1308,7 +1311,8 @@ flex gap-3 justify-center">      <button
           >
             Add Section
           </button>
-        </div>
+          </div>
+</div>
 
       </div>
     </div>
