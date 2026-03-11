@@ -808,7 +808,7 @@ export default function MobilePublicSettings({
   const sectionsLocked = draft.sections?.locked;
   return (
 <div
-  className={`relative w-full max-h-[calc(100vh-100px)] overflow-x-hidden ${fontClass}`}
+  className={`relative w-full max-h-[calc(100vh-110px)] overflow-x-hidden ${fontClass}`}
 >
 
       {/* BACKGROUND: only here on real mobile. On desktop preview,
