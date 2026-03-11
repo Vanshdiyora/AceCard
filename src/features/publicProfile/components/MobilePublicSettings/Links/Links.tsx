@@ -1,7 +1,11 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { Link2, FileText, Pencil, Upload } from "lucide-react";
+import { Link2, FileText, Pencil, Upload, Trash2 } from "lucide-react";
 import { Section, resolveTheme } from "../MobilePublicSettings";
+import CommonItemsReorder from "../../../../settings/components/vice/sections/CommonItemsReorder";
+import { uploadImage } from "../../../services/publicProfile.api";
+
+const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
 
 /* ============================================================
    LINKS SECTION (PREVIEW + EDIT)
@@ -25,7 +29,7 @@ export default function Links({
 
   const [buffer, setBuffer] = useState({
     section_title: title || "Links & Files",
-    items: [],
+    items: [] as any[],
   });
 
   useEffect(() => {
@@ -127,11 +131,12 @@ function LinksFilesModal({
   onClose,
   onSave,
 }: any) {
-  const [error, setError] = useState<string | null>(null);
 
-  /* =========================
-     HANDLE AVATAR UPLOAD
-  ========================== */
+  const [error, setError] = useState<string | null>(null);
+  const [uploadingIndex, setUploadingIndex] = useState<number | null>(null);
+
+  /* ================= ICON UPLOAD ================= */
+
   const handleAvatarUpload = (file: File, index: number) => {
     const url = URL.createObjectURL(file);
 
@@ -142,25 +147,59 @@ function LinksFilesModal({
         avatar_url: url,
       };
 
-      return {
-        ...prev,
-        items: updated,
-      };
+      return { ...prev, items: updated };
     });
   };
 
-  /* =========================
-     VALIDATION
-  ========================== */
+  /* ================= FILE UPLOAD ================= */
+
+  const handleFileUpload = async (file: File, index: number) => {
+    try {
+
+      if (file.size > MAX_FILE_SIZE) {
+        setError("File size must be less than 20 MB.");
+        return;
+      }
+
+      setUploadingIndex(index);
+      setError(null);
+
+      const form = new FormData();
+      form.append("file", file);
+
+      const res = await uploadImage(file); // your API
+      const url = res?.data?.url;
+
+      setBuffer((prev: any) => {
+        const updated = [...prev.items];
+        updated[index] = {
+          ...updated[index],
+          file_url: url,
+        };
+
+        return { ...prev, items: updated };
+      });
+
+    } catch {
+      setError("File upload failed.");
+    } finally {
+      setUploadingIndex(null);
+    }
+  };
+
+  /* ================= VALIDATION ================= */
+
   const validate = () => {
+
     if (!buffer.items.length) {
       setError("Please add at least one link or file.");
       return false;
     }
 
     for (const item of buffer.items) {
+
       if (!item.title?.trim()) {
-        setError("Each link must have a title.");
+        setError("Each item must have a title.");
         return false;
       }
 
@@ -179,8 +218,35 @@ function LinksFilesModal({
     return true;
   };
 
-  /* LOCK SCROLL */
+  /* ================= PREVENT ADD IF INVALID ================= */
+
+  const validateExistingRows = () => {
+    for (const item of buffer.items) {
+
+      if (!item.title?.trim()) {
+        setError("Please enter title before adding another item.");
+        return false;
+      }
+
+      if (item.type === "link" && !item.url?.trim()) {
+        setError("Link item missing URL.");
+        return false;
+      }
+
+      if (item.type === "file" && !item.file_url) {
+        setError("File item missing uploaded file.");
+        return false;
+      }
+    }
+
+    setError(null);
+    return true;
+  };
+
+  /* ================= LOCK BODY SCROLL ================= */
+
   useEffect(() => {
+
     if (!open) return;
 
     const scrollY = window.scrollY;
@@ -193,24 +259,27 @@ function LinksFilesModal({
       document.body.style.cssText = "";
       window.scrollTo(0, parseInt(y || "0") * -1);
     };
+
   }, [open]);
 
   if (!open) return null;
 
   return createPortal(
+
     <div
       className="fixed inset-0 z-[9999] bg-black/50 backdrop-blur-sm flex items-center justify-center px-3"
       onClick={onClose}
     >
+
       <div
         onClick={(e) => e.stopPropagation()}
         className="relative bg-white w-full max-w-md rounded-2xl shadow-xl max-h-[85vh] flex flex-col"
       >
+
         {/* CLOSE */}
         <button
           onClick={onClose}
-          className="absolute right-3 top-3 h-8 w-8 rounded-full flex items-center justify-center
-          text-gray-400 hover:text-gray-700 hover:bg-gray-100"
+          className="absolute right-3 top-3 h-8 w-8 rounded-full flex items-center justify-center hover:bg-gray-100"
         >
           ✕
         </button>
@@ -220,11 +289,16 @@ function LinksFilesModal({
         </h3>
 
         {/* BODY */}
+
         <div className="flex-1 overflow-y-auto px-4 space-y-6">
 
           {/* SECTION TITLE */}
+
           <div>
-            <p className="text-xs text-gray-500 uppercase">Section title</p>
+            <p className="text-xs text-gray-500 uppercase mb-1">
+              Section Title
+            </p>
+
             <input
               value={buffer.section_title}
               onChange={(e) =>
@@ -238,102 +312,240 @@ function LinksFilesModal({
           </div>
 
           {/* ITEMS */}
-          {buffer.items.map((item: any, i: number) => (
-            <div key={i} className="border rounded-xl p-3 space-y-3">
 
-              <div className="flex items-center gap-3">
+          <CommonItemsReorder
+            items={buffer.items.map((item: any) => ({
+              ...item,
+              id: item.id,
+            }))}
+            onChange={(updated: any[]) =>
+              setBuffer((prev: any) => ({
+                ...prev,
+                items: updated.map((i, idx) => ({
+                  ...i,
+                  rank: idx + 1,
+                })),
+              }))
+            }
+            renderItem={(item: any, i: number) => (
 
-                {/* AVATAR */}
-                <div className="h-10 w-10 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
-                  {item.avatar_url ? (
-                    <img
-                      src={item.avatar_url}
-                      className="h-full w-full object-cover"
-                    />
-                  ) : item.type === "file" ? (
-                    <FileText size={16} />
-                  ) : (
-                    <Link2 size={16} />
-                  )}
+              <div className="border rounded-xl p-3 space-y-3">
+
+                {/* HEADER */}
+
+                <div className="flex justify-between">
+
+                  <span className="text-xs font-semibold text-gray-500">
+                    Item {i + 1}
+                  </span>
+
+                  <button
+                    onClick={() =>
+                      setBuffer((prev: any) => ({
+                        ...prev,
+                        items: prev.items.filter((_: any, idx: number) => idx !== i),
+                      }))
+                    }
+                    className="text-red-500"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+
                 </div>
 
-                {/* UPLOAD */}
-                <label className="cursor-pointer text-xs text-purple-600 flex items-center gap-1">
-                  <Upload size={14} />
-                  {item.avatar_url ? "Update Icon" : "Upload Icon"}
+                {/* ICON */}
+
+                <div className="flex items-center gap-3">
+
+                  <div className="h-10 w-10 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
+                    {item.avatar_url
+                      ? <img src={item.avatar_url} className="w-full h-full object-cover" />
+                      : item.type === "file"
+                        ? <FileText size={16} />
+                        : <Link2 size={16} />
+                    }
+                  </div>
+
+                  <label className="cursor-pointer text-xs text-purple-600 flex items-center gap-1">
+
+                    <Upload size={14} />
+                    {item.avatar_url ? "Update Icon" : "Upload Icon"}
+
+                    <input
+                      type="file"
+                      hidden
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+
+                        handleAvatarUpload(file, i);
+                        e.target.value = "";
+                      }}
+                    />
+
+                  </label>
+
+                </div>
+
+                {/* TITLE */}
+
+                <div>
+                  <p className="text-xs text-gray-500 uppercase mb-1">
+                    Title
+                  </p>
 
                   <input
-                    type="file"
-                    accept="image/*"
-                    hidden
+                    value={item.title}
+                    placeholder="Title"
                     onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) handleAvatarUpload(file, i);
+                      const val = e.target.value;
+
+                      setBuffer((prev: any) => {
+                        const updated = [...prev.items];
+                        updated[i] = { ...updated[i], title: val };
+                        return { ...prev, items: updated };
+                      });
                     }}
+                    className="w-full border rounded-lg px-3 py-2 text-sm"
                   />
-                </label>
+
+                </div>
+                {/* LINK */}
+
+                {item.type === "link" && (
+
+                  <div>
+                    <p className="text-xs text-gray-500 uppercase mb-1">
+                      Link URL
+                    </p>
+
+                    <input
+                      value={item.url}
+                      placeholder="https://example.com"
+                      onChange={(e) => {
+                        const val = e.target.value;
+
+                        setBuffer((prev: any) => {
+                          const updated = [...prev.items];
+                          updated[i] = { ...updated[i], url: val };
+                          return { ...prev, items: updated };
+                        });
+                      }}
+                      className="w-full border rounded-lg px-3 py-2 text-sm"
+                    />
+                  </div>
+
+                )}
+
+                {/* FILE */}
+
+                {item.type === "file" && (
+
+                  <div>
+
+                    <label className="cursor-pointer text-sm text-purple-600 flex items-center gap-2">
+
+                      <Upload size={16} />
+
+                      {uploadingIndex === i
+                        ? "Uploading..."
+                        : item.file_url
+                          ? "Replace File"
+                          : "Upload File"
+                      }
+
+                      <input
+                        type="file"
+                        hidden
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+
+                          handleFileUpload(file, i);
+                          e.target.value = "";
+                        }}
+                      />
+
+                    </label>
+
+                    {item.file_url && (
+                      <p className="text-xs text-gray-400 mt-1">
+                        File uploaded
+                      </p>
+                    )}
+
+                  </div>
+
+                )}
+
               </div>
 
-              {/* TITLE */}
-              <input
-                value={item.title}
-                placeholder="Title"
-                onChange={(e) => {
-                  const val = e.target.value;
+            )}
+          />
 
-                  setBuffer((prev: any) => {
-                    const updated = [...prev.items];
-                    updated[i] = { ...updated[i], title: val };
+          {/* ADD BUTTONS */}
 
-                    return { ...prev, items: updated };
-                  });
-                }}
-                className="w-full border rounded-lg px-3 py-2 text-sm"
-              />
+          <div className="flex gap-3 pb-2">
 
-              {/* URL */}
-              {item.type === "link" && (
-                <input
-                  value={item.url}
-                  placeholder="https://example.com"
-                  onChange={(e) => {
-                    const val = e.target.value;
+            <button
+              onClick={() => {
 
-                    setBuffer((prev: any) => {
-                      const updated = [...prev.items];
-                      updated[i] = { ...updated[i], url: val };
+                if (!validateExistingRows()) return;
 
-                      return { ...prev, items: updated };
-                    });
-                  }}
-                  className="w-full border rounded-lg px-3 py-2 text-sm"
-                />
-              )}
+                setBuffer((prev: any) => ({
+                  ...prev,
+                  items: [
+                    ...prev.items,
+                    {
+                      id: crypto.randomUUID(),
+                      title: "",
+                      type: "link",
+                      url: "",
+                      enabled: true,
+                      rank: prev.items.length + 1
+                    }
+                  ]
+                }));
 
-              {/* FILE */}
-              {item.type === "file" && (
-                <input
-                  value={item.file_url}
-                  placeholder="File URL"
-                  onChange={(e) => {
-                    const val = e.target.value;
+              }}
+              className="flex-1 border rounded-lg py-2 text-sm"
+            >
+              + Add Link
+            </button>
 
-                    setBuffer((prev: any) => {
-                      const updated = [...prev.items];
-                      updated[i] = { ...updated[i], file_url: val };
+            <button
+              onClick={() => {
 
-                      return { ...prev, items: updated };
-                    });
-                  }}
-                  className="w-full border rounded-lg px-3 py-2 text-sm"
-                />
-              )}
-            </div>
-          ))}
+                if (!validateExistingRows()) return;
+
+                setBuffer((prev: any) => ({
+                  ...prev,
+                  items: [
+                    ...prev.items,
+                    {
+                      id: crypto.randomUUID(),
+                      title: "",
+                      type: "file",
+                      file_url: "",
+                      enabled: true,
+                      rank: prev.items.length + 1
+                    }
+                  ]
+                }));
+
+              }}
+              className="flex-1 border rounded-lg py-2 text-sm"
+            >
+              + Add File
+            </button>
+
+          </div>
 
         </div>
 
         {/* FOOTER */}
+
         <div className="border-t bg-white">
 
           {error && (
@@ -343,6 +555,7 @@ function LinksFilesModal({
           )}
 
           <div className="p-4 flex gap-3">
+
             <button
               onClick={onClose}
               className="flex-1 border rounded-xl py-2.5"
@@ -359,11 +572,15 @@ function LinksFilesModal({
             >
               Save
             </button>
+
           </div>
 
         </div>
+
       </div>
+
     </div>,
+
     document.body
   );
 }
