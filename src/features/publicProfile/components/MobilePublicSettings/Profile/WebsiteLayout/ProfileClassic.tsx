@@ -64,7 +64,6 @@ export function ProfileClassic({
       };
 
       onProfileChange(updatedProfile);
-      console.log(updatedProfile)
 
       setCropFile(null);
     } catch (err) {
@@ -131,10 +130,14 @@ export function ProfileClassic({
               hidden
               accept="image/*"
               onChange={(e) => {
-                if (e.target.files?.[0]) {
-                  coverFileRef.current = e.target.files[0];
-                  setIsCoverCropping(true);
-                }
+                const file = e.target.files?.[0];
+                if (!file) return;
+
+                coverFileRef.current = file;
+                setIsCoverCropping(true);
+
+                // allow selecting same image again
+                e.target.value = "";
               }}
             />
           </button>
@@ -215,9 +218,15 @@ export function ProfileClassic({
                   type="file"
                   hidden
                   accept="image/*"
-                  onChange={(e) =>
-                    e.target.files && setCropFile(e.target.files[0])
-                  }
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+
+                    setCropFile(file);
+
+                    // allow selecting same image again
+                    e.target.value = "";
+                  }}
                 />
               </label>
             </div>

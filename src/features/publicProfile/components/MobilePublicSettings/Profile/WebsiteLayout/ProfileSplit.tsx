@@ -123,9 +123,15 @@ function InlineAvatarUploader({
           type="file"
           hidden
           accept="image/*"
-          onChange={(e) =>
-            e.target.files && setCropFile(e.target.files[0])
-          }
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (!file) return;
+
+            setCropFile(file);
+
+            // allow selecting same image again
+            e.target.value = "";
+          }}
         />
       </label>
 

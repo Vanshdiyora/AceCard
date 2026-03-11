@@ -11,7 +11,7 @@ type Props = {
 export default function AvatarCropModal({ file, onCancel, onSave }: Props) {
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
-const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
   const [imageUrl, setImageUrl] = useState<string>("");
 
   /* create blob URL once */
@@ -31,8 +31,8 @@ const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
   }, []);
 
   const onCropComplete = useCallback((_: any, areaPixels: any) => {
-  setCroppedAreaPixels(areaPixels);
-}, []);
+    setCroppedAreaPixels(areaPixels);
+  }, []);
 
   const getCroppedBlob = async () => {
     const img = new Image();
@@ -46,19 +46,19 @@ const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
     canvas.height = OUTPUT_SIZE;
 
     const ctx = canvas.getContext("2d")!;
-   if (!croppedAreaPixels) return;
+    if (!croppedAreaPixels) return;
 
-ctx.drawImage(
-  img,
-  croppedAreaPixels.x,
-  croppedAreaPixels.y,
-  croppedAreaPixels.width,
-  croppedAreaPixels.height,
-  0,
-  0,
-  OUTPUT_SIZE,
-  OUTPUT_SIZE
-);
+    ctx.drawImage(
+      img,
+      croppedAreaPixels.x,
+      croppedAreaPixels.y,
+      croppedAreaPixels.width,
+      croppedAreaPixels.height,
+      0,
+      0,
+      OUTPUT_SIZE,
+      OUTPUT_SIZE
+    );
 
     return new Promise<Blob>((resolve) =>
       canvas.toBlob((b) => resolve(b!), "image/jpeg", 0.95)
@@ -96,21 +96,21 @@ ctx.drawImage(
         <div className="relative w-full h-[60vh] max-h-[420px] bg-black">
           {imageUrl && (
             <Cropper
-  image={imageUrl}
-  crop={crop}
-  zoom={zoom}
-  aspect={1}
-  cropShape="round"
-  showGrid={false}
-  objectFit="contain"
-  minZoom={0.2}
-  maxZoom={10}
-  restrictPosition={false}
-  zoomWithScroll
-  onCropChange={setCrop}
-  onZoomChange={setZoom}
-  onCropComplete={onCropComplete}
-/>
+              image={imageUrl}
+              crop={crop}
+              zoom={zoom}
+              aspect={1}
+              cropShape="round"
+              showGrid={false}
+              objectFit="contain"
+              minZoom={0.2}
+              maxZoom={10}
+              restrictPosition={false}
+              zoomWithScroll
+              onCropChange={setCrop}
+              onZoomChange={setZoom}
+              onCropComplete={onCropComplete}
+            />
           )}
         </div>
 
@@ -141,9 +141,9 @@ ctx.drawImage(
             </button>
             <button
               onClick={async () => {
-  const blob = await getCroppedBlob();
-  if (blob) onSave(blob);
-}}
+                const blob = await getCroppedBlob();
+                if (blob) onSave(blob);
+              }}
               className="px-6 py-2 rounded-xl text-white bg-gradient-to-r from-black to-gray-800 shadow-md hover:opacity-90 transition"
             >
               Save Photo

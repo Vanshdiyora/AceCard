@@ -66,7 +66,6 @@ export function ProfileCenter({
       };
       
       onProfileChange(updatedProfile);
-      console.log(updatedProfile)
 
       setCropFile(null);
     } catch (err) {
