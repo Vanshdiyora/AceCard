@@ -1224,8 +1224,10 @@ export default function MobilePublicSettings({
       />
 
       {/* BOTTOM ACTION BAR */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur border-t shadow px-4 py-3 flex gap-3 justify-center">
-        <button
+      <div className="fixed bottom-0 left-0 right-0 z-50 
+bg-white/95 backdrop-blur border-t shadow 
+px-4 pt-3 pb-[calc(env(safe-area-inset-bottom)+12px)] 
+flex gap-3 justify-center">      <button
           onClick={onLogout}
           className="flex-1 py-3 rounded-xl font-semibold border border-red-200 text-red-600 hover:bg-red-50 transition"
         >
