@@ -808,7 +808,7 @@ export default function MobilePublicSettings({
   const sectionsLocked = draft.sections?.locked;
   return (
     <div
-      className={`relative w-full max-h-[90vh] overflow-x-hidden ${fontClass}`}
+      className={`relative w-full min-h-[90vh] overflow-x-hidden ${fontClass}`}
     >
 
       {/* BACKGROUND: only here on real mobile. On desktop preview,
@@ -1225,50 +1225,6 @@ export default function MobilePublicSettings({
         onClose={() => setResultModal(null)}
       />
 
-      {/* BOTTOM ACTION BAR */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur border-t shadow px-4 py-3 flex gap-3 justify-center">
-        <button
-          onClick={onLogout}
-          className="flex-1 py-3 rounded-xl font-semibold border border-red-200 text-red-600 hover:bg-red-50 transition"
-        >
-          Sign out
-        </button>
-
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className="flex-1 py-3 rounded-xl font-semibold text-white bg-purple-600 shadow disabled:opacity-60"
-        >
-          {saving ? "Saving..." : "Save Changes"}
-        </button>
-
-        <ProfileLayoutModal
-          open={openLayoutEditor}
-          onClose={() => {
-            setLayoutDraft({
-              layout: { ...(draft.layout || {}) },
-              theme: { ...(draft.theme || {}) },
-            });
-            setOpenLayoutEditor(false);
-          }}
-          onSave={() => {
-            setDraft((prev: any) => ({
-              ...prev,
-              layout: layoutDraft?.layout,
-              theme: layoutDraft?.theme,
-            }));
-
-            setOpenLayoutEditor(false);
-          }}
-        >
-          <ProfileLayoutEditor
-            config={layoutDraft}
-            update={setLayoutDraft}
-            uploadImage={uploadImage}
-          />
-        </ProfileLayoutModal>
-
-      </div>
 
 
       <div className="flex-1 relative overflow-x-hidden p-4">
@@ -1315,6 +1271,62 @@ export default function MobilePublicSettings({
         </div>
 
       </div>
+
+      
+      {/* BOTTOM ACTION BAR */}
+   {/* BOTTOM ACTION BAR — Floating, mobile-safe */}
+<div className="fixed bottom-0 left-0 right-0 z-50 px-4 pb-safe">
+  {/* Backdrop blur pill */}
+  <div className="mb-3 rounded-2xl bg-white/90 backdrop-blur-md border border-gray-200/80 shadow-[0_-2px_24px_rgba(0,0,0,0.10)] px-3 py-3">
+    <div className="flex gap-2 items-stretch">
+
+      {/* Sign Out */}
+      <button
+        onClick={onLogout}
+        className="flex-1 min-w-0 py-3 px-2 rounded-xl font-semibold text-sm border border-red-200 text-red-500 hover:bg-red-50 active:bg-red-100 transition-colors"
+      >
+        Sign out
+      </button>
+      {/* Save */}
+      <button
+        onClick={handleSave}
+        disabled={saving}
+        className="flex-1 min-w-0 py-3 px-2 rounded-xl font-semibold text-sm text-white bg-purple-600 hover:bg-purple-700 active:bg-purple-800 shadow-sm disabled:opacity-60 transition-colors"
+      >
+        {saving ? "Saving…" : "Save"}
+      </button>
+
+    </div>
+  </div>
+</div>
+
+{/* Spacer so content doesn't hide under the floating bar */}
+<div className="h-24" />
+
+<ProfileLayoutModal
+  open={openLayoutEditor}
+  onClose={() => {
+    setLayoutDraft({
+      layout: { ...(draft.layout || {}) },
+      theme: { ...(draft.theme || {}) },
+    });
+    setOpenLayoutEditor(false);
+  }}
+  onSave={() => {
+    setDraft((prev: any) => ({
+      ...prev,
+      layout: layoutDraft?.layout,
+      theme: layoutDraft?.theme,
+    }));
+    setOpenLayoutEditor(false);
+  }}
+>
+  <ProfileLayoutEditor
+    config={layoutDraft}
+    update={setLayoutDraft}
+    uploadImage={uploadImage}
+  />
+</ProfileLayoutModal>
     </div>
   );
 }
