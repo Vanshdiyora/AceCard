@@ -31,7 +31,9 @@ export function Banner({
   const [isCropping, setIsCropping] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const [draftImage, setDraftImage] = useState<string | null>(null);
+  const [imageRemoved, setImageRemoved] = useState(false);
+  const [tempImage, setTempImage] = useState<string | null>(null);
+  const [tempImageRemoved, setTempImageRemoved] = useState(false);
   const [draft, setDraft] = useState<{
     cta_text: string;
     cta_url: string;
@@ -62,22 +64,32 @@ export function Banner({
       cta_url: ctaUrl || "",
     });
 
-    setDraftImage(image ?? null);
+    setImageRemoved(false);
+
+    // ✅ temp states
+    setTempImage(image ?? null);
+    setTempImageRemoved(false);
+
     setError(null);
   }, [isEditing, ctaText, ctaUrl, image]);
-
   /* ---------------- IMAGE UPLOAD ---------------- */
   const uploadBanner = async (blob: Blob) => {
     const file = new File([blob], "banner.jpg", { type: "image/jpeg" });
     const res = await uploadImage(file);
 
-    setDraftImage(res.data.url);
+    setTempImage(res.data.url);
+    setTempImageRemoved(false);
     setIsCropping(false);
   };
 
   /* ---------------- SAVE ---------------- */
   const saveBanner = () => {
     if (!draft) return;
+
+    if (tempImageRemoved || !tempImage) {
+      setError("Please upload a banner image before saving.");
+      return;
+    }
 
     if (draft.cta_url?.trim()) {
       if (!isValidUrl(draft.cta_url)) {
@@ -94,7 +106,7 @@ export function Banner({
       ...prev,
       banner: {
         ...prev.banner,
-        image_url: draftImage,
+        image_url: tempImageRemoved ? null : tempImage,
         cta_text: draft.cta_text,
         cta_url: draft.cta_url,
       },
@@ -103,7 +115,6 @@ export function Banner({
     setIsEditing(false);
     setDraft(null);
   };
-
   return (
     <div className="relative">
       {/* CTA TEXT */}
@@ -127,20 +138,22 @@ export function Banner({
       )}
 
       {/* BANNER DISPLAY */}
-      <div
-        className="cursor-pointer"
-        onClick={() => {
-          if (ctaUrl && isValidUrl(ctaUrl)) {
-            window.open(ctaUrl, "_blank");
-          }
-        }}
-      >
-        <img
-          src={image}
-          className="w-full h-28 rounded-2xl object-cover"
-          alt="Banner"
-        />
-      </div>
+      {!imageRemoved && image && (
+        <div
+          className="cursor-pointer"
+          onClick={() => {
+            if (ctaUrl && isValidUrl(ctaUrl)) {
+              window.open(ctaUrl, "_blank");
+            }
+          }}
+        >
+          <img
+            src={image}
+            className="w-full h-28 rounded-2xl object-cover"
+            alt="Banner"
+          />
+        </div>
+      )}
 
       {/* ---------------- EDIT MODAL ---------------- */}
       <EditModal
@@ -158,12 +171,33 @@ export function Banner({
         {draft && (
           <div className="space-y-4">
             {/* IMAGE PREVIEW */}
-            <div className="w-full h-32 rounded-2xl overflow-hidden bg-gray-100">
-              <img
-                src={draftImage || image}
-                alt="Banner Preview"
-                className="w-full h-full object-cover"
-              />
+            <div className="relative w-full h-32 rounded-2xl overflow-hidden bg-gray-100 flex items-center justify-center">
+
+              {(tempImage || (!tempImageRemoved && image)) ? (
+                <>
+                  <img
+                    src={tempImage || image}
+                    alt="Banner Preview"
+                    className="w-full h-full object-cover"
+                  />
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTempImage(null);
+                      setTempImageRemoved(true);
+                    }}
+                    className="absolute top-2 right-2 bg-red-500 text-white text-xs px-3 py-1 rounded-lg z-20 active:scale-95"
+                  >
+                    Remove
+                  </button>
+                </>
+              ) : (
+                <span className="text-gray-400 text-sm">
+                  No banner image
+                </span>
+              )}
+
             </div>
 
             {/* CHANGE IMAGE */}
@@ -197,7 +231,7 @@ export function Banner({
               </label>
               <input
                 className="w-full border rounded-lg p-2 text-sm"
-                placeholder="e.g. Shop Now"
+                placeholder="Enter a text"
                 value={draft.cta_text}
                 onChange={(e) =>
                   setDraft((d) =>
@@ -213,14 +247,28 @@ export function Banner({
                 CTA Link
               </label>
               <input
-                className={`w-full border rounded-lg p-2 text-sm ${error ? "border-red-400 focus:ring-red-400" : ""
-                  }`}
-                placeholder="https://your-link.com"
+                className={`w-full border rounded-lg p-2 text-sm`}
+                placeholder="Enter a URL"
                 value={draft.cta_url}
                 onChange={(e) => {
                   setError(null);
+
+                  let url = e.target.value ?? "";
+
+                  const looksLikeDomain =
+                    /^[a-zA-Z0-9.-]+\.[a-zA-Z]{1,}(\/.*)?$/.test(url.trim());
+
+                  if (
+                    url.trim() !== "" &&
+                    !url.startsWith("http://") &&
+                    !url.startsWith("https://") &&
+                    looksLikeDomain
+                  ) {
+                    url = "https://" + url.trim();
+                  }
+
                   setDraft((d) =>
-                    d ? { ...d, cta_url: e.target.value } : d
+                    d ? { ...d, cta_url: url } : d
                   );
                 }}
               />

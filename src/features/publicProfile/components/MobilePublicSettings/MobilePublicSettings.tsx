@@ -305,7 +305,7 @@ export default function MobilePublicSettings({
   const sectionValidators: Record<string, ValidatorFn> = {
     youtube: (draft) => {
       for (const item of draft.items || []) {
-        if (!item.url?.trim()) return "Please enter a YouTube URL for all videos.";
+        if (!item.url?.trim()) return "Please enter a Video URL for all videos.";
         if (!isYoutubeRowComplete(item))
           return `"${item.url}" is not a valid URL`;
       }
@@ -314,32 +314,50 @@ export default function MobilePublicSettings({
 
     photo_gallery: (draft) => {
       const items = draft?.items || [];
-      if (items.length === 0) return "Please add at least one photo.";
+
+      if (items.length === 0)
+        return "Please add at least one photo.";
+
       for (const item of items) {
-        if (!item.title?.trim()) return "Each photo must have a title.";
+        if (!item.title?.trim())
+          return "Each photo must have a title.";
+
+        // ✅ IMAGE VALIDATION
+        if (!item.img_url?.trim())
+          return `Photo "${item.title || "Untitled"}" must have an image.`;
+
         if (item.link?.trim() && !isValidUrl(item.link.trim()))
           return `Photo "${item.title}" has an invalid URL. Make sure it starts with https:// or http:// `;
       }
+
       return null;
     },
 
     social_links: (draft) => {
       const normalized = (draft.items || []).map((item: any) => {
         const inputType = getSocialInputType(item.id);
-        let url = item.url ?? "";
-        const looksLikeDomain = /^[^\s]+\.[a-zA-Z]{2,}(\/.*)?$/.test(url.trim());
-        if (
-          inputType === "url" &&
-          url.trim() !== "" &&
-          !url.startsWith("http://") &&
-          !url.startsWith("https://") &&
-          looksLikeDomain
-        ) {
-          url = "https://" + url.trim();
+
+        let url = (item.url ?? "").trim();
+
+        if (inputType === "url" && url !== "") {
+          const looksLikeDomain =
+            /^[a-zA-Z0-9.-]+\.[a-zA-Z]{1,}(\/.*)?$/.test(url);
+
+          const hasProtocol =
+            url.startsWith("http://") || url.startsWith("https://");
+
+          if (!hasProtocol && looksLikeDomain) {
+            url = "https://" + url;
+          }
         }
-        return { ...item, url };
+
+        return {
+          ...item,
+          url,
+        };
       });
 
+      // update normalized items back
       draft.items = normalized;
 
       return hasInvalidSocialLinks(normalized)
@@ -349,7 +367,7 @@ export default function MobilePublicSettings({
 
     links_files: (draft) => {
       const items = draft?.items || [];
-      if (items.length === 0) return "Please add at least one link or file.";
+      // if (items.length === 0) return "Please add at least one link or file.";
       for (const item of items) {
         if (!item.title?.trim()) return "Each link/file must have a title.";
         if (item.type === "link") {
@@ -367,6 +385,16 @@ export default function MobilePublicSettings({
     },
 
     contact: (draft) => {
+      // Validate titles
+      if (!draft.form_title?.trim())
+        return "Contact form title is required.";
+
+      if (!draft.connect_title?.trim())
+        return "Connect button text is required.";
+
+      if (!draft.contact_title?.trim())
+        return "Save contact button text is required.";
+
       for (const field of draft.fields || []) {
         if (!field.label?.trim()) return "Each contact field must have a label.";
         if (field.type === "dropdown") {
@@ -389,8 +417,14 @@ export default function MobilePublicSettings({
 
     banner: (draft) => {
       if (!draft.enabled) return null;
+
+      // ✅ IMAGE REQUIRED
+      if (!draft.image_url?.trim())
+        return "Banner image is required.";
+
       if (draft.cta_url?.trim() && !isValidUrl(draft.cta_url.trim()))
         return "CTA URL is invalid. Make sure it starts with https:// or http://";
+
       return null;
     },
 
@@ -468,23 +502,26 @@ export default function MobilePublicSettings({
 
       case "about":
         return (
-          <Section title="About" theme={draft.theme}>
-            <EditableAbout
-              value={draft.profile?.description || ""}
-              theme={draft.theme}
-              editable={!draft.profile?.locked}
-              autoOpen={autoEditSection === "about"}   // ✅ REQUIRED
-              onChange={(val: string) =>
-                setDraft((prev: any) => ({
-                  ...prev,
-                  profile: {
-                    ...prev.profile,
-                    description: val,
-                  },
-                }))
-              }
-            />
-          </Section>
+          <div className="py-2">
+
+            <Section title="About" theme={draft.theme}>
+              <EditableAbout
+                value={draft.profile?.description || ""}
+                theme={draft.theme}
+                editable={!draft.profile?.locked}
+                autoOpen={autoEditSection === "about"}   // ✅ REQUIRED
+                onChange={(val: string) =>
+                  setDraft((prev: any) => ({
+                    ...prev,
+                    profile: {
+                      ...prev.profile,
+                      description: val,
+                    },
+                  }))
+                }
+              />
+            </Section>
+          </div>
         );
 
       case "social_links":
@@ -1232,7 +1269,7 @@ export default function MobilePublicSettings({
         <span className="wave-3 absolute inset-0" />
         <span className="wave-fade" />
 
-        <div className="relative z-10">
+        <div className="relative z-10 space-y-4">
 
           {orderedSections.map((s: any) =>
             s?.enabled ? (
@@ -1272,61 +1309,61 @@ export default function MobilePublicSettings({
 
       </div>
 
-      
+
       {/* BOTTOM ACTION BAR */}
-   {/* BOTTOM ACTION BAR — Floating, mobile-safe */}
-<div className="fixed bottom-0 left-0 right-0 z-50 px-4 pb-safe">
-  {/* Backdrop blur pill */}
-  <div className="mb-3 rounded-2xl bg-white/90 backdrop-blur-md border border-gray-200/80 shadow-[0_-2px_24px_rgba(0,0,0,0.10)] px-3 py-3">
-    <div className="flex gap-2 items-stretch">
+      {/* BOTTOM ACTION BAR — Floating, mobile-safe */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 px-4 pb-safe">
+        {/* Backdrop blur pill */}
+        <div className="mb-3 rounded-2xl bg-white/90 backdrop-blur-md border border-gray-200/80 shadow-[0_-2px_24px_rgba(0,0,0,0.10)] px-3 py-3">
+          <div className="flex gap-2 items-stretch">
 
-      {/* Sign Out */}
-      <button
-        onClick={onLogout}
-        className="flex-1 min-w-0 py-3 px-2 rounded-xl font-semibold text-sm border border-red-200 text-red-500 hover:bg-red-50 active:bg-red-100 transition-colors"
+            {/* Sign Out */}
+            <button
+              onClick={onLogout}
+              className="flex-1 min-w-0 py-3 px-2 rounded-xl font-semibold text-sm border border-red-200 text-red-500 hover:bg-red-50 active:bg-red-100 transition-colors"
+            >
+              Sign out
+            </button>
+            {/* Save */}
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="flex-1 min-w-0 py-3 px-2 rounded-xl font-semibold text-sm text-white bg-purple-600 hover:bg-purple-700 active:bg-purple-800 shadow-sm disabled:opacity-60 transition-colors"
+            >
+              {saving ? "Saving…" : "Save"}
+            </button>
+
+          </div>
+        </div>
+      </div>
+
+      {/* Spacer so content doesn't hide under the floating bar */}
+      <div className="h-24" />
+
+      <ProfileLayoutModal
+        open={openLayoutEditor}
+        onClose={() => {
+          setLayoutDraft({
+            layout: { ...(draft.layout || {}) },
+            theme: { ...(draft.theme || {}) },
+          });
+          setOpenLayoutEditor(false);
+        }}
+        onSave={() => {
+          setDraft((prev: any) => ({
+            ...prev,
+            layout: layoutDraft?.layout,
+            theme: layoutDraft?.theme,
+          }));
+          setOpenLayoutEditor(false);
+        }}
       >
-        Sign out
-      </button>
-      {/* Save */}
-      <button
-        onClick={handleSave}
-        disabled={saving}
-        className="flex-1 min-w-0 py-3 px-2 rounded-xl font-semibold text-sm text-white bg-purple-600 hover:bg-purple-700 active:bg-purple-800 shadow-sm disabled:opacity-60 transition-colors"
-      >
-        {saving ? "Saving…" : "Save"}
-      </button>
-
-    </div>
-  </div>
-</div>
-
-{/* Spacer so content doesn't hide under the floating bar */}
-<div className="h-24" />
-
-<ProfileLayoutModal
-  open={openLayoutEditor}
-  onClose={() => {
-    setLayoutDraft({
-      layout: { ...(draft.layout || {}) },
-      theme: { ...(draft.theme || {}) },
-    });
-    setOpenLayoutEditor(false);
-  }}
-  onSave={() => {
-    setDraft((prev: any) => ({
-      ...prev,
-      layout: layoutDraft?.layout,
-      theme: layoutDraft?.theme,
-    }));
-    setOpenLayoutEditor(false);
-  }}
->
-  <ProfileLayoutEditor
-    config={layoutDraft}
-    update={setLayoutDraft}
-    uploadImage={uploadImage}
-  />
-</ProfileLayoutModal>
+        <ProfileLayoutEditor
+          config={layoutDraft}
+          update={setLayoutDraft}
+          uploadImage={uploadImage}
+        />
+      </ProfileLayoutModal>
     </div>
   );
 }
@@ -2120,6 +2157,7 @@ function AboutEditModal({
           rows={5}
           value={text}
           onChange={(e) => setText(e.target.value)}
+          placeholder="Enter description"
           className="w-full rounded-xl border p-3 text-sm focus:ring-2 focus:ring-purple-400 outline-none"
         />
 

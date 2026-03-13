@@ -358,16 +358,23 @@ export default function ContactSection({
 
   const deleteField = (index: number) => {
     if (disabled) return;
+
+    // Prevent removing the last field
+    if (fields.length === 1) {
+      setError("At least one field is required.");
+      return;
+    }
+
     const updated = fields
       .filter((_, i) => i !== index)
       .map((f, i) => ({ ...f, rank: i + 1 }));
+
     onChange({ ...value, fields: updated });
   };
-
   const addField = () => {
     if (disabled) return;
     const last = fields[fields.length - 1];
-    if (last && !last.label?.trim()) {
+    if (last && (!last.label?.trim() || !last.type)) {
       setError("Please complete the previous field before adding another.");
       return;
     }
@@ -396,10 +403,12 @@ export default function ContactSection({
       <div className="space-y-2">
         <label className="text-sm font-medium">Form Title</label>
         <input
+          required
           disabled={disabled}
           value={value.form_title || ""}
           onChange={(e) => !disabled && onChange({ ...value, form_title: e.target.value })}
           className="w-full rounded-xl border px-4 py-3"
+          placeholder="Enter a form title"
         />
       </div>
 
@@ -407,10 +416,12 @@ export default function ContactSection({
       <div className="space-y-2">
         <label className="text-sm font-medium">Connect Button Text</label>
         <input
+          required
           disabled={disabled}
           value={value.connect_title || ""}
           onChange={(e) => !disabled && onChange({ ...value, connect_title: e.target.value })}
           className="w-full rounded-xl border px-4 py-3"
+          placeholder="Enter a connect button text"
         />
       </div>
 
@@ -418,10 +429,12 @@ export default function ContactSection({
       <div className="space-y-2">
         <label className="text-sm font-medium">Save Contact Button Text</label>
         <input
+          required
           disabled={disabled}
           value={value.contact_title || ""}
           onChange={(e) => !disabled && onChange({ ...value, contact_title: e.target.value })}
           className="w-full rounded-xl border px-4 py-3"
+          placeholder="Enter a Contact button text"
         />
       </div>
 
@@ -441,10 +454,10 @@ export default function ContactSection({
               </span>
               <button
                 type="button"
-                disabled={disabled}
+                disabled={disabled || fields.length === 1}
                 onClick={() => deleteField(index)}
-                className={`text-red-400 hover:text-red-600 transition ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
-              >
+                className={`text-red-400 hover:text-red-600 transition 
+${disabled || fields.length === 1 ? "opacity-40 cursor-not-allowed" : ""}`}             >
                 <X size={16} />
               </button>
             </div>
@@ -456,7 +469,7 @@ export default function ContactSection({
                 disabled={disabled}
                 value={field.label}
                 onChange={(e) => updateField(index, { label: e.target.value })}
-                placeholder="e.g. Your Name"
+                placeholder="Enter a label name"
                 className={`w-full rounded-xl border px-4 py-3 text-sm ${disabled ? "bg-gray-100 text-gray-400 cursor-not-allowed" : "bg-white"}`}
               />
             </div>

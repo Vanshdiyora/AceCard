@@ -106,15 +106,30 @@ export default function CardButtonsSection({
               <input
                 value={btn.link}
                 onChange={(e) => {
+                  let url = e.target.value ?? "";
+
+                  const looksLikeDomain =
+                    /^[a-zA-Z0-9.-]+\.[a-zA-Z]{1,}(\/.*)?$/.test(url.trim());
+
+                  if (
+                    url.trim() !== "" &&
+                    !url.startsWith("http://") &&
+                    !url.startsWith("https://") &&
+                    looksLikeDomain
+                  ) {
+                    url = "https://" + url.trim();
+                  }
+
                   const updated = [...items];
                   updated[index] = {
                     ...btn,
-                    link: e.target.value,
+                    link: url,
                   };
+
                   updateItems(updated);
                 }}
                 className="w-full rounded-lg border px-3 py-2"
-                placeholder="https://example.com"
+                placeholder="Enter a URL"
               />
             </div>
           </div>

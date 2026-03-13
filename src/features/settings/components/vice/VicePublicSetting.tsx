@@ -343,7 +343,7 @@ export interface SocialLinkItem {
   rank: number;        // ✅ ADD THIS
   country_code?: string;
 }
-
+const MAX_VIDEO_SIZE = 20 * 1024 * 1024; // 20MB
 export interface SocialLinksConfig extends LockMeta {
   locked_by: string;
   items: SocialLinkItem[];
@@ -500,7 +500,145 @@ export default function VicePublicSetting({
   const { products, loading: productsLoading } = useAppSelector(
     (s) => s.products
   );
+  function CustomSelect({
+    value,
+    onChange,
+  }: {
+    value: "link" | "upload";
+    onChange: (v: "link" | "upload") => void;
+  }) {
+    const [open, setOpen] = useState(false);
+    const btnRef = useRef<HTMLButtonElement | null>(null);
+    const menuRef = useRef<HTMLDivElement | null>(null);
 
+    const [pos, setPos] = useState({ top: 0, left: 0 });
+    const [menuW, setMenuW] = useState(0);
+
+    const options = [
+      { value: "link", label: "Video Link" },
+      { value: "upload", label: "Upload Video" },
+    ];
+
+    const active = options.find((o) => o.value === value);
+
+    /* close on outside click */
+    useEffect(() => {
+      if (!open) return;
+
+      const close = (e: any) => {
+        if (
+          btnRef.current?.contains(e.target) ||
+          menuRef.current?.contains(e.target)
+        )
+          return;
+
+        setOpen(false);
+      };
+
+      document.addEventListener("mousedown", close);
+      window.addEventListener("scroll", close, true);
+
+      return () => {
+        document.removeEventListener("mousedown", close);
+        window.removeEventListener("scroll", close, true);
+      };
+    }, [open]);
+
+    const openDropdown = () => {
+      if (!btnRef.current) return;
+
+      if (open) {
+        setOpen(false);
+        return;
+      }
+
+      const r = btnRef.current.getBoundingClientRect();
+      const width = btnRef.current.offsetWidth;
+
+      const MENU_H = 120;
+      const GAP = 6;
+
+      let top = r.bottom + GAP;
+
+      if (top + MENU_H > window.innerHeight) {
+        top = r.top - MENU_H - GAP;
+      }
+
+      let left = r.left;
+
+      if (left + width > window.innerWidth) {
+        left = window.innerWidth - width - GAP;
+      }
+
+      if (left < GAP) left = GAP;
+
+      setMenuW(width);
+      setPos({ top, left });
+      setOpen(true);
+    };
+
+    return (
+      <div className="relative">
+        <button
+          ref={btnRef}
+          type="button"
+          onClick={openDropdown}
+          className="
+          w-full flex items-center justify-between
+          rounded-xl border border-gray-300
+          bg-white px-4 py-3 text-sm
+          shadow-sm transition
+          hover:border-gray-400
+          focus:outline-none focus:ring-2 focus:ring-purple-500
+        "
+        >
+          <span>{active?.label}</span>
+
+          <ChevronDown
+            className={`w-4 h-4 text-gray-500 transition-transform ${open ? "rotate-180" : ""
+              }`}
+          />
+        </button>
+
+        {open &&
+          createPortal(
+            <div
+              ref={menuRef}
+              style={{
+                position: "fixed",
+                top: pos.top,
+                left: pos.left,
+                width: menuW,
+                zIndex: 10000,
+              }}
+              className="bg-white border rounded-xl shadow-xl overflow-hidden"
+            >
+              {options.map((o) => (
+                <button
+                  key={o.value}
+                  type="button"
+                  onClick={() => {
+                    onChange(o.value as any);
+                    setOpen(false);
+                  }}
+                  className={`
+                  w-full text-left px-4 py-3 text-sm transition
+                  hover:bg-purple-50
+                  ${value === o.value
+                      ? "bg-purple-100 text-purple-700 font-medium"
+                      : ""
+                    }
+                `}
+                >
+                  {o.label}
+                </button>
+              ))}
+            </div>,
+            document.body
+          )}
+      </div>
+    );
+  }
   const [config, setConfig] = useState<PublicProfileConfig | null>(null);
 
   /* ---------- Product search state ---------- */
@@ -913,7 +1051,7 @@ export default function VicePublicSetting({
               })
             }
             className="w-full rounded-xl border px-4 py-3"
-            placeholder="Videos Gallery"
+            placeholder="Enter a section title"
           />
         </div>
 
@@ -935,6 +1073,7 @@ export default function VicePublicSetting({
             renderItem={(item: any, index: number) => (
               <div className="bg-gray-50 rounded-2xl p-5 space-y-4">
 
+                {/* HEADER */}
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-medium text-gray-600">
                     Video {index + 1}
@@ -960,23 +1099,144 @@ export default function VicePublicSetting({
                   </button>
                 </div>
 
-                <input
-                  value={item.url || ""}
-                  onChange={(e) => {
-                    const next = [...sectionDraft.items];
-                    next[index] = {
-                      ...item,
-                      url: e.target.value,
-                    };
+                {/* TYPE SELECT */}
+                <div className="space-y-1">
+                  <label className="text-xs text-gray-500">Video Type</label>
 
-                    setSectionDraft({
-                      ...sectionDraft,
-                      items: next,
-                    });
-                  }}
-                  className="w-full rounded-xl border px-4 py-3"
-                  placeholder="https://youtube.com/..."
-                />
+                  <CustomSelect
+                    value={item.type || "link"}
+                    onChange={(val: "link" | "upload") => {
+                      const next = [...sectionDraft.items];
+
+                      next[index] = {
+                        ...item,
+                        type: val,
+                        url: "",
+                      };
+
+                      setSectionDraft({
+                        ...sectionDraft,
+                        items: next,
+                      });
+                    }}
+                  />
+                </div>
+
+                {/* LINK INPUT */}
+                {item.type === "link" && (
+                  <input
+                    value={item.url || ""}
+                    onChange={(e) => {
+                      let url = e.target.value ?? "";
+
+                      const looksLikeDomain =
+                        /^[a-zA-Z0-9.-]+\.[a-zA-Z]{1,}(\/.*)?$/.test(url.trim());
+
+                      if (
+                        url.trim() !== "" &&
+                        !url.startsWith("http://") &&
+                        !url.startsWith("https://") &&
+                        looksLikeDomain
+                      ) {
+                        url = "https://" + url.trim();
+                      }
+
+                      const next = [...sectionDraft.items];
+                      next[index] = {
+                        ...item,
+                        url,
+                      };
+
+                      setSectionDraft({
+                        ...sectionDraft,
+                        items: next,
+                      });
+                    }}
+                    className="w-full rounded-xl border px-4 py-3"
+                    placeholder="Enter a video link"
+                  />
+                )}
+
+                {/* VIDEO UPLOAD */}
+                {item.type === "upload" && (
+                  <div className="border-2 border-dashed rounded-xl p-4 text-center">
+
+                    {item.url ? (
+                      <div className="space-y-2">
+                        <video
+                          src={item.url}
+                          controls
+                          className="w-full rounded-lg"
+                        />
+
+                        <button
+                          onClick={() => {
+                            const next = [...sectionDraft.items];
+                            next[index] = {
+                              ...item,
+                              url: "",
+                            };
+
+                            setSectionDraft({
+                              ...sectionDraft,
+                              items: next,
+                            });
+                          }}
+                          className="text-red-500 text-sm"
+                        >
+                          Remove Video
+                        </button>
+                      </div>
+                    ) : (
+                      <>
+                        <input
+                          type="file"
+                          accept="video/*"
+                          id={`video-upload-${item.id}`}
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+
+                            if (file.size > MAX_VIDEO_SIZE) {
+                              alert("Video must be less than 20MB");
+                              return;
+                            }
+
+                            // Example upload API call
+                            uploadImage(file).then((res: any) => {
+                              const uploadedUrl = res?.data?.url;
+
+                              const next = [...sectionDraft.items];
+                              next[index] = {
+                                ...item,
+                                url: uploadedUrl,
+                              };
+
+                              setSectionDraft({
+                                ...sectionDraft,
+                                items: next,
+                              });
+                            });
+                          }}
+                        />
+
+                        <label
+                          htmlFor={`video-upload-${item.id}`}
+                          className="cursor-pointer text-indigo-600 font-medium"
+                        >
+                          Click to upload video
+                        </label>
+
+                        <p className="text-xs text-gray-400 mt-1">
+                          Max 20MB
+                        </p>
+                      </>
+                    )}
+
+                  </div>
+                )}
+
               </div>
             )}
           />
@@ -997,14 +1257,14 @@ export default function VicePublicSetting({
 
                 if (!last || !last.url?.trim()) {
                   setYoutubeError(
-                    "Please enter a valid YouTube link before adding another video."
+                    "Please enter a valid Video link before adding another video."
                   );
                   return;
                 }
 
                 if (!isYoutubeRowComplete(last)) {
                   setYoutubeError(
-                    "Please enter a valid YouTube URL."
+                    "Please enter a valid Video URL."
                   );
                   return;
                 }
@@ -1017,7 +1277,7 @@ export default function VicePublicSetting({
                     ...sectionDraft.items,
                     {
                       id: crypto.randomUUID(),
-                      title: "",
+                      type: "link",   // ✅ DEFAULT TYPE
                       url: "",
                       rank: sectionDraft.items.length + 1,
                       enabled: true,
@@ -1094,7 +1354,7 @@ export default function VicePublicSetting({
               })
             }
             className="w-full rounded-xl border px-4 py-3"
-            placeholder="Photo Gallery"
+            placeholder="Enter a section title"
           />
         </div>
 
@@ -1216,7 +1476,7 @@ export default function VicePublicSetting({
                       });
                     }}
                     className="w-full mt-1 rounded-xl border px-4 py-3"
-                    placeholder="Enter a title or short description."
+                    placeholder="Enter a title"
                   />
                 </div>
 
@@ -1241,7 +1501,7 @@ export default function VicePublicSetting({
                       });
                     }}
                     className="w-full mt-1 rounded-xl border px-4 py-3 text-sm"
-                    placeholder="Enter description..."
+                    placeholder="Enter description"
                     rows={3}
                   />
                 </div>
@@ -1250,21 +1510,37 @@ export default function VicePublicSetting({
                   <label className="text-sm text-gray-500">
                     URL
                   </label>
+
                   <input
                     value={item.link || ""}
                     onChange={(e) => {
+                      let url = e.target.value ?? "";
+
+                      const looksLikeDomain =
+                        /^[^\s]+\.[a-zA-Z]{1,}(\/.*)?$/.test(url.trim());
+
+                      if (
+                        url.trim() !== "" &&
+                        !url.startsWith("http://") &&
+                        !url.startsWith("https://") &&
+                        looksLikeDomain
+                      ) {
+                        url = "https://" + url.trim();
+                      }
+
                       const next = [...sectionDraft.items];
                       next[index] = {
                         ...item,
-                        link: e.target.value,
+                        link: url,
                       };
+
                       setSectionDraft({
                         ...sectionDraft,
                         items: next,
                       });
                     }}
                     className="w-full mt-1 rounded-xl border px-4 py-3"
-                    placeholder="https://example.com"
+                    placeholder="Enter an URL"
                   />
                 </div>
               </div>
@@ -1349,7 +1625,7 @@ export default function VicePublicSetting({
 
               // Auto-prefix https:// or http:// for URL-type socials
               // Auto-prefix https:// or http:// only if value looks like a real domain (has a TLD)
-              const looksLikeDomain = /^[^\s]+\.[a-zA-Z]{2,}(\/.*)?$/.test(url.trim());
+              const looksLikeDomain = /^[^\s]+\.[a-zA-Z]{1,}(\/.*)?$/.test(url.trim());
 
               if (
                 inputType === "url" &&
@@ -1545,6 +1821,7 @@ export default function VicePublicSetting({
               })
             }
             className="w-full rounded-xl border px-4 py-3"
+            placeholder="Enter a description"
           />
         </div>
       </div>
@@ -1593,10 +1870,28 @@ export default function VicePublicSetting({
   `}
           >
             {sectionDraft.image_url ? (
-              <img
-                src={sectionDraft.image_url}
-                className="w-full h-full object-cover"
-              />
+              <>
+                <img
+                  src={sectionDraft.image_url}
+                  className="w-full h-full object-cover"
+                />
+
+                {/* REMOVE BUTTON */}
+                {!isReadOnly(sectionDraft) && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setSectionDraft({
+                        ...sectionDraft,
+                        image_url: "",
+                      })
+                    }
+                    className="absolute top-2 right-2 bg-red-500 text-white text-xs px-3 py-1 rounded-md hover:bg-red-600 z-20"
+                  >
+                    Remove
+                  </button>
+                )}
+              </>
             ) : (
               <div className="h-full flex items-center justify-center text-gray-400">
                 No banner image
@@ -1642,6 +1937,7 @@ export default function VicePublicSetting({
               })
             }
             className="w-full rounded-xl border px-4 py-3"
+            placeholder="Enter a text"
           />
         </div>
 
@@ -1653,13 +1949,28 @@ export default function VicePublicSetting({
           <input
             disabled={isReadOnly(sectionDraft)}
             value={sectionDraft.cta_url || ""}
-            onChange={(e) =>
+            onChange={(e) => {
+              let url = e.target.value ?? "";
+
+              const looksLikeDomain =
+                /^[a-zA-Z0-9.-]+\.[a-zA-Z]{1,}(\/.*)?$/.test(url.trim());
+
+              if (
+                url.trim() !== "" &&
+                !url.startsWith("http://") &&
+                !url.startsWith("https://") &&
+                looksLikeDomain
+              ) {
+                url = "https://" + url.trim();
+              }
+
               setSectionDraft({
                 ...sectionDraft,
-                cta_url: e.target.value,
-              })
-            }
+                cta_url: url,
+              });
+            }}
             className="w-full rounded-xl border px-4 py-3"
+            placeholder="Enter a URL"
           />
         </div>
 
@@ -1713,13 +2024,29 @@ export default function VicePublicSetting({
           setModalError("Each button must have a title.");
           return false;
         }
+
         if (!btn.link?.trim()) {
           setModalError(`Button "${btn.title}" is missing a link.`);
           return false;
         }
-        if (!isValidUrl(btn.link.trim())) {
+
+        let link = btn.link.trim();
+
+        // Normalize link (auto add https://)
+        const looksLikeDomain =
+          /^[a-zA-Z0-9.-]+\.[a-zA-Z]{1,}(\/.*)?$/.test(link);
+
+        if (
+          !link.startsWith("http://") &&
+          !link.startsWith("https://") &&
+          looksLikeDomain
+        ) {
+          link = "https://" + link;
+        }
+
+        if (!isValidUrl(link)) {
           setModalError(
-            `Button "${btn.title}" has an invalid URL. Make sure it starts with https:// or http:// `
+            `Button "${btn.title}" has an invalid URL. Make sure it starts with https:// or http://`
           );
           return false;
         }
@@ -1727,13 +2054,25 @@ export default function VicePublicSetting({
     }
 
     if (activeSection === "banner") {
-      if (sectionDraft.enabled && sectionDraft.cta_url?.trim()) {
-        if (!isValidUrl(sectionDraft.cta_url.trim())) {
-          setModalError(
-            "CTA URL is invalid. Make sure it starts with https:// or http:// "
-          );
+
+      if (sectionDraft.enabled) {
+
+        // ✅ Require banner image
+        if (!sectionDraft.image_url?.trim()) {
+          setModalError("Please upload a banner image.");
           return false;
         }
+
+        // CTA URL validation
+        if (sectionDraft.cta_url?.trim()) {
+          if (!isValidUrl(sectionDraft.cta_url.trim())) {
+            setModalError(
+              "CTA URL is invalid. Make sure it starts with https:// or http:// "
+            );
+            return false;
+          }
+        }
+
       }
     }
     // if (activeSection === "meeting") {
@@ -1752,29 +2091,39 @@ export default function VicePublicSetting({
     // }
     // YouTube
     if (activeSection === "youtube") {
-      for (const item of sectionDraft.items) {
+      for (let i = 0; i < sectionDraft.items.length; i++) {
+        const item = sectionDraft.items[i];
+
         if (!item.url?.trim()) {
-          setModalError("Please enter a YouTube URL for all videos.");
+          setModalError(`Video ${i + 1} is missing a Video link.`);
           return false;
         }
+
         if (!isYoutubeRowComplete(item)) {
-          setModalError(
-            `"${item.url}" is not a valid YouTube URL (e.g. https:// or http://youtube.com/watch?v=...)`
-          );
+          setModalError(`Video ${i + 1} has an invalid Video link.`);
           return false;
         }
       }
     }
+
     // Photo Gallery
     if (activeSection === "photo_gallery") {
       for (const item of sectionDraft.items) {
+
         if (!item.title?.trim()) {
           setModalError("Each photo must have a title.");
           return false;
         }
-        if (item.link?.trim() && !isValidUrl(item.link.trim())) {
+
+        // Validate image URL
+        if (!item.img_url?.trim()) {
+          setModalError(`Photo "${item.title}" is missing an uploaded image.`);
+          return false;
+        }
+
+        if (!isValidUrl(item.img_url.trim())) {
           setModalError(
-            `Photo "${item.title}" has an invalid URL. Make sure it starts with https:// or http:// `
+            `Photo "${item.title}" has an invalid image URL. Make sure it starts with https:// or http://`
           );
           return false;
         }
@@ -1787,7 +2136,7 @@ export default function VicePublicSetting({
       const normalizedItems = (sectionDraft.items ?? []).map((item: any) => {
         const inputType = getSocialInputType(item.platform || item.id);
         let url = item.url ?? "";
-        const looksLikeDomain = /^[^\s]+\.[a-zA-Z]{2,}(\/.*)?$/.test(url.trim());
+        const looksLikeDomain = /^[^\s]+\.[a-zA-Z]{1,}(\/.*)?$/.test(url.trim());
         if (
           inputType === "url" &&
           url.trim() !== "" &&
@@ -1857,6 +2206,22 @@ export default function VicePublicSetting({
 
     // Contact
     if (activeSection === "contact") {
+
+      if (!sectionDraft.form_title?.trim()) {
+        setModalError("Form title is required.");
+        return false;
+      }
+
+      if (!sectionDraft.connect_title?.trim()) {
+        setModalError("Connect button text is required.");
+        return false;
+      }
+
+      if (!sectionDraft.contact_title?.trim()) {
+        setModalError("Save contact button text is required.");
+        return false;
+      }
+
       for (const field of sectionDraft.fields || []) {
         if (!isContactFieldComplete(field)) {
           setModalError("Please complete all contact fields.");
@@ -1921,9 +2286,20 @@ export default function VicePublicSetting({
     }
 
     if (activeSection === "youtube") {
-      nextConfig = { ...nextConfig, youtube: sectionDraft };
-    }
+      const normalizedItems = sectionDraft.items.map((v: any, index: number) => ({
+        ...v,
+        type: v.type || "link",   // ✅ guarantee type
+        rank: index + 1,
+      }));
 
+      nextConfig = {
+        ...nextConfig,
+        youtube: {
+          ...sectionDraft,
+          items: normalizedItems,
+        },
+      };
+    }
     if (activeSection === "links_files") {
       nextConfig = { ...nextConfig, links_files: sectionDraft };
     }
@@ -2584,6 +2960,18 @@ export default function VicePublicSetting({
                         ? ""
                         : config.layout.profile_width
                     }
+                    onKeyDown={(e) => {
+                      // Block minus key
+                      if (e.key === "-" || e.key === "e") {
+                        e.preventDefault();
+                      }
+                    }}
+                    onPaste={(e) => {
+                      const paste = e.clipboardData.getData("text");
+                      if (paste.includes("-")) {
+                        e.preventDefault();
+                      }
+                    }}
                     onChange={(e) => {
                       const val = e.target.value;
 
@@ -2595,16 +2983,18 @@ export default function VicePublicSetting({
                         return;
                       }
 
+                      const num = Number(val);
+
                       update({
                         ...config,
                         layout: {
                           ...config.layout,
-                          profile_width: Number(val),
+                          profile_width: num,
                         },
                       });
                     }}
                     className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                    placeholder="e.g. 6"
+                    placeholder="Enter thickness"
                   />
 
                   <span className="text-xs text-gray-500">px</span>
@@ -2652,7 +3042,7 @@ export default function VicePublicSetting({
                       });
                     }}
                     className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                    placeholder="e.g. 60"
+                    placeholder="Enter size"
                   />
 
                   <span className="text-xs text-gray-500">px</span>

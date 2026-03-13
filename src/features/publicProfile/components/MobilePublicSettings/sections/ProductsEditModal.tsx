@@ -156,6 +156,7 @@ export function ProductsEditModal({
         </div>
 
         <Input
+        placeholder="Enter a section title"
           value={value.section_title}
           onChange={(v: string) =>
             update({ ...value, section_title: v })

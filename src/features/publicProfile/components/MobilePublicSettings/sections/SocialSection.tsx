@@ -272,7 +272,8 @@ function SocialLinksModal({
     const normalizedItems = items.map((item: any) => {
       const isUrl = !PHONE_IDS.includes(item.id) && !EMAIL_IDS.includes(item.id) && !TEXT_IDS.includes(item.id);
       let url = item.url ?? "";
-      const looksLikeDomain = /^[^\s]+\.[a-zA-Z]{2,}(\/.*)?$/.test(url.trim());
+      const looksLikeDomain =
+        /^[a-zA-Z0-9.-]+\.[a-zA-Z]{1,}(\/.*)?$/.test(url);
 
       if (
         isUrl &&

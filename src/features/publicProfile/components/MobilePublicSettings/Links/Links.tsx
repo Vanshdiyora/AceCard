@@ -308,6 +308,7 @@ function LinksFilesModal({
                 }))
               }
               className="w-full border rounded-lg px-3 py-2 text-sm"
+              placeholder="Enter a section title"
             />
           </div>
 
@@ -397,7 +398,7 @@ function LinksFilesModal({
 
                   <input
                     value={item.title}
-                    placeholder="Title"
+                    placeholder="Enter a title"
                     onChange={(e) => {
                       const val = e.target.value;
 
@@ -422,13 +423,25 @@ function LinksFilesModal({
 
                     <input
                       value={item.url}
-                      placeholder="https://example.com"
+                      placeholder="Enter an URL"
                       onChange={(e) => {
-                        const val = e.target.value;
+                        let url = e.target.value ?? "";
+
+                        const looksLikeDomain =
+                          /^[a-zA-Z0-9.-]+\.[a-zA-Z]{1,}(\/.*)?$/.test(url.trim());
+
+                        if (
+                          url.trim() !== "" &&
+                          !url.startsWith("http://") &&
+                          !url.startsWith("https://") &&
+                          looksLikeDomain
+                        ) {
+                          url = "https://" + url.trim();
+                        }
 
                         setBuffer((prev: any) => {
                           const updated = [...prev.items];
-                          updated[i] = { ...updated[i], url: val };
+                          updated[i] = { ...updated[i], url };
                           return { ...prev, items: updated };
                         });
                       }}

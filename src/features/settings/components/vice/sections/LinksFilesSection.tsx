@@ -173,7 +173,7 @@ export default function LinksFilesSection({
         <input
           disabled={disabled}
           value={value.section_title || ""}
-          placeholder="e.g. Important Links"
+          placeholder="Enter a section title"
           className="border rounded-xl p-3 text-sm w-full"
           onChange={(e) =>
             onChange({
@@ -236,10 +236,10 @@ export default function LinksFilesSection({
             </div>
 
             {/* FORM GRID */}
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-start">
 
               {/* AVATAR */}
-              <div className="md:col-span-2">
+              <div className="md:col-span-2 flex flex-col">
                 <label className="block text-xs font-semibold text-gray-500 mb-1">
                   Avatar
                 </label>
@@ -300,7 +300,7 @@ export default function LinksFilesSection({
                     />
                   </div>
                 ) : (
-                  <div className="border rounded-xl text-center py-2 text-xs bg-gray-50">
+                  <div className="border rounded-xl h-[46px] flex items-center justify-center text-xs bg-gray-50">
                     <label
                       htmlFor={`avatar-upload-${item.id}`}
                       className="cursor-pointer text-indigo-600"
@@ -331,7 +331,7 @@ export default function LinksFilesSection({
               </div>
 
               {/* TYPE */}
-              <div className="md:col-span-2">
+              <div className="md:col-span-2 flex flex-col">
                 <label className="block text-xs font-semibold text-gray-500 mb-1">
                   Type
                 </label>
@@ -359,14 +359,14 @@ export default function LinksFilesSection({
               </div>
 
               {/* TITLE */}
-              <div className="md:col-span-3">
+              <div className="md:col-span-3 flex flex-col">
                 <label className="block text-xs font-semibold text-gray-500 mb-1">
                   Title
                 </label>
                 <input
                   disabled={disabled}
                   value={item.title}
-                  placeholder="e.g. Website"
+                  placeholder="Enter a title"
                   className="border rounded-xl p-3 text-sm w-full"
                   onChange={(e) => {
                     setError(null);
@@ -384,22 +384,37 @@ export default function LinksFilesSection({
 
               {/* LINK */}
               {item.type === "link" && (
-                <div className="md:col-span-5">
+                <div className="md:col-span-5 flex flex-col">
                   <label className="block text-xs font-semibold text-gray-500 mb-1">
                     Link URL
                   </label>
                   <input
                     disabled={disabled}
                     value={item.url}
-                    placeholder="https://example.com"
+                    placeholder="Enter an URL"
                     className="border rounded-xl p-3 text-sm w-full"
                     onChange={(e) => {
                       setError(null);
+
+                      let url = e.target.value ?? "";
+
+                      const looksLikeDomain =
+                         /^[^\s]+\.[a-zA-Z]{1,}(\/.*)?$/.test(url.trim());
+
+                      if (
+                        url.trim() !== "" &&
+                        !url.startsWith("http://") &&
+                        !url.startsWith("https://") &&
+                        looksLikeDomain
+                      ) {
+                        url = "https://" + url.trim();
+                      }
+
                       onChange({
                         ...value,
                         items: items.map((i) =>
                           i.id === item.id
-                            ? { ...i, url: e.target.value }
+                            ? { ...i, url }
                             : i
                         ),
                       });

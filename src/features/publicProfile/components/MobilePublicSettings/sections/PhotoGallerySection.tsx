@@ -131,6 +131,7 @@ export default function PhotoGallerySection({
           Section label
         </p>
         <Input
+          placeholder="Enter a section title"
           value={value.section_title}
           disabled={disabled}
           onChange={(v) =>
@@ -210,22 +211,50 @@ export default function PhotoGallerySection({
             </div>
 
             {/* IMAGE */}
-            <div className="space-y-1">
+            <div className="space-y-2">
               <p className="text-xs tracking-wide text-gray-500">
                 Image
               </p>
 
-              <div className="relative h-28 w-28 rounded-xl overflow-hidden bg-gray-100">
-                {item.img_url && (
-                  <img
-                    src={item.img_url}
-                    className="w-full h-full object-cover"
-                  />
+              <div className="relative w-full h-40 rounded-xl overflow-hidden bg-gray-100 group">
+
+                {item.img_url ? (
+                  <>
+                    <img
+                      src={item.img_url}
+                      className="w-full h-full object-cover"
+                    />
+
+                    {/* REMOVE BUTTON */}
+                    {!disabled && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          onChange({
+                            ...value,
+                            items: items.map((i: any) =>
+                              i.id === item.id
+                                ? { ...i, img_url: "" }
+                                : i
+                            ),
+                          })
+                        }
+                        className="absolute top-2 right-2 bg-red-500 text-white text-xs px-3 py-1 rounded-lg z-20 active:scale-95"
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </>
+                ) : (
+                  <div className="h-full flex items-center justify-center text-gray-400 text-sm">
+                    No image uploaded
+                  </div>
                 )}
 
                 {!disabled && (
-                  <label className="absolute inset-0 bg-black/40 text-white flex items-center justify-center opacity-0 hover:opacity-100 cursor-pointer">
-                    Change
+                  <label className="absolute inset-0 bg-black/40 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 active:opacity-100 transition cursor-pointer z-10">
+                    {item.img_url ? "Change Image" : "Upload Image"}
+
                     <input
                       type="file"
                       hidden
@@ -240,7 +269,6 @@ export default function PhotoGallerySection({
                 )}
               </div>
             </div>
-
             {/* DESCRIPTION */}
             <div className="space-y-1">
               <p className="text-xs tracking-wide text-gray-500">
@@ -250,7 +278,7 @@ export default function PhotoGallerySection({
               <textarea
                 value={item.description || ""}
                 disabled={disabled}
-                placeholder="Write a short description..."
+                placeholder="Enter a description"
                 className="w-full rounded-xl border p-3 text-sm"
                 onChange={(e) =>
                   onChange({
@@ -276,18 +304,32 @@ export default function PhotoGallerySection({
 
               <Input
                 value={item.link || ""}
-                placeholder="https://example.com"
+                placeholder="Enter an URL"
                 disabled={disabled}
-                onChange={(v) =>
+                onChange={(v) => {
+                  let url = v ?? "";
+
+                  const looksLikeDomain =
+                    /^[a-zA-Z0-9.-]+\.[a-zA-Z]{1,}(\/.*)?$/.test(url.trim());
+
+                  if (
+                    url.trim() !== "" &&
+                    !url.startsWith("http://") &&
+                    !url.startsWith("https://") &&
+                    looksLikeDomain
+                  ) {
+                    url = "https://" + url.trim();
+                  }
+
                   onChange({
                     ...value,
                     items: items.map((i: any) =>
                       i.id === item.id
-                        ? { ...i, link: v }
+                        ? { ...i, link: url }
                         : i
                     ),
-                  })
-                }
+                  });
+                }}
               />
             </div>
 

@@ -229,8 +229,9 @@ const normalizeYoutube = (api: any) => {
     section_title: y?.section_title ?? "Video Gallery",
     items: Array.isArray(y.items)
       ? y.items.map((v: any, i: number) => ({
-        id: v.id,
-        url: v.url,
+        id: v.id ?? crypto.randomUUID(),
+        type: v.type ?? "link",   // ✅ ADD
+        url: v.url ?? "",
         rank: v.rank ?? i + 1,
         enabled: v.enabled ?? true,
       }))
@@ -484,9 +485,9 @@ export function denormalizeProfile(
         lock_mode: cfg.youtube.lock_mode ?? null,
         locked_by: cfg.youtube.locked_by,
         section_title: cfg.youtube.section_title,
-
         items: cfg.youtube.items.map((v: any) => ({
           id: v.id,
+          type: v.type ?? "link",   // ✅ ADD
           url: v.url,
           rank: v.rank,
           enabled: v.enabled,
