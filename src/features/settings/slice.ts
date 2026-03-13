@@ -167,6 +167,20 @@ export const saveLeadConfig = createAsyncThunk<
   }
 );
 
+export const saveSuggestedQuestionsOrder = createAsyncThunk<
+  void,
+  { id: number; rank: number }[]
+>(
+  "settings/saveSuggestedQuestionsOrder",
+  async (items, thunkAPI) => {
+    try {
+      await settingsService.reorderSuggestedQuestions(items);
+    } catch {
+      return thunkAPI.rejectWithValue("Failed to save order");
+    }
+  }
+);
+
 // ---------- Suggested Questions ----------
 export const fetchSuggestedQuestions = createAsyncThunk<SuggestedQuestion[]>(
   "settings/fetchSuggestedQuestions",
@@ -508,10 +522,20 @@ const settingsSlice = createSlice({
       .addCase(saveTrackingPixels.rejected, (s, a) => {
         s.trackingPixels.saving = false;
         s.trackingPixels.error = a.payload as string;
+      })
+      .addCase(saveSuggestedQuestionsOrder.pending, (s) => {
+        s.suggestedQuestions.saving = true;
+      })
+      .addCase(saveSuggestedQuestionsOrder.fulfilled, (s) => {
+        s.suggestedQuestions.saving = false;
+      })
+      .addCase(saveSuggestedQuestionsOrder.rejected, (s, a) => {
+        s.suggestedQuestions.saving = false;
+        s.suggestedQuestions.error = a.payload as string;
       });
 
   },
 });
 
-export const { resetSettings,reorderSuggestedQuestions  } = settingsSlice.actions;
+export const { resetSettings, reorderSuggestedQuestions } = settingsSlice.actions;
 export default settingsSlice.reducer;

@@ -17,7 +17,7 @@ export const settingsService = {
     const data = res.data;
 
     return {
-       username: (data as any).username,
+      username: (data as any).username,
       name: data.name ?? "",
       email: data.email ?? "",
       phone: data.phone ?? "",
@@ -29,7 +29,7 @@ export const settingsService = {
       other_links: data.other_links ?? null,
       display_settings: data.display_settings ?? null,
       address: (data as any).address ?? "",
-      custom_job_role: data.custom_job_role?? "",
+      custom_job_role: data.custom_job_role ?? "",
       vendor_name: data.vendor_name ?? ""
     };
   },
@@ -41,7 +41,7 @@ export const settingsService = {
     const data = res.data;
 
     return {
-       username: (data as any).username,
+      username: (data as any).username,
       name: data.name ?? "",
       email: data.email ?? "",
       phone: data.phone ?? "",
@@ -53,31 +53,37 @@ export const settingsService = {
       other_links: data.other_links ?? null,
       display_settings: data.display_settings ?? null,
       address: (data as any).address ?? "",
-      custom_job_role: data.custom_job_role?? "",
+      custom_job_role: data.custom_job_role ?? "",
       vendor_name: data.vendor_name ?? ""
     };
   },
 
   // ---------- Lead Configuration ----------
   async getLeadsConfig(): Promise<LeadFormConfig> {
-  const res = await axios.get<LeadConfigApiResponse>(
-    "/vendor/leads-config"
-  );
+    const res = await axios.get<LeadConfigApiResponse>(
+      "/vendor/leads-config"
+    );
 
-  return res.data.config;
-},
+    return res.data.config;
+  },
 
-async updateLeadsConfig(
-  payload: LeadFormConfig
-): Promise<LeadFormConfig> {
-  const res = await axios.put<LeadConfigApiResponse>(
-    "/vendor/leads-config",
-    payload
-  );
+  async updateLeadsConfig(
+    payload: LeadFormConfig
+  ): Promise<LeadFormConfig> {
+    const res = await axios.put<LeadConfigApiResponse>(
+      "/vendor/leads-config",
+      payload
+    );
 
-  return res.data.config;
-},
+    return res.data.config;
+  },
 
+  async reorderSuggestedQuestions(items: { id: number; rank: number }[]) {
+    const res = await axios.put("/vendor/suggested-questions/reorder", {
+      items
+    });
+    return res.data;
+  },
 
   // ---------- Suggested Questions ----------
   async listSuggestedQuestions() {
@@ -128,31 +134,31 @@ async updateLeadsConfig(
     const res = await axios.post(`/vendor/integrations/${provider}/sync`);
     return res.data;
   },
-// ---------- Tracking Pixels ----------
-async getTrackingPixels() {
-  const res = await axios.get("/vendor/tracking-pixels");
-  return res.data;
-},
+  // ---------- Tracking Pixels ----------
+  async getTrackingPixels() {
+    const res = await axios.get("/vendor/tracking-pixels");
+    return res.data;
+  },
 
-async saveTrackingPixels(payload: {
-  meta_pixel_id: string;
-  google_analytics_id: string;
-  linkedin_insight_tag_id: string;
-}) {
-  const res = await axios.post("/vendor/tracking-pixels", payload);
-  return res.data;
-},
+  async saveTrackingPixels(payload: {
+    meta_pixel_id: string;
+    google_analytics_id: string;
+    linkedin_insight_tag_id: string;
+  }) {
+    const res = await axios.post("/vendor/tracking-pixels", payload);
+    return res.data;
+  },
 
-async updateMyAccountProfile(
-  payload: UpdateMyAccountProfilePayload
-) {
-  // only success message
-  await axios.put("/edit/myprofile", payload);
+  async updateMyAccountProfile(
+    payload: UpdateMyAccountProfilePayload
+  ) {
+    // only success message
+    await axios.put("/edit/myprofile", payload);
 
-  // re-fetch full profile
-  const res = await axios.get<AccountProfileResponse>("/profile");
-  return res.data;
-}
+    // re-fetch full profile
+    const res = await axios.get<AccountProfileResponse>("/profile");
+    return res.data;
+  }
 
 
 };

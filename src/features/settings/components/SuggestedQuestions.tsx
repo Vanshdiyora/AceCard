@@ -9,6 +9,7 @@ import {
   editSuggestedQuestion,
   removeSuggestedQuestion,
   reorderSuggestedQuestions,
+  saveSuggestedQuestionsOrder
 } from "../slice";
 
 import ResultModal from "../../../common/ui/ResultModal";
@@ -213,7 +214,14 @@ export default function SuggestedQuestions() {
 
       setIsMutating(true);
 
-      // await dispatch(saveSuggestedQuestionsOrder(data)).unwrap();
+      await dispatch(
+        saveSuggestedQuestionsOrder(
+          data.map((q, index) => ({
+            id: q.id,
+            rank: index + 1
+          }))
+        )
+      ).unwrap();
 
       setOrderChanged(false);
 
