@@ -102,3 +102,31 @@ export interface VendorSeatsTarget {
   id: number;
   seats_appointed: number;
 }
+
+/* ---------- VENDOR NOTES ---------- */
+
+export interface VendorNote {
+  id: number;
+  vendor_id: number;
+  author_id: number;
+  author_name: string;
+  content: string;
+  is_archived: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface VendorNotesResponse {
+  data: VendorNote[];
+}
+
+export interface CreateVendorNotePayload {
+  vendorId: number;
+  note: string;
+}
+
+export interface UpdateVendorNotePayload {
+  vendorId: number;
+  noteId: number;
+  note: string;
+}

@@ -1,4 +1,5 @@
 import type { TabItem } from "../../../common/components/layout/PageFilter";
+import { formatStage } from "../formatStage";
 
 export function getStageTabs(config: any): TabItem[] {
   const stageField = config?.customFields?.find(
@@ -15,7 +16,7 @@ export function getStageTabs(config: any): TabItem[] {
   return [
     { label: "All", value: "all" },
     ...stageField.options.map((opt: any) => ({
-      label: opt.label,
+      label: formatStage(opt.label),
       value: opt.value,
     })),
   ];

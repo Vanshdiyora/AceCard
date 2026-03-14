@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { vendorsService } from "./services/vendors.service";
-import type { VendorItem, VendorStat, VendorMeta } from "./types";
+import type { VendorItem, VendorStat, VendorMeta, VendorNote, VendorNotesResponse } from "./types";
 import type { VendorTeamActivity, VendorTeamMeta } from "./types";
 import type { VendorTeamResponse, SearchVendorTeamParams } from "./types";
 
@@ -19,6 +19,9 @@ interface VendorsState {
   teamActivity: VendorTeamActivity[];
   teamMeta: VendorTeamMeta | null;
   teamLoading: boolean;
+  notes: VendorNote[];
+  notesLoading: boolean;
+  noteSaving: boolean;
 }
 
 
@@ -37,6 +40,9 @@ const initialState: VendorsState = {
   teamActivity: [],
   teamMeta: null,
   teamLoading: false,
+  notes: [],
+  notesLoading: false,
+  noteSaving: false,
 };
 
 
@@ -232,6 +238,69 @@ function computeStats(vendors: VendorItem[]): VendorStat[] {
   ];
 }
 
+export const fetchVendorNotes = createAsyncThunk<
+  VendorNotesResponse,
+  { vendorId: number; status?: "all" | "active" },
+  { rejectValue: string }
+>(
+  "vendors/fetchNotes",
+  async ({ vendorId, status }, { rejectWithValue }) => {
+    try {
+      const res = await vendorsService.getNotes(vendorId, status);
+
+      return {
+        data: Array.isArray(res) ? res : res?.data ?? [],
+      };
+    } catch (err) {
+      return rejectWithValue(extractError(err, "Failed to fetch notes"));
+    }
+  }
+);
+export const createVendorNote = createAsyncThunk<
+  VendorNote,
+  { vendorId: number; content: string },
+  { rejectValue: string }
+>(
+  "vendors/createNote",
+  async ({ vendorId, content }, { rejectWithValue }) => {
+    try {
+      return await vendorsService.createNote(vendorId, content);
+    } catch (err) {
+      return rejectWithValue(extractError(err, "Failed to create note"));
+    }
+  }
+);
+
+export const updateVendorNote = createAsyncThunk<
+  VendorNote,
+  { vendorId: number; noteId: number; content: string },
+  { rejectValue: string }
+>(
+  "vendors/updateNote",
+  async ({ vendorId, noteId, content }, { rejectWithValue }) => {
+    try {
+      return await vendorsService.updateNote(vendorId, noteId, content);
+    } catch (err) {
+      return rejectWithValue(extractError(err, "Failed to update note"));
+    }
+  }
+);
+
+export const archiveVendorNote = createAsyncThunk<
+  number,
+  { vendorId: number; noteId: number },
+  { rejectValue: string }
+>(
+  "vendors/archiveNote",
+  async ({ vendorId, noteId }, { rejectWithValue }) => {
+    try {
+      await vendorsService.archiveNote(vendorId, noteId);
+      return noteId;
+    } catch (err) {
+      return rejectWithValue(extractError(err, "Failed to archive note"));
+    }
+  }
+);
 /* ---------- SLICE ---------- */
 
 const vendorsSlice = createSlice({
@@ -399,7 +468,46 @@ const vendorsSlice = createSlice({
       .addCase(searchVendors.rejected, (state, action) => {
         state.searchLoading = false;
         state.error = action.payload;
-      });
+      })
+      .addCase(fetchVendorNotes.pending, (state) => {
+  state.notesLoading = true;
+})
+
+.addCase(fetchVendorNotes.fulfilled, (state, action) => {
+  state.notesLoading = false;
+ state.notes = (action.payload.data ?? []).filter(
+  (n) => !n.is_archived
+);
+})
+
+.addCase(fetchVendorNotes.rejected, (state, action) => {
+  state.notesLoading = false;
+  state.error = action.payload;
+})
+.addCase(createVendorNote.pending, (state) => {
+  state.noteSaving = true;
+})
+
+.addCase(createVendorNote.fulfilled, (state, action) => {
+  state.noteSaving = false;
+  state.notes.unshift(action.payload);
+})
+
+.addCase(createVendorNote.rejected, (state, action) => {
+  state.noteSaving = false;
+  state.error = action.payload;
+})
+.addCase(updateVendorNote.fulfilled, (state, action) => {
+  const idx = state.notes.findIndex(n => n.id === action.payload.id);
+  if (idx !== -1) state.notes[idx] = action.payload;
+})
+.addCase(archiveVendorNote.fulfilled, (state, action) => {
+  state.notes = state.notes.map(note =>
+    note.id === action.payload
+      ? { ...note, is_archived: true }
+      : note
+  );
+})
 
 
   },

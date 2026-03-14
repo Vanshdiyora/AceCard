@@ -23,7 +23,7 @@ import { normalizeLeadCsvRow } from "../utils/normalizeLeadCsvRow";
 import { downloadLeadExampleCsv } from "../utils/downloadLeadExampleCsv";
 
 import ImportLeadsModal from "../components/ImportLeadsModal";
-
+import { formatStage } from "../../../common/components/formatStage";
 import type { Lead, LeadStage, SortBy, SortOrder } from "../types";
 import { formatRupees } from "../../../common/utils/ruppeeFormater";
 
@@ -142,7 +142,7 @@ export default function LeadsPage() {
               : "bg-gray-100 text-gray-600 border-gray-200"
               }`}
           >
-            {l.stage}
+            {formatStage(l.stage)}
           </span>
         );
       },

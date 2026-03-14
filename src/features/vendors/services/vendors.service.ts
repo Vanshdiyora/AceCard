@@ -1,5 +1,5 @@
 import type { FetchVendorsParams } from "../slice";
-import type { VendorListResponse, VendorItem, SearchVendorTeamParams, VendorTeamResponse } from "../types";
+import type { VendorListResponse, VendorItem, SearchVendorTeamParams, VendorTeamResponse, VendorNote, VendorNotesResponse } from "../types";
 import api from "../../../services/axiosClient"; // adjust path if needed
 import type { AxiosResponse } from "axios";
 
@@ -83,4 +83,44 @@ export const vendorsService = {
       },
     };
   },
+  /* ---------- VENDOR NOTES ---------- */
+
+getNotes: async (
+  vendorId: number,
+  status?: "all" | "active"
+): Promise<VendorNotesResponse> => {
+  const res = await api.get(`/admin/vendors/${vendorId}/notes`, {
+    params: { status },
+  });
+  return res.data;
+},
+
+createNote: async (
+  vendorId: number,
+  content: string
+): Promise<VendorNote> => {
+  const res = await api.post(`/admin/vendors/${vendorId}/notes`, {
+    content,
+  });
+  return res.data;
+},
+
+updateNote: async (
+  vendorId: number,
+  noteId: number,
+  content: string
+): Promise<VendorNote> => {
+  const res = await api.put(
+    `/admin/vendors/${vendorId}/notes/${noteId}`,
+    { content }
+  );
+  return res.data;
+},
+
+archiveNote: async (
+  vendorId: number,
+  noteId: number
+): Promise<void> => {
+  await api.post(`/admin/vendors/${vendorId}/notes/${noteId}/archive`);
+},
 };

@@ -1,5 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { StickyNote } from "lucide-react";
 import {
   ArrowLeft,
   Edit,
@@ -12,7 +13,7 @@ import {
   Users,
   ChevronRight,
 } from "lucide-react";
-
+import VendorNotesModal from "../components/VendorNotesModal";
 import { useAppDispatch, useAppSelector } from "../../../app/hooks";
 import {
   archiveVendor,
@@ -20,6 +21,10 @@ import {
   fetchVendors,
   unarchiveVendor,
   searchVendorTeam,
+} from "../slice";
+
+import {
+  fetchVendorNotes
 } from "../slice";
 
 import { fetchPaymentHistory } from "../../paymentHistory/slice";
@@ -73,6 +78,8 @@ export default function VendorDetailsPage() {
     loading: paymentHistoryLoading,
   } = useAppSelector((s: any) => s.payments);
 
+  const { notes, notesLoading } = useAppSelector((s: any) => s.vendors);
+
   const vendorFromStore = vendors.find((v: any) => v.id === Number(id));
   const vendor = vendorFromStore ?? null;
 
@@ -83,6 +90,7 @@ export default function VendorDetailsPage() {
   const [seatsOpen, setSeatsOpen] = useState(false);
   const [confirmArchiveOpen, setConfirmArchiveOpen] = useState(false);
   const [paymentHistoryOpen, setPaymentHistoryOpen] = useState(false);
+  const [notesOpen, setNotesOpen] = useState(false);
 
   /* ------------------------------- ui state ------------------------------- */
 
@@ -102,6 +110,12 @@ export default function VendorDetailsPage() {
   useEffect(() => {
     if (id) dispatch(fetchVendorById(Number(id)));
   }, [id, dispatch]);
+  
+useEffect(() => {
+  if (!notesOpen || !vendor?.id) return;
+
+  dispatch(fetchVendorNotes({ vendorId: vendor.id, status: "all" }));
+}, [notesOpen, vendor?.id, dispatch]);
 
   useEffect(() => {
     if (vendor?.id) {
@@ -126,6 +140,7 @@ export default function VendorDetailsPage() {
     seatsOpen ||
     confirmArchiveOpen ||
     paymentHistoryOpen ||
+    notesOpen ||
     processing;
 
   useEffect(() => {
@@ -209,6 +224,11 @@ export default function VendorDetailsPage() {
         actions={
           <>
             <ActionButton icon={<Edit size={14} />} label="Edit" onClick={() => setEditOpen(true)} />
+            <ActionButton
+              icon={<StickyNote size={14} />}
+              label="Notes"
+              onClick={() => setNotesOpen(true)}
+            />
             <ActionButton icon={<Layers size={14} />} label="Update Seats" onClick={() => setSeatsOpen(true)} />
             <ActionButton icon={<Send size={14} />} label="Notify" onClick={() => setNotifyOpen(true)} />
             <ActionButton icon={<Users size={14} />} label="Team Detail" onClick={() => navigate(`/super/vendors/${vendor.id}/team`)} />
@@ -325,7 +345,13 @@ export default function VendorDetailsPage() {
         history={paymentHistory}
         onClose={() => setPaymentHistoryOpen(false)}
       />
-
+      <VendorNotesModal
+        open={notesOpen}
+        onClose={() => setNotesOpen(false)}
+        vendorId={vendor.id}
+        notes={notes}
+        loading={notesLoading}
+      />
       <ConfirmationModal
         open={confirmArchiveOpen}
         title={vendor.status === "active" ? "Archive Vendor" : "Unarchive Vendor"}
