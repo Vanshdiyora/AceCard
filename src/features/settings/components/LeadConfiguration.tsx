@@ -55,17 +55,26 @@ export default function LeadConfiguration() {
   useEffect(() => {
     if (!data) return;
 
-    const normalized: Record<string, StandardFieldConfig> = {};
 
-    Object.entries(data.standardFields || {}).forEach(([key, value]) => {
-      const field = value as any;
+   const normalized: Record<string, StandardFieldConfig> = {};
 
-      normalized[key] = {
-        enabled: field?.enabled ?? Boolean(field),
-        required: field?.required ?? false,
-      };
-    });
+Object.entries(data.standardFields || {}).forEach(([key, value]) => {
+  const field = value as any;
 
+  if (key === "latitude" || key === "longitude") {
+    // merge both into location
+    normalized["location"] = {
+      enabled: field?.enabled ?? Boolean(field),
+      required: field?.required ?? false,
+    };
+    return;
+  }
+
+  normalized[key] = {
+    enabled: field?.enabled ?? Boolean(field),
+    required: field?.required ?? false,
+  };
+});
     setStandardFields(normalized);
     setCustomFields(data.customFields || []);
   }, [data]);
@@ -182,8 +191,23 @@ export default function LeadConfiguration() {
 
   const saveConfiguration = async () => {
     try {
-      const payloadStandardFields = standardFields;
+    const payloadStandardFields: any = {};
 
+Object.entries(standardFields).forEach(([key, val]) => {
+  if (key === "location") {
+    payloadStandardFields["latitude"] = {
+      enabled: val.enabled,
+      required: val.required,
+    };
+
+    payloadStandardFields["longitude"] = {
+      enabled: val.enabled,
+      required: val.required,
+    };
+  } else {
+    payloadStandardFields[key] = val;
+  }
+});
       await dispatch(
         saveLeadConfig({
           standardFields: payloadStandardFields,
