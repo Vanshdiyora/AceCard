@@ -4,6 +4,8 @@ import { Pencil } from "lucide-react";
 import { X } from "lucide-react";
 import { createPortal } from "react-dom";
 import { getSocialInputType } from "../../../settings/components/vice/VicePublicSetting";
+import { useRef } from "react";
+import { ChevronDown } from "lucide-react";
 import {
   SiInstagram,
   SiLinkedin,
@@ -129,7 +131,7 @@ export function resolveBackgroundStyleFromLayout(layout: any, theme: any) {
   }
   return { backgroundColor: layout?.background_color || theme?.background_color || "#000" };
 }
-
+const MAX_VIDEO_SIZE = 20 * 1024 * 1024; // 20MB
 /**
  * Renders the decorative background.
  * positionClass = "fixed" on real mobile, "absolute" when used as a sibling
@@ -291,8 +293,6 @@ export default function MobilePublicSettings({
   }
   type ValidatorFn = (draft: any) => string | null;
 
-  const isYoutubeRowComplete = (item: any) =>
-    item.url?.trim() && isValidUrl(item.url.trim());
 
   function hasInvalidSocialLinks(items: any[] = []) {
     return items.some(
@@ -305,10 +305,21 @@ export default function MobilePublicSettings({
   const sectionValidators: Record<string, ValidatorFn> = {
     youtube: (draft) => {
       for (const item of draft.items || []) {
-        if (!item.url?.trim()) return "Please enter a Video URL for all videos.";
-        if (!isYoutubeRowComplete(item))
-          return `"${item.url}" is not a valid URL`;
+
+        if (item.type === "link") {
+          if (!item.url?.trim())
+            return "Please enter a Video URL.";
+
+          if (!isValidUrl(item.url.trim()))
+            return `"${item.url}" is not a valid URL`;
+        }
+
+        if (item.type === "upload") {
+          if (!item.url)
+            return "Please upload a video.";
+        }
       }
+
       return null;
     },
 
@@ -712,6 +723,145 @@ export default function MobilePublicSettings({
 
   const [editPhotoGallery, setEditPhotoGallery] = useState(false);
   const [youtubeDraft, setYoutubeDraft] = useState<any | null>(null);
+  function CustomSelect({
+    value,
+    onChange,
+  }: {
+    value: "link" | "upload";
+    onChange: (v: "link" | "upload") => void;
+  }) {
+    const [open, setOpen] = useState(false);
+    const btnRef = useRef<HTMLButtonElement | null>(null);
+    const menuRef = useRef<HTMLDivElement | null>(null);
+
+    const [pos, setPos] = useState({ top: 0, left: 0 });
+    const [menuW, setMenuW] = useState(0);
+
+    const options = [
+      { value: "link", label: "Video Link" },
+      { value: "upload", label: "Upload Video" },
+    ];
+
+    const active = options.find((o) => o.value === value);
+
+    /* close on outside click */
+    useEffect(() => {
+      if (!open) return;
+
+      const close = (e: any) => {
+        if (
+          btnRef.current?.contains(e.target) ||
+          menuRef.current?.contains(e.target)
+        )
+          return;
+
+        setOpen(false);
+      };
+
+      document.addEventListener("mousedown", close);
+      window.addEventListener("scroll", close, true);
+
+      return () => {
+        document.removeEventListener("mousedown", close);
+        window.removeEventListener("scroll", close, true);
+      };
+    }, [open]);
+
+    const openDropdown = () => {
+      if (!btnRef.current) return;
+
+      if (open) {
+        setOpen(false);
+        return;
+      }
+
+      const r = btnRef.current.getBoundingClientRect();
+      const width = btnRef.current.offsetWidth;
+
+      const MENU_H = 120;
+      const GAP = 6;
+
+      let top = r.bottom + GAP;
+
+      if (top + MENU_H > window.innerHeight) {
+        top = r.top - MENU_H - GAP;
+      }
+
+      let left = r.left;
+
+      if (left + width > window.innerWidth) {
+        left = window.innerWidth - width - GAP;
+      }
+
+      if (left < GAP) left = GAP;
+
+      setMenuW(width);
+      setPos({ top, left });
+      setOpen(true);
+    };
+
+    return (
+      <div className="relative">
+        <button
+          ref={btnRef}
+          type="button"
+          onClick={openDropdown}
+          className="
+            w-full flex items-center justify-between
+            rounded-xl border border-gray-300
+            bg-white px-4 py-3 text-sm
+            shadow-sm transition
+            hover:border-gray-400
+            focus:outline-none focus:ring-2 focus:ring-purple-500
+          "
+        >
+          <span>{active?.label}</span>
+
+          <ChevronDown
+            className={`w-4 h-4 text-gray-500 transition-transform ${open ? "rotate-180" : ""
+              }`}
+          />
+        </button>
+
+        {open &&
+          createPortal(
+            <div
+              ref={menuRef}
+              style={{
+                position: "fixed",
+                top: pos.top,
+                left: pos.left,
+                width: menuW,
+                zIndex: 10000,
+              }}
+              className="bg-white border rounded-xl shadow-xl overflow-hidden"
+            >
+              {options.map((o) => (
+                <button
+                  key={o.value}
+                  type="button"
+                  onClick={() => {
+                    onChange(o.value as any);
+                    setOpen(false);
+                  }}
+                  className={`
+                    w-full text-left px-4 py-3 text-sm transition
+                    hover:bg-purple-50
+                    ${value === o.value
+                      ? "bg-purple-100 text-purple-700 font-medium"
+                      : ""
+                    }
+                  `}
+                >
+                  {o.label}
+                </button>
+              ))}
+            </div>,
+            document.body
+          )}
+      </div>
+    );
+  }
   useEffect(() => {
     if (editSection?.type !== "youtube") return;
 
@@ -914,7 +1064,7 @@ export default function MobilePublicSettings({
                   }))
                 }
                 className="w-full rounded-xl border px-4 py-3"
-                placeholder="Videos Gallery"
+                placeholder="Enter a section title"
               />
             </div>
 
@@ -959,23 +1109,195 @@ export default function MobilePublicSettings({
                       </button>
                     </div>
 
-                    <input
-                      value={item.url || ""}
-                      onChange={(e) => {
-                        const next = [...youtubeDraft.items];
-                        next[index] = {
-                          ...item,
-                          url: e.target.value,
-                        };
+                    {/* VIDEO TYPE SELECT */}
+                    <div className="space-y-1">
+                      <label className="text-xs text-gray-500">
+                        Video Type
+                      </label>
 
-                        setYoutubeDraft({
-                          ...youtubeDraft,
-                          items: next,
-                        });
-                      }}
-                      className="w-full rounded-xl border px-4 py-3"
-                      placeholder="https://youtube.com/..."
-                    />
+                      <CustomSelect
+                        value={item.type || "link"}
+                        onChange={(v) => {
+                          const next = [...youtubeDraft.items];
+                          next[index] = {
+                            ...item,
+                            type: v,
+                            url: v === "link" ? item.url : "",
+                          };
+
+                          setYoutubeDraft({
+                            ...youtubeDraft,
+                            items: next,
+                          });
+                        }}
+                      />
+                    </div>
+
+                    {/* LINK INPUT */}
+                    {item.type === "link" && (
+                      <div className="space-y-1">
+                        <label className="text-xs text-gray-500">
+                          Video URL
+                        </label>
+
+                        <input
+                          value={item.url || ""}
+                          onChange={(e) => {
+                            let url = e.target.value ?? "";
+
+                            const trimmed = url.trim();
+
+                            const looksLikeDomain =
+                              /^[a-zA-Z0-9.-]+\.[a-zA-Z]{1,}(\/.*)?$/.test(trimmed);
+
+                            const hasProtocol =
+                              trimmed.startsWith("http://") || trimmed.startsWith("https://");
+
+                            if (trimmed !== "" && !hasProtocol && looksLikeDomain) {
+                              url = "https://" + trimmed;
+                            }
+
+                            const next = [...youtubeDraft.items];
+
+                            next[index] = {
+                              ...item,
+                              url,
+                            };
+
+                            setYoutubeDraft({
+                              ...youtubeDraft,
+                              items: next,
+                            });
+                          }}
+                          className="w-full rounded-xl border px-4 py-3"
+                          placeholder="Enter video URL"
+                        />
+                      </div>
+                    )}
+
+                    {/* FILE UPLOAD */}
+                    {item.type === "upload" && (
+                      <div className="space-y-3">
+
+                        <label className="text-xs text-gray-500">
+                          Upload Video
+                        </label>
+                        {item.uploading ? (
+                          <div className="flex flex-col items-center justify-center py-8">
+                            <div className="h-6 w-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+                            <p className="text-xs text-gray-500 mt-2">Uploading video...</p>
+                          </div>
+                        ) : item.url ? (
+                          <div className="space-y-2">
+                            <video
+                              src={item.url}
+                              controls
+                              className="w-full rounded-lg"
+                            />
+
+                            <button
+                              onClick={() => {
+                                const next = [...youtubeDraft.items];
+                                next[index] = {
+                                  ...item,
+                                  url: "",
+                                };
+
+                                setYoutubeDraft({
+                                  ...youtubeDraft,
+                                  items: next,
+                                });
+                              }}
+                              className="text-red-500 text-sm"
+                            >
+                              Remove Video
+                            </button>
+                          </div>
+                        ) : (
+                          <>
+                            <input
+                              type="file"
+                              accept="video/*"
+                              id={`video-upload-${item.id}`}
+                              className="hidden"
+                              onChange={async (e) => {
+                                const file = e.target.files?.[0];
+                                if (!file) return;
+
+                                if (file.size > MAX_VIDEO_SIZE) {
+                                  setModalError("Video must be less than 20MB.");
+                                  return;
+                                }
+
+                                const next = [...youtubeDraft.items];
+
+                                // 🔵 Start loading
+                                next[index] = {
+                                  ...item,
+                                  uploading: true,
+                                };
+
+                                setYoutubeDraft({
+                                  ...youtubeDraft,
+                                  items: next,
+                                });
+
+                                try {
+                                  const res: any = await uploadImage(file);
+                                  const uploadedUrl = res?.data?.url;
+
+                                  if (!uploadedUrl) {
+                                    setModalError("Video upload failed.");
+                                    return;
+                                  }
+
+                                  const updated = [...youtubeDraft.items];
+
+                                  updated[index] = {
+                                    ...item,
+                                    url: uploadedUrl,
+                                    uploading: false,
+                                  };
+
+                                  setYoutubeDraft({
+                                    ...youtubeDraft,
+                                    items: updated,
+                                  });
+
+                                  setModalError(null);
+                                } catch (err) {
+                                  const updated = [...youtubeDraft.items];
+
+                                  updated[index] = {
+                                    ...item,
+                                    uploading: false,
+                                  };
+
+                                  setYoutubeDraft({
+                                    ...youtubeDraft,
+                                    items: updated,
+                                  });
+
+                                  setModalError("Video upload failed.");
+                                }
+                              }}
+                            />
+
+                            <label
+                              htmlFor={`video-upload-${item.id}`}
+                              className="block w-full border-2 border-dashed rounded-xl py-6 text-center cursor-pointer text-indigo-600 font-medium hover:bg-gray-50"
+                            >
+                              Click to upload video
+                            </label>
+
+                            <p className="text-xs text-gray-400 text-center">
+                              Max 20MB
+                            </p>
+                          </>
+                        )}
+
+                      </div>
+                    )}
                   </div>
                 )}
               />
@@ -987,10 +1309,17 @@ export default function MobilePublicSettings({
                 const items = youtubeDraft?.items || [];
 
                 // 🚨 Check incomplete rows
-                const hasInvalid = items.some(
-                  (item: any) =>
-                    !item.url?.trim() || !isValidUrl(item.url.trim())
-                );
+                const hasInvalid = items.some((item: any) => {
+                  if (item.type === "link") {
+                    return !item.url?.trim() || !isValidUrl(item.url.trim());
+                  }
+
+                  if (item.type === "upload") {
+                    return !item.url;
+                  }
+
+                  return true;
+                });
 
                 if (hasInvalid) {
                   setModalError("Please complete existing video URLs before adding a new one.");
@@ -1007,6 +1336,7 @@ export default function MobilePublicSettings({
                     ...(prev.items || []),
                     {
                       id: crypto.randomUUID(),
+                      type: "link",
                       url: "",
                       rank: (prev.items?.length || 0) + 1,
                       enabled: true,
@@ -1237,6 +1567,7 @@ export default function MobilePublicSettings({
           }));
         }}
       />
+
       <ProductsEditModal
         open={editProducts}
         value={productsDraft}
@@ -1309,8 +1640,6 @@ export default function MobilePublicSettings({
 
       </div>
 
-
-      {/* BOTTOM ACTION BAR */}
       {/* BOTTOM ACTION BAR — Floating, mobile-safe */}
       <div className="fixed bottom-0 left-0 right-0 z-50 px-4 pb-safe">
         {/* Backdrop blur pill */}
@@ -1550,6 +1879,16 @@ const YoutubeEmbed = React.memo(({ id }: { id: string }) => (
   />
 ));
 
+/* ================= CUSTOM VIDEO ================= */
+const CustomVideo = React.memo(({ src }: { src: string }) => (
+  <video
+    src={src}
+    className="w-full h-full object-cover"
+    controls
+    playsInline
+  />
+));
+
 function YouTube({
   title,
   items,
@@ -1563,10 +1902,15 @@ function YouTube({
   onEdit: (item: any) => void;
   editable?: boolean;
 }) {
-  const valid = (items || []).filter((v) => getYouTubeId(v.url));
+  const valid = (items || []).filter((v) => v.url);
   const [active, setActive] = React.useState(0);
   const ref = React.useRef<HTMLDivElement>(null);
+  const maxDots = 5;
 
+  const start = Math.max(0, active - Math.floor(maxDots / 2));
+  const end = Math.min(valid.length, start + maxDots);
+
+  const visibleDots = valid.slice(start, end);
   const isDown = React.useRef(false);
   const startX = React.useRef(0);
   const scrollLeft = React.useRef(0);
@@ -1582,6 +1926,9 @@ function YouTube({
 
     setActive((prev) => (prev === index ? prev : index));
   };
+
+  const isCustomVideo = (url: string) =>
+    url.endsWith(".mp4") || url.endsWith(".webm") || url.endsWith(".ogg");
 
   return (
     <Section title={title} theme={theme}>
@@ -1606,6 +1953,7 @@ function YouTube({
       >
         {valid.map((v, i) => {
           const id = getYouTubeId(v.url);
+          const custom = isCustomVideo(v.url);
 
           return (
             <div
@@ -1616,8 +1964,8 @@ function YouTube({
                 <button
                   onClick={() => onEdit(v)}
                   className="absolute top-2 right-0 z-20 h-8 w-8 rounded-full shadow
-            flex items-center justify-center transition hover:scale-105
-            bg-orange-500 text-white"
+                  flex items-center justify-center transition hover:scale-105
+                  bg-orange-500 text-white"
                   title="Edit"
                 >
                   <Pencil size={14} />
@@ -1625,8 +1973,16 @@ function YouTube({
               )}
 
               <div className="w-full h-full rounded-2xl overflow-hidden shadow-md bg-black/5">
-                {i === active && id ? (
-                  <YoutubeEmbed id={id} />
+                {i === active ? (
+                  id ? (
+                    <YoutubeEmbed id={id} />
+                  ) : custom ? (
+                    <CustomVideo src={v.url} />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm">
+                      Unsupported video
+                    </div>
+                  )
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm">
                     Video {i + 1}
@@ -1636,17 +1992,32 @@ function YouTube({
             </div>
           );
         })}
-
       </div>
 
-      <div className="flex justify-center gap-2 mt-3">
-        {valid.map((_, i) => (
-          <span
-            key={i}
-            className={`h-2 w-2 rounded-full transition ${i === active ? "bg-indigo-500 scale-125" : "bg-gray-300"
-              }`}
-          />
-        ))}
+      <div className="flex items-center justify-center gap-2 mt-3">
+
+        {/* show left indicator */}
+        {start > 0 && (
+          <span className="text-gray-400 text-xs">‹</span>
+        )}
+
+        {visibleDots.map((_, i) => {
+          const actualIndex = start + i;
+
+          return (
+            <span
+              key={actualIndex}
+              className={`h-2 w-2 rounded-full transition ${actualIndex === active
+                ? "bg-indigo-500 scale-125"
+                : "bg-gray-300"
+                }`}
+            />
+          );
+        })}
+
+        {end < valid.length && (
+          <span className="text-gray-400 text-xs">›</span>
+        )}
       </div>
     </Section>
   );

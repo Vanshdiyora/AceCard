@@ -18,7 +18,7 @@ const extractApiError = (err: unknown, fallback: string): string =>
    THUNK
 ----------------------------------------------------- */
 
-export type Period = "day" | "week" | "month" | "year";
+export type Period = "today" | "week" | "month" | "year";
 
 export const fetchDashboard = createAsyncThunk<
   DashboardMetrics,

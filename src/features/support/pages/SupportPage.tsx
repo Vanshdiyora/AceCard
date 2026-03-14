@@ -63,7 +63,7 @@ function StatsSkeleton() {
 
 export default function SupportPage() {
   const dispatch = useAppDispatch();
-  const { tickets, loading, error, stats, statsLoading } = useAppSelector(
+  const { tickets, loading, error, stats, statsLoading, meta } = useAppSelector(
     (s) => s.support
   );
 
@@ -81,12 +81,7 @@ export default function SupportPage() {
     }
   }
 
-  useEffect(() => {
-    if (vendorId) {
-      dispatch(fetchTickets(vendorId));
-      dispatch(fetchSupportStats());
-    }
-  }, [vendorId, dispatch]);
+
 
   /* ---------------- STATE ---------------- */
 
@@ -98,18 +93,47 @@ export default function SupportPage() {
   const [resultMessage, setResultMessage] = useState("");
   const [page, setPage] = useState(1);
   const pageSize = 10; // tickets per page
-  const totalPages = Math.ceil(tickets.length / pageSize);
+  const totalPages = Math.ceil((meta?.total_count ?? 0) / pageSize);
+  const [filters, setFilters] = useState({
+    fromDate: "",
+    toDate: ""
+  });
 
-  const paginatedTickets = tickets.slice(
-    (page - 1) * pageSize,
-    page * pageSize
-  );
+  const [appliedFilters, setAppliedFilters] = useState({
+    fromDate: "",
+    toDate: ""
+  });
+
+  const applyFilters = () => {
+    setAppliedFilters(filters);
+    setPage(1);
+  };
+
+
+
+  const paginatedTickets = tickets;
 
   const showResult = (success: boolean, message: string) => {
     setResultSuccess(success);
     setResultMessage(message);
     setResultOpen(true);
   };
+
+  useEffect(() => {
+    if (!vendorId) return;
+
+    dispatch(
+      fetchTickets({
+        vendorId,
+        page,
+        page_size: 10,
+        from_date: appliedFilters.fromDate,
+        to_date: appliedFilters.toDate,
+      })
+    );
+
+    dispatch(fetchSupportStats());
+  }, [vendorId, page, appliedFilters, dispatch]);
 
   /* ---------------- STATS ---------------- */
 
@@ -172,10 +196,61 @@ export default function SupportPage() {
       <div className="grid grid-cols-12 gap-8 mt-6">
         {/* LEFT */}
         <div className="col-span-8 space-y-6">
-          <div className="bg-white rounded-2xl px-6 py-4 border shadow-sm">
+          <div className="bg-white rounded-2xl px-6 py-4 border shadow-sm flex items-center justify-between">
+
+            {/* Left Title */}
             <span className="text-purple-600 font-semibold border-b-2 border-purple-600 pb-2 inline-block">
               Support Tickets
             </span>
+
+            {/* Right Date Filter */}
+            <div className="flex items-center gap-2">
+              <input
+                type="date"
+                value={filters.fromDate}
+                onChange={(e) =>
+                  setFilters((f) => ({ ...f, fromDate: e.target.value }))
+                }
+                className="px-3 py-2 rounded-xl border bg-gray-50 text-sm"
+              />
+
+              <span className="text-gray-400 text-sm">to</span>
+
+              <input
+                type="date"
+                value={filters.toDate}
+                min={filters.fromDate || undefined}
+                onChange={(e) =>
+                  setFilters((f) => ({ ...f, toDate: e.target.value }))
+                }
+                className="px-3 py-2 rounded-xl border bg-gray-50 text-sm"
+              />
+
+              <button
+                onClick={() => {
+                  if (!filters.fromDate || !filters.toDate) {
+                    setResultSuccess(false);
+                    setResultMessage("Please select both From date and To date.");
+                    setResultOpen(true);
+                    return;
+                  }
+
+                  if (new Date(filters.fromDate) > new Date(filters.toDate)) {
+                    setResultSuccess(false);
+                    setResultMessage(
+                      "From date must be less than or equal to To date."
+                    );
+                    setResultOpen(true);
+                    return;
+                  }
+
+                  applyFilters();
+                }}
+                className="px-4 py-2 rounded-xl bg-purple-600 text-white text-sm hover:bg-purple-700"
+              >
+                Apply
+              </button>
+            </div>
           </div>
 
           {loading && !error ? (

@@ -9,10 +9,10 @@ interface Props {
   positive?: boolean;
   icon?: React.ReactNode;
   color?: Theme;
-  period?: "day" | "week" | "month" | "year";
+  period?: "today" | "week" | "month" | "year";
 }
 const periodLabelMap = {
-  day: "vs. prior day",
+  today: "vs. prior day",
   week: "vs. prior week",
   month: "vs. prior month",
   year: "vs. prior year",
@@ -55,10 +55,7 @@ export default function StatCard({
   color = "blue",
   period
 }: Props) {
-  const percent =
-    typeof change === "number"
-      ? Math.min(Math.abs(change), 100)
-      : 0;
+  const percent = Number(change ?? 0);
 
   return (
     <div className="group relative bg-white/80 backdrop-blur p-5 rounded-2xl border shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 flex flex-col h-full">
@@ -81,29 +78,27 @@ export default function StatCard({
       </div>
 
       {/* CHANGE INDICATOR - BOTTOM */}
-    {change !== undefined && (
-  <div className="flex items-center gap-1 text-sm mt-auto pt-4">
-    <span
-      className={`text-xs ${
-        positive ? "text-green-600" : "text-red-600"
-      }`}
-    >
-      {positive ? "▲" : "▼"}
-    </span>
+      {change !== undefined && (
+        <div className="flex items-center gap-1 text-sm mt-auto pt-4">
+          <span
+            className={`text-xs ${positive ? "text-green-600" : "text-red-600"
+              }`}
+          >
+            {positive ? "▲" : "▼"}
+          </span>
 
-    <span
-      className={`font-medium ${
-        positive ? "text-green-600" : "text-red-600"
-      }`}
-    >
-      {percent}%
-    </span>
+          <span
+            className={`font-medium ${positive ? "text-green-600" : "text-red-600"
+              }`}
+          >
+            {percent}%
+          </span>
 
-    <span className="text-gray-400">
-      {periodLabelMap[period ?? "month"]}
-    </span>
-  </div>
-)}
+          <span className="text-gray-400">
+            {periodLabelMap[period ?? "month"]}
+          </span>
+        </div>
+      )}
     </div>
   );
 }

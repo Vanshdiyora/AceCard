@@ -2,6 +2,7 @@ export interface RecentActivityEntry {
   type: string;
   title: string;
   name: string;
+  avatar_url: string;
   created_at: string;
 }
 
@@ -50,12 +51,8 @@ export interface KPIBlock {
 /* -------------------------------
    PIPELINE SUMMARY
 -------------------------------- */
-export interface PipelineGenerated {
-  today: number;
-  week: number;
-  month: number;
-  year: number;
-}
+export type Period = "today" | "week" | "month" | "year";
+export type PipelineGenerated = Record<Period, number>;
 
 /* -------------------------------
    MAIN DASHBOARD

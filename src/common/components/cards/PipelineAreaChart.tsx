@@ -21,7 +21,7 @@ export interface ChartPoint {
 
 interface Props {
   data: ChartPoint[];
-  period: "day" | "week" | "month" | "year";
+  period: "today" | "week" | "month" | "year";
   color?: string;
 }
 
@@ -131,7 +131,7 @@ export default function PipelineAreaChart({
   let finalData: ChartPoint[] = [];
 
   switch (period) {
-    case "day":
+    case "today":
       finalData = buildDay(data);
       break;
     case "week":

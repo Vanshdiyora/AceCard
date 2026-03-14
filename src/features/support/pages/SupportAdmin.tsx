@@ -4,6 +4,7 @@ import {
   fetchAllTickets,
   replyTicket,
   fetchAdminSupportStats,
+  fetchVendorNames
 } from "../slice";
 import { useSearchParams } from "react-router-dom";
 import { MessageSquare, Clock, CheckCircle2 } from "lucide-react";
@@ -40,8 +41,8 @@ export const formatDate = (value?: string) => {
 
 export default function SupportAdmin() {
   const dispatch = useAppDispatch();
-const [searchParams] = useSearchParams();
-const initialQuery = searchParams.get("q") ?? "";
+  const [searchParams] = useSearchParams();
+  const initialQuery = searchParams.get("q") ?? "";
 
   const {
     tickets,
@@ -50,6 +51,7 @@ const initialQuery = searchParams.get("q") ?? "";
     meta,
     statsAdmin,
     statsAdminLoading,
+    vendorNames
   } = useAppSelector((s) => s.support);
 
   const [page, setPage] = useState(1);
@@ -64,26 +66,49 @@ const initialQuery = searchParams.get("q") ?? "";
   const [resultOpen, setResultOpen] = useState(false);
   const [resultSuccess, setResultSuccess] = useState(true);
   const [resultMessage, setResultMessage] = useState("");
+  const [filters, setFilters] = useState({
+    vendor: "",
+    fromDate: "",
+    toDate: ""
+  });
+
+  const [appliedFilters, setAppliedFilters] = useState({
+    vendor: "",
+    fromDate: "",
+    toDate: ""
+  });
+
+  const applyFilters = () => {
+    setAppliedFilters(filters);
+    setPage(1);
+  };
 
   const showResult = (success: boolean, message: string) => {
     setResultSuccess(success);
     setResultMessage(message);
     setResultOpen(true);
   };
-useEffect(() => {
-  if (initialQuery) {
-    setSearch(initialQuery);
-  }
-}, [initialQuery]);
+  useEffect(() => {
+    if (initialQuery) {
+      setSearch(initialQuery);
+    }
+  }, [initialQuery]);
+  useEffect(() => {
+    dispatch(fetchVendorNames());
+  }, []);
 
   useEffect(() => {
     const params: any = { page, page_size: pageSize };
 
     if (search) params.search = search;
     if (activeTab !== "all") params.status = activeTab;
+    if (appliedFilters.fromDate) params.from_date = appliedFilters.fromDate;
+    if (appliedFilters.toDate) params.to_date = appliedFilters.toDate;
+    if (appliedFilters.vendor) params.vendor_name = appliedFilters.vendor;
+
 
     dispatch(fetchAllTickets(params));
-  }, [dispatch, page, search, activeTab]);
+  }, [dispatch, page, search, activeTab, appliedFilters]);
 
   useEffect(() => {
     dispatch(fetchAdminSupportStats());
@@ -267,11 +292,32 @@ useEffect(() => {
           { label: "In-progress", value: "pending" },
           { label: "Closed", value: "closed" },
         ]}
-        initialSearch={initialQuery} 
+        initialSearch={initialQuery}
         activeTab={activeTab}
         onTabChange={setActiveTab}
         searchPlaceholder="Search tickets..."
         onSearch={setSearch}
+        supportFilters={{
+          vendors: vendorNames.map((v: string) => ({
+            label: v,
+            value: v,
+          })),
+          vendorValue: filters.vendor,
+          onVendorChange: (v) => setFilters((f) => ({ ...f, vendor: v })),
+
+          fromDate: filters.fromDate,
+          toDate: filters.toDate,
+          onFromDateChange: (v) => setFilters((f) => ({ ...f, fromDate: v })),
+          onToDateChange: (v) => setFilters((f) => ({ ...f, toDate: v })),
+
+          onApply: applyFilters,
+
+          onInvalidDate: (msg) => {
+            setResultSuccess(false);
+            setResultMessage(msg);
+            setResultOpen(true);
+          }
+        }}
       />
 
       <div className="mt-6" />

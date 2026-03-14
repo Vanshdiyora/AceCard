@@ -18,7 +18,7 @@ import PipelineAreaChart from "../../../common/components/cards/PipelineAreaChar
 /* -----------------------------------------------------
    PERIOD OPTIONS
 ----------------------------------------------------- */
-const periods = ["day", "week", "month", "year"] as const;
+const periods = ["today", "week", "month", "year"] as const;
 
 export default function DashboardPage() {
   const dispatch = useAppDispatch();
@@ -41,7 +41,7 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
           <StatCard
             title="Pipeline Generated"
-            value={`₹${formatINRCompact(data.pipeline_generated.month)}`}
+           value={`₹${formatINRCompact(data.pipeline_generated[period])}`}
             change={data.pipeline.percentage}
             positive={data.pipeline.percentage >= 0}
             icon={<TrendingUp size={18} />}

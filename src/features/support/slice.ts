@@ -4,7 +4,8 @@ import {
   createSupportTicket,
   replyToSupportTicket,
   getAllSupportTickets,
-  getAdminSupportStats
+  getAdminSupportStats,
+  getSupportVendorNames
 } from "./services/support.service";
 import type { SupportState, SupportTicket } from "./types";
 import { getVendorSupportStats } from "./services/support.service";
@@ -13,11 +14,42 @@ import { getVendorSupportStats } from "./services/support.service";
 
 export const fetchTickets = createAsyncThunk(
   "support/fetchVendor",
-  async (vendorId: number, { rejectWithValue }) => {
+  async (
+    {
+      vendorId,
+      page = 1,
+      page_size = 10,
+      from_date,
+      to_date,
+    }: {
+      vendorId: number;
+      page?: number;
+      page_size?: number;
+      from_date?: string;
+      to_date?: string;
+    },
+    { rejectWithValue }
+  ) => {
     try {
-      return await getVendorSupportTickets(vendorId);
+      return await getVendorSupportTickets(vendorId, {
+        page,
+        page_size,
+        from_date,
+        to_date,
+      });
     } catch (err: any) {
       return rejectWithValue(err?.message ?? "Failed to fetch tickets");
+    }
+  }
+);
+
+export const fetchVendorNames = createAsyncThunk(
+  "support/vendorNames",
+  async (_, { rejectWithValue }) => {
+    try {
+      return await getSupportVendorNames();
+    } catch (err: any) {
+      return rejectWithValue(err?.message ?? "Failed to fetch vendors");
     }
   }
 );
@@ -110,6 +142,8 @@ const initialState: SupportState = {
   error: undefined,
   statsAdmin: null,
   statsAdminLoading: false,
+  vendorNames: [],
+  vendorNamesLoading: false,
 
 };
 
@@ -167,6 +201,17 @@ const supportSlice = createSlice({
         });
       })
 
+      .addCase(fetchVendorNames.pending, (state) => {
+        state.vendorNamesLoading = true;
+      })
+      .addCase(fetchVendorNames.fulfilled, (state, action) => {
+        state.vendorNamesLoading = false;
+        state.vendorNames = action.payload ?? [];
+      })
+      .addCase(fetchVendorNames.rejected, (state) => {
+        state.vendorNamesLoading = false;
+      })
+
       /* -------- REPLY TICKET -------- */
       .addCase(replyTicket.fulfilled, (state, action) => {
         const reply = action.payload;
@@ -194,16 +239,16 @@ const supportSlice = createSlice({
         state.error = action.payload as string;
       })
       .addCase(fetchAdminSupportStats.pending, (state) => {
-  state.statsAdminLoading = true;
-})
-.addCase(fetchAdminSupportStats.fulfilled, (state, action) => {
-  state.statsAdminLoading = false;
-  state.statsAdmin = action.payload;
-})
-.addCase(fetchAdminSupportStats.rejected, (state, action) => {
-  state.statsAdminLoading = false;
-  state.error = action.payload as string;
-});
+        state.statsAdminLoading = true;
+      })
+      .addCase(fetchAdminSupportStats.fulfilled, (state, action) => {
+        state.statsAdminLoading = false;
+        state.statsAdmin = action.payload;
+      })
+      .addCase(fetchAdminSupportStats.rejected, (state, action) => {
+        state.statsAdminLoading = false;
+        state.error = action.payload as string;
+      });
 
   },
 });

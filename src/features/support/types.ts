@@ -65,6 +65,8 @@ export interface SupportState {
   error?: string;
   statsAdmin: SupportStats | null;
 statsAdminLoading: boolean;
+  vendorNames: string[];
+  vendorNamesLoading: boolean;
 
 }
 

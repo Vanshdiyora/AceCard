@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Filter, Download, Search, Upload } from "lucide-react";
+import SearchableSelect from "../../ui/SearchableSelect";
 
 /* ---------------- TYPES ---------------- */
 
@@ -32,7 +33,19 @@ export interface PageFiltersProps {
   onImport?: () => void;
   disableExport?: boolean; // optional
   rightSlot?: React.ReactNode;
+  supportFilters?: {
+    vendors?: { label: string; value: string }[];
+    vendorValue?: string;
+    onVendorChange?: (v: string) => void;
 
+    fromDate?: string;
+    toDate?: string;
+    onFromDateChange?: (v: string) => void;
+    onToDateChange?: (v: string) => void;
+    onApply?: () => void;
+
+    onInvalidDate?: (message: string) => void;
+  };
   initialSearch?: string;
 }
 
@@ -53,17 +66,19 @@ export default function PageFilters({
   disableExport = false,
   rightSlot,
   initialSearch = "",
+
+  supportFilters
 }: PageFiltersProps) {
   const [panelOpen, setPanelOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
 
-const [searchValue, setSearchValue] = useState(initialSearch ?? "");
+  const [searchValue, setSearchValue] = useState(initialSearch ?? "");
   const debounceRef = useRef<number | undefined>(undefined);
-useEffect(() => {
-  if (initialSearch !== undefined) {
-    setSearchValue(initialSearch);
-  }
-}, [initialSearch]);
+  useEffect(() => {
+    if (initialSearch !== undefined) {
+      setSearchValue(initialSearch);
+    }
+  }, [initialSearch]);
   /* -------- Outside click -------- */
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -145,6 +160,70 @@ useEffect(() => {
               className="w-full pl-11 pr-4 py-2.5 lg:py-3 rounded-2xl border bg-gray-50 text-xs lg:text-sm focus:outline-none focus:ring-2 focus:ring-purple-300"
             />
           </div>
+
+          {supportFilters && (
+            <div className="flex items-center gap-3">
+
+              {/* Vendor Select */}
+              <SearchableSelect
+                value={supportFilters.vendorValue}
+                options={[
+                  { label: "All Vendors", value: "" },
+                  ...(supportFilters.vendors || []),
+                ]}
+                onChange={(v: string) => supportFilters.onVendorChange?.(v)}
+                placeholder="Select Vendor"
+              />
+
+              {/* Date Range */}
+              <div className="flex items-center gap-2">
+                <input
+                  type="date"
+                  value={supportFilters.fromDate}
+                  onChange={(e) =>
+                    supportFilters.onFromDateChange?.(e.target.value)
+                  }
+                  className="px-3 py-2 rounded-xl border bg-gray-50 text-sm"
+                />
+
+                <span className="text-gray-400 text-sm">to</span>
+
+                <input
+                  type="date"
+                  value={supportFilters.toDate}
+                  min={supportFilters.fromDate || undefined}
+                  onChange={(e) =>
+                    supportFilters.onToDateChange?.(e.target.value)
+                  }
+                  className="px-3 py-2 rounded-xl border bg-gray-50 text-sm"
+                />
+
+                <button
+                  onClick={() => {
+                    const { fromDate, toDate, onApply, onInvalidDate } = supportFilters;
+
+                    if (!fromDate || !toDate) {
+                      onInvalidDate?.("Please select both From date and To date");
+                      return;
+                    }
+
+                    if (new Date(fromDate) > new Date(toDate)) {
+                      onInvalidDate?.(
+                        "From date must be less than or equal to To date"
+                      );
+                      return;
+                    }
+
+                    onApply?.();
+                  }}
+                  className="px-4 py-2 rounded-xl bg-purple-600 text-white text-sm hover:bg-purple-700"
+                >
+                  Apply
+                </button>
+              </div>
+
+            </div>
+          )}
 
           {/* Filter Trigger */}
           {filters.length > 0 && (

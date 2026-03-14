@@ -155,13 +155,19 @@ export function ProductsEditModal({
           </button>
         </div>
 
-        <Input
-        placeholder="Enter a section title"
-          value={value.section_title}
-          onChange={(v: string) =>
-            update({ ...value, section_title: v })
-          }
-        />
+        <div className="space-y-1">
+          <label className="block text-xs font-medium text-gray-600">
+            Section Title
+          </label>
+
+          <Input
+            placeholder="Enter a section title"
+            value={value.section_title}
+            onChange={(v: string) =>
+              update({ ...value, section_title: v })
+            }
+          />
+        </div>
 
         <Switch
           label="Show Prices"

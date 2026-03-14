@@ -11,12 +11,16 @@ import type { PaginationParams } from "../../../common/types";
 /* -------- ADMIN: Vendor-specific tickets -------- */
 export const getVendorSupportTickets = async (
   vendorId: number,
-  params: PaginationParams = { page: 1, page_size: 10 }
+  params: PaginationParams & {
+    from_date?: string;
+    to_date?: string;
+  } = { page: 1, page_size: 10 }
 ): Promise<SupportListResponse> => {
   const res = await axiosClient.get(
     `/admin/vendors/${vendorId}/support`,
     { params }
   );
+
   return res.data;
 };
 
@@ -46,9 +50,21 @@ type TicketStatus = "open" | "pending" | "closed";
 
 /* -------- ADMIN: All tickets -------- */
 export const getAllSupportTickets = async (
-  params: PaginationParams & { search?: string; status?: TicketStatus } = { page: 1, page_size: 10 }
+  params: PaginationParams & {
+    search?: string;
+    status?: TicketStatus;
+    from_date?: string;
+    to_date?: string;
+    sort?: "asc" | "desc";
+    vendor_name?: string;
+  } = { page: 1, page_size: 10 }
 ): Promise<SupportListResponse> => {
   const res = await axiosClient.get(`/admin/support/requests`, { params });
+  return res.data;
+};
+
+export const getSupportVendorNames = async (): Promise<string[]> => {
+  const res = await axiosClient.get(`/admin/support/vendor-names`);
   return res.data;
 };
 

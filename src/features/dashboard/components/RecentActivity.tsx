@@ -37,7 +37,17 @@ export default function RecentActivity({ items }: Props) {
           <div key={idx} className="relative flex items-center py-4">
             {/* Left */}
             <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-full bg-gray-300" />
+              <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-300 flex items-center justify-center text-sm font-semibold text-white">
+                {i.avatar_url ? (
+                  <img
+                    src={i.avatar_url}
+                    alt={i.name}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  i.name?.charAt(0).toUpperCase()
+                )}
+              </div>
               <div>
                 <p className="font-medium text-[#2d1a53] leading-tight">
                   {i.title}
