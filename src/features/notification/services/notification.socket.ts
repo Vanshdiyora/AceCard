@@ -1,6 +1,6 @@
 let socket: WebSocket | null = null;
 
-const BASE_URL = window.location.origin.replace(/^http/, "ws");
+const BASE_URL = "wss://api.theacecard.co";
 
 export function connectNotificationSocket(
   token: string,

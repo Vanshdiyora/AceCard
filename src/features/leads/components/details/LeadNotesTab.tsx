@@ -44,6 +44,7 @@ export default function LeadNotesTab({ leadId }: Props) {
               }
               time={new Date(n.created_at).toLocaleString()}
               text={n.body}
+              heading={n.heading}
             />
           ))}
       </div>
@@ -54,15 +55,16 @@ export default function LeadNotesTab({ leadId }: Props) {
 /* ======================================================
    NOTE CARD
 ====================================================== */
-
 const NoteCard = ({
   authorName,
   time,
   text,
+  heading,
 }: {
   authorName: string;
   time: string;
   text: string;
+  heading?: string;
 }) => (
   <div
     className="
@@ -70,18 +72,28 @@ const NoteCard = ({
       px-5 py-4 shadow-sm hover:shadow-md transition
     "
   >
-    <div className="flex items-center justify-between mb-1">
-      <span className="text-sm font-semibold text-gray-900">
-        {authorName}
-      </span>
-      <span className="flex items-center gap-1 text-sm text-gray-600">
-        <Clock size={12} />
+    {/* Heading */}
+    {heading && (
+      <h4 className="text-sm font-semibold text-gray-800 mb-2 leading-snug">
+        {heading}
+      </h4>
+    )}
+
+    {/* Body */}
+    <p className="text-sm text-gray-500 leading-relaxed whitespace-pre-line">
+      {text}
+    </p>
+
+    {/* Divider */}
+    <div className="border-t border-gray-100 mt-3 mb-2" />
+
+    {/* Footer: author + time */}
+    <div className="flex items-center justify-between">
+      <span className="text-xs font-medium text-gray-400">{authorName}</span>
+      <span className="flex items-center gap-1 text-xs text-gray-400">
+        <Clock size={11} />
         {time}
       </span>
     </div>
-
-    <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-line">
-      {text}
-    </p>
   </div>
 );

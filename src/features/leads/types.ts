@@ -56,7 +56,7 @@ export interface LeadNote {
   // ✅ ADD THESE (from API)
   author_name?: string;
   author_email?: string;
-
+  heading:string;
   body: string;
   created_at: string;
 }
