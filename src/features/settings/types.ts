@@ -70,8 +70,13 @@ export type CustomField = {
   options?: Option[];
 };
 
+export type StandardFieldConfig = {
+  enabled: boolean;
+  required: boolean;
+};
+
 export interface LeadFormConfig {
-  standardFields: Record<string, boolean>;
+  standardFields: Record<string, StandardFieldConfig>;
   customFields: CustomField[];
 }
 export interface LeadConfigApiResponse {

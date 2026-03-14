@@ -11,9 +11,13 @@ export default function LeadConfiguration() {
     (s) => s.settings.leadConfig
   );
 
-  const [standardFields, setStandardFields] = useState<Record<string, boolean>>(
-    {}
-  );
+  type StandardFieldConfig = {
+    enabled: boolean;
+    required: boolean;
+  };
+
+  const [standardFields, setStandardFields] = useState<Record<string, StandardFieldConfig>>({});
+
   const [customFields, setCustomFields] = useState<CustomField[]>([]);
   const [result, setResult] = useState<{
     open: boolean;
@@ -49,28 +53,22 @@ export default function LeadConfiguration() {
   }, [dispatch]);
 
   useEffect(() => {
-  if (!data) return;
+    if (!data) return;
 
-  const existingCustom = data.customFields || [];
-  const hasStage = existingCustom.some((f) => f.fieldId === "stage");
+    const normalized: Record<string, StandardFieldConfig> = {};
 
-  const withStage = hasStage
-    ? existingCustom
-    : [
-        {
-          fieldId: "stage",
-          label: "Stage",
-          type: "dropdown" as FieldType,
-          required: true,
-          archived: false,
-          options: [],
-        },
-        ...existingCustom,
-      ];
+    Object.entries(data.standardFields || {}).forEach(([key, value]) => {
+      const field = value as any;
 
-  setStandardFields(data.standardFields || {});
-  setCustomFields(withStage);
-}, [data]);
+      normalized[key] = {
+        enabled: field?.enabled ?? Boolean(field),
+        required: field?.required ?? false,
+      };
+    });
+
+    setStandardFields(normalized);
+    setCustomFields(data.customFields || []);
+  }, [data]);
 
   const STAGE_COLORS = [
     { bg: "bg-blue-100", text: "text-blue-700", border: "border-blue-300" },
@@ -85,7 +83,20 @@ export default function LeadConfiguration() {
 
   const resetConfiguration = () => {
     if (!data) return;
-    setStandardFields(data.standardFields || {});
+
+    const normalized: Record<
+      string,
+      { enabled: boolean; required: boolean }
+    > = {};
+
+    Object.entries(data.standardFields || {}).forEach(([key, value]) => {
+      normalized[key] = {
+        enabled: Boolean(value),
+        required: false,
+      };
+    });
+
+    setStandardFields(normalized);
     setCustomFields(data.customFields || []);
     setFieldLabel("");
     setType("text");
@@ -171,9 +182,11 @@ export default function LeadConfiguration() {
 
   const saveConfiguration = async () => {
     try {
+      const payloadStandardFields = standardFields;
+
       await dispatch(
         saveLeadConfig({
-          standardFields,
+          standardFields: payloadStandardFields,
           customFields,
         })
       ).unwrap();
@@ -258,54 +271,95 @@ export default function LeadConfiguration() {
 
           {/* Standard Fields */}
           <section>
-            <h3 className="text-sm font-semibold mb-4 text-gray-700">
-              Standard Fields
-            </h3>
-
-            {Object.keys(standardFields).length === 0 ? (
-              <div className="text-gray-500 italic text-sm">
-                No standard fields configured.
+            <div className="flex items-center justify-between mb-5">
+              <div>
+                <h3 className="text-md font-semibold text-gray-800">Standard Fields</h3>
+                <p className="text-xs text-gray-400 mt-0.5">
+                  Toggle which fields appear on your lead form
+                </p>
               </div>
-            ) : (
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {Object.entries(standardFields).map(([key, val]) => (
-                  <label
-                    key={key}
-                    className={`flex items-center justify-between px-4 py-3 rounded-2xl border cursor-pointer transition
-                    ${val
-                        ? "bg-purple-50 border-purple-300 shadow-sm"
-                        : "bg-white hover:bg-gray-50 border-gray-200"
-                      }`}
-                  >
-                    <span className="text-sm font-medium text-gray-700">
-                      {formatStandardFieldLabel(key)}
-                    </span>
+            </div>
 
-                    <span className="relative">
-                      <input
-                        type="checkbox"
-                        checked={val}
-                        onChange={() =>
-                          setStandardFields((p) => ({ ...p, [key]: !p[key] }))
-                        }
-                        className="sr-only"
-                      />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {Object.entries(standardFields).map(([key, config]) => (
+                <div
+                  key={key}
+                  onClick={() =>
+                    setStandardFields((prev) => ({
+                      ...prev,
+                      [key]: { ...prev[key], enabled: !prev[key].enabled },
+                    }))
+                  }
+                  className={`relative group rounded-2xl border p-4 transition-all duration-200 cursor-pointer
+    ${config.enabled
+                      ? "bg-white border-purple-200 shadow-sm shadow-purple-50"
+                      : "bg-gray-50 border-gray-200 opacity-70"
+                    }`}
+                >
+                  {/* Top row: field name + enabled toggle */}
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2.5">
                       <span
-                        className={`w-5 h-5 flex items-center justify-center rounded-full border
-                        ${val
-                            ? "bg-purple-600 border-purple-600"
-                            : "bg-white border-gray-300"
+                        className={`w-2 h-2 rounded-full transition-colors duration-200
+          ${config.enabled ? "bg-purple-500" : "bg-gray-300"}`}
+                      />
+                      <span className="text-sm font-medium text-gray-800">
+                        {formatStandardFieldLabel(key)}
+                      </span>
+                    </div>
+
+                    {/* Enabled toggle — stop propagation so it doesn't double-fire */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setStandardFields((prev) => ({
+                          ...prev,
+                          [key]: { ...prev[key], enabled: !prev[key].enabled },
+                        }));
+                      }}
+                      className={`relative w-10 h-5 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-purple-300 focus:ring-offset-1
+        ${config.enabled ? "bg-purple-500" : "bg-gray-200"}`}
+                      aria-label={`Toggle ${key}`}
+                    >
+                      <span
+                        className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all duration-200
+          ${config.enabled ? "right-0.5" : "left-0.5"}`}
+                      />
+                    </button>
+                  </div>
+
+                  {/* Bottom row: Required badge */}
+                  <div className="flex items-center justify-between min-h-[24px]">
+                    {config.enabled ? (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation(); // prevent card toggle when clicking Required
+                          setStandardFields((prev) => ({
+                            ...prev,
+                            [key]: { ...prev[key], required: !prev[key].required },
+                          }));
+                        }}
+                        className={`flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full border transition-all duration-150
+          ${config.required
+                            ? "bg-amber-50 border-amber-300 text-amber-700 font-medium"
+                            : "bg-gray-50 border-gray-200 text-gray-400 hover:border-gray-300 hover:text-gray-500"
                           }`}
                       >
-                        {val && (
-                          <span className="w-2.5 h-2.5 bg-white rounded-full" />
-                        )}
-                      </span>
-                    </span>
-                  </label>
-                ))}
-              </div>
-            )}
+                        <span
+                          className={`w-1.5 h-1.5 rounded-full
+            ${config.required ? "bg-amber-400" : "bg-gray-300"}`}
+                        />
+                        {config.required ? "Required" : "Optional"}
+                      </button>
+                    ) : (
+                      <span className="text-xs text-gray-300 italic">Disabled</span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
           </section>
 
           {/* Lead Stages */}

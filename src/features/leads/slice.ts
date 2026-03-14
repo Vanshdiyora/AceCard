@@ -196,17 +196,16 @@ export const fetchLeadTimeline = createAsyncThunk<
             actor: e.data?.author_name,
           };
 
-        case "meeting":
-          return {
-            id: e.id,
-            type: "meeting",
-            timestamp: e.timestamp,
-            scheduled_at: e.data?.scheduled_at, // ✅ store meeting time
-            title: `Meeting: ${e.data?.title}`,
-            description: `${e.data?.location} • ${e.data?.duration_min} min`,
-            actor: e.data?.created_by ? `User #${e.data.created_by}` : undefined,
-          };
-
+      case "meeting":
+  return {
+    id: e.id,
+    type: "meeting",
+    timestamp: e.timestamp,
+    scheduled_at: e.data?.scheduled_at,
+    title: `Meeting: ${e.data?.title}`,
+    description: `${e.data?.location} • ${e.data?.duration_min} min`,
+    actor: e.data?.created_by_name, // ✅ show real name
+  };
         case "created":
           return {
             id: e.id,
@@ -227,16 +226,15 @@ export const fetchLeadTimeline = createAsyncThunk<
             actor: e.data?.actor_id ? `User #${e.data.actor_id}` : undefined,
           };
 
-        case "meeting_status_update":
-          return {
-            id: e.id,
-            type: "meeting_status_update",
-            timestamp: e.timestamp,
-            title: "Meeting Status Updated",
-            description: `Meeting marked as ${e.data?.metadata?.status}`,
-            actor: e.data?.actor_id ? `User #${e.data.actor_id}` : undefined,
-          };
-
+      case "meeting_status_update":
+  return {
+    id: e.id,
+    type: "meeting_status_update",
+    timestamp: e.timestamp,
+    title: "Meeting Status Updated",
+    description: `Meeting marked as ${e.data?.metadata?.status}`,
+    actor: e.data?.actor_name ?? (e.data?.actor_id ? `User #${e.data.actor_id}` : undefined),
+  };
         case "assignment_change":
           return {
             id: e.id,

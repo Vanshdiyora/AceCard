@@ -27,7 +27,6 @@ function cleanTimeline(items: any[]) {
 export default function LeadTimeLineTab({ leadId }: Props) {
   const dispatch = useAppDispatch();
   const rawTimeline = useAppSelector((s) => s.leads.timeline[leadId]);
-  console.log(rawTimeline)
   const timeline = cleanTimeline(rawTimeline || []);
   const loading = useAppSelector((s) => s.leads.loading);
 
@@ -74,7 +73,6 @@ function TimelineItem({ item }: { item: any }) {
             {item.title}
           </span>
 
-          {/* existing activity timestamp */}
           <span className="flex items-center gap-1 text-sm text-gray-600">
             <Clock size={12} />
             {new Date(item.timestamp).toLocaleString()}
@@ -83,16 +81,19 @@ function TimelineItem({ item }: { item: any }) {
 
         <p className="text-sm text-gray-600">{item.description}</p>
 
-        {/* ✅ show scheduled meeting time separately */}
+        {/* Show scheduled meeting time */}
         {item.type === "meeting" && item.scheduled_at && (
           <p className="text-sm text-gray-600">
             Scheduled: {new Date(item.scheduled_at).toLocaleString()}
           </p>
         )}
 
-        {item.actor && (
-          <p className="mt-1 text-xs text-gray-400">by {item.actor}</p>
-        )}
+        {/* ❌ Hide actor for created and assignment_change */}
+        {item.actor &&
+          item.type !== "created" &&
+          item.type !== "assignment_change" && (
+            <p className="mt-1 text-xs text-gray-500">by {item.actor}</p>
+          )}
       </div>
     </div>
   );
