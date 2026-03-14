@@ -18,6 +18,7 @@ export interface Lead {
   created_at: string;
   updated_at: string;
   campaign_id?: number;
+  actual_place?: string;
 }
 
 export interface CreateLeadDto {
@@ -60,8 +61,15 @@ export interface LeadNote {
   created_at: string;
 }
 
-export type TimelineEventType = "note" | "created" | "updated" | "status_changed" | "unknown";
-
+export type TimelineEventType =
+  | "note"
+  | "meeting"
+  | "created"
+  | "stage_change"
+  | "assignment_change"
+  | "meeting_status_update"
+  | "activity";
+  
 export interface TimelineItem {
   id: string;
   type: TimelineEventType;
@@ -69,6 +77,7 @@ export interface TimelineItem {
   title: string;
   description: string;
   actor?: string;
+  scheduled_at?: string; // ✅ for meetings
 }
 
 export interface Meeting {

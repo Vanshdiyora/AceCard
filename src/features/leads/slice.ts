@@ -13,6 +13,7 @@ import type {
   SortOrder
 } from "./types";
 import { LeadsService } from "./services/leads.service";
+import { formatStage } from "../../common/components/formatStage";
 
 /* -----------------------------------------------------
    ERROR HANDLER
@@ -172,7 +173,18 @@ export const fetchLeadTimeline = createAsyncThunk<
   try {
     const raw = await LeadsService.getTimeline(leadId);
 
-    const normalized: TimelineItem[] = raw.map((e: any) => {
+    const filtered = raw.filter((e: any) => {
+      // ❌ remove activity note wrapper
+      if (e.type === "note" && e.data?.metadata?.note_id) return false;
+
+      // ❌ remove system created duplicate
+      if (e.type === "created" && e.data?.actor === "System") return false;
+
+      if (e.type === "meeting" && !e.data.title) return false;
+      return true;
+    });
+
+    const normalized: TimelineItem[] = filtered.map((e: any) => {
       switch (e.type) {
         case "note":
           return {
@@ -180,8 +192,19 @@ export const fetchLeadTimeline = createAsyncThunk<
             type: "note",
             timestamp: e.timestamp,
             title: "Note Added",
-            description: e.data?.body ?? "Note added",
-            actor: e.data?.author_id ? `User #${e.data.author_id}` : undefined,
+            description: e.data?.body ?? "",
+            actor: e.data?.author_name,
+          };
+
+        case "meeting":
+          return {
+            id: e.id,
+            type: "meeting",
+            timestamp: e.timestamp,
+            scheduled_at: e.data?.scheduled_at, // ✅ store meeting time
+            title: `Meeting: ${e.data?.title}`,
+            description: `${e.data?.location} • ${e.data?.duration_min} min`,
+            actor: e.data?.created_by ? `User #${e.data.created_by}` : undefined,
           };
 
         case "created":
@@ -190,17 +213,48 @@ export const fetchLeadTimeline = createAsyncThunk<
             type: "created",
             timestamp: e.timestamp,
             title: "Lead Created",
-            description: `Source: ${e.data?.source ?? "unknown"}`,
-            actor: e.data?.actor,
+            description: `Source: ${e.data?.metadata?.source ?? "manual"}`,
+            actor: e.data?.actor_id ? `User #${e.data.actor_id}` : undefined,
+          };
+
+        case "stage_change":
+          return {
+            id: e.id,
+            type: "stage_change",
+            timestamp: e.timestamp,
+            title: "Stage Updated",
+            description: `${formatStage(e.data?.metadata?.from)} → ${formatStage(e.data?.metadata?.to)}`,
+            actor: e.data?.actor_id ? `User #${e.data.actor_id}` : undefined,
+          };
+
+        case "meeting_status_update":
+          return {
+            id: e.id,
+            type: "meeting_status_update",
+            timestamp: e.timestamp,
+            title: "Meeting Status Updated",
+            description: `Meeting marked as ${e.data?.metadata?.status}`,
+            actor: e.data?.actor_id ? `User #${e.data.actor_id}` : undefined,
+          };
+
+        case "assignment_change":
+          return {
+            id: e.id,
+            type: "assignment_change",
+            timestamp: e.timestamp,
+            title: "Assignment Updated",
+            description: `Assigned from ${e.data?.metadata?.from ?? "none"} to ${e.data?.metadata?.to ?? "unassigned"
+              }`,
+            actor: e.data?.actor_id ? `User #${e.data.actor_id}` : undefined,
           };
 
         default:
           return {
             id: e.id,
-            type: "unknown",
+            type: "activity",
             timestamp: e.timestamp,
             title: "Activity",
-            description: "An activity occurred",
+            description: "Activity occurred",
           };
       }
     });

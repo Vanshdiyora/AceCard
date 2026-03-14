@@ -1,3 +1,4 @@
+import { formatStage } from "../../../../common/components/formatStage";
 import { formatRupees } from "../../../../common/utils/ruppeeFormater";
 import type { Lead } from "../../types";
 import { Mail, Phone, MapPin } from "lucide-react";
@@ -15,7 +16,7 @@ export default function LeadOverviewTab({ lead }: Props) {
 
   const baseFields = [
     { label: "Company", value: lead.company },
-    { label: "Stage", value: lead.stage },
+    { label: "Stage", value: formatStage(lead.stage) },
     { label: "Source", value: lead.source },
     {
       label: "Deal Amount",
@@ -59,28 +60,38 @@ export default function LeadOverviewTab({ lead }: Props) {
       {/* Top Info Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
         <InfoCard icon={<Mail size={18} />} label="Email" value={lead.email || "Not provided"} />
+
         <InfoCard icon={<Phone size={18} />} label="Phone" value={lead.phone || "Not provided"} />
+
         <InfoCard
           icon={<MapPin size={18} />}
           label="Location"
           value={
-            lead.latitude && lead.longitude ? (
-              <a
-                href={`https://www.google.com/maps?q=${lead.latitude},${lead.longitude}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-purple-600 hover:underline"
-              >
-                View on Map
-              </a>
+            lead.actual_place || (lead.latitude && lead.longitude) ? (
+              <div className="flex flex-col">
+                {lead.actual_place && (
+                  <span className="text-gray-700 line-clamp-2">
+                    {lead.actual_place}
+                  </span>
+                )}
+
+                {lead.latitude && lead.longitude && (
+                  <a
+                    href={`https://www.google.com/maps?q=${lead.latitude},${lead.longitude}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-purple-600 hover:underline text-sm"
+                  >
+                    View on Map
+                  </a>
+                )}
+              </div>
             ) : (
               "Not provided"
             )
           }
         />
-
       </div>
-
       {/* Overview Details */}
       <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-12">
@@ -88,7 +99,7 @@ export default function LeadOverviewTab({ lead }: Props) {
             <Info
               key={index}
               label={item.label}
-              value={item.value}
+              value={formatStage(item.value)}
             />
           ))}
         </div>

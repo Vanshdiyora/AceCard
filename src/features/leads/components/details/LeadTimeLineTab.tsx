@@ -8,9 +8,27 @@ interface Props {
   leadId: number;
 }
 
+function cleanTimeline(items: any[]) {
+  return items.filter((item) => {
+    // ❌ remove activity note wrapper
+    if (item.type === "note" && item.data?.metadata?.note_id) {
+      return false;
+    }
+
+    // ❌ remove system created event
+    if (item.type === "created" && item.data?.actor === "System") {
+      return false;
+    }
+
+    // ✅ keep everything else
+    return true;
+  });
+}
 export default function LeadTimeLineTab({ leadId }: Props) {
   const dispatch = useAppDispatch();
-  const timeline = useAppSelector((s) => s.leads.timeline[leadId]);
+  const rawTimeline = useAppSelector((s) => s.leads.timeline[leadId]);
+  console.log(rawTimeline)
+  const timeline = cleanTimeline(rawTimeline || []);
   const loading = useAppSelector((s) => s.leads.loading);
 
   useEffect(() => {
@@ -55,6 +73,8 @@ function TimelineItem({ item }: { item: any }) {
           <span className="text-sm font-semibold text-gray-900">
             {item.title}
           </span>
+
+          {/* existing activity timestamp */}
           <span className="flex items-center gap-1 text-sm text-gray-600">
             <Clock size={12} />
             {new Date(item.timestamp).toLocaleString()}
@@ -62,6 +82,13 @@ function TimelineItem({ item }: { item: any }) {
         </div>
 
         <p className="text-sm text-gray-600">{item.description}</p>
+
+        {/* ✅ show scheduled meeting time separately */}
+        {item.type === "meeting" && item.scheduled_at && (
+          <p className="text-sm text-gray-600">
+            Scheduled: {new Date(item.scheduled_at).toLocaleString()}
+          </p>
+        )}
 
         {item.actor && (
           <p className="mt-1 text-xs text-gray-400">by {item.actor}</p>
