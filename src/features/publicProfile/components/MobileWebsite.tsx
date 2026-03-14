@@ -647,18 +647,18 @@ import { WaveBackground } from "./patterns/WaveBackground";
 // import { link } from "fs";
 import { PolkaBackground } from "./patterns/PolkaBackground";
 import { ZigzagBackground } from "./patterns/ZigzagBackground";
+
 function YouTube({ title, items, theme }: any) {
   if (!items?.length) return null;
 
   const containerRef = useRef<HTMLDivElement>(null);
   const [index, setIndex] = useState(0);
 
-  const videos = items
-    .map((v: any) => ({
-      ...v,
-      ytId: getYouTubeId(v.url),
-    }))
-    .filter((v: any) => v.ytId);
+  const videos = items.map((v: any) => ({
+    ...v,
+    ytId: getYouTubeId(v.url),
+    isYoutube: !!getYouTubeId(v.url),
+  }));
 
   if (!videos.length) return null;
 
@@ -678,6 +678,18 @@ function YouTube({ title, items, theme }: any) {
       behavior: "smooth",
     });
   };
+
+  const maxDots = 5;
+
+  let start = Math.max(0, index - Math.floor(maxDots / 2));
+  let end = start + maxDots;
+
+  if (end > videos.length) {
+    end = videos.length;
+    start = Math.max(0, end - maxDots);
+  }
+
+  const visibleDots = videos.slice(start, end);
 
   return (
     <Section title={title} theme={theme}>
@@ -701,30 +713,52 @@ function YouTube({ title, items, theme }: any) {
             "
           >
             <div className="w-full h-full rounded-2xl overflow-hidden shadow-md">
-              <iframe
-                src={`https://www.youtube.com/embed/${v.ytId}`}
-                className="w-full h-full"
-                frameBorder="0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              />
+              {v.isYoutube ? (
+                <iframe
+                  src={`https://www.youtube.com/embed/${v.ytId}`}
+                  className="w-full h-full"
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              ) : (
+                <video
+                  src={v.url}
+                  controls
+                  className="w-full h-full object-cover"
+                />
+              )}
             </div>
           </div>
         ))}
       </div>
 
       {/* Dots */}
-      <div className="flex justify-center gap-2 mt-3">
-        {videos.map((_: any, i: number) => (
-          <button
-            key={i}
-            onClick={() => scrollTo(i)}
-            className={`h-2 w-2 rounded-full transition ${i === index
-              ? "bg-gray-900"
-              : "bg-gray-300 hover:bg-gray-400"
-              }`}
-          />
-        ))}
+      <div className="flex items-center justify-center gap-2 mt-3">
+
+        {start > 0 && (
+          <span className="text-gray-400 text-xs">‹</span>
+        )}
+
+        {visibleDots.map((_:any, i: any) => {
+          const actualIndex = start + i;
+
+          return (
+            <button
+              key={actualIndex}
+              onClick={() => scrollTo(actualIndex)}
+              className={`h-2 w-2 rounded-full transition ${actualIndex === index
+                  ? "bg-gray-900 scale-125"
+                  : "bg-gray-300 hover:bg-gray-400"
+                }`}
+            />
+          );
+        })}
+
+        {end < videos.length && (
+          <span className="text-gray-400 text-xs">›</span>
+        )}
+
       </div>
     </Section>
   );

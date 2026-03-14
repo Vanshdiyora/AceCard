@@ -97,6 +97,27 @@ export default function SearchableSelect({
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
+
+  useEffect(() => {
+  if (!open) return;
+
+  const handleScroll = (e: Event) => {
+    const target = e.target as Node;
+
+    // If scroll happened inside dropdown, ignore
+    if (dropdownRef.current?.contains(target)) return;
+
+    // Otherwise close dropdown
+    setOpen(false);
+  };
+
+  window.addEventListener("scroll", handleScroll, true);
+
+  return () => {
+    window.removeEventListener("scroll", handleScroll, true);
+  };
+}, [open]);
+
   /* ---------- SELECT ---------- */
   const toggleValue = (val: any) => {
     if (!multiple) {

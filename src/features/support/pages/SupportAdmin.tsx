@@ -303,7 +303,16 @@ export default function SupportAdmin() {
             value: v,
           })),
           vendorValue: filters.vendor,
-          onVendorChange: (v) => setFilters((f) => ({ ...f, vendor: v })),
+          onVendorChange: (v) => {
+            setFilters((f) => ({ ...f, vendor: v }));
+
+            setAppliedFilters((f) => ({
+              ...f,
+              vendor: v,
+            }));
+
+            setPage(1);
+          },
 
           fromDate: filters.fromDate,
           toDate: filters.toDate,

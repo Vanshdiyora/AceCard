@@ -38,16 +38,10 @@ function buildDay(data: ChartPoint[]): ChartPoint[] {
     map.set(Number(d.label.split(":")[0]), d.value as number);
   });
 
-  const STEP = 4;
-
-  return Array.from({ length: Math.ceil(24 / STEP) }, (_, i) => {
-    const hour = i * STEP;
-
-    return {
-      label: `${hour.toString().padStart(2, "0")}:00`,
-      value: hour <= nowHour ? map.get(hour) ?? null : null,
-    };
-  });
+  return Array.from({ length: 24 }, (_, hour) => ({
+    label: `${hour.toString().padStart(2, "0")}:00`,
+    value: hour <= nowHour ? map.get(hour) ?? null : null,
+  }));
 }
 
 function buildWeek(data: ChartPoint[]): ChartPoint[] {
@@ -160,15 +154,15 @@ export default function PipelineAreaChart({
           </defs>
 
           <CartesianGrid strokeDasharray="4 4" stroke="#e5e7eb" />
-
           <XAxis
             dataKey="label"
-            ticks={monthTicks}
+            ticks={period === "month" ? monthTicks : undefined}
+            interval={period === "today" ? 3 : 0}
+            padding={{ right: 10 }}
             tick={{ fill: "#9ca3af", fontSize: 12 }}
             axisLine={false}
             tickLine={false}
           />
-
           <YAxis
             tick={{ fill: "#9ca3af", fontSize: 12 }}
             axisLine={false}

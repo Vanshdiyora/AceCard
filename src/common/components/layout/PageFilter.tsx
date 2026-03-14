@@ -165,15 +165,17 @@ export default function PageFilters({
             <div className="flex items-center gap-3">
 
               {/* Vendor Select */}
-              <SearchableSelect
-                value={supportFilters.vendorValue}
-                options={[
-                  { label: "All Vendors", value: "" },
-                  ...(supportFilters.vendors || []),
-                ]}
-                onChange={(v: string) => supportFilters.onVendorChange?.(v)}
-                placeholder="Select Vendor"
-              />
+              <div className="w-[160px]">
+                <SearchableSelect
+                  value={supportFilters.vendorValue}
+                  options={[
+                    { label: "All Vendors", value: "" },
+                    ...(supportFilters.vendors || []),
+                  ]}
+                  onChange={(v: string) => supportFilters.onVendorChange?.(v)}
+                  placeholder="Select Vendor"
+                />
+              </div>
 
               {/* Date Range */}
               <div className="flex items-center gap-2">

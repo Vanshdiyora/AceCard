@@ -67,7 +67,7 @@ export default function TeamMemberAnalyticsTab({
   const dispatch = useAppDispatch();
   const { analytics, analyticsLoading } = useAppSelector((s) => s.team);
 
-  const [period, setPeriod] = useState<"day" | "week" | "month" | "year">(
+  const [period, setPeriod] = useState<"today" | "week" | "month" | "year">(
     "month"
   );
   const [open, setOpen] = useState(false);
@@ -87,7 +87,7 @@ export default function TeamMemberAnalyticsTab({
     dispatch(
       fetchMemberAnalytics({
         id: memberId,
-        pipeline_period: period === "day" ? "day" : period,
+        pipeline_period: period === "today" ? "day" : period,
       })
     );
   }, [memberId, period, dispatch]);
@@ -134,7 +134,7 @@ export default function TeamMemberAnalyticsTab({
       </div>
 
       {/* PIPELINE TREND */}
-      <div className="bg-white rounded-2xl p-6 shadow-lg">
+      <div className="bg-white rounded-2xl p-6">
         <div className="flex items-center justify-between mb-3">
           <h3 className="font-medium text-gray-700">Pipeline Trend</h3>
 
@@ -163,7 +163,7 @@ export default function TeamMemberAnalyticsTab({
 
             {open && (
               <div className="absolute right-0 mt-2 w-36 bg-white border rounded-xl shadow-lg z-50">
-                {["day", "week", "month", "year"].map((p) => (
+                {["today", "week", "month", "year"].map((p) => (
                   <button
                     key={p}
                     onClick={() => {
@@ -192,7 +192,7 @@ export default function TeamMemberAnalyticsTab({
       </div>
 
       {a.campaign_contribution?.length > 0 && (
-        <div className="bg-white rounded-2xl p-6 shadow-lg">
+        <div className="bg-white rounded-2xl p-6">
           <h3 className="font-medium mb-5 text-gray-700">
             Campaign Contribution
           </h3>
@@ -208,12 +208,12 @@ export default function TeamMemberAnalyticsTab({
                 const percent = total ? (item.value / total) * 100 : 0;
 
                 return (
-                  <div key={item.employee_name} className="space-y-1">
+                  <div key={item.campaign_name} className="space-y-1">
 
                     <div className="flex justify-between text-sm">
                       <div>
                         <p className="font-medium text-gray-700">
-                          {item.employee_name}
+                          {item.campaign_name}
                         </p>
 
                         <p className="text-xs text-gray-400">
@@ -259,7 +259,7 @@ function Kpi({
 }) {
   const c = iconColors[color];
   return (
-    <div className="relative h-[120px] rounded-2xl p-5 shadow-lg hover:shadow-xl transition bg-gradient-to-br from-slate-50 to-white overflow-hidden">
+    <div className="relative h-[120px] rounded-2xl p-5 transition bg-gradient-to-br from-slate-50 to-white overflow-hidden">
       <div className="flex h-full justify-between items-stretch gap-4">
 
         {/* LEFT */}

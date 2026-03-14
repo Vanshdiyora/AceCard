@@ -1124,117 +1124,129 @@ export default function VicePublicSetting({
 
                 {/* LINK INPUT */}
                 {item.type === "link" && (
-                  <input
-                    value={item.url || ""}
-                    onChange={(e) => {
-                      let url = e.target.value ?? "";
+                  <div className="space-y-1">
+                    <label className="text-xs text-gray-500">
+                      Video URL
+                    </label>
 
-                      const looksLikeDomain =
-                        /^[a-zA-Z0-9.-]+\.[a-zA-Z]{1,}(\/.*)?$/.test(url.trim());
+                    <input
+                      value={item.url || ""}
+                      onChange={(e) => {
+                        let url = e.target.value ?? "";
 
-                      if (
-                        url.trim() !== "" &&
-                        !url.startsWith("http://") &&
-                        !url.startsWith("https://") &&
-                        looksLikeDomain
-                      ) {
-                        url = "https://" + url.trim();
-                      }
+                        const looksLikeDomain =
+                          /^[a-zA-Z0-9.-]+\.[a-zA-Z]{1,}(\/.*)?$/.test(url.trim());
 
-                      const next = [...sectionDraft.items];
-                      next[index] = {
-                        ...item,
-                        url,
-                      };
+                        if (
+                          url.trim() !== "" &&
+                          !url.startsWith("http://") &&
+                          !url.startsWith("https://") &&
+                          looksLikeDomain
+                        ) {
+                          url = "https://" + url.trim();
+                        }
 
-                      setSectionDraft({
-                        ...sectionDraft,
-                        items: next,
-                      });
-                    }}
-                    className="w-full rounded-xl border px-4 py-3"
-                    placeholder="Enter a video link"
-                  />
+                        const next = [...sectionDraft.items];
+                        next[index] = {
+                          ...item,
+                          url,
+                        };
+
+                        setSectionDraft({
+                          ...sectionDraft,
+                          items: next,
+                        });
+                      }}
+                      className="w-full rounded-xl border px-4 py-3"
+                      placeholder="Enter a video link"
+                    />
+                  </div>
                 )}
 
                 {/* VIDEO UPLOAD */}
                 {item.type === "upload" && (
-                  <div className="border-2 border-dashed rounded-xl p-4 text-center">
+                  <div className="space-y-1">
+                    <label className="text-xs text-gray-500">
+                      Upload Video
+                    </label>
 
-                    {item.url ? (
-                      <div className="space-y-2">
-                        <video
-                          src={item.url}
-                          controls
-                          className="w-full rounded-lg"
-                        />
+                    <div className="border-2 border-dashed rounded-xl p-4 text-center">
+                      {item.url ? (
+                        <div className="space-y-2">
+                          <video
+                            src={item.url}
+                            controls
+                            className="w-full rounded-lg"
+                          />
 
-                        <button
-                          onClick={() => {
-                            const next = [...sectionDraft.items];
-                            next[index] = {
-                              ...item,
-                              url: "",
-                            };
-
-                            setSectionDraft({
-                              ...sectionDraft,
-                              items: next,
-                            });
-                          }}
-                          className="text-red-500 text-sm"
-                        >
-                          Remove Video
-                        </button>
-                      </div>
-                    ) : (
-                      <>
-                        <input
-                          type="file"
-                          accept="video/*"
-                          id={`video-upload-${item.id}`}
-                          className="hidden"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (!file) return;
-
-                            if (file.size > MAX_VIDEO_SIZE) {
-                              alert("Video must be less than 20MB");
-                              return;
-                            }
-
-                            // Example upload API call
-                            uploadImage(file).then((res: any) => {
-                              const uploadedUrl = res?.data?.url;
-
+                          <button
+                            onClick={() => {
                               const next = [...sectionDraft.items];
                               next[index] = {
                                 ...item,
-                                url: uploadedUrl,
+                                url: "",
                               };
 
                               setSectionDraft({
                                 ...sectionDraft,
                                 items: next,
                               });
-                            });
-                          }}
-                        />
+                            }}
+                            className="text-red-500 text-sm"
+                          >
+                            Remove Video
+                          </button>
+                        </div>
+                      ) : (
+                        <>
+                          <input
+                            type="file"
+                            accept="video/*"
+                            id={`video-upload-${item.id}`}
+                            className="hidden"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (!file) return;
 
-                        <label
-                          htmlFor={`video-upload-${item.id}`}
-                          className="cursor-pointer text-indigo-600 font-medium"
-                        >
-                          Click to upload video
-                        </label>
+                              if (file.size > MAX_VIDEO_SIZE) {
+                                alert("Video must be less than 20MB");
+                                return;
+                              }
 
-                        <p className="text-xs text-gray-400 mt-1">
-                          Max 20MB
-                        </p>
-                      </>
-                    )}
+                              // Example upload API call
+                              uploadImage(file).then((res: any) => {
+                                const uploadedUrl = res?.data?.url;
 
+                                const next = [...sectionDraft.items];
+                                next[index] = {
+                                  ...item,
+                                  url: uploadedUrl,
+                                };
+
+                                setSectionDraft({
+                                  ...sectionDraft,
+                                  items: next,
+                                });
+                              });
+                            }}
+                          />
+
+                          <label
+                            htmlFor={`video-upload-${item.id}`}
+                            className="cursor-pointer text-indigo-600 font-medium"
+                          >
+                            Click to upload video
+                          </label>
+
+                          <p className="text-xs text-gray-400 mt-1">
+                            Max 20MB
+                          </p>
+                        </>
+                      )}
+
+                    </div>
                   </div>
+
                 )}
 
               </div>
