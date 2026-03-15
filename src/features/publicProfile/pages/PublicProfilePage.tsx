@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../../app/hooks";
 import { loadPublicProfile } from "../slice";
 import MobileWebsite from "../components/MobileWebsite";
@@ -15,7 +15,11 @@ export default function PublicProfilePage({ handle: propHandle }: Props) {
     username: string;
   }>();
 
+  const [searchParams] = useSearchParams();
+
   const handle = propHandle || routeHandle || username;
+  const type = searchParams.get("type") || "direct"; // read ?type=
+
   const dispatch = useAppDispatch();
   const { data, loading } = useAppSelector((s) => s.publicProfile);
 
@@ -29,21 +33,21 @@ export default function PublicProfilePage({ handle: propHandle }: Props) {
           dispatch(
             loadPublicProfile({
               handle,
-              type: "direct",
+              type,
               lat: pos.coords.latitude,
               lng: pos.coords.longitude,
             })
           );
         },
         () => {
-          dispatch(loadPublicProfile({ handle, type: "direct" }));
+          dispatch(loadPublicProfile({ handle, type }));
         },
         { enableHighAccuracy: true, timeout: 8000 }
       );
     } else {
-      dispatch(loadPublicProfile({ handle, type: "direct" }));
+      dispatch(loadPublicProfile({ handle, type }));
     }
-  }, [handle, dispatch]);
+  }, [handle, type, dispatch]);
 
   if (!handle)
     return <div className="p-6">No profile handle found.</div>;
@@ -58,7 +62,7 @@ export default function PublicProfilePage({ handle: propHandle }: Props) {
   return (
     <div className="min-h-screen bg-[#f6f7fb] flex items-center justify-center">
 
-      {/* 📱 MOBILE — Full Screen (No Phone Frame) */}
+      {/* 📱 MOBILE — Full Screen */}
       <div className="w-full h-full md:hidden bg-white">
         <MobileWebsite data={data} isPreview={false} />
       </div>
@@ -66,23 +70,20 @@ export default function PublicProfilePage({ handle: propHandle }: Props) {
       {/* 💻 DESKTOP — Phone Preview */}
       <div className="hidden sm:flex w-full justify-center items-center min-h-screen bg-[#f6f7fb]">
 
-        {/* Phone wrapper = full viewport height */}
         <div className="h-screen aspect-[10/19] max-w-[420px]">
-
           <div
             className="
-        w-full h-full
-        bg-white
-        shadow-xl
-        ring-1 ring-gray-200
-        overflow-hidden
-      "
+              w-full h-full
+              bg-white
+              shadow-xl
+              ring-1 ring-gray-200
+              overflow-hidden
+            "
           >
             <div className="h-full overflow-y-auto no-scrollbar">
               <MobileWebsite data={data} isPreview={true} />
             </div>
           </div>
-
         </div>
 
       </div>
