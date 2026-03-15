@@ -1635,8 +1635,6 @@ export default function VicePublicSetting({
               const inputType = getSocialInputType(item.platform || item.id);
               let url = item.url ?? "";
 
-              // Auto-prefix https:// or http:// for URL-type socials
-              // Auto-prefix https:// or http:// only if value looks like a real domain (has a TLD)
               const looksLikeDomain = /^[^\s]+\.[a-zA-Z]{1,}(\/.*)?$/.test(url.trim());
 
               if (
@@ -1653,7 +1651,7 @@ export default function VicePublicSetting({
                 ...item,
                 url,
                 rank: index + 1,
-                country_code: item.country_code || "+91",
+                country_code: item.country_code, // keep selected code
               };
             });
 
@@ -2333,7 +2331,7 @@ export default function VicePublicSetting({
         .map((item: any, index: number) => ({
           ...item,
           rank: index + 1,
-          country_code: item.country_code || "+91", // ✅ ensure saved
+          country_code: item.country_code, // ✅ ensure saved
         }));
 
       nextConfig = {

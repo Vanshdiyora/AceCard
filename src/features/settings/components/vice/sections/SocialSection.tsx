@@ -1,6 +1,6 @@
 import { ChevronDown, Trash2 } from "lucide-react";
 import { getSocialInputType } from "../VicePublicSetting";
-
+import { fetchCountryCodes, type CountryCode } from "../service/countryCodesApi";
 import {
   SiInstagram,
   SiLinkedin,
@@ -18,7 +18,6 @@ import {
 } from "react-icons/si";
 
 import { FiPhone, FiGlobe, FiMail, FiMapPin, FiMessageSquare } from "react-icons/fi";
-
 import CommonItemsReorder from "./CommonItemsReorder";
 
 /* ---------------- ICON MAP ---------------- */
@@ -72,44 +71,44 @@ export const ALL_SOCIALS = [
 ];
 
 /* ---------------- COUNTRY CODES ---------------- */
-export const COUNTRY_CODES = [
-  { code: "+91", country: "India", flag: "🇮🇳" },
-  { code: "+1", country: "USA / Canada", flag: "🇺🇸" },
-  { code: "+44", country: "United Kingdom", flag: "🇬🇧" },
-  { code: "+61", country: "Australia", flag: "🇦🇺" },
-  { code: "+64", country: "New Zealand", flag: "🇳🇿" },
-  { code: "+971", country: "UAE", flag: "🇦🇪" },
-  { code: "+966", country: "Saudi Arabia", flag: "🇸🇦" },
-  { code: "+974", country: "Qatar", flag: "🇶🇦" },
-  { code: "+965", country: "Kuwait", flag: "🇰🇼" },
-  { code: "+973", country: "Bahrain", flag: "🇧🇭" },
-  { code: "+968", country: "Oman", flag: "🇴🇲" },
-  { code: "+65", country: "Singapore", flag: "🇸🇬" },
-  { code: "+60", country: "Malaysia", flag: "🇲🇾" },
-  { code: "+66", country: "Thailand", flag: "🇹🇭" },
-  { code: "+62", country: "Indonesia", flag: "🇮🇩" },
-  { code: "+63", country: "Philippines", flag: "🇵🇭" },
-  { code: "+84", country: "Vietnam", flag: "🇻🇳" },
-  { code: "+81", country: "Japan", flag: "🇯🇵" },
-  { code: "+82", country: "South Korea", flag: "🇰🇷" },
-  { code: "+86", country: "China", flag: "🇨🇳" },
-  { code: "+49", country: "Germany", flag: "🇩🇪" },
-  { code: "+33", country: "France", flag: "🇫🇷" },
-  { code: "+39", country: "Italy", flag: "🇮🇹" },
-  { code: "+34", country: "Spain", flag: "🇪🇸" },
-  { code: "+31", country: "Netherlands", flag: "🇳🇱" },
-  { code: "+41", country: "Switzerland", flag: "🇨🇭" },
-  { code: "+46", country: "Sweden", flag: "🇸🇪" },
-  { code: "+47", country: "Norway", flag: "🇳🇴" },
-  { code: "+45", country: "Denmark", flag: "🇩🇰" },
-  { code: "+27", country: "South Africa", flag: "🇿🇦" },
-  { code: "+20", country: "Egypt", flag: "🇪🇬" },
-  { code: "+234", country: "Nigeria", flag: "🇳🇬" },
-  { code: "+254", country: "Kenya", flag: "🇰🇪" },
-  { code: "+55", country: "Brazil", flag: "🇧🇷" },
-  { code: "+54", country: "Argentina", flag: "🇦🇷" },
-  { code: "+52", country: "Mexico", flag: "🇲🇽" },
-];
+// export const COUNTRY_CODES = [
+//   { code: "+91", country: "India", flag: "🇮🇳" },
+//   { code: "+1", country: "USA / Canada", flag: "🇺🇸" },
+//   { code: "+44", country: "United Kingdom", flag: "🇬🇧" },
+//   { code: "+61", country: "Australia", flag: "🇦🇺" },
+//   { code: "+64", country: "New Zealand", flag: "🇳🇿" },
+//   { code: "+971", country: "UAE", flag: "🇦🇪" },
+//   { code: "+966", country: "Saudi Arabia", flag: "🇸🇦" },
+//   { code: "+974", country: "Qatar", flag: "🇶🇦" },
+//   { code: "+965", country: "Kuwait", flag: "🇰🇼" },
+//   { code: "+973", country: "Bahrain", flag: "🇧🇭" },
+//   { code: "+968", country: "Oman", flag: "🇴🇲" },
+//   { code: "+65", country: "Singapore", flag: "🇸🇬" },
+//   { code: "+60", country: "Malaysia", flag: "🇲🇾" },
+//   { code: "+66", country: "Thailand", flag: "🇹🇭" },
+//   { code: "+62", country: "Indonesia", flag: "🇮🇩" },
+//   { code: "+63", country: "Philippines", flag: "🇵🇭" },
+//   { code: "+84", country: "Vietnam", flag: "🇻🇳" },
+//   { code: "+81", country: "Japan", flag: "🇯🇵" },
+//   { code: "+82", country: "South Korea", flag: "🇰🇷" },
+//   { code: "+86", country: "China", flag: "🇨🇳" },
+//   { code: "+49", country: "Germany", flag: "🇩🇪" },
+//   { code: "+33", country: "France", flag: "🇫🇷" },
+//   { code: "+39", country: "Italy", flag: "🇮🇹" },
+//   { code: "+34", country: "Spain", flag: "🇪🇸" },
+//   { code: "+31", country: "Netherlands", flag: "🇳🇱" },
+//   { code: "+41", country: "Switzerland", flag: "🇨🇭" },
+//   { code: "+46", country: "Sweden", flag: "🇸🇪" },
+//   { code: "+47", country: "Norway", flag: "🇳🇴" },
+//   { code: "+45", country: "Denmark", flag: "🇩🇰" },
+//   { code: "+27", country: "South Africa", flag: "🇿🇦" },
+//   { code: "+20", country: "Egypt", flag: "🇪🇬" },
+//   { code: "+234", country: "Nigeria", flag: "🇳🇬" },
+//   { code: "+254", country: "Kenya", flag: "🇰🇪" },
+//   { code: "+55", country: "Brazil", flag: "🇧🇷" },
+//   { code: "+54", country: "Argentina", flag: "🇦🇷" },
+//   { code: "+52", country: "Mexico", flag: "🇲🇽" },
+// ];
 
 /* ---------------- HELPERS ---------------- */
 
@@ -124,7 +123,15 @@ export default function SocialSection({
   onAddClick,
   disabled = false,
 }: any) {
+  const [countries, setCountries] = useState<any[]>([]);
+  useEffect(() => {
+    const load = async () => {
+      const data = await fetchCountryCodes();
+      setCountries(data);
+    };
 
+    load();
+  }, []);
   const normalizeRank = (list: any[]) =>
     list.map((item, index) => ({
       ...item,
@@ -134,9 +141,20 @@ export default function SocialSection({
   const update = (id: string, val: string) => {
     if (disabled) return;
 
-    const updated = items.map((i: any) =>
-      i.id === id || i.platform === id ? { ...i, url: val } : i
-    );
+    const updated = items.map((i: any) => {
+      if (i.id !== id && i.platform !== id) return i;
+
+      if (isPhoneType(i.platform || i.id)) {
+        const code = i.country_code || "+91";
+
+        return {
+          ...i,
+          url: combinePhoneNumber(code, val),
+        };
+      }
+
+      return { ...i, url: val };
+    });
 
     onChange(normalizeRank(updated));
   };
@@ -144,13 +162,20 @@ export default function SocialSection({
   const updateCountryCode = (id: string, code: string) => {
     if (disabled) return;
 
-    const updated = items.map((i: any) =>
-      i.id === id ? { ...i, country_code: code } : i
-    );
+    const updated = items.map((i: any) => {
+      if (i.id !== id) return i;
+
+      const { number } = splitPhoneNumber(i.url, countries);
+
+      return {
+        ...i,
+        country_code: code,
+        url: combinePhoneNumber(code, number),
+      };
+    });
 
     onChange(normalizeRank(updated));
   };
-
   const remove = (id: string) => {
     if (disabled) return;
 
@@ -195,28 +220,34 @@ export default function SocialSection({
                 </div>
 
                 {/* PHONE INPUT WITH COUNTRY CODE */}
-                {isPhoneType(platform) ? (
-                  <div className="flex flex-1 border rounded-lg overflow-hidden">
+                {isPhoneType(platform) ? (() => {
+                  const phoneData = splitPhoneNumber(s.url, countries);
 
-                    <CountryCodeDropdown
-                      value={s.country_code || "+91"}
-                      disabled={disabled}
-                      onChange={(code) => updateCountryCode(s.id, code)}
-                    />
+                  const selectedCode =
+                    s.country_code ??
+                    phoneData.code ??
+                    "+91";
 
-                    <input
-                      disabled={disabled}
-                      type="tel"
-                      inputMode="tel"
-                      placeholder="2345678900"
-                      className="flex-1 px-3 py-2 text-sm outline-none"
-                      value={s.url}
-                      onChange={(e) =>
-                        update(s.id, e.target.value)
-                      }
-                    />
-                  </div>
-                ) : (
+                  return (
+                    <div className="flex flex-1 border rounded-lg overflow-hidden">
+                      <CountryCodeDropdown
+                        value={selectedCode}
+                        disabled={disabled}
+                        onChange={(code) => updateCountryCode(s.id, code)}
+                      />
+
+                      <input
+                        disabled={disabled}
+                        type="tel"
+                        inputMode="tel"
+                        placeholder="2345678900"
+                        className="flex-1 px-3 py-2 text-sm outline-none"
+                        value={phoneData.number}
+                        onChange={(e) => update(s.id, e.target.value)}
+                      />
+                    </div>
+                  );
+                })() : (
                   /* NORMAL INPUT */
                   <input
                     disabled={disabled}
@@ -279,6 +310,8 @@ export default function SocialSection({
 }
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
+import { combinePhoneNumber, splitPhoneNumber } from "../../../../../common/utils/phoneHelpers";
+
 export function CountryCodeDropdown({
   value,
   onChange,
@@ -290,12 +323,28 @@ export function CountryCodeDropdown({
 }) {
   const [open, setOpen] = useState(false);
   const [coords, setCoords] = useState<any>(null);
+  const [countries, setCountries] = useState<CountryCode[]>([]);
 
   const buttonRef = useRef<HTMLButtonElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  /* ---------------- FETCH COUNTRIES ---------------- */
+
+  useEffect(() => {
+    const load = async () => {
+      const data = await fetchCountryCodes();
+      setCountries(data);
+    };
+
+    load();
+  }, []);
+
+  /* ---------------- CURRENT VALUE ---------------- */
+
   const current =
-    COUNTRY_CODES.find((c) => c.code === value) || COUNTRY_CODES[0];
+    countries.find((c) => c.code === value) || countries[0];
+
+  /* ---------------- OPEN DROPDOWN ---------------- */
 
   const openDropdown = () => {
     if (!buttonRef.current) return;
@@ -305,11 +354,13 @@ export function CountryCodeDropdown({
     setCoords({
       top: rect.bottom + 4,
       left: rect.left,
-      width: 120,
+      width: 180,
     });
 
     setOpen(true);
   };
+
+  /* ---------------- CLOSE ON OUTSIDE CLICK ---------------- */
 
   useEffect(() => {
     if (!open) return;
@@ -335,18 +386,27 @@ export function CountryCodeDropdown({
 
   return (
     <>
+      {/* BUTTON */}
       <button
         ref={buttonRef}
         type="button"
         disabled={disabled}
         onClick={() => !disabled && openDropdown()}
-        className="flex items-center gap-1 px-3 bg-gray-100 text-sm min-w-20"
+        className="flex items-center gap-2 px-3 bg-gray-100 text-sm min-w-24"
       >
-        {current.code}
+        {current ? (
+          <>
+            <span>{current.flag}</span>
+            <span>{current.code}</span>
+          </>
+        ) : (
+          "+91"
+        )}
 
         <ChevronDown size={14} />
       </button>
 
+      {/* DROPDOWN */}
       {open &&
         coords &&
         createPortal(
@@ -361,9 +421,9 @@ export function CountryCodeDropdown({
             }}
             className="bg-white border rounded-xl shadow-xl max-h-60 overflow-auto"
           >
-            {COUNTRY_CODES.map((c) => (
+            {countries.map((c) => (
               <button
-                key={c.code}
+                key={`${c.code}-${c.country}`}
                 onClick={() => {
                   onChange(c.code);
                   setOpen(false);
@@ -371,8 +431,13 @@ export function CountryCodeDropdown({
                 className={`w-full text-left px-3 py-2 text-sm hover:bg-purple-50 ${value === c.code ? "bg-purple-100 font-semibold" : ""
                   }`}
               >
-                <div className="flex items-center justify-between">
-                  <span>{c.country}</span>
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <span>{c.flag}</span>
+                    <span>{c.country}</span>
+                  </div>
+
+                  <span className="text-gray-500">{c.code}</span>
                 </div>
               </button>
             ))}

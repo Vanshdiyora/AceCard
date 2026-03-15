@@ -117,13 +117,6 @@ export default function EditMemberModal({
       required: true,
       pattern: /^[0-9+\-()\s]{7,15}$/,
     },
-    {
-      name: "custom_job_role",
-      label: "Custom Job Role",
-      type: "text",
-      placeholder: "Enter custom job role",
-      required: true,
-    },
     ...(currentRole === "vendor_admin"
       ? [
           {
@@ -167,6 +160,13 @@ export default function EditMemberModal({
           },
         ]
       : []),
+        {
+      name: "custom_job_role",
+      label: "Custom Job Role",
+      type: "text",
+      placeholder: "Enter custom job role",
+      required: true,
+    },
   ];
 
   /* ---------- SUBMIT ---------- */

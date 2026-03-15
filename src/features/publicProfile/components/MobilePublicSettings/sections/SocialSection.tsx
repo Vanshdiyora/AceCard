@@ -4,7 +4,7 @@ import { createPortal } from "react-dom";
 import AddSocialModal from "./AddSocialModal";
 import CommonItemsReorder from "../../../../settings/components/vice/sections/CommonItemsReorder";
 import { CountryCodeDropdown, isPhoneType } from "../../../../settings/components/vice/sections/SocialSection";
-// Icons
+import { splitPhoneNumber, combinePhoneNumber } from "../../../../../common/utils/phoneHelpers";
 import {
   SiInstagram,
   SiLinkedin,
@@ -27,6 +27,7 @@ import {
   FiMapPin,
   FiMessageCircle,
 } from "react-icons/fi";
+import { fetchCountryCodes } from "../../../../settings/components/vice/service/countryCodesApi";
 
 /* ================= ICON MAP ================= */
 
@@ -208,8 +209,8 @@ export default function SocialSection({
           setPickerOpen(true);
         }}
         className={`mt-3 px-4 py-2 rounded-lg text-sm font-semibold ${locked
-            ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-            : "bg-purple-600 text-white"
+          ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+          : "bg-purple-600 text-white"
           }`}
       >
         + Add Social
@@ -261,8 +262,17 @@ function SocialLinksModal({
 }: any) {
   const [error, setError] = useState<string | null>(null);
 
+  const [countries, setCountries] = useState<any[]>([]);
+  
+  useEffect(() => {
+    const load = async () => {
+      const data = await fetchCountryCodes();
+      setCountries(data);
+    };
+    
+    load();
+  }, []);
   if (!open) return null;
-
   const handleDone = () => {
     // Auto-prefix https:// for URL-type items that look like domains
     const PHONE_IDS = ["whatsapp", "phone", "sms"];
@@ -345,29 +355,36 @@ function SocialLinksModal({
                     <Icon size={18} />
                   </div>
 
-                  {isPhoneType(s.id) ? (
-                    <div className="flex flex-1 border rounded-lg overflow-hidden">
+                  {isPhoneType(s.id) ? (() => {
+                    const { code, number } = splitPhoneNumber(s.url, countries);
+                    const selectedCode = s.country_code ?? code ?? "+91";
 
-                      <CountryCodeDropdown
-                        value={s.country_code || "+91"}
-                        onChange={(code) => {
-                          onUpdate(s.id, `${code}${s.url || ""}`);
-                        }}
-                      />
+                    return (
+                      <div className="flex flex-1 border rounded-lg overflow-hidden">
 
-                      <input
-                        type="tel"
-                        className="flex-1 px-3 py-2 text-sm outline-none"
-                        placeholder="9876543210"
-                        value={s.url}
-                        onChange={(e) => {
-                          setError(null);
-                          onUpdate(s.id, e.target.value);
-                        }}
-                      />
+                        <CountryCodeDropdown
+                          value={selectedCode}
+                          onChange={(newCode) => {
+                            const updated = combinePhoneNumber(newCode, number);
+                            onUpdate(s.id, updated);
+                          }}
+                        />
 
-                    </div>
-                  ) : (
+                        <input
+                          type="tel"
+                          className="flex-1 px-3 py-2 text-sm outline-none"
+                          placeholder="9876543210"
+                          value={number}
+                          onChange={(e) => {
+                            setError(null);
+                            const updated = combinePhoneNumber(selectedCode, e.target.value);
+                            onUpdate(s.id, updated);
+                          }}
+                        />
+
+                      </div>
+                    );
+                  })() : (
                     <input
                       className="flex-1 rounded-lg border px-3 py-2 text-sm"
                       placeholder={`Enter ${s.label} link`}

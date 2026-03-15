@@ -89,8 +89,6 @@ export default function TeamPage() {
     setResultOpen(true);
   };
 
-  const managers = useAppSelector((s) => s.team.managers);
-  const managersMeta = useAppSelector((s) => s.team.meta.managers);
   useEffect(() => {
     if (!addOpen && !editOpen) return;
 
@@ -102,23 +100,6 @@ export default function TeamPage() {
       })
     );
   }, [addOpen, editOpen, dispatch]);
-
-  const loadMoreManagers = () => {
-    if (!managersMeta) return;
-
-    const { page, total_pages } = managersMeta;
-
-    if (page >= total_pages) return;
-
-    dispatch(
-      fetchTeam({
-        role: "manager",
-        page: page + 1,
-        page_size: 10,
-        append: true,
-      })
-    );
-  };
 
   /* ======================================================
      ✅ NEW: MEMOIZED QUERY PARAMS (SINGLE SOURCE OF TRUTH)
@@ -416,9 +397,6 @@ export default function TeamPage() {
         open={addOpen}
         currentRole={currentRole}
         currentUserId={currentUserId}
-        managers={managers}
-        managersMeta={managersMeta}
-        loadMoreManagers={loadMoreManagers}
         onClose={() => {
           setAddOpen(false);
           searchParams.delete("open");
@@ -447,9 +425,6 @@ export default function TeamPage() {
         open={editOpen}
         member={selected}
         currentRole={currentRole}
-        managersMeta={managersMeta}
-        loadMoreManagers={loadMoreManagers}
-        managers={managers}
         onClose={() => {
           setEditOpen(false);
           setSelectedId(null);
