@@ -263,7 +263,7 @@ Object.entries(standardFields).forEach(([key, val]) => {
       <div className="mx-auto bg-white rounded-3xl shadow-sm flex flex-col">
 
         {/* ===== FIXED HEADER ===== */}
-        <div className="p-10 border-b bg-white rounded-t-3xl">
+        <div className="p-8 border-b bg-white rounded-t-3xl">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-2xl font-semibold">Lead Configuration</h2>
@@ -291,7 +291,7 @@ Object.entries(standardFields).forEach(([key, val]) => {
         </div>
 
         {/* ===== SCROLLABLE CONTENT ===== */}
-        <div className="flex-1 overflow-y-auto px-10 py-8 space-y-10">
+        <div className="flex-1 overflow-y-auto px-8 py-8 space-y-10">
 
           {/* Standard Fields */}
           <section>

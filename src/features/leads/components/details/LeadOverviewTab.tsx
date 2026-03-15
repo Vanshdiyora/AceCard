@@ -25,8 +25,8 @@ export default function LeadOverviewTab({ lead }: Props) {
           ? formatRupees(lead.deal_amount)
           : "—",
     },
-    { label: "Vendor", value: (lead as any).vendor_name },
-    { label: "Assigned Rep", value: lead.assigned_rep_name },
+    // { label: "Vendor", value: (lead as any).vendor_name },
+    { label: "Assigned Represntative", value: lead.assigned_rep_name },
     { label: "Rating", value: (lead as any).rating },
     { label: "Marketing Source", value: (lead as any).marketing_source },
     { label: "Job Title", value: (lead as any).job_title },

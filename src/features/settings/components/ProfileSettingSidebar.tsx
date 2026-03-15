@@ -26,7 +26,7 @@ export default function ProfileSettingsSidebar({
 }: Props) {
 
   return (
-    <div className="fixed top-0 left-[260px] h-screen z-40 hidden lg:block">
+    <div className="fixed top-0 left-[250px] h-screen z-40 hidden lg:block">
       {/* Hover strip */}
       <div className="group h-full w-[10px] hover:w-[220px] transition-all duration-300 ease-out">
         <div className="h-full w-full bg-gradient-to-b from-purple-600 to-purple-700 rounded-r-2xl shadow-xl overflow-hidden">

@@ -241,11 +241,11 @@ export default function SuggestedQuestions() {
   /* ---------------------------------------------------- */
 
   return (
-    <div className="bg-white rounded-3xl p-6 shadow-lg border">
+    <div className="bg-white rounded-3xl p-8 shadow-lg border">
 
       <div className="flex justify-between items-center mb-5">
 
-        <h2 className="text-xl font-semibold">
+        <h2 className="text-2xl font-semibold">
           Suggested Lead Questions
         </h2>
 
