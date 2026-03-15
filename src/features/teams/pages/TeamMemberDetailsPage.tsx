@@ -3,7 +3,7 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import { ArrowLeft, Edit, Shield, UserX, CheckCircle2 } from "lucide-react";
 import PublicMobileWebsite from "../../publicProfile/components/MobileWebsite";
 import { useAppDispatch, useAppSelector } from "../../../app/hooks";
-import { updateMember, fetchMemberById, updatePermissions, transferLeads, unassignManager, transferSalespersons } from "../slice";
+import { updateMember, fetchMemberById, updatePermissions, transferLeads, unassignManager, transferSalespersons, fetchTeam } from "../slice";
 import EditMemberModal from "../components/EditMemberModal";
 import PermissionsModal from "../components/PermissionsModal";
 import { loadProfileViewByUsername } from "../../publicProfile/slice";
@@ -44,7 +44,7 @@ export default function TeamMemberDetailsPage() {
   const [isCropping, setIsCropping] = useState(false);
 
   const auth = useAppSelector((s) => s.auth);
-  const { members } = useAppSelector((s) => s.team);
+  const { managers } = useAppSelector((s) => s.team);
   const [leadIds, setLeadIds] = useState<number[]>([]);
 
   const ROLES = ["vendor_admin", "manager", "sales_rep"] as const;
@@ -53,13 +53,10 @@ export default function TeamMemberDetailsPage() {
     ? (rawRole as "vendor_admin" | "manager" | "sales_rep")
     : "sales_rep";
 
-  const managers = useMemo(
-    () => members.filter((m) => m.role === "manager"),
-    [members]
-  );
+
   const vendor = useAppSelector(
-  (state) => state.settings.account.data?.vendor_name
-);
+    (state) => state.settings.account.data?.vendor_name
+  );
   const member = useAppSelector((s) => s.team.selectedMember);
 
   const [activeTab, setActiveTab] = useState<typeof TABS[number]>("overview");
@@ -115,6 +112,12 @@ export default function TeamMemberDetailsPage() {
       dispatch(loadProfileViewByUsername({ username: member.username }));
     }
   }, [member?.username, dispatch]);
+
+  useEffect(() => {
+    if (managers.length === 0) {
+      dispatch(fetchTeam({ role: "manager", page: 1, page_size: 100 }));
+    }
+  }, [dispatch, managers.length]);
 
   useEffect(() => {
     if (!id) return;
@@ -534,7 +537,6 @@ export default function TeamMemberDetailsPage() {
         open={editOpen}
         member={member}
         currentRole={currentRole}
-        managers={managers}
         onClose={() => setEditOpen(false)}
         onSubmit={async (data) => {
           const updated = await dispatch(updateMember({ id: member.id, data })).unwrap();

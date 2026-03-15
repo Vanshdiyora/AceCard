@@ -2,8 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import BrandLoader from "./BrandLoader";
 
-/* ================= TYPES ================= */
-
 interface Option {
   label: string;
   value: any;
@@ -22,8 +20,6 @@ interface Props {
   hideValues?: boolean;
 }
 
-/* ================= COMPONENT ================= */
-
 export default function SearchableSelect({
   value,
   onChange,
@@ -38,21 +34,23 @@ export default function SearchableSelect({
 }: Props) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const [pos, setPos] = useState({ top: 0, left: 0, width: 0 });
-  const [openUp, setOpenUp] = useState(false);
+
+  const [pos, setPos] = useState({
+    top: 0,
+    left: 0,
+    width: 0,
+  });
 
   const triggerRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // ✅ Always keep latest onScrollEnd in a ref — scroll handler reads from ref,
-  // so it never becomes stale even when parent re-renders with new function refs
   const onScrollEndRef = useRef(onScrollEnd);
+  const loadingRef = useRef(loading);
+
   useEffect(() => {
     onScrollEndRef.current = onScrollEnd;
   }, [onScrollEnd]);
 
-  // ✅ Same for loading — prevents double-firing while fetch is in-flight
-  const loadingRef = useRef(loading);
   useEffect(() => {
     loadingRef.current = loading;
   }, [loading]);
@@ -61,31 +59,62 @@ export default function SearchableSelect({
     o.label.toLowerCase().includes(query.toLowerCase())
   );
 
-  /* ---------- AUTO LOAD MORE WHEN LIST DOESN'T FILL THE DROPDOWN ---------- */
+  /* ---------- POSITION CALCULATION ---------- */
+
+  const updatePos = () => {
+    const trigger = triggerRef.current;
+    const dropdown = dropdownRef.current;
+
+    if (!trigger) return;
+
+    const r = trigger.getBoundingClientRect();
+
+    const viewportHeight = window.innerHeight;
+    const spaceBelow = viewportHeight - r.bottom;
+    const spaceAbove = r.top;
+
+    const dropdownHeight = dropdown?.offsetHeight || 260;
+
+    let top = r.bottom;
+
+    if (spaceBelow < dropdownHeight && spaceAbove > spaceBelow) {
+      top = r.top - dropdownHeight;
+    }
+
+    setPos({
+      top,
+      left: r.left,
+      width: r.width,
+    });
+  };
+
+  /* ---------- AUTO LOAD MORE ---------- */
+
   useEffect(() => {
     if (!open) return;
     if (!onScrollEndRef.current) return;
 
-    // Wait for DOM to paint before measuring
     const id = setTimeout(() => {
       const el = dropdownRef.current?.querySelector(
         ".scroll-list"
       ) as HTMLElement | null;
+
       if (!el) return;
 
-      // If no scrollbar exists and we're not already fetching, load more
       if (el.scrollHeight <= el.clientHeight && !loadingRef.current) {
         onScrollEndRef.current?.();
       }
     }, 150);
 
     return () => clearTimeout(id);
-  }, [open, filtered.length]); // re-runs each time new items arrive
+  }, [open, filtered.length]);
 
-  /* ---------- CLOSE ON OUTSIDE CLICK ---------- */
+  /* ---------- OUTSIDE CLICK ---------- */
+
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       const t = e.target as Node;
+
       if (
         !triggerRef.current?.contains(t) &&
         !dropdownRef.current?.contains(t)
@@ -93,32 +122,45 @@ export default function SearchableSelect({
         setOpen(false);
       }
     };
+
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
+  /* ---------- SCROLL CLOSE ---------- */
 
   useEffect(() => {
-  if (!open) return;
+    if (!open) return;
 
-  const handleScroll = (e: Event) => {
-    const target = e.target as Node;
+    const handleScroll = (e: Event) => {
+      const target = e.target as Node;
 
-    // If scroll happened inside dropdown, ignore
-    if (dropdownRef.current?.contains(target)) return;
+      if (dropdownRef.current?.contains(target)) return;
 
-    // Otherwise close dropdown
-    setOpen(false);
-  };
+      setOpen(false);
+    };
 
-  window.addEventListener("scroll", handleScroll, true);
+    const handleResize = () => setOpen(false);
 
-  return () => {
-    window.removeEventListener("scroll", handleScroll, true);
-  };
-}, [open]);
+    window.addEventListener("scroll", handleScroll, true);
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll, true);
+      window.removeEventListener("resize", handleResize);
+    };
+  }, [open]);
+
+  /* ---------- POSITION AFTER OPEN ---------- */
+
+  useEffect(() => {
+    if (!open) return;
+
+    requestAnimationFrame(updatePos);
+  }, [open, filtered.length]);
 
   /* ---------- SELECT ---------- */
+
   const toggleValue = (val: any) => {
     if (!multiple) {
       onChange(val);
@@ -127,6 +169,7 @@ export default function SearchableSelect({
     }
 
     const arr = Array.isArray(value) ? value : [];
+
     onChange(
       arr.includes(val)
         ? arr.filter((v) => v !== val)
@@ -141,42 +184,23 @@ export default function SearchableSelect({
 
   return (
     <>
-      {/* ================= TRIGGER ================= */}
+      {/* TRIGGER */}
       <div
         ref={triggerRef}
         onClick={() => {
           if (disabled) return;
-
-          const r = triggerRef.current?.getBoundingClientRect();
-          if (!r) return;
-
-          const viewportHeight = window.innerHeight;
-          const spaceBelow = viewportHeight - r.bottom;
-          const spaceAbove = r.top;
-          const DROPDOWN_ESTIMATED_HEIGHT = 260;
-
-          const shouldOpenUp =
-            spaceBelow < DROPDOWN_ESTIMATED_HEIGHT && spaceAbove > spaceBelow;
-
-          setOpenUp(shouldOpenUp);
-          setPos({
-            top: shouldOpenUp ? r.top : r.bottom,
-            left: r.left,
-            width: r.width,
-          });
-
           setOpen((s) => !s);
         }}
-        className={`border rounded-lg px-3 py-2 text-sm cursor-pointer bg-white
-          min-h-[44px] flex items-center
-          ${disabled ? "opacity-50" : ""}
-        `}
+        className={`border rounded-lg px-3 py-2 text-sm cursor-pointer bg-white min-h-[44px] flex items-center ${
+          disabled ? "opacity-50" : ""
+        }`}
       >
         <div className="flex items-center flex-wrap w-full min-h-[20px] gap-1">
           {multiple ? (
             Array.isArray(value) && value.length > 0 && !hideValues ? (
               value.map((v: any) => {
                 const opt = options.find((o) => o.value === v);
+
                 return (
                   <span
                     key={v}
@@ -207,31 +231,35 @@ export default function SearchableSelect({
           ) : (
             (() => {
               const selectedOption = options.find((o) => o.value == value);
+
               if (!selectedOption || hideValues) {
-                return <span className="text-gray-400 text-sm">{placeholder}</span>;
+                return (
+                  <span className="text-gray-400 text-sm">{placeholder}</span>
+                );
               }
+
               return (
-                <span className="text-gray-800 truncate">{selectedOption.label}</span>
+                <span className="text-gray-800 truncate">
+                  {selectedOption.label}
+                </span>
               );
             })()
           )}
         </div>
       </div>
 
-      {/* ================= DROPDOWN ================= */}
+      {/* DROPDOWN */}
       {open &&
         createPortal(
           <div
             ref={dropdownRef}
             className="fixed z-[99999] bg-white border rounded-xl shadow-lg"
             style={{
-              top: openUp ? undefined : pos.top,
-              bottom: openUp ? window.innerHeight - pos.top + "px" : undefined,
+              top: pos.top,
               left: pos.left,
               width: pos.width,
             }}
           >
-            {/* SEARCH */}
             <input
               autoFocus
               placeholder="Search..."
@@ -244,15 +272,14 @@ export default function SearchableSelect({
               className="w-full px-3 py-2 border-b outline-none text-sm"
             />
 
-            {/* LIST — class "scroll-list" used by useEffect to measure overflow */}
             <div
               className="scroll-list max-h-64 overflow-y-auto custom-scrollbar"
               onScroll={(e) => {
                 const el = e.currentTarget;
+
                 const nearBottom =
                   el.scrollTop + el.clientHeight >= el.scrollHeight - 5;
 
-                // ✅ Guard: don't fire if already loading
                 if (nearBottom && !loadingRef.current) {
                   onScrollEndRef.current?.();
                 }
@@ -262,9 +289,9 @@ export default function SearchableSelect({
                 <div
                   key={opt.value}
                   onClick={() => toggleValue(opt.value)}
-                  className={`px-3 py-2 text-sm cursor-pointer hover:bg-purple-50
-                    ${isSelected(opt.value) ? "bg-purple-100" : ""}
-                  `}
+                  className={`px-3 py-2 text-sm cursor-pointer hover:bg-purple-50 ${
+                    isSelected(opt.value) ? "bg-purple-100" : ""
+                  }`}
                 >
                   {opt.label}
                 </div>

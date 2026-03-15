@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import DynamicForm, {
-  type FieldConfig,
-} from "../../../common/ui/DynamicForm";
+import { useAppDispatch, useAppSelector } from "../../../app/hooks";
+import { fetchTeam } from "../slice";
+import DynamicForm, { type FieldConfig } from "../../../common/ui/DynamicForm";
 import { validateField } from "../../../common/utils/formValidator";
 import { uploadImage } from "../../publicProfile/services/publicProfile.api";
 
@@ -10,31 +10,29 @@ export default function EditMemberModal({
   member,
   onClose,
   onSubmit,
-  onSuccess, // 👈 NEW
+  onSuccess,
   currentRole,
-  managers,
-  managersMeta,
-  loadMoreManagers,
 }: {
   open: boolean;
   member: any;
   onClose: () => void;
-  onSubmit: (data: any) => Promise<any>; // 👈 make async
-  onSuccess?: (updated: any) => void; // 👈 callback
+  onSubmit: (data: any) => Promise<any>;
+  onSuccess?: (updated: any) => void;
   currentRole: "vendor_admin" | "manager" | "sales_rep";
-  managers: { id: number; name: string }[];
-  managersMeta?: any;              // ✅ NEW
-  loadMoreManagers?: () => void;   // ✅ NEW
-
 }) {
+  const dispatch = useAppDispatch();
+  const { managers } = useAppSelector((s) => s.team);
 
   const [form, setForm] = useState<any>(null);
-  const [errors, setErrors] = useState<
-    Record<string, string | null>
-  >({});
- const [submitAttempted, setSubmitAttempted] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string | null>>({});
+  const [submitAttempted, setSubmitAttempted] = useState(false);
 
-  /* ---------- INIT FORM ---------- */
+  /* ---------- PAGINATION STATE ---------- */
+  const [managerPage, setManagerPage] = useState(1);
+  const [hasNextManagers, setHasNextManagers] = useState(true);
+  const [loadingMoreManagers, setLoadingMoreManagers] = useState(false);
+
+  /* ---------- INIT ---------- */
   useEffect(() => {
     if (!open || !member) return;
 
@@ -45,25 +43,44 @@ export default function EditMemberModal({
       role: member.role,
       manager_id: member.manager_id ?? undefined,
       avatar: member.avatar ?? "",
-      custom_job_role: member.custom_job_role ?? "", // 👈 ADD
+      custom_job_role: member.custom_job_role ?? "",
     });
-setSubmitAttempted(false); 
-
+    setSubmitAttempted(false);
     setErrors({});
+    setManagerPage(1);
+    setHasNextManagers(true);
+
+    // Initial managers fetch
+    dispatch(fetchTeam({ page: 1, page_size: 10, role: "manager", append: true }))
+      .unwrap()
+      .then((res: any) => setHasNextManagers(res.meta.has_next));
   }, [member, open]);
 
   if (!open || !form) return null;
 
-  /* ---------- UPDATE HANDLER ---------- */
+  /* ---------- UPDATE ---------- */
   const update = (key: string, value: any) => {
     let parsedValue = value;
-
     if (key === "manager_id") {
-      parsedValue =
-        value === "" || value == null ? undefined : Number(value);
+      parsedValue = value === "" || value == null ? undefined : Number(value);
     }
-
     setForm((prev: any) => ({ ...prev, [key]: parsedValue }));
+  };
+
+  /* ---------- LOAD MORE MANAGERS ---------- */
+  const loadMoreManagers = async () => {
+    if (loadingMoreManagers || !hasNextManagers) return;
+
+    setLoadingMoreManagers(true);
+    const next = managerPage + 1;
+
+    const res: any = await dispatch(
+      fetchTeam({ page: next, page_size: 10, role: "manager", append: true })
+    ).unwrap();
+
+    setManagerPage(next);
+    setHasNextManagers(res.meta.has_next);
+    setLoadingMoreManagers(false);
   };
 
   /* ---------- FIELD CONFIG ---------- */
@@ -77,24 +94,26 @@ setSubmitAttempted(false);
         return res.data.url;
       },
     },
-
     {
       name: "name",
       label: "Full Name",
-      type: "text" as const,
+      placeholder: "Enter full name",
+      type: "text",
       required: true,
       minLength: 2,
     },
     {
       name: "email",
       label: "Email",
-      type: "email" as const,
+      placeholder: "Enter email address",
+      type: "email",
       required: true,
     },
     {
       name: "phone",
       label: "Phone",
-      type: "text" as const,
+      type: "text",
+      placeholder: "Enter phone number",
       required: true,
       pattern: /^[0-9+\-()\s]{7,15}$/,
     },
@@ -102,50 +121,58 @@ setSubmitAttempted(false);
       name: "custom_job_role",
       label: "Custom Job Role",
       type: "text",
-      placeholder: "e.g. Senior Sales Manager",
+      placeholder: "Enter custom job role",
       required: true,
     },
     ...(currentRole === "vendor_admin"
       ? [
-        {
-          name: "role",
-          label: "Role",
-          type: "select" as const,
-          required: true,
-          options: [
-            { label: "Manager", value: "manager" },
-            { label: "Sales Rep", value: "sales_rep" },
-          ],
-        },
-      ]
+          {
+            name: "role",
+            label: "Role",
+            type: "select" as const,
+            required: true,
+            options: [
+              { label: "Manager", value: "manager" },
+              { label: "Sales Rep", value: "sales_rep" },
+            ],
+          },
+        ]
       : []),
     ...(currentRole === "vendor_admin" && form.role === "sales_rep"
       ? [
-        {
-          name: "manager_id",
-          label: "Manager",
-          type: "select" as const,
-          required: true,
-          options: managers.map((m) => ({
-            label: m.name,
-            value: m.id,
-          })),
-          hasMore: managersMeta
-            ? managersMeta.page < managersMeta.total_pages
-            : false,
-          onLoadMore: loadMoreManagers,
-        }
-
-      ]
+          {
+            name: "manager_id",
+            label: "Manager",
+            type: "search-select" as const,
+            required: true,
+            placeholder: "Search and select manager",
+            options: [
+              // Always keep the currently assigned manager at top
+              ...(member.manager_id
+                ? [
+                    {
+                      label:
+                        managers.find((m) => m.id === member.manager_id)
+                          ?.name ?? `Manager #${member.manager_id}`,
+                      value: member.manager_id,
+                    },
+                  ]
+                : []),
+              ...managers
+                .filter((m) => m.id !== member.manager_id)
+                .map((m) => ({ label: m.name, value: m.id })),
+            ],
+            onScrollEnd: loadMoreManagers,
+            showLoader: loadingMoreManagers,
+          },
+        ]
       : []),
   ];
 
-
   /* ---------- SUBMIT ---------- */
   const submit = async () => {
-    setSubmitAttempted(true); // ✅ ADD
+    setSubmitAttempted(true);
 
-    // ✅ Collect all errors at once
     const newErrors: Record<string, string | null> = {};
     let hasErrors = false;
 
@@ -155,8 +182,7 @@ setSubmitAttempted(false);
       if (error) hasErrors = true;
     });
 
-    setErrors(newErrors); // ✅ Single update
-
+    setErrors(newErrors);
     if (hasErrors) return;
 
     if (
@@ -181,15 +207,10 @@ setSubmitAttempted(false);
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
       <div className="bg-white w-[400px] max-h-[90vh] rounded-xl shadow-lg flex flex-col">
-
-        {/* Header */}
         <div className="p-5 border-b">
-          <h2 className="text-xl font-semibold">
-            Edit Member
-          </h2>
+          <h2 className="text-xl font-semibold">Edit Member</h2>
         </div>
 
-        {/* Scrollable Form Area */}
         <div className="overflow-y-auto flex-1">
           <DynamicForm
             fields={fields}
@@ -201,12 +222,8 @@ setSubmitAttempted(false);
           />
         </div>
 
-        {/* Footer */}
         <div className="p-4 border-t flex justify-end gap-2">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 border rounded"
-          >
+          <button onClick={onClose} className="px-4 py-2 border rounded">
             Cancel
           </button>
           <button
@@ -216,9 +233,7 @@ setSubmitAttempted(false);
             Save
           </button>
         </div>
-
       </div>
     </div>
   );
-
 }

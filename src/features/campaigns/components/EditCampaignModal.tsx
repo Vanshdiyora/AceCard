@@ -58,7 +58,7 @@ export default function EditCampaignModal({
   const [loadingMoreSales, setLoadingMoreSales] = useState(false);
   const [loadingMoreProducts, setLoadingMoreProducts] = useState(false);
 
-const { managers, salesReps: salespeople } = useAppSelector((s) => s.team); 
+  const { managers, salesReps: salespeople } = useAppSelector((s) => s.team);
 
   /* ---------- FORM BUILDER ---------- */
   const buildForm = (c: EnrichedCampaign) => ({
@@ -189,11 +189,13 @@ const { managers, salesReps: salespeople } = useAppSelector((s) => s.team);
       type: "text",
       required: true,
       minLength: 3,
+      placeholder: "Enter campaign name",
     },
     {
       name: "description",
       label: "Description",
       type: "textarea",
+      placeholder: "Enter campaign description",
     },
     {
       name: "budget",
@@ -201,6 +203,7 @@ const { managers, salesReps: salespeople } = useAppSelector((s) => s.team);
       type: "number",
       required: true,
       min: 1,
+      placeholder: "Enter campaign budget",
     },
     {
       name: "status",
@@ -208,24 +211,42 @@ const { managers, salesReps: salespeople } = useAppSelector((s) => s.team);
       type: "select",
       required: true,
       options: STATUS_OPTIONS,
+      placeholder: "Select campaign status",
     },
-    {
-      name: "manager_id",
-      label: "Owner (Manager)",
-      type: "search-select",   // 🔥
-      required: true,
-      options: managers.map((m) => ({
+   {
+  name: "manager_id",
+  label: "Owner (Manager)",
+  type: "search-select",
+  required: true,
+  placeholder: "Search and select manager",
+
+  options: [
+    ...(campaign.manager_id
+      ? [
+          {
+            label: campaign.manager_name,
+            value: campaign.manager_id,
+          },
+        ]
+      : []),
+
+    ...managers
+      .filter((m) => m.id !== campaign.manager_id)
+      .map((m) => ({
         label: m.name,
         value: m.id,
       })),
-      onScrollEnd: loadMoreManagers,
-      showLoader: loadingMoreManagers,
-    },
+  ],
+
+  onScrollEnd: loadMoreManagers,
+  showLoader: loadingMoreManagers,
+},
 
     {
       name: "assigned_reps_ids",
       label: "Assigned Salespersons",
-      type: "search-multiselect", // 🔥
+      type: "search-multiselect",
+      placeholder: "Search and select salespersons",
       options: salespeople.map((s) => ({
         label: s.name,
         value: s.id,
@@ -237,12 +258,25 @@ const { managers, salesReps: salespeople } = useAppSelector((s) => s.team);
     {
       name: "product_ids",
       label: "Products",
-      type: "search-multiselect", // 🔥
+      type: "search-multiselect",
       required: true,
-      options: products.map((p) => ({
-        label: p.name,
-        value: p.id,
-      })),
+      placeholder: "Search and select products",
+
+      options: [
+        ...(campaign.products ?? []).map((p) => ({
+          label: p.name,
+          value: p.id,
+        })),
+        ...products
+          .filter(
+            (p) => !(campaign.products ?? []).some((cp) => cp.id === p.id)
+          )
+          .map((p) => ({
+            label: p.name,
+            value: p.id,
+          })),
+      ],
+
       onScrollEnd: loadMoreProducts,
       showLoader: loadingMoreProducts || productsLoading,
       disabled: productsLoading,
@@ -254,74 +288,76 @@ const { managers, salesReps: salespeople } = useAppSelector((s) => s.team);
       label: "Start Date",
       type: "date",
       required: true,
+      placeholder: "Select start date",
     },
     {
       name: "end_date",
       label: "End Date",
       type: "date",
+      placeholder: "Select end date",
     },
   ];
 
   /* ---------- SAVE ---------- */
-const save = async () => {
-  setSubmitAttempted(true);
+  const save = async () => {
+    setSubmitAttempted(true);
 
-  const newErrors: Record<string, string | null> = {};
-  let hasErrors = false;
+    const newErrors: Record<string, string | null> = {};
+    let hasErrors = false;
 
-  fields.forEach((field) => {
-    const error = validateField(field, form[field.name], form);
-    newErrors[field.name] = error;
-    if (error) hasErrors = true;
-  });
+    fields.forEach((field) => {
+      const error = validateField(field, form[field.name], form);
+      newErrors[field.name] = error;
+      if (error) hasErrors = true;
+    });
 
-  setErrors(newErrors);
-  if (hasErrors) return;
+    setErrors(newErrors);
+    if (hasErrors) return;
 
-  try {
-    setProcessing?.(true);
+    try {
+      setProcessing?.(true);
 
-    await dispatch(
-      updateCampaign({
-        id: campaign.id,
-        data: {
-          name: form.name,
-          description: form.description || undefined,
-          status: form.status,
-          budget: Number(form.budget),
-          manager_id: Number(form.manager_id),
-          assigned_reps_ids: form.assigned_reps_ids.length
-            ? form.assigned_reps_ids
-            : undefined,
-          product_ids: form.product_ids.length
-            ? form.product_ids
-            : undefined,
-          start_date: form.start_date
-            ? new Date(form.start_date).toISOString()
-            : undefined,
-          end_date: form.end_date
-            ? new Date(form.end_date).toISOString()
-            : undefined,
-        },
-      })
-    ).unwrap();
+      await dispatch(
+        updateCampaign({
+          id: campaign.id,
+          data: {
+            name: form.name,
+            description: form.description || undefined,
+            status: form.status,
+            budget: Number(form.budget),
+            manager_id: Number(form.manager_id),
+            assigned_reps_ids: form.assigned_reps_ids.length
+              ? form.assigned_reps_ids
+              : undefined,
+            product_ids: form.product_ids.length
+              ? form.product_ids
+              : undefined,
+            start_date: form.start_date
+              ? new Date(form.start_date).toISOString()
+              : undefined,
+            end_date: form.end_date
+              ? new Date(form.end_date).toISOString()
+              : undefined,
+          },
+        })
+      ).unwrap();
 
-    onClose();
-    onSuccess?.(); // ✅ Trigger ResultModal
+      onClose();
+      onSuccess?.(); // ✅ Trigger ResultModal
 
-  } catch (err: unknown) {
-    const message =
-      typeof err === "string"
-        ? err
-        : err instanceof Error
-        ? err.message
-        : "Failed to update campaign.";
+    } catch (err: unknown) {
+      const message =
+        typeof err === "string"
+          ? err
+          : err instanceof Error
+            ? err.message
+            : "Failed to update campaign.";
 
-    onError?.(message); // ✅ Trigger error ResultModal
-  } finally {
-    setProcessing?.(false);
-  }
-};
+      onError?.(message); // ✅ Trigger error ResultModal
+    } finally {
+      setProcessing?.(false);
+    }
+  };
 
   /* ---------- UI ---------- */
   return (
@@ -337,7 +373,7 @@ const save = async () => {
           onChange={update}
           errors={errors}
           setErrors={setErrors}
-          submitAttempted={submitAttempted} 
+          submitAttempted={submitAttempted}
         />
 
         <div className="p-4 border-t flex justify-end gap-3">

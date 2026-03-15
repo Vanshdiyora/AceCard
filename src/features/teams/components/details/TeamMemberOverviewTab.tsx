@@ -5,7 +5,8 @@ import { useEffect, useMemo, useRef } from "react";
 import { fetchCampaignsByTeamMember } from "../../../campaigns/slice";
 import BrandLoader from "../../../../common/ui/BrandLoader";
 import QRCode from "qrcode";
-import { Copy, Download } from "lucide-react";
+import { Check, Copy, Download } from "lucide-react";
+import { useState } from "react";
 
 export default function TeamMemberOverviewTab({
   member,
@@ -19,15 +20,15 @@ export default function TeamMemberOverviewTab({
   const { items, loading } = useAppSelector((s) => s.campaigns);
   const allCampaigns = items ?? [];
   const vendor = useAppSelector(
-  (state) => state.settings.account.data?.vendor_name
-);
+    (state) => state.settings.account.data?.vendor_name
+  );
   const profileUrl = member?.username
     ? `${window.location.origin}/profile/${vendor}/${member.username}`
     : "";
   const directUrl = `${profileUrl}?type=direct`;
   const qrUrl = `${profileUrl}?type=qr`;
   const nfcUrl = `${profileUrl}?type=nfc`;
-
+  const [copied, setCopied] = useState<"direct" | "nfc" | null>(null);
   const displayRole = useMemo(() => {
     switch (member.role) {
       case "sales_rep":
@@ -54,9 +55,14 @@ export default function TeamMemberOverviewTab({
   }, [profileUrl]);
 
   /* ---------------- Copy ---------------- */
-  const copy = async (text: string) => {
+  const copy = async (text: string, type: "direct" | "nfc") => {
     try {
       await navigator.clipboard.writeText(text);
+      setCopied(type);
+
+      setTimeout(() => {
+        setCopied(null);
+      }, 1500);
     } catch { }
   };
 
@@ -137,10 +143,18 @@ export default function TeamMemberOverviewTab({
                   className="w-full text-xs px-3 py-2 rounded-lg border bg-gray-50 truncate"
                 />
                 <button
-                  onClick={() => copy(directUrl)}
-                  className="p-2 rounded-lg border hover:bg-gray-50 shrink-0"
+                  onClick={() => copy(directUrl, "direct")}
+                  className={`p-2 rounded-lg border transition shrink-0
+    ${copied === "direct"
+                      ? "bg-green-50 border-green-400 text-green-600"
+                      : "hover:bg-gray-50"}
+  `}
                 >
-                  <Copy size={16} />
+                  {copied === "direct" ? (
+                    <Check size={16} className="animate-scaleIn" />
+                  ) : (
+                    <Copy size={16} />
+                  )}
                 </button>
               </div>
             </div>
@@ -155,10 +169,18 @@ export default function TeamMemberOverviewTab({
                   className="w-full text-xs px-3 py-2 rounded-lg border bg-gray-50 truncate"
                 />
                 <button
-                  onClick={() => copy(nfcUrl)}
-                  className="p-2 rounded-lg border hover:bg-gray-50 shrink-0"
+                  onClick={() => copy(nfcUrl, "nfc")}
+                  className={`p-2 rounded-lg border transition shrink-0
+    ${copied === "nfc"
+                      ? "bg-green-50 border-green-400 text-green-600"
+                      : "hover:bg-gray-50"}
+  `}
                 >
-                  <Copy size={16} />
+                  {copied === "nfc" ? (
+                    <Check size={16} className="animate-scaleIn" />
+                  ) : (
+                    <Copy size={16} />
+                  )}
                 </button>
               </div>
             </div>

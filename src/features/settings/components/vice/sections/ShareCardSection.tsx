@@ -2,27 +2,36 @@ import QRCode from "qrcode";
 import { Copy, Download } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 
-export function ShareCardSection({ username, vendor }: { username?: string, vendor?: string }) {
+export function ShareCardSection({
+  username,
+  vendor,
+}: {
+  username?: string;
+  vendor?: string;
+}) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [copied, setCopied] = useState(false);
 
   if (!username) return null;
 
   const baseUrl = window.location.origin;
-  const cardUrl = `${baseUrl}/profile/${vendor}/${username}`;
+
+  // 👇 Two different URLs
+  const directUrl = `${baseUrl}/profile/${vendor}/${username}?type=direct`;
+  const qrUrl = `${baseUrl}/profile/${vendor}/${username}?type=qr`;
 
   // 🔥 Generate QR
   useEffect(() => {
     if (!canvasRef.current) return;
 
-    QRCode.toCanvas(canvasRef.current, cardUrl, {
-      width: 100,      // 👈 Reduce size here (try 120–160)
-      margin: 2,       // optional (default is 4)
+    QRCode.toCanvas(canvasRef.current, qrUrl, {
+      width: 100,
+      margin: 2,
     });
-  }, [cardUrl]);
+  }, [qrUrl]);
 
   const handleCopy = async () => {
-    await navigator.clipboard.writeText(cardUrl);
+    await navigator.clipboard.writeText(directUrl);
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
   };
@@ -40,14 +49,13 @@ export function ShareCardSection({ username, vendor }: { username?: string, vend
 
   return (
     <div className="space-y-6">
-
       {/* COPY LINK */}
       <div>
         <p className="text-sm font-medium mb-2">Copy Your Card Link</p>
 
         <div className="flex items-center border rounded-full px-4 py-2 bg-gray-50">
           <input
-            value={cardUrl}
+            value={directUrl}
             readOnly
             className="flex-1 bg-transparent text-sm outline-none"
           />
@@ -59,16 +67,13 @@ export function ShareCardSection({ username, vendor }: { username?: string, vend
           </button>
         </div>
 
-        {copied && (
-          <p className="text-xs text-green-600 mt-1">Copied!</p>
-        )}
+        {copied && <p className="text-xs text-green-600 mt-1">Copied!</p>}
       </div>
 
       {/* QR SECTION */}
       <div>
         <p className="text-sm font-medium mb-3">QR Code</p>
 
-        {/* QR + Download */}
         <div className="flex items-center gap-6">
           <div className="p-4 bg-gray-50 rounded-xl border">
             <canvas ref={canvasRef} />
