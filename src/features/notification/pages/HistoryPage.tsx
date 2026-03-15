@@ -46,7 +46,6 @@ function NotificationDetailModal({
 
         {/* Scrollable body */}
         <div className="overflow-y-auto flex-1 px-5 py-4 space-y-5">
-
           {/* Message */}
           <div>
             <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
@@ -105,44 +104,107 @@ export default function NotificationHistoryPage() {
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const loadingLock = useRef(false);
+  const loadingRef = useRef(false);
+  const metaRef = useRef(meta);
+  const searchRef = useRef("");
 
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<any | null>(null);
+  const isFirstRender = useRef(true);
 
+  /* ---------- KEEP REFS IN SYNC ---------- */
+  useEffect(() => {
+    loadingRef.current = loading;
+    if (!loading) loadingLock.current = false;
+  }, [loading]);
+
+  useEffect(() => {
+    metaRef.current = meta;
+  }, [meta]);
+
+  useEffect(() => {
+    searchRef.current = search;
+  }, [search]);
+
+  /* ---------- INITIAL FETCH ---------- */
   useEffect(() => {
     dispatch(resetSentNotifications());
     dispatch(fetchSentNotifications({ page: 1, page_size: 10, search: "" }));
   }, [dispatch]);
 
+  /* ---------- SEARCH FETCH ---------- */
   useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
     const t = setTimeout(() => {
       dispatch(resetSentNotifications());
       dispatch(fetchSentNotifications({ page: 1, page_size: 10, search }));
     }, 400);
     return () => clearTimeout(t);
   }, [search]);
-
-  const handleScroll = () => {
+  useEffect(() => {
     const el = scrollRef.current;
-    if (!el || loading || !meta?.has_next || loadingLock.current) return;
-    const { scrollTop, scrollHeight, clientHeight } = el;
-    if (scrollHeight - (scrollTop + clientHeight) < 120) {
+    const currentMeta = metaRef.current;
+
+    if (!el) return;
+
+    const notScrollable = el.scrollHeight <= el.clientHeight;
+
+    if (
+      notScrollable &&
+      currentMeta?.has_next &&
+      !loadingRef.current &&
+      !loadingLock.current &&
+      currentMeta.page === 1
+    ) {
       loadingLock.current = true;
+
       dispatch(
         fetchSentNotifications({
-          page: (meta?.page ?? 1) + 1,
-          page_size: meta?.page_size ?? 10,
-          search,
+          page: currentMeta.page + 1,
+          page_size: currentMeta.page_size ?? 10,
+          search: searchRef.current,
         })
       );
     }
-  };
-
+  }, [meta?.page]);
   useEffect(() => {
-    if (!loading) loadingLock.current = false;
-  }, [notifications]);
+    const onScroll = () => {
+      const currentMeta = metaRef.current;
 
-  /* Strip HTML tags for the preview snippet */
+      if (
+        loadingRef.current ||
+        loadingLock.current ||
+        !currentMeta?.has_next
+      )
+        return;
+
+      const scrollPosition =
+        window.innerHeight + document.documentElement.scrollTop;
+
+      const pageHeight = document.documentElement.offsetHeight;
+
+      if (scrollPosition >= pageHeight - 200) {
+        loadingLock.current = true;
+
+        dispatch(
+          fetchSentNotifications({
+            page: (currentMeta.page ?? 1) + 1,
+            page_size: currentMeta.page_size ?? 10,
+            search: searchRef.current,
+          })
+        );
+      }
+    };
+
+    window.addEventListener("scroll", onScroll);
+
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [dispatch]);
+
+  /* Strip HTML tags for preview snippet */
   const stripHtml = (html: string) => {
     const div = document.createElement("div");
     div.innerHTML = html;
@@ -150,18 +212,21 @@ export default function NotificationHistoryPage() {
   };
 
   return (
-    <div className="p-6 h-[calc(100dvh-var(--app-header-height))] flex flex-col">
+    <div className="p-6 h-[calc(100dvh-var(--app-header-height))] flex flex-col overflow-hidden">
 
       {/* Top bar */}
-      <div className="flex items-center gap-3 mb-5">
-        <button onClick={() => navigate(-1)} className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
+      <div className="flex items-center gap-3 mb-5 flex-shrink-0">
+        <button
+          onClick={() => navigate(-1)}
+          className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+        >
           <ArrowLeft size={20} />
         </button>
         <h1 className="text-3xl font-bold text-gray-800">Notification History</h1>
       </div>
 
       {/* Search */}
-      <div className="mb-4 w-[400px]">
+      <div className="mb-4 w-[400px] flex-shrink-0">
         <div className="relative">
           <Search size={16} className="absolute left-3 top-2.5 text-gray-400" />
           <input
@@ -176,9 +241,7 @@ export default function NotificationHistoryPage() {
       {/* List */}
       <div
         ref={scrollRef}
-        onScroll={handleScroll}
-        className="flex-1 overflow-y-auto space-y-3 pr-2"
-        style={{ minHeight: 0, maxHeight: "70vh" }}
+        className="flex-1 space-y-3 pr-2 min-h-0"
       >
         {(notifications ?? []).map((n) => (
           <button
@@ -195,12 +258,9 @@ export default function NotificationHistoryPage() {
                 </div>
 
                 <div className="min-w-0 flex-1">
-                  {/* Title */}
                   <div className="font-semibold text-gray-900 text-sm truncate">
                     {n.message_title}
                   </div>
-
-                  {/* Message preview — max 2 lines, ~80 chars */}
                   <div className="text-xs text-gray-500 mt-0.5 line-clamp-2 leading-relaxed">
                     {stripHtml(n.message_body).slice(0, 120)}
                     {stripHtml(n.message_body).length > 120 ? "…" : ""}
@@ -228,8 +288,17 @@ export default function NotificationHistoryPage() {
         ))}
 
         {loading && notifications.length > 0 && (
-          <div className="flex justify-center py-4 text-gray-400 text-sm">Loading more...</div>
+          <div className="flex justify-center py-4 text-gray-400 text-sm">
+            Loading more...
+          </div>
         )}
+
+        {loading && notifications.length === 0 && (
+          <div className="flex justify-center py-12 text-gray-400 text-sm">
+            Loading...
+          </div>
+        )}
+
         {!loading && notifications.length === 0 && (
           <div className="text-center text-gray-400 py-12">
             <Bell size={32} className="mx-auto mb-2 opacity-30" />
