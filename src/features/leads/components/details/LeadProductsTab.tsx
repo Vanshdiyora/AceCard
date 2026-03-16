@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import type { Lead } from "../../types";
+import { formatRupees } from "../../../../common/utils/ruppeeFormater";
 
 interface Props {
   lead: Lead;
@@ -71,7 +72,7 @@ const ProductRow = ({
               <span className="mr-3">Qty: {product.quantity}</span>
             )}
             {product.price != null && (
-              <span>Price: ₹{product.price}</span>
+              <span>Price: {formatRupees(product.price)}</span>
             )}
           </div>
         </div>

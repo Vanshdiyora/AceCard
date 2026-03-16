@@ -196,16 +196,16 @@ export const fetchLeadTimeline = createAsyncThunk<
             actor: e.data?.author_name,
           };
 
-      case "meeting":
-  return {
-    id: e.id,
-    type: "meeting",
-    timestamp: e.timestamp,
-    scheduled_at: e.data?.scheduled_at,
-    title: `Meeting: ${e.data?.title}`,
-    description: `${e.data?.location} • ${e.data?.duration_min} min`,
-    actor: e.data?.created_by_name, // ✅ show real name
-  };
+        case "meeting":
+          return {
+            id: e.id,
+            type: "meeting",
+            timestamp: e.timestamp,
+            scheduled_at: e.data?.scheduled_at,
+            title: `Meeting: ${e.data?.title}`,
+            description: `${e.data?.duration_min} min`,
+            actor: e.data?.created_by_name, // ✅ show real name
+          };
         case "created":
           return {
             id: e.id,
@@ -226,22 +226,22 @@ export const fetchLeadTimeline = createAsyncThunk<
             actor: e.data?.actor_id ? `User #${e.data.actor_id}` : undefined,
           };
 
-      case "meeting_status_update":
-  return {
-    id: e.id,
-    type: "meeting_status_update",
-    timestamp: e.timestamp,
-    title: "Meeting Status Updated",
-    description: `Meeting marked as ${e.data?.metadata?.status}`,
-    actor: e.data?.actor_name ?? (e.data?.actor_id ? `User #${e.data.actor_id}` : undefined),
-  };
+        case "meeting_status_update":
+          return {
+            id: e.id,
+            type: "meeting_status_update",
+            timestamp: e.timestamp,
+            title: "Meeting Status Updated",
+            description: `Meeting marked as ${e.data?.metadata?.status}`,
+            actor: e.data?.actor_name ?? (e.data?.actor_id ? `User #${e.data.actor_id}` : undefined),
+          };
         case "assignment_change":
           return {
             id: e.id,
             type: "assignment_change",
             timestamp: e.timestamp,
             title: "Assignment Updated",
-            description: `Assigned from ${e.data?.metadata?.from ?? "none"} to ${e.data?.metadata?.to ?? "unassigned"
+            description: `Assigned from ${e.data?.metadata?.from_name ?? "none"} to ${e.data?.metadata?.to_name ?? "unassigned"
               }`,
             actor: e.data?.actor_id ? `User #${e.data.actor_id}` : undefined,
           };

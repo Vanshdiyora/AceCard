@@ -455,32 +455,28 @@ Object.entries(standardFields).forEach(([key, val]) => {
               ))}
             </div>
 
-            <div className="flex flex-col gap-1">
-              <div className="flex gap-2">
-                <input
-                  className={`border rounded px-3 py-2 flex-1 ${stageError ? "border-red-500" : ""
-                    }`}
-                  placeholder="New stage"
-                  value={newStage}
-                  onChange={(e) => {
-                    setNewStage(e.target.value);
-                    if (stageError) setStageError("");
-                  }}
-                />
-                <button
-                  className="px-4 py-2 bg-gray-900 text-white rounded"
-                  onClick={addStage}
-                >
-                  Add
-                </button>
-              </div>
-
-              {stageError && (
-                <span className="text-red-500 text-xs mt-1">
-                  {stageError}
-                </span>
-              )}
-            </div>
+          <div className="flex flex-col gap-1">
+  <div className="flex gap-2">
+    <input
+      className={`border rounded px-3 py-2 flex-1 ${
+        stageError ? "border-red-500" : ""
+      }`}
+      placeholder="New stage"
+      value={newStage}
+      onChange={(e) => {
+        const value = e.target.value.replace(/[^a-zA-Z0-9 ]/g, "");
+        setNewStage(value);
+        if (stageError) setStageError("");
+      }}
+    />
+    <button
+      className="px-4 py-2 bg-gray-900 text-white rounded"
+      onClick={addStage}
+    >
+      Add
+    </button>
+  </div>
+</div>
           </section>
 
           {/* Custom Fields */}
