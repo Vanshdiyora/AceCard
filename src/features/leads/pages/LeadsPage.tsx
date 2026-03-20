@@ -167,7 +167,7 @@ export default function LeadsPage() {
       Name: l.lead_name,
       Company: l.company ?? "",
       Owner: l.assigned_rep_name ?? "",
-      "Deal Amount": formatRupees(l.deal_amount) ?? "",
+      "Deal Amount": l.deal_amount ?? "",
       Stage: l.stage,
       "Updated At": new Date(l.updated_at).toLocaleString(),
     }));

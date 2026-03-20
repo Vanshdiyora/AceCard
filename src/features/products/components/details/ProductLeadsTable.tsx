@@ -27,11 +27,16 @@ export default function ProductLeadsTable({ productId }: Props) {
     dispatch(fetchProductLeads(productId));
   }, [dispatch, productId]);
 
+  const displayValue = (value?: string) => {
+    if (!value || !value.trim()) return "-";
+    return value;
+  };
+
   const columns: Column<LeadRow>[] = [
-    { header: "Lead Name", accessor: "lead_name" },
-    { header: "Campaign", accessor: "campaign_name" },
-    { header: "Owner", accessor: "owner_name" },
-    { header: "Manager", accessor: "manager_name" },
+    { header: "Lead Name", render: (row) => displayValue(row.lead_name) },
+    { header: "Campaign", render: (row) => displayValue(row.campaign_name) },
+    { header: "Owner", render: (row) => displayValue(row.owner_name) },
+    { header: "Manager", render: (row) => displayValue(row.manager_name) },
   ];
 
   return (

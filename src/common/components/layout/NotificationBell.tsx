@@ -6,9 +6,7 @@ import NotificationSidebar from "../../../features/notification/components/Notif
 export default function NotificationBell() {
   const [open, setOpen] = useState(false);
 
-  const notifications =
-    useAppSelector((s: any) => s.notifications || s.notfication || []);
-  const unread = notifications.meta?.total_unread_count;
+  const unread = useAppSelector((s) => s.notifications?.unreadCount ?? 0);
   return (
     <>
       <button

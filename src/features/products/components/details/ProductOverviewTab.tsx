@@ -24,7 +24,7 @@ export default function ProductOverviewTab({
         </div>
 
         {/* RIGHT: Rectangular Image */}
-        <div className="w-full md:w-64 h-29 rounded-xl overflow-hidden border bg-gray-100 flex items-center justify-center">
+        <div className="w-full md:w-64 aspect-[16/9] max-h-44 rounded-xl overflow-hidden border bg-gray-100 flex items-center justify-center shrink-0">
           {product.product_img_url ? (
             <img
               src={product.product_img_url}

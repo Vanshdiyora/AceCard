@@ -90,7 +90,7 @@ export default function ProductsPage() {
     document.body.style.paddingRight = "";
   };
   useEffect(() => {
-    const isAnyModalOpen = importOpen || result.open;
+    const isAnyModalOpen = open || importOpen || result.open;
 
     if (isAnyModalOpen) {
       lockScroll();
@@ -101,7 +101,7 @@ export default function ProductsPage() {
     return () => {
       unlockScroll();
     };
-  }, [importOpen, result.open]);
+  }, [open, importOpen, result.open]);
   useEffect(() => {
     const open = searchParams.get("open");
 

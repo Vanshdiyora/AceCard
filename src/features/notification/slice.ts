@@ -6,12 +6,26 @@ export const fetchNotifications = createAsyncThunk(
   "notifications/fetch",
   async ({ page = 1 }: { page?: number }) => {
     const res = await notificationService.getMyNotifications(page);
+    const apiMeta = (res.meta ?? {}) as {
+      page?: number;
+      page_size?: number;
+      total_pages?: number;
+      has_next?: boolean;
+      total_unread_count?: number;
+    };
+
     return {
       list: (res.data ?? []).map((n: any) => ({
         ...n,
         is_read: n.status === "read",
       })),
-      meta: res.meta,
+      meta: {
+        page: apiMeta.page ?? page,
+        page_size: apiMeta.page_size ?? 10,
+        total_pages: apiMeta.total_pages ?? 1,
+        has_next: apiMeta.has_next ?? false,
+        total_unread_count: apiMeta.total_unread_count,
+      },
       page,
     };
   }
@@ -114,11 +128,13 @@ interface State {
   sending: boolean;
   archiving: boolean;
   archiveError?: string;
+  unreadCount: number;
   meta?: {
     page: number;
     page_size: number;
     total_pages: number;
     has_next: boolean;
+    total_unread_count?: number;
   };
   sentList: SentNotification[];
   sentLoading: boolean;
@@ -137,6 +153,7 @@ const initialState: State = {
   loading: false,
   sending: false,
   archiving: false,
+  unreadCount: 0,
   meta: undefined,
   sentList: [],
   sentLoading: false,
@@ -148,10 +165,15 @@ const notificationSlice = createSlice({
   initialState,
   reducers: {
     pushNotification: (state, action) => {
-      state.list.unshift({
+      const normalized = {
         ...action.payload,
         is_read: action.payload.status === "read",
-      });
+      };
+
+      state.list.unshift(normalized);
+      if (!normalized.is_read) {
+        state.unreadCount += 1;
+      }
     },
     clearArchiveError: (state) => {
       state.archiveError = undefined;
@@ -168,6 +190,8 @@ const notificationSlice = createSlice({
       })
       .addCase(fetchNotifications.fulfilled, (state, action) => {
         const { list, meta, page } = action.payload;
+        const unreadFromMeta = (meta as { total_unread_count?: number } | undefined)
+          ?.total_unread_count;
 
         if (page === 1) {
           state.list = list;
@@ -178,13 +202,19 @@ const notificationSlice = createSlice({
         }
 
         state.meta = meta;
+        if (typeof unreadFromMeta === "number") {
+          state.unreadCount = unreadFromMeta;
+        } else if (page === 1) {
+          state.unreadCount = state.list.filter((n) => !n.is_read).length;
+        }
         state.loading = false;
       })
       .addCase(markRead.fulfilled, (state, action) => {
         const n = state.list.find((i) => i.id === action.payload);
-        if (n) {
+        if (n && !n.is_read) {
           n.is_read = true;
           n.status = "read";
+          if (state.unreadCount > 0) state.unreadCount -= 1;
         }
       })
 
@@ -193,6 +223,7 @@ const notificationSlice = createSlice({
           n.is_read = true;
           n.status = "read";
         });
+        state.unreadCount = 0;
       })
 
       .addCase(sendVendorNotification.pending, (state) => {
@@ -212,6 +243,10 @@ const notificationSlice = createSlice({
 
       .addCase(archiveNotification.fulfilled, (state, action) => {
         state.archiving = false;
+        const archived = state.list.find((n) => n.id === action.payload);
+        if (archived && !archived.is_read && state.unreadCount > 0) {
+          state.unreadCount -= 1;
+        }
         state.list = state.list.filter((n) => n.id !== action.payload);
       })
 
@@ -228,6 +263,7 @@ const notificationSlice = createSlice({
       .addCase(archiveAllNotifications.fulfilled, (state) => {
         state.archiving = false;
         state.list = []; // clear all notifications
+        state.unreadCount = 0;
       })
 
       .addCase(archiveAllNotifications.rejected, (state, action) => {
