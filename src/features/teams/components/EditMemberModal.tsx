@@ -36,19 +36,21 @@ export default function EditMemberModal({
   useEffect(() => {
     if (!open || !member) return;
 
-    setForm({
-      name: member.name ?? "",
-      email: member.email ?? "",
-      phone: member.phone ?? "",
-      role: member.role,
-      manager_id: member.manager_id ?? undefined,
-      avatar: member.avatar ?? "",
-      custom_job_role: member.custom_job_role ?? "",
+    queueMicrotask(() => {
+      setForm({
+        name: member.name ?? "",
+        email: member.email ?? "",
+        phone: member.phone ?? "",
+        role: member.role,
+        manager_id: member.manager_id ?? undefined,
+        avatar: member.avatar ?? "",
+        custom_job_role: member.custom_job_role ?? "",
+      });
+      setSubmitAttempted(false);
+      setErrors({});
+      setManagerPage(1);
+      setHasNextManagers(true);
     });
-    setSubmitAttempted(false);
-    setErrors({});
-    setManagerPage(1);
-    setHasNextManagers(true);
 
     // Initial managers fetch
     dispatch(fetchTeam({ page: 1, page_size: 10, role: "manager", append: true }))

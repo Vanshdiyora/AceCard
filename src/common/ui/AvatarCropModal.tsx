@@ -17,7 +17,7 @@ export default function AvatarCropModal({ file, onCancel, onSave }: Props) {
   /* create blob URL once */
   useEffect(() => {
     const url = URL.createObjectURL(file);
-    setImageUrl(url);
+    queueMicrotask(() => setImageUrl(url));
     return () => URL.revokeObjectURL(url);
   }, [file]);
 

@@ -76,7 +76,7 @@ export default function PageFilters({
   const debounceRef = useRef<number | undefined>(undefined);
   useEffect(() => {
     if (initialSearch !== undefined) {
-      setSearchValue(initialSearch);
+      queueMicrotask(() => setSearchValue(initialSearch));
     }
   }, [initialSearch]);
   /* -------- Outside click -------- */

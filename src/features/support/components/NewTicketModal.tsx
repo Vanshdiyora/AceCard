@@ -53,14 +53,16 @@ export default function NewTicketModal({
   useEffect(() => {
     if (!open) return;
 
-    setForm({
-      subject: "",
-      priority: "medium",
-      category: "technical",
-      description: "",
+    queueMicrotask(() => {
+      setForm({
+        subject: "",
+        priority: "medium",
+        category: "technical",
+        description: "",
+      });
+      setSubmitAttempted(false);
+      setErrors({});
     });
-    setSubmitAttempted(false);
-    setErrors({});
   }, [open]);
 
   if (!open) return null;

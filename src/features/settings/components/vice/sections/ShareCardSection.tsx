@@ -12,23 +12,26 @@ export function ShareCardSection({
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [copied, setCopied] = useState(false);
 
-  if (!username) return null;
-
   const baseUrl = window.location.origin;
+  const safeVendor = vendor ?? "";
+  const safeUsername = username ?? "";
 
   // 👇 Two different URLs
-  const directUrl = `${baseUrl}/profile/${vendor}/${username}?type=direct`;
-  const qrUrl = `${baseUrl}/profile/${vendor}/${username}?type=qr`;
+  const directUrl = `${baseUrl}/profile/${safeVendor}/${safeUsername}?type=direct`;
+  const qrUrl = `${baseUrl}/profile/${safeVendor}/${safeUsername}?type=qr`;
 
   // 🔥 Generate QR
   useEffect(() => {
+    if (!username) return;
     if (!canvasRef.current) return;
 
     QRCode.toCanvas(canvasRef.current, qrUrl, {
       width: 100,
       margin: 2,
     });
-  }, [qrUrl]);
+  }, [qrUrl, username]);
+
+  if (!username) return null;
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(directUrl);

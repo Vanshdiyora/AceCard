@@ -47,10 +47,12 @@ export function TransferLeadsModal({
   useEffect(() => {
     if (!open) return;
 
-    setForm({});
-    setErrors({});
-    setPage(1);
-    setSearch("");
+    queueMicrotask(() => {
+      setForm({});
+      setErrors({});
+      setPage(1);
+      setSearch("");
+    });
 
     dispatch(
       fetchTeam({
@@ -69,7 +71,7 @@ export function TransferLeadsModal({
     if (!open) return;
 
     // Reset to page 1 on new search
-    setPage(1);
+    queueMicrotask(() => setPage(1));
 
     dispatch(
       fetchTeam({

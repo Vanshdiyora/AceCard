@@ -15,7 +15,7 @@ export default function LiveServerLogsPage() {
   // Handle pause logic
   useEffect(() => {
     if (paused) {
-      setSnapshotLogs(filteredLogs);
+      queueMicrotask(() => setSnapshotLogs(filteredLogs));
     }
   }, [paused]);
 

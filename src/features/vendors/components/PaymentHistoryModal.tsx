@@ -14,7 +14,6 @@ export default function PaymentHistoryModal({
     history,
     onClose,
 }: Props) {
-    if (!open) return null;
     useEffect(() => {
         if (!open) return;
 
@@ -29,6 +28,8 @@ export default function PaymentHistoryModal({
             document.body.style.paddingRight = originalPadding;
         };
     }, [open]);
+
+    if (!open) return null;
 
     return (
         <div

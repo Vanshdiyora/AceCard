@@ -38,7 +38,7 @@ const wrapperRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!debouncedQuery) {
       dispatch(clearResults());
-      setActiveIndex(0);
+      queueMicrotask(() => setActiveIndex(0));
       return;
     }
 
@@ -54,7 +54,7 @@ const wrapperRef = useRef<HTMLDivElement>(null);
       dispatch(fetchGlobalSearch({ query: debouncedQuery, mode }));
     }
 
-    setActiveIndex(0);
+    queueMicrotask(() => setActiveIndex(0));
   }, [debouncedQuery, mode, dispatch]);
 useEffect(() => {
   const handleClickOutside = (event: MouseEvent) => {

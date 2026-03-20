@@ -15,9 +15,8 @@ export default function PhotoGallerySection({
   disabled?: boolean;
   onValidationChange?: (valid: boolean) => void; // 👈 NEW
 }) {
-  if (!value) return null;
   const [addError, setAddError] = useState<string | null>(null);
-  const items = (value.items || []).map((item: any, index: number) => ({
+  const items = (value?.items || []).map((item: any, index: number) => ({
     ...item,
     id: item.id && item.id !== 0
       ? item.id
@@ -71,6 +70,9 @@ export default function PhotoGallerySection({
       setAddError(null);
     }
   }, [isValid]);
+
+  if (!value) return null;
+
   const addItem = () => {
     if (disabled) return;
 
@@ -132,7 +134,7 @@ export default function PhotoGallerySection({
         </p>
         <Input
           placeholder="Enter a section title"
-          value={value.section_title}
+          value={value?.section_title ?? ""}
           disabled={disabled}
           onChange={(v) =>
             onChange({ ...value, section_title: v })

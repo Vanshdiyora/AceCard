@@ -29,7 +29,9 @@ export default function PublicProfileSettings() {
     if (!data) return;
 
     const normalized = normalizeProfile(data);
-    setLiveConfig(denormalizeProfile(normalized, data));
+    queueMicrotask(() =>
+      setLiveConfig(denormalizeProfile(normalized, data))
+    );
   }, [data]);
 
   return (

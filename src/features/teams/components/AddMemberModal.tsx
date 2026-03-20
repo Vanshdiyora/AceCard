@@ -48,19 +48,21 @@ export default function AddMemberModal({
   useEffect(() => {
     if (!open) return;
 
-    setForm({
-      name: "",
-      email: "",
-      phone: "",
-      role: currentRole === "vendor_admin" ? "manager" : "sales_rep",
-      manager_id: currentRole === "manager" ? currentUserId : undefined,
-      avatar: "",
-      custom_job_role: "",
+    queueMicrotask(() => {
+      setForm({
+        name: "",
+        email: "",
+        phone: "",
+        role: currentRole === "vendor_admin" ? "manager" : "sales_rep",
+        manager_id: currentRole === "manager" ? currentUserId : undefined,
+        avatar: "",
+        custom_job_role: "",
+      });
+      setSubmitAttempted(false);
+      setErrors({});
+      setManagerPage(1);
+      setHasNextManagers(true);
     });
-    setSubmitAttempted(false);
-    setErrors({});
-    setManagerPage(1);
-    setHasNextManagers(true);
 
     // Initial managers fetch
     dispatch(fetchTeam({ page: 1, page_size: 10, role: "manager", append: true }))

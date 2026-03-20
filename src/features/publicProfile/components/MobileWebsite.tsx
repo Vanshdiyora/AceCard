@@ -30,10 +30,78 @@ import { normalizeProfile } from "../utils/normalizeProfile";
 import { FiPhone, FiGlobe } from "react-icons/fi";
 
 import { ProfileWrapper } from "./WebsiteLayout/ProfileWrapper";
-import { useState, useEffect } from "react";
+import { type ReactNode, useState, useEffect, useRef } from "react";
 import { ConnectModal } from "./ConnectModal";
 import { ProfileActions } from "./WebsiteLayout/ProfileActions";
 /* ================= HELPERS ================= */
+
+type ThemeLike = {
+  card_background?: string;
+  button_color?: string;
+  card_text?: string;
+  button_text?: string;
+  image_text_color?: string;
+};
+
+type RankedItem = {
+  enabled?: boolean;
+  rank?: number;
+};
+
+type SectionLike = RankedItem & {
+  id?: string | number;
+  type?: string;
+};
+
+type SocialLike = RankedItem & {
+  id?: string;
+  platform?: string;
+  url?: string;
+};
+
+type ProductLike = RankedItem & {
+  id?: string | number;
+  name?: string;
+  price?: string | number;
+  image_url?: string;
+  product_img_url?: string;
+};
+
+type LinkLike = RankedItem & {
+  id?: string | number;
+  type?: string;
+  title?: string;
+  url?: string;
+  file_url?: string;
+  avatar_url?: string;
+};
+
+type VideoLike = RankedItem & {
+  id?: string | number;
+  url?: string;
+};
+
+type PhotoLike = {
+  img_url?: string;
+  title?: string;
+  description?: string;
+  link?: string;
+  rank?: number;
+  enabled?: boolean;
+};
+
+type MobileData = {
+  meta_pixel_id?: string;
+  google_analytics_id?: string;
+  linkedin_insight_tag_id?: string;
+  name?: string;
+  vendor_name?: string;
+  job_title?: string;
+  role?: string;
+  phone?: string;
+  email?: string;
+  username?: string;
+};
 
 function injectScript(id: string, src?: string, inner?: string) {
   if (document.getElementById(id)) return;
@@ -48,7 +116,7 @@ function injectScript(id: string, src?: string, inner?: string) {
   document.head.appendChild(s);
 }
 
-const resolveTheme = (theme: any) => ({
+const resolveTheme = (theme: ThemeLike = {}) => ({
   cardBg: theme.card_background || "#6B6E93",
   buttonBg: theme.button_color || "#A5A6AB",
   text: theme.card_text || "#EA3636",
@@ -63,7 +131,7 @@ const getYouTubeId = (url?: string) => {
   return match?.[1];
 };
 
-const sortByRank = (arr: any[]) => {
+const sortByRank = <T extends RankedItem>(arr: T[] = []): T[] => {
   if (!Array.isArray(arr)) return [];
   return arr
     .filter((i) => i?.enabled !== false)
@@ -86,7 +154,7 @@ export default function MobileWebsite({
   data,
   isPreview = false,
 }: {
-  data: any;
+  data: MobileData;
   isPreview?: boolean;
   scrollRef?: React.RefObject<HTMLDivElement | null>;
 }) {
@@ -156,7 +224,7 @@ export default function MobileWebsite({
   ]);
 
 
-  const [activePhoto, setActivePhoto] = useState<any | null>(null);
+  const [activePhoto, setActivePhoto] = useState<PhotoLike | null>(null);
 
   const [open, setOpen] = useState(false);
 
@@ -180,7 +248,7 @@ export default function MobileWebsite({
 
 
 
-  const orderedSections = sortByRank(sections.items);
+  const orderedSections = sortByRank(sections.items as SectionLike[]);
   const shapeClass = resolveShape(layout?.button_style);
 
   const resolveFontClass = (font?: string) => {
@@ -316,7 +384,7 @@ export default function MobileWebsite({
         return photo_gallery?.items?.length ? (
           <PhotoGallery
             title={photo_gallery.section_title}
-            items={sortByRank(photo_gallery.items)}
+            items={sortByRank(photo_gallery.items as PhotoLike[]) as PhotoLike[]}
             theme={theme}
             onOpen={setActivePhoto}   // 👈 add
           />
@@ -324,7 +392,7 @@ export default function MobileWebsite({
       case "card_buttons":
         return (
           <CardButtons
-            items={sortByRank(card_buttons.items)}
+            items={sortByRank(card_buttons.items as Array<{ id?: string | number; title?: string; link?: string; enabled?: boolean }>)}
             theme={theme}
             shapeClass={shapeClass}
           />
@@ -496,7 +564,7 @@ export default function MobileWebsite({
         <ConnectModal
           open={open}
           onClose={() => setOpen(false)}
-          handle={data?.username}
+          handle={data?.username || ""}
           theme={theme}
           config={config.contact}
         />
@@ -517,9 +585,9 @@ export default function MobileWebsite({
         <span className="wave-fade" />
         <div className="relative z-10 space-y-6">
 
-          {orderedSections.map((s: any) =>
+          {orderedSections.map((s) =>
             s?.enabled ? (
-              <div key={s.id}>{renderSection(s.type)}</div>
+              <div key={s.id}>{renderSection(s.type || "")}</div>
             ) : null
           )}
         </div>
@@ -531,7 +599,7 @@ export default function MobileWebsite({
 
 /* ================= UI BLOCKS ================= */
 
-function Section({ title, children, theme }: any) {
+function Section({ title, children, theme }: { title?: string; children?: ReactNode; theme?: ThemeLike }) {
   const t = resolveTheme(theme);
 
   return (
@@ -589,9 +657,9 @@ export function Products({
   theme,
   showPrice,
 }: {
-  title: string;
-  items: any[];
-  theme: any;
+  title?: string;
+  items: ProductLike[];
+  theme: ThemeLike;
   showPrice: boolean;
 }) {
   if (!items?.length) return null;
@@ -600,7 +668,7 @@ export function Products({
     <Section title={title || "Products"} theme={theme}>
       <div className="w-full overflow-x-auto pb-3 snap-x snap-mandatory">
         <div className="flex gap-4 w-[240px]">
-          {items.map((p: any) => (
+          {items.map((p) => (
             <div
               key={p.id}
               className="relative min-w-[220px] h-44 rounded-2xl overflow-hidden snap-start shadow-lg transition hover:scale-[1.02] flex-shrink-0"
@@ -641,20 +709,19 @@ export function Products({
 }
 
 /* ================= YOUTUBE ================= */
-import { useRef } from "react";
 import { StripeBackground } from "./patterns/StripeBackground";
 import { WaveBackground } from "./patterns/WaveBackground";
 // import { link } from "fs";
 import { PolkaBackground } from "./patterns/PolkaBackground";
 import { ZigzagBackground } from "./patterns/ZigzagBackground";
 
-function YouTube({ title, items, theme }: any) {
-  if (!items?.length) return null;
-
+function YouTube({ title, items, theme }: { title?: string; items: VideoLike[]; theme: ThemeLike }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [index, setIndex] = useState(0);
 
-  const videos = items.map((v: any) => ({
+  if (!items?.length) return null;
+
+  const videos = items.map((v) => ({
     ...v,
     ytId: getYouTubeId(v.url),
     isYoutube: !!getYouTubeId(v.url),
@@ -703,7 +770,7 @@ function YouTube({ title, items, theme }: any) {
           scrollbar-hide
         "
       >
-        {videos.map((v: any, i: number) => (
+        {videos.map((v, i: number) => (
           <div
             key={v.id ?? i}
             className="
@@ -740,7 +807,7 @@ function YouTube({ title, items, theme }: any) {
           <span className="text-gray-400 text-xs">‹</span>
         )}
 
-        {visibleDots.map((_:any, i: any) => {
+        {visibleDots.map((_, i) => {
           const actualIndex = start + i;
 
           return (
@@ -784,12 +851,12 @@ export function getSocialHref(platform: string, url: string): string {
 }
 
 /* ================= SOCIAL ================= */
-function Social({ items, theme, shapeClass }: any) {
+function Social({ items, theme, shapeClass }: { items: SocialLike[]; theme: ThemeLike; shapeClass?: string }) {
   if (!items?.length) return null;
 
   const t = resolveTheme(theme);
 
-  const rows: any[][] = [];
+  const rows: SocialLike[][] = [];
   for (let i = 0; i < items.length; i += 3) {
     rows.push(items.slice(i, i + 3));
   }
@@ -802,10 +869,10 @@ function Social({ items, theme, shapeClass }: any) {
           className={`flex gap-4 ${row.length < 3 ? "justify-center" : "justify-between"
             } w-full`}
         >
-          {row.map((s: any) => (
+          {row.map((s) => (
             <a
               key={s.id}
-              href={getSocialHref(s.platform || s.id, s.url)}
+              href={getSocialHref(s.platform || s.id || "", s.url || "")}
               target="_blank"
               rel="noopener noreferrer"
               className={`h-20 w-20 p-2 flex items-center justify-center shadow-md transition hover:scale-105 overflow-hidden ${shapeClass}`}
@@ -845,14 +912,14 @@ function Social({ items, theme, shapeClass }: any) {
 
 /* ================= LINKS ================= */
 
-function Links({ title, items, theme }: any) {
+function Links({ title, items, theme }: { title?: string; items: LinkLike[]; theme: ThemeLike }) {
   if (!items?.length) return null;
   const t = resolveTheme(theme);
 
   return (
     <Section title={title} theme={theme}>
       <div className="flex flex-col gap-4">
-        {items.map((l: any) => {
+        {items.map((l) => {
           const href = l.type === "file" ? l.file_url : l.url;
 
           return (
@@ -922,7 +989,7 @@ function Banner({
   image: string;
   ctaText?: string;
   ctaUrl?: string;
-  theme?: any;
+  theme?: ThemeLike;
 }) {
   const t = resolveTheme(theme)
   return (
@@ -953,7 +1020,7 @@ function Banner({
 }
 
 /* ================= VCARD ================= */
-export function saveContact(user: any) {
+export function saveContact(user?: MobileData) {
   if (!user) return;
 
   const vcard = `
@@ -983,7 +1050,7 @@ END:VCARD
 }
 
 // Photo Gallery
-function PhotoGallery({ title, items, theme }: any) {
+function PhotoGallery({ title, items, theme, onOpen }: { title?: string; items: PhotoLike[]; theme: ThemeLike; onOpen?: (item: PhotoLike) => void }) {
 
   const t = resolveTheme(theme);
 
@@ -994,10 +1061,11 @@ function PhotoGallery({ title, items, theme }: any) {
       <Section title={title || "Photo Gallery"} theme={theme}>
         <div className="w-full overflow-x-auto overflow-y-hidden pb-3">
           <div className="flex gap-4 w-[240px]">
-            {items.map((p: any, i: number) => (
+            {items.map((p, i: number) => (
               <button
                 key={i}
                 className="group text-left flex-shrink-0"
+                onClick={() => onOpen?.(p)}
               >
                 <div className="relative w-[200px] h-44 rounded-2xl overflow-hidden shadow-md">
                   <img
@@ -1044,13 +1112,13 @@ function PhotoModal({
 }: {
   open: boolean;
   onClose: () => void;
-  item: any;
-  theme: any;
+  item: PhotoLike | null;
+  theme: ThemeLike;
 }) {
-  if (!open || !item) return null;
-
   const t = resolveTheme(theme);
   const isMobile = useIsMobile();
+
+  if (!open || !item) return null;
 
   return (
     <div
@@ -1151,7 +1219,7 @@ function PhotoModal({
 //   return (
 //     <Section title={title || "Video Gallery"} theme={theme}>
 //       <div className="flex gap-4 overflow-x-auto pb-3 snap-x snap-mandatory">
-//         {items.map((v: any, i: number) => {
+//         {items.map((v, i: number) => {
 //           const id = getYouTubeId(v.video_url);
 //           if (!id) return null;
 
@@ -1234,8 +1302,8 @@ function CardButtons({
   theme,
   shapeClass,
 }: {
-  items: any[];
-  theme: any;
+  items: Array<{ id?: string | number; title?: string; link?: string; enabled?: boolean }>;
+  theme: ThemeLike;
   shapeClass?: string;
 }) {
   const t = resolveTheme(theme);
@@ -1254,7 +1322,7 @@ function CardButtons({
         className={`flex gap-3 ${isSingle ? "flex-col" : "flex-row"
           }`}
       >
-        {visible.map((btn: any) => (
+        {visible.map((btn) => (
           <a
             key={btn.id}
             href={btn.link}

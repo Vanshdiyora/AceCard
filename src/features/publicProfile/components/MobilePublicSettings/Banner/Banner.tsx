@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from "react";
+import { useState } from "react";
 import { uploadImage } from "../../../../publicProfile/services/publicProfile.api";
 import CoverCropModal from "../../../../../common/ui/CoverCropModal";
 import { resolveTheme, EditModal } from "../MobilePublicSettings";
@@ -25,19 +25,27 @@ export function Banner({
 }: Props) {
   const t = resolveTheme(theme);
 
-  const fileRef = useRef<File | null>(null);
-
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(Boolean(autoOpen));
   const [isCropping, setIsCropping] = useState(false);
+  const [cropFile, setCropFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const [imageRemoved, setImageRemoved] = useState(false);
-  const [tempImage, setTempImage] = useState<string | null>(null);
+  const [tempImage, setTempImage] = useState<string | null>(
+    autoOpen ? (image ?? null) : null
+  );
   const [tempImageRemoved, setTempImageRemoved] = useState(false);
   const [draft, setDraft] = useState<{
     cta_text: string;
     cta_url: string;
-  } | null>(null);
+  } | null>(
+    autoOpen
+      ? {
+        cta_text: ctaText || "",
+        cta_url: ctaUrl || "",
+      }
+      : null
+  );
 
   /* ---------------- URL VALIDATION ---------------- */
   const isValidUrl = (url: string) => {
@@ -50,28 +58,17 @@ export function Banner({
     }
   };
 
-  /* ---------------- AUTO OPEN ---------------- */
-  useEffect(() => {
-    if (autoOpen) setIsEditing(true);
-  }, [autoOpen]);
-
-  /* ---------------- INIT DRAFT ---------------- */
-  useEffect(() => {
-    if (!isEditing) return;
-
+  const openEditor = () => {
     setDraft({
       cta_text: ctaText || "",
       cta_url: ctaUrl || "",
     });
-
     setImageRemoved(false);
-
-    // ✅ temp states
     setTempImage(image ?? null);
     setTempImageRemoved(false);
-
     setError(null);
-  }, [isEditing, ctaText, ctaUrl, image]);
+    setIsEditing(true);
+  };
   /* ---------------- IMAGE UPLOAD ---------------- */
   const uploadBanner = async (blob: Blob) => {
     const file = new File([blob], "banner.jpg", { type: "image/jpeg" });
@@ -80,6 +77,7 @@ export function Banner({
     setTempImage(res.data.url);
     setTempImageRemoved(false);
     setIsCropping(false);
+    setCropFile(null);
   };
 
   /* ---------------- SAVE ---------------- */
@@ -128,7 +126,7 @@ export function Banner({
       {editable && (
         <button
           type="button"
-          onClick={() => setIsEditing(true)}
+          onClick={openEditor}
           className="absolute top-2 right-0 z-20 h-9 w-9 rounded-full shadow
                      flex items-center justify-center transition hover:scale-105
                      bg-orange-500 text-white"
@@ -218,7 +216,7 @@ export function Banner({
               accept="image/*"
               onChange={(e) => {
                 if (e.target.files?.[0]) {
-                  fileRef.current = e.target.files[0];
+                  setCropFile(e.target.files[0]);
                   setIsCropping(true);
                 }
               }}
@@ -278,10 +276,13 @@ export function Banner({
       </EditModal>
 
       {/* ---------------- CROP MODAL ---------------- */}
-      {isCropping && fileRef.current && (
+      {isCropping && cropFile && (
         <CoverCropModal
-          file={fileRef.current}
-          onCancel={() => setIsCropping(false)}
+          file={cropFile}
+          onCancel={() => {
+            setIsCropping(false);
+            setCropFile(null);
+          }}
           onSave={uploadBanner}
         />
       )}

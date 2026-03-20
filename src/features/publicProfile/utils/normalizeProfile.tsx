@@ -32,8 +32,8 @@ export function normalizeProfile(api: any) {
         : [];
 
       const mappedItems = [...rawItems]
-        .sort((a: any, b: any) => (a.rank ?? 0) - (b.rank ?? 0))
-        .map((b: any, i: number) => ({
+        .sort((a, b) => (a.rank ?? 0) - (b.rank ?? 0))
+        .map((b, i: number) => ({
           id: b.id ?? crypto.randomUUID(),
           title: b.title ?? "",
           link: b.link ?? "",
@@ -60,8 +60,8 @@ export function normalizeProfile(api: any) {
 
       fields: Array.isArray(cfg.contact?.fields)
         ? [...cfg.contact.fields]
-          .sort((a: any, b: any) => (a.rank ?? 0) - (b.rank ?? 0))
-          .map((f: any, i: number) => ({
+          .sort((a, b) => (a.rank ?? 0) - (b.rank ?? 0))
+          .map((f, i: number) => ({
             id: f.id ?? `field_${i}`,
             type: f.type ?? "text",
             label: f.label ?? "",
@@ -142,8 +142,8 @@ export function normalizeProfile(api: any) {
 
       items: Array.isArray(cfg.social_links?.items)
         ? [...cfg.social_links.items]
-          .sort((a: any, b: any) => (a.rank ?? 0) - (b.rank ?? 0))
-          .map((s: any, i: number) => ({
+          .sort((a, b) => (a.rank ?? 0) - (b.rank ?? 0))
+          .map((s, i: number) => ({
             id: s.id ?? crypto.randomUUID(),
             platform: s.platform ?? s.type ?? "",
             url: s.url ?? "",
@@ -207,7 +207,7 @@ export function normalizeProfile(api: any) {
 
 
 /* ================= SUB NORMALIZERS ================= */
-// const normalizeMeeting = (api: any) => {
+// const normalizeMeeting = (api) => {
 //   const m = api.configuration?.meeting ?? {};
 //   return {
 //     locked: Boolean(m.locked),
@@ -347,8 +347,8 @@ export function denormalizeProfile(
         form_title: cfg.contact.form_title,
 
         fields: cfg.contact.fields
-          .sort((a: any, b: any) => a.rank - b.rank)
-          .map((f: any) => ({
+          .sort((a, b) => a.rank - b.rank)
+          .map((f) => ({
             id: f.id,
             type: f.type,
             label: f.label,
@@ -421,8 +421,8 @@ export function denormalizeProfile(
         locked_by: cfg.card_buttons.locked_by,
 
         items: cfg.card_buttons.items
-          .sort((a: any, b: any) => a.rank - b.rank)
-          .map((b: any) => ({
+          .sort((a, b) => a.rank - b.rank)
+          .map((b) => ({
             id: b.id,
             title: b.title,
             link: b.link,
@@ -449,8 +449,8 @@ export function denormalizeProfile(
         locked_by: cfg.social_links.locked_by,
 
         items: [...cfg.social_links.items]
-          .sort((a: any, b: any) => a.rank - b.rank)
-          .map((s: any) => ({
+          .sort((a, b) => a.rank - b.rank)
+          .map((s) => ({
             id: s.id,
             platform: s.platform,
             url: s.url,
@@ -564,3 +564,4 @@ export function denormalizeProfile(
     },
   };
 }
+

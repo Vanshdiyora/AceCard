@@ -18,38 +18,36 @@ export default function Links({
   onChange,
   autoOpen = false,
 }: any) {
-  if (!items?.length && !editable) return null;
-
   const t = resolveTheme(theme);
-  const [open, setOpen] = useState(false);
+  const showSection = Boolean(items?.length) || editable;
+  const initialBuffer = {
+    section_title: title || "Links & Files",
+    items: items || [],
+  };
 
-  useEffect(() => {
-    if (autoOpen) setOpen(true);
-  }, [autoOpen]);
+  const [open, setOpen] = useState(Boolean(autoOpen));
 
   const [buffer, setBuffer] = useState({
-    section_title: title || "Links & Files",
-    items: [] as any[],
+    section_title: initialBuffer.section_title,
+    items: initialBuffer.items as any[],
   });
 
-  useEffect(() => {
-    if (!open) {
-      setBuffer({
-        section_title: title || "Links & Files",
-        items: items || [],
-      });
-    }
-  }, [items, title, open]);
+  const displayBuffer = open ? buffer : initialBuffer;
+
+  if (!showSection) return null;
 
   return (
     <Section
       title={
         <div className="flex items-center justify-between w-full">
-          <span>{buffer.section_title}</span>
+          <span>{displayBuffer.section_title}</span>
 
           {editable && (
             <button
-              onClick={() => setOpen(true)}
+              onClick={() => {
+                setBuffer(initialBuffer);
+                setOpen(true);
+              }}
               className="h-9 w-9 rounded-full flex items-center justify-center
               shadow transition hover:scale-105
               bg-orange-500 text-white"
@@ -63,7 +61,7 @@ export default function Links({
     >
       {/* PREVIEW */}
       <div className="mt-3 flex flex-col gap-4">
-        {buffer.items
+        {displayBuffer.items
           .filter((l: any) => l.enabled !== false)
           .sort((a: any, b: any) => (a.rank ?? 0) - (b.rank ?? 0))
           .map((l: any) => {
@@ -190,27 +188,43 @@ function LinksFilesModal({
   /* ================= VALIDATION ================= */
 
   const validate = () => {
-
     if (!buffer.items.length) {
       setError("Please add at least one link or file.");
       return false;
     }
 
     for (const item of buffer.items) {
-
       if (!item.title?.trim()) {
         setError("Each item must have a title.");
         return false;
       }
 
-      if (item.type === "link" && !item.url) {
-        setError(`${item.title} is missing URL`);
-        return false;
+      if (item.type === "link") {
+        const url = item.url?.trim();
+
+        if (!url) {
+          setError(`${item.title} is missing URL`);
+          return false;
+        }
+
+        if (!/^https?:\/\//i.test(url)) {
+          setError(`${item.title}'s link must start with http:// or https://`);
+          return false;
+        }
       }
 
-      if (item.type === "file" && !item.file_url) {
-        setError(`${item.title} is missing file`);
-        return false;
+      if (item.type === "file") {
+        const fileUrl = item.file_url?.trim();
+
+        if (!fileUrl) {
+          setError(`${item.title} is missing file`);
+          return false;
+        }
+
+        if (!/^https?:\/\//i.test(fileUrl)) {
+          setError(`${item.title} has invalid file URL`);
+          return false;
+        }
       }
     }
 

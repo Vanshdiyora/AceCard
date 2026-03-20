@@ -37,8 +37,6 @@ export default function AppModal({
   onBack,
   errorMessage,
 }: AppModalProps) {
-  if (!open) return null;
-
   const widthMap = {
     sm: "max-w-sm",
     md: "max-w-md",
@@ -54,6 +52,8 @@ export default function AppModal({
     document.addEventListener("keydown", handleEsc);
     return () => document.removeEventListener("keydown", handleEsc);
   }, [onClose]);
+
+  if (!open) return null;
 
   return createPortal(
     <div className="fixed inset-0 z-[9999] bg-black/40 flex items-center justify-center px-4">

@@ -382,9 +382,17 @@ export default function MobilePublicSettings({
       for (const item of items) {
         if (!item.title?.trim()) return "Each link/file must have a title.";
         if (item.type === "link") {
-          if (!item.url?.trim()) return `"${item.title}" is missing a URL.`;
-          if (!isValidUrl(item.url.trim()))
-            return `"${item.title}" has an invalid URL. Make sure it starts with https:// or http://`;
+          const url = item.url?.trim();
+
+          if (!url) return `"${item.title}" is missing a URL.`;
+
+          if (!/^https?:\/\//i.test(url)) {
+            return `"${item.title}" must start with http:// or https://`;
+          }
+
+          if (!isValidUrl(url)) {
+            return `"${item.title}" has an invalid URL format.`;
+          }
         }
         if (item.type === "file") {
           if (!item.file_url?.trim()) return `"${item.title}" is missing an uploaded file.`;
@@ -2428,7 +2436,7 @@ function EditableAbout({
   const t = resolveTheme(theme);
   useEffect(() => {
     if (autoOpen) {
-      setOpen(true);
+      queueMicrotask(() => setOpen(true));
     }
   }, [autoOpen]);
   useEffect(() => {

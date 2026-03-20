@@ -33,7 +33,9 @@ export default function VicePublicPage() {
     if (!data) return;
 
     const normalized = normalizeProfile(data);
-    setLiveConfig(denormalizeProfile(normalized, data));
+    queueMicrotask(() =>
+      setLiveConfig(denormalizeProfile(normalized, data))
+    );
   }, [data]);
   return (
     <div className="pt-6 px-4 xl:px-8 xl:h-[calc(100vh-84px)]">

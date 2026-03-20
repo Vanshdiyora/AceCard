@@ -22,9 +22,11 @@ export function ProfileActions({
 
   useEffect(() => {
     if (editing) {
-      setLocal({
-        contact_title: contact?.contact_title || "",
-        connect_title: contact?.connect_title || "",
+      queueMicrotask(() => {
+        setLocal({
+          contact_title: contact?.contact_title || "",
+          connect_title: contact?.connect_title || "",
+        });
       });
     }
   }, [editing, contact]);

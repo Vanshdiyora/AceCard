@@ -12,7 +12,7 @@ export function VideoGalleryEditModal({
   const [draft, setDraft] = useState(value);
 
   useEffect(() => {
-    if (open) setDraft(value);
+    if (open) queueMicrotask(() => setDraft(value));
   }, [open, value]);
 
   // 🔒 lock background scroll (unchanged)

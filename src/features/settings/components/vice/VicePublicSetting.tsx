@@ -4271,8 +4271,11 @@ export function LockControl({
   currentUser?: string;   // 👈 logged in username
   onChange: (v: LockMeta) => void;
 }) {
-
-  if (!value) return null;
+  const lockValue: LockMeta & { locked_by?: string } = value ?? {
+    locked: false,
+    lock_mode: "individual",
+    locked_by: undefined,
+  };
 
   /* ================= STATE ================= */
   const [open, setOpen] = useState(false);
@@ -4281,8 +4284,8 @@ export function LockControl({
   const [menuW, setMenuW] = useState(0);
 
   /* 🔒 WAS LOCKED (INITIAL STATE ONLY) */
-  const wasLockedRef = useRef<boolean>(
-    value.lock_mode === "global" && Boolean(value.locked)
+  const [wasLockedInitially] = useState(
+    () => lockValue.lock_mode === "global" && Boolean(lockValue.locked)
   );
 
   /* ================= MODES ================= */
@@ -4291,10 +4294,10 @@ export function LockControl({
     { id: "global", label: "Global" },
   ];
 
-  const currentMode: LockMode = value.lock_mode ?? "individual";
+  const currentMode: LockMode = lockValue.lock_mode ?? "individual";
   const isIndividual = currentMode === "individual";
   const isGlobal = currentMode === "global";
-  const locked = isGlobal && Boolean(value.locked);
+  const locked = isGlobal && Boolean(lockValue.locked);
 
   /* ================= HARD LOCK RULE =================
      - vendor_admin → never locked
@@ -4304,18 +4307,18 @@ export function LockControl({
   */
 
   const isVendorLock =
-    value.locked &&
-    value.locked_by?.includes("vendor");
+    lockValue.locked &&
+    lockValue.locked_by?.includes("vendor");
 
   const isOwner =
     currentUser &&
-    value.locked_by === currentUser;
+    lockValue.locked_by === currentUser;
 
   const isHardLocked =
     role !== "vendor_admin" &&     // 🔥 vendor_admin is always editable
     !isOwner &&
     (
-      (role === "manager" && wasLockedRef.current) ||
+      (role === "manager" && wasLockedInitially) ||
       isVendorLock
     );
 
@@ -4354,6 +4357,8 @@ export function LockControl({
     };
   }, [open, isHardLocked]);
 
+  if (!value) return null;
+
   /* ================= RENDER ================= */
 
   return (
@@ -4386,7 +4391,7 @@ export function LockControl({
             if (!isGlobal || isHardLocked) return;
 
             onChange({
-              ...value,
+              ...lockValue,
               locked: !locked,
             });
 
@@ -4436,9 +4441,9 @@ export function LockControl({
                   type="button"
                   onClick={() => {
                     onChange({
-                      ...value,
+                      ...lockValue,
                       lock_mode: m.id,
-                      locked: m.id === "global" ? value.locked : false,
+                      locked: m.id === "global" ? lockValue.locked : false,
                     });
                     setOpen(false);
                   }}

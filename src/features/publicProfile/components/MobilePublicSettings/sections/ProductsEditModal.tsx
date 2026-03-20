@@ -34,8 +34,6 @@ export function ProductsEditModal({
   onChange,
   onSave,
 }: any) {
-  if (!open) return null;
-
   const dispatch = useAppDispatch();
 
   const [search, setSearch] = useState("");
@@ -91,6 +89,8 @@ export function ProductsEditModal({
     setPage(pg);
     setLoading(false);
   };
+
+  if (!open) return null;
 
   /* ---------- INFINITE SCROLL ---------- */
   const onScroll = () => {

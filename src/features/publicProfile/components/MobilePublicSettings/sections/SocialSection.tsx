@@ -137,7 +137,7 @@ export default function SocialSection({
   const isAnyOpen = pickerOpen || formOpen;
 
   useEffect(() => {
-    if (autoOpen) setPickerOpen(true);
+    if (autoOpen) queueMicrotask(() => setPickerOpen(true));
   }, [autoOpen]);
 
   /* ================= MUTATIONS ================= */

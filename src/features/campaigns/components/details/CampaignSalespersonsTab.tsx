@@ -36,8 +36,10 @@ export default function CampaignSalespersonsTab({
 
   useEffect(() => {
     if (open) {
-      setSalesPage(1);
-      setHasNextSales(true);
+      queueMicrotask(() => {
+        setSalesPage(1);
+        setHasNextSales(true);
+      });
 
       dispatch(fetchTeam({ page: 1, page_size: 10, role: "sales_rep", append: true }))
         .unwrap()

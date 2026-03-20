@@ -14,7 +14,7 @@ export default function LeadFollowupsTab({ leadId }: Props) {
   const [isFetching, setIsFetching] = useState(false);
 
   useEffect(() => {
-    setIsFetching(true);
+    queueMicrotask(() => setIsFetching(true));
     dispatch(fetchLeadMeetings(leadId))
       .unwrap()
       .finally(() => setIsFetching(false));

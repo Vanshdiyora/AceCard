@@ -17,7 +17,7 @@ export default function CoverCropModal({ file, onCancel, onSave }: Props) {
   /* Load image */
   useEffect(() => {
     const url = URL.createObjectURL(file);
-    setImageUrl(url);
+    queueMicrotask(() => setImageUrl(url));
     return () => URL.revokeObjectURL(url);
   }, [file]);
 

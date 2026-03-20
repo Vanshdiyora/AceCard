@@ -42,7 +42,7 @@ export default function MarkPaidOptionsModal({
   useEffect(() => {
     if (open && vendor) {
       dispatch(fetchPaymentHistory(vendor.vendor_id));
-      setSelectedPaymentId(null);
+      queueMicrotask(() => setSelectedPaymentId(null));
     }
   }, [open, vendor, dispatch]);
 

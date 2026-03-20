@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 import AvatarCropModal from "../../../../../../common/ui/AvatarCropModal";
 import CoverCropModal from "../../../../../../common/ui/CoverCropModal";
 import { Image, Camera } from "lucide-react";
@@ -45,8 +45,8 @@ export function ProfileClassic({
   const BORDER_RADIUS = 999; // always circular
 
   const [cropFile, setCropFile] = useState<File | null>(null);
+  const [coverCropFile, setCoverCropFile] = useState<File | null>(null);
   const [isCoverCropping, setIsCoverCropping] = useState(false);
-  const coverFileRef = useRef<File | null>(null);
 
   /* ================= AVATAR UPLOAD ================= */
   const uploadAvatar = async (blob: Blob) => {
@@ -91,6 +91,7 @@ export function ProfileClassic({
     });
 
     setIsCoverCropping(false);
+    setCoverCropFile(null);
   };
 
   return (
@@ -133,7 +134,7 @@ export function ProfileClassic({
                 const file = e.target.files?.[0];
                 if (!file) return;
 
-                coverFileRef.current = file;
+                setCoverCropFile(file);
                 setIsCoverCropping(true);
 
                 // allow selecting same image again
@@ -253,10 +254,13 @@ export function ProfileClassic({
           />
         )}
 
-        {isCoverCropping && coverFileRef.current && (
+        {isCoverCropping && coverCropFile && (
           <CoverCropModal
-            file={coverFileRef.current}
-            onCancel={() => setIsCoverCropping(false)}
+            file={coverCropFile}
+            onCancel={() => {
+              setIsCoverCropping(false);
+              setCoverCropFile(null);
+            }}
             onSave={uploadCover}
           />
         )}

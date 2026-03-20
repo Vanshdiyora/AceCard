@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { resolveTheme, EditModal } from "../MobilePublicSettings";
 import { Pencil } from "lucide-react";
 
@@ -26,26 +26,29 @@ export function EditableMeetingCTA({
 }: Props) {
   const t = resolveTheme(theme);
 
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(Boolean(autoOpen));
   const [error, setError] = useState<string | null>(null);
 
   const [draft, setDraft] = useState<{
     button_text: string;
     meeting_url: string;
-  } | null>(null);
+  } | null>(
+    autoOpen
+      ? {
+        button_text: meeting?.button_text || "",
+        meeting_url: meeting?.meeting_url || "",
+      }
+      : null
+  );
 
-  useEffect(() => {
-    if (autoOpen) setIsEditing(true);
-  }, [autoOpen]);
-
-  useEffect(() => {
-    if (!isEditing) return;
-
+  const openEditor = () => {
     setDraft({
       button_text: meeting?.button_text || "",
       meeting_url: meeting?.meeting_url || "",
     });
-  }, [isEditing, meeting]);
+    setError(null);
+    setIsEditing(true);
+  };
 
   const isValidUrl = (url: string) => {
     if (!url || !url.trim()) return false;
@@ -92,7 +95,7 @@ export function EditableMeetingCTA({
       {editable && (
         <button
           type="button"
-          onClick={() => setIsEditing(true)}
+          onClick={openEditor}
           className="absolute top-2 right-0 z-20 h-9 w-9 rounded-full shadow
                      flex items-center justify-center transition hover:scale-105
                      bg-orange-500 text-white"

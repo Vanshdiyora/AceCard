@@ -165,7 +165,7 @@ function EditNoteModal({ open, note, onClose, onSave }: any) {
   const [content, setContent] = useState("");
 
   useEffect(() => {
-    setContent(note?.content ?? "");
+    queueMicrotask(() => setContent(note?.content ?? ""));
   }, [note]);
 
   if (!open) return null;

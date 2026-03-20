@@ -63,9 +63,11 @@ export default function PermissionsModal({
 
   useEffect(() => {
     if (open) {
-      setForm({
-        ...EMPTY_PERMISSIONS,
-        ...permissions,
+      queueMicrotask(() => {
+        setForm({
+          ...EMPTY_PERMISSIONS,
+          ...permissions,
+        });
       });
     }
   }, [open, permissions]);

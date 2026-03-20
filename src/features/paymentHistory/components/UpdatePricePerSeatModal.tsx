@@ -21,7 +21,7 @@ export default function UpdatePricePerSeatModal({
 
   useEffect(() => {
     if (vendor) {
-      setPrice(String(vendor.price_per_card));
+      queueMicrotask(() => setPrice(String(vendor.price_per_card)));
     }
   }, [vendor]);
 

@@ -52,10 +52,12 @@ export function TransferSalespersonsModal({
   useEffect(() => {
     if (!open) return;
 
-    setForm({});
-    setErrors({});
-    setPage(1);
-    setSearch("");
+    queueMicrotask(() => {
+      setForm({});
+      setErrors({});
+      setPage(1);
+      setSearch("");
+    });
 
     dispatch(
       fetchTeam({
@@ -74,7 +76,7 @@ export function TransferSalespersonsModal({
   useEffect(() => {
     if (!open) return;
 
-    setPage(1);
+    queueMicrotask(() => setPage(1));
 
     dispatch(
       fetchTeam({

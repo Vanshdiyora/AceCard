@@ -75,8 +75,10 @@ Object.entries(data.standardFields || {}).forEach(([key, value]) => {
     required: field?.required ?? false,
   };
 });
-    setStandardFields(normalized);
-    setCustomFields(data.customFields || []);
+    queueMicrotask(() => {
+      setStandardFields(normalized);
+      setCustomFields(data.customFields || []);
+    });
   }, [data]);
 
   const STAGE_COLORS = [

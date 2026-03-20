@@ -24,11 +24,9 @@ export function CustomDropdown({
     const spaceBelow = window.innerHeight - rect.bottom;
     const spaceAbove = rect.top;
 
-    if (spaceBelow < 200 && spaceAbove > spaceBelow) {
-      setOpenUp(true);
-    } else {
-      setOpenUp(false);
-    }
+    queueMicrotask(() => {
+      setOpenUp(spaceBelow < 200 && spaceAbove > spaceBelow);
+    });
   }, [open]);
 
   /* ================= CLOSE ON OUTSIDE CLICK ================= */

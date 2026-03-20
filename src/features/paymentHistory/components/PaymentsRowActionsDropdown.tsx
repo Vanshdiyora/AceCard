@@ -41,13 +41,14 @@ export default function PaymentsRowActionsDropdown({
     const shouldOpenTop =
       spaceBelow < dropdownHeight && spaceAbove > spaceBelow;
 
-    setPlacement(shouldOpenTop ? "top" : "bottom");
-
-    setPos({
-      left: rect.right - 192,
-      top: shouldOpenTop
-        ? rect.top - dropdownHeight - 6
-        : rect.bottom + 6,
+    queueMicrotask(() => {
+      setPlacement(shouldOpenTop ? "top" : "bottom");
+      setPos({
+        left: rect.right - 192,
+        top: shouldOpenTop
+          ? rect.top - dropdownHeight - 6
+          : rect.bottom + 6,
+      });
     });
   }, [open]);
 

@@ -32,7 +32,7 @@ export default function TicketDetailsModal({
   // Sync status whenever ticket changes
   useEffect(() => {
     if (ticket?.status) {
-      setStatus(ticket.status);
+      queueMicrotask(() => setStatus(ticket.status));
     }
   }, [ticket]);
 
@@ -45,7 +45,7 @@ export default function TicketDetailsModal({
 
   // Close dropdown when modal closes
   useEffect(() => {
-    if (!open) setStatusOpen(false);
+    if (!open) queueMicrotask(() => setStatusOpen(false));
   }, [open]);
 
   if (!open || !ticket) return null;

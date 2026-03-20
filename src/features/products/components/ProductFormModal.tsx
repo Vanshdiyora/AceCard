@@ -45,12 +45,14 @@ export default function ProductFormModal({
     if (!open) return;
 
     if (product) {
-      setBase({
-        name: product.name ?? "",
-        price: product.price ?? "",
-        category: product.category ?? "",
-        description: product.description ?? "",
-        product_img_url: product.product_img_url ?? "",
+      queueMicrotask(() => {
+        setBase({
+          name: product.name ?? "",
+          price: product.price ?? "",
+          category: product.category ?? "",
+          description: product.description ?? "",
+          product_img_url: product.product_img_url ?? "",
+        });
       });
 
       const list = Object.entries(
@@ -60,31 +62,37 @@ export default function ProductFormModal({
         value: String(value),
       }));
 
-      setExtraProps(
-        list.length ? list : [{ key: "", value: "" }]
-      );
+      queueMicrotask(() => {
+        setExtraProps(
+          list.length ? list : [{ key: "", value: "" }]
+        );
 
-      setMeta({
-        id: product.id,
-        vendor_id: product.vendor_id,
-        status: product.status,
-        created_at: product.created_at,
-        updated_at: product.updated_at,
+        setMeta({
+          id: product.id,
+          vendor_id: product.vendor_id,
+          status: product.status,
+          created_at: product.created_at,
+          updated_at: product.updated_at,
+        });
       });
     } else {
-      setBase({
-        name: "",
-        price: "",
-        category: "",
-        description: "",
-        product_img_url: "",
+      queueMicrotask(() => {
+        setBase({
+          name: "",
+          price: "",
+          category: "",
+          description: "",
+          product_img_url: "",
+        });
+        setExtraProps([{ key: "", value: "" }]);
+        setMeta({});
       });
-      setExtraProps([{ key: "", value: "" }]);
-      setMeta({});
     }
 
-    setSubmitAttempted(false);
-    setErrors({});
+    queueMicrotask(() => {
+      setSubmitAttempted(false);
+      setErrors({});
+    });
   }, [product, open]);
 
   if (!open) return null;

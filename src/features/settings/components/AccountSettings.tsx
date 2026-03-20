@@ -44,9 +44,12 @@ export default function AccountSettings() {
 
   useEffect(() => {
     if (tracking.data) {
-      setMeta(tracking.data.meta_pixel_id || "");
-      setGa(tracking.data.google_analytics_id || "");
-      setLi(tracking.data.linkedin_insight_tag_id || "");
+      const trackingData = tracking.data;
+      queueMicrotask(() => {
+        setMeta(trackingData.meta_pixel_id || "");
+        setGa(trackingData.google_analytics_id || "");
+        setLi(trackingData.linkedin_insight_tag_id || "");
+      });
     }
   }, [tracking.data]);
 

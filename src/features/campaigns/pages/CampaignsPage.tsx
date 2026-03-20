@@ -76,7 +76,7 @@ export default function CampaignsPage() {
   /* -------- Auto open from redirect -------- */
   useEffect(() => {
     if (searchParams.get("open") === "create") {
-      setOpenCreate(true);
+      queueMicrotask(() => setOpenCreate(true));
       setSearchParams({}, { replace: true });
     }
   }, [searchParams, setSearchParams]);
@@ -96,7 +96,7 @@ export default function CampaignsPage() {
   }, [dispatch, page, pageSize, search, activeTab, sortBy, sortOrder]);
 
   useEffect(() => {
-    setPage(1);
+    queueMicrotask(() => setPage(1));
   }, [search, activeTab, sortBy, sortOrder]);
 
   /* -------- Sorting -------- */

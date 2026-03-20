@@ -34,7 +34,7 @@ export default function NotificationSidebar({
   /* Fetch first page when opened */
   useEffect(() => {
     if (open) {
-      setPage(1);
+      queueMicrotask(() => setPage(1));
       dispatch(fetchNotifications({ page: 1 }));
     }
   }, [open, dispatch]);
