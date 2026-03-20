@@ -67,9 +67,20 @@ export const updateSeatsApi = async (
 };
 
 /* -------------------- PAYMENT HISTORY -------------------- */
-export const getPaymentHistoryApi = async (vendorId: number) => {
+export const getPaymentHistoryApi = async (
+  vendorId: number,
+  params?: { page?: number; page_size?: number }
+) => {
+  const query = new URLSearchParams();
+
+  if (params?.page) query.append("page", String(params.page));
+  if (params?.page_size) {
+    query.append("page_size", String(params.page_size));
+  }
+
+  const suffix = query.toString() ? `?${query.toString()}` : "";
   const res = await axiosClient.get(
-    `/admin/payments/history/${vendorId}`
+    `/admin/payments/history/${vendorId}${suffix}`
   );
   return res.data;
 };

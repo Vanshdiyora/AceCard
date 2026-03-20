@@ -29,6 +29,7 @@ import ArchiveConfirmationModal from "../components/ArchiveConfirmationModal";
 import UpdatePricePerSeatModal from "../components/UpdatePricePerSeatModal";
 
 import type { VendorPayment } from "../types";
+import { formatRupees } from "../../../common/utils/ruppeeFormater";
 
 /* -------------------------------- helpers -------------------------------- */
 
@@ -121,13 +122,12 @@ export default function PaymentsPage() {
     {
       header: "Price / Seat",
       width: "1fr",
-      render: (v) => `₹${v.price_per_card}`,
+      render: (v) => `${formatRupees(v.price_per_card)}`,
     },
     {
       header: "Total Amount",
       width: "1.2fr",
-      render: (v) =>
-        `₹${v.payment_amount_total}`,
+      render: (v) => `${formatRupees(v.payment_amount_total)}`,
     },
     { header: "Days Left", accessor: "days_left", width: "1fr" },
     {

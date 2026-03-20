@@ -76,6 +76,7 @@ export default function VendorDetailsPage() {
   const {
     history: paymentHistory,
     loading: paymentHistoryLoading,
+    historyMeta,
   } = useAppSelector((s: any) => s.payments);
 
   const { notes, notesLoading } = useAppSelector((s: any) => s.vendors);
@@ -131,7 +132,29 @@ useEffect(() => {
   const openPaymentHistory = () => {
     if (!vendor?.id) return;
     setPaymentHistoryOpen(true);
-    dispatch(fetchPaymentHistory(vendor.id));
+    dispatch(
+      fetchPaymentHistory({
+        vendorId: vendor.id,
+        page: 1,
+        page_size: 10,
+      })
+    );
+  };
+
+  const loadMorePaymentHistory = () => {
+    if (!vendor?.id) return;
+    if (paymentHistoryLoading) return;
+    if (!historyMeta?.has_next) return;
+
+    const nextPage = Number(historyMeta.page || 1) + 1;
+
+    dispatch(
+      fetchPaymentHistory({
+        vendorId: vendor.id,
+        page: nextPage,
+        page_size: Number(historyMeta.page_size || 10),
+      })
+    );
   };
 
   const anyModalOpen =
@@ -343,6 +366,8 @@ useEffect(() => {
         open={paymentHistoryOpen}
         loading={paymentHistoryLoading}
         history={paymentHistory}
+        hasNext={Boolean(historyMeta?.has_next)}
+        onLoadMore={loadMorePaymentHistory}
         onClose={() => setPaymentHistoryOpen(false)}
       />
       <VendorNotesModal

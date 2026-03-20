@@ -59,20 +59,37 @@ export const AvatarCell = (m: AvatarLike) => {
 
 
 function getVisiblePages(page: number, totalPages: number) {
-  if (totalPages <= MAX_VISIBLE) {
-    return Array.from({ length: totalPages }, (_, i) => i + 1);
+  const safeTotal = Math.max(1, Number(totalPages) || 1);
+  const safePage = Math.min(
+    Math.max(1, Number(page) || 1),
+    safeTotal
+  );
+
+  if (safeTotal <= MAX_VISIBLE) {
+    return Array.from({ length: safeTotal }, (_, i) => i + 1);
   }
 
   const pages: (number | "...")[] = [];
+  const seen = new Set<number>();
 
-  const start = Math.max(2, page - 1);
-  const end = Math.min(totalPages - 1, page + 1);
+  const pushPage = (p: number) => {
+    if (p < 1 || p > safeTotal || seen.has(p)) return;
+    pages.push(p);
+    seen.add(p);
+  };
 
-  pages.push(1);
-  if (start > 2) pages.push("...");
-  for (let p = start; p <= end; p++) pages.push(p);
-  if (end < totalPages - 1) pages.push("...");
-  pages.push(totalPages);
+  const pushEllipsis = () => {
+    if (pages[pages.length - 1] !== "...") pages.push("...");
+  };
+
+  const start = Math.max(2, safePage - 1);
+  const end = Math.min(safeTotal - 1, safePage + 1);
+
+  pushPage(1);
+  if (start > 2) pushEllipsis();
+  for (let p = start; p <= end; p++) pushPage(p);
+  if (end < safeTotal - 1) pushEllipsis();
+  pushPage(safeTotal);
 
   return pages;
 }
@@ -175,14 +192,14 @@ export default function DataTable<T>({
           {getVisiblePages(uiPage, totalPages).map((p, i) =>
             p === "..." ? (
               <span
-                key={i}
+                key={`ellipsis-${i}`}
                 className="w-9 text-center text-gray-400 select-none"
               >
                 …
               </span>
             ) : (
               <button
-                key={p}
+                key={`page-${p}-${i}`}
                 onClick={() => {
                   setUiPage(p);
                   onPageChange(p);

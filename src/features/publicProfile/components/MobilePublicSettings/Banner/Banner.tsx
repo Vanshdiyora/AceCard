@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { uploadImage } from "../../../../publicProfile/services/publicProfile.api";
 import CoverCropModal from "../../../../../common/ui/CoverCropModal";
 import { resolveTheme, EditModal } from "../MobilePublicSettings";
@@ -69,6 +69,12 @@ export function Banner({
     setError(null);
     setIsEditing(true);
   };
+
+  useEffect(() => {
+    if (!autoOpen) return;
+    openEditor();
+  }, [autoOpen, image, ctaText, ctaUrl]);
+
   /* ---------------- IMAGE UPLOAD ---------------- */
   const uploadBanner = async (blob: Blob) => {
     const file = new File([blob], "banner.jpg", { type: "image/jpeg" });

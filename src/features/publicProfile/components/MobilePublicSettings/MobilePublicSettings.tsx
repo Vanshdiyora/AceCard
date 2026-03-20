@@ -999,6 +999,43 @@ export default function MobilePublicSettings({
         break;
     }
   };
+
+  const enableSectionByType = (type: string) => {
+    setDraft((prev: any) => {
+      const items = prev.sections?.items || [];
+      const existing = items.find((s: any) => s.type === type);
+
+      const updated = existing
+        ? items.map((s: any) =>
+          s.type === type ? { ...s, enabled: true } : s
+        )
+        : [
+          ...items,
+          {
+            id: type,
+            type,
+            rank: items.length + 1,
+            enabled: true,
+          },
+        ];
+
+      const enabled = updated.filter((s: any) => s.enabled);
+      const disabled = updated.filter((s: any) => !s.enabled);
+
+      const reRanked = enabled.map((s: any, idx: number) => ({
+        ...s,
+        rank: idx + 1,
+      }));
+
+      return {
+        ...prev,
+        sections: {
+          ...prev.sections,
+          items: [...reRanked, ...disabled],
+        },
+      };
+    });
+  };
   // bgPositionClass no longer used here; background is handled by BackgroundLayer
   const sectionsLocked = draft.sections?.locked;
   return (
@@ -1450,9 +1487,10 @@ export default function MobilePublicSettings({
               },
             }))
           }
-          onSectionClick={() => {
+          onSectionClick={(type: string) => {
             setOpenSectionsEditor(false);
-            // optionally open section editor here
+            enableSectionByType(type);
+            openSectionEditor(type);
           }}
           onToggle={(id, enabled) => {
             setDraft((prev: any) => ({
@@ -1511,27 +1549,7 @@ export default function MobilePublicSettings({
         onAdd={(type: string) => {
           setOpenAddSection(false);
 
-          const exists = draft.sections.items.find((s: any) => s.type === type);
-
-          if (!exists) {
-            setDraft((prev: any) => ({
-              ...prev,
-              sections: {
-                ...prev.sections,
-                items: [
-                  ...prev.sections.items,
-                  {
-                    id: type,
-                    type,
-                    rank: prev.sections.items.length + 1,
-                    enabled: true,
-                  },
-                ],
-              },
-            }));
-          }
-
-          // 🔥 THIS IS WHAT WAS MISSING
+          enableSectionByType(type);
           openSectionEditor(type);
         }}
 
@@ -2541,6 +2559,13 @@ function AboutEditModal({
         />
 
         <div className="flex gap-3 pt-4">
+
+          <button
+            onClick={onClose}
+            className="flex-1 py-2 rounded-xl bg-gray-100 text-gray-700"
+          >
+            Cancel
+          </button>
           <button
             onClick={() => {
               onSave(text);
@@ -2549,13 +2574,6 @@ function AboutEditModal({
             className="flex-1 py-2 rounded-xl bg-purple-600 text-white font-semibold"
           >
             Save
-          </button>
-
-          <button
-            onClick={onClose}
-            className="flex-1 py-2 rounded-xl bg-gray-100 text-gray-700"
-          >
-            Cancel
           </button>
         </div>
       </div>

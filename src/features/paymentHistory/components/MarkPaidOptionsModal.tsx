@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../../app/hooks";
 import ResultModal from "../../../common/ui/ResultModal";
 import { fetchPaymentHistory } from "../slice";
@@ -31,24 +31,110 @@ export default function MarkPaidOptionsModal({
   }) => void;
 }) {
   const dispatch = useAppDispatch();
-  const { history, loading } = useAppSelector(
+  const { history, loading, historyMeta } = useAppSelector(
     (state: any) => state.payments
   );
 
   const [selectedPaymentId, setSelectedPaymentId] =
     useState<number | null>(null);
+  const requestedPageRef = useRef(0);
+  const listRef = useRef<HTMLDivElement | null>(null);
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const PAGE_SIZE = 10;
+
+  const sortedHistory = useMemo(() => {
+    const toTimestamp = (value?: string) => {
+      if (!value) return 0;
+      const t = new Date(value).getTime();
+      return Number.isNaN(t) ? 0 : t;
+    };
+
+    const getOrderTimestamp = (payment: any) =>
+      toTimestamp(
+        payment.paid_at ||
+          payment.created_at ||
+          payment.updated_at ||
+          payment.subscription_start_date ||
+          payment.subscription_end_date
+      );
+
+    return [...(history || [])].sort((a: any, b: any) => {
+      const byDate = getOrderTimestamp(b) - getOrderTimestamp(a);
+      if (byDate !== 0) return byDate;
+      return Number(b?.id || 0) - Number(a?.id || 0);
+    });
+  }, [history]);
 
   /* Fetch history when modal opens */
   useEffect(() => {
     if (open && vendor) {
-      dispatch(fetchPaymentHistory(vendor.vendor_id));
+      requestedPageRef.current = 1;
+      dispatch(
+        fetchPaymentHistory({
+          vendorId: vendor.vendor_id,
+          page: 1,
+          page_size: PAGE_SIZE,
+        })
+      );
       queueMicrotask(() => setSelectedPaymentId(null));
     }
   }, [open, vendor, dispatch]);
 
-  if (!open || !vendor) return null;
+  useEffect(() => {
+    if (!open) {
+      requestedPageRef.current = 0;
+    }
+  }, [open]);
 
-  const hasHistory = history.length > 0;
+  const hasHistory = sortedHistory.length > 0;
+  const hasNextHistoryPage = Boolean(historyMeta?.has_next);
+
+  useEffect(() => {
+    const root = listRef.current;
+    const target = sentinelRef.current;
+
+    if (!open || !vendor || !root || !target) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        if (!entry?.isIntersecting) return;
+        if (loading || !hasNextHistoryPage) return;
+
+        const currentPage = Number(historyMeta?.page || 1);
+        const nextPage = currentPage + 1;
+
+        if (requestedPageRef.current >= nextPage) return;
+        requestedPageRef.current = nextPage;
+
+        dispatch(
+          fetchPaymentHistory({
+            vendorId: vendor.vendor_id,
+            page: nextPage,
+            page_size: PAGE_SIZE,
+          })
+        );
+      },
+      {
+        root,
+        rootMargin: "0px 0px 40px 0px",
+        threshold: 0.1,
+      }
+    );
+
+    observer.observe(target);
+
+    return () => observer.disconnect();
+  }, [
+    dispatch,
+    open,
+    vendor,
+    loading,
+    hasNextHistoryPage,
+    historyMeta?.page,
+  ]);
+
+  if (!open || !vendor) return null;
 
   const resolvePaymentId = () => {
     if (hasHistory) return selectedPaymentId;
@@ -61,11 +147,6 @@ export default function MarkPaidOptionsModal({
         Payment History – {vendor.vendor_name}
       </h3>
 
-      {loading && (
-        <p className="text-sm text-gray-500">
-          Loading history...
-        </p>
-      )}
 
       {/* No History */}
       {!loading && !hasHistory && (
@@ -78,15 +159,18 @@ export default function MarkPaidOptionsModal({
 
       {/* History List */}
       {hasHistory && (
-        <div className="space-y-3 max-h-72 overflow-y-auto pr-1">
-          {history.map((payment: any) => {
+        <div
+          className="space-y-3 max-h-72 overflow-y-auto pr-1"
+          ref={listRef}
+        >
+          {sortedHistory.map((payment: any, index: number) => {
             const amount = Number(
               payment.payment_amount_total ?? 0
             );
 
             return (
               <div
-                key={payment.id}
+                key={`${payment.id ?? "payment"}-${index}`}
                 onClick={() =>
                   setSelectedPaymentId(payment.id)
                 }
@@ -120,6 +204,12 @@ export default function MarkPaidOptionsModal({
               </div>
             );
           })}
+          {loading && hasNextHistoryPage && (
+            <p className="text-xs text-gray-500 py-1">
+              Loading more payments...
+            </p>
+          )}
+          <div ref={sentinelRef} className="h-1" />
         </div>
       )}
 

@@ -32,6 +32,16 @@ export default function Links({
     items: initialBuffer.items as any[],
   });
 
+  useEffect(() => {
+    if (!autoOpen) return;
+
+    setBuffer({
+      section_title: title || "Links & Files",
+      items: items || [],
+    });
+    setOpen(true);
+  }, [autoOpen, title, items]);
+
   const displayBuffer = open ? buffer : initialBuffer;
 
   if (!showSection) return null;

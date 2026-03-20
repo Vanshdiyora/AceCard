@@ -105,9 +105,26 @@ export const updateSubscription = createAsyncThunk(
 /* PAYMENT HISTORY */
 export const fetchPaymentHistory = createAsyncThunk(
   "payments/history",
-  async (vendorId: number, { rejectWithValue }) => {
+  async (
+    payload:
+      | number
+      | { vendorId: number; page?: number; page_size?: number },
+    { rejectWithValue }
+  ) => {
     try {
-      const response = await getPaymentHistoryApi(vendorId);
+      const vendorId =
+        typeof payload === "number" ? payload : payload.vendorId;
+      const page =
+        typeof payload === "number" ? 1 : payload.page ?? 1;
+      const page_size =
+        typeof payload === "number"
+          ? 10
+          : payload.page_size ?? 10;
+
+      const response = await getPaymentHistoryApi(vendorId, {
+        page,
+        page_size,
+      });
 
       return {
         data: Array.isArray(response?.data) ? response.data : [],

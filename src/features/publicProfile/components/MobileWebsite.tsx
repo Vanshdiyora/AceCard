@@ -31,6 +31,7 @@ import { FiPhone, FiGlobe } from "react-icons/fi";
 
 import { ProfileWrapper } from "./WebsiteLayout/ProfileWrapper";
 import { type ReactNode, useState, useEffect, useRef } from "react";
+import { useLocation } from "react-router-dom";
 import { ConnectModal } from "./ConnectModal";
 import { ProfileActions } from "./WebsiteLayout/ProfileActions";
 /* ================= HELPERS ================= */
@@ -158,12 +159,16 @@ export default function MobileWebsite({
   isPreview?: boolean;
   scrollRef?: React.RefObject<HTMLDivElement | null>;
 }) {
+  const { pathname, search } = useLocation();
   const normalized = normalizeProfile(data);
   const config = normalized;
   const bgPositionClass = isPreview ? "absolute" : "fixed";
+  const isPublicProfileRoute = /^\/profile\/[^/]+\/[^/]+\/?$/.test(pathname);
+  const routeType = new URLSearchParams(search).get("type")?.toLowerCase();
+  const isPreviewRoute = routeType === "preview";
 
   useEffect(() => {
-    if (!data) return;
+    if (!data || isPreview || isPreviewRoute || !isPublicProfileRoute) return;
 
     /* ---------- META ---------- */
     if (data.meta_pixel_id) {
@@ -218,6 +223,9 @@ export default function MobileWebsite({
       );
     }
   }, [
+    isPreview,
+    isPreviewRoute,
+    isPublicProfileRoute,
     data?.meta_pixel_id,
     data?.google_analytics_id,
     data?.linkedin_insight_tag_id,
