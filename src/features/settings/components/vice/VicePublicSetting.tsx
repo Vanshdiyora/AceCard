@@ -984,9 +984,11 @@ export default function VicePublicSetting({
   const role = useAppSelector((s) => s.auth.role);
 
   if (loading || !config)
-    return <div className="text-gray-400">
-      <BrandLoader />
-    </div>;
+    return (
+      <div className="min-h-[560px] w-full flex items-center justify-center text-gray-400">
+        <BrandLoader />
+      </div>
+    );
 
   const isReadOnly = (meta?: { locked?: boolean }) =>
     meta?.locked === true && role !== "vendor_admin";

@@ -132,20 +132,39 @@ export default function SocialSection({
 }: any) {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [formOpen, setFormOpen] = useState(false);
+  const [localItems, setLocalItems] = useState<any[]>(normalizeRank(items || []));
 
-  const enabled = items.filter((i: any) => i.enabled === true);
+  const beginEditing = () => {
+    setLocalItems(normalizeRank(items || []));
+    setFormOpen(false);
+    setPickerOpen(true);
+  };
+
+  const discardAndClose = () => {
+    setFormOpen(false);
+    setPickerOpen(false);
+    setLocalItems(normalizeRank(items || []));
+  };
+
+  const enabled = localItems.filter((i: any) => i.enabled === true);
   const isAnyOpen = pickerOpen || formOpen;
 
   useEffect(() => {
-    if (autoOpen) queueMicrotask(() => setPickerOpen(true));
+    if (autoOpen) queueMicrotask(beginEditing);
   }, [autoOpen]);
+
+  useEffect(() => {
+    if (!isAnyOpen) {
+      setLocalItems(normalizeRank(items || []));
+    }
+  }, [items, isAnyOpen]);
 
   /* ================= MUTATIONS ================= */
 
   const toggle = (s: any) => {
     if (locked) return;
 
-    onChange((prev: any[]) => {
+    setLocalItems((prev: any[]) => {
       const idx = prev.findIndex((i) => i.id === s.id);
       let updated;
 
@@ -165,7 +184,7 @@ export default function SocialSection({
   };
 
   const update = (id: string, val: string) => {
-    onChange((prev: any[]) =>
+    setLocalItems((prev: any[]) =>
       normalizeRank(
         prev.map((i) => (i.id === id ? { ...i, url: val } : i))
       )
@@ -173,7 +192,7 @@ export default function SocialSection({
   };
 
   const remove = (id: string) => {
-    onChange((prev: any[]) =>
+    setLocalItems((prev: any[]) =>
       normalizeRank(prev.filter((i) => i.id !== id))
     );
   };
@@ -205,8 +224,7 @@ export default function SocialSection({
         disabled={locked}
         onClick={() => {
           if (locked) return;
-          setFormOpen(false);
-          setPickerOpen(true);
+          beginEditing();
         }}
         className={`mt-3 px-4 py-2 rounded-lg text-sm font-semibold ${locked
           ? "bg-gray-300 text-gray-500 cursor-not-allowed"
@@ -219,9 +237,9 @@ export default function SocialSection({
       <AddSocialModal
         open={pickerOpen}
         all={ALL_SOCIALS}
-        selected={items}
+        selected={localItems}
         onToggle={toggle}
-        onCancel={() => setPickerOpen(false)}
+        onCancel={discardAndClose}
         onContinue={() => {
           setPickerOpen(false);
           if (enabled.length > 0) setFormOpen(true);
@@ -236,13 +254,17 @@ export default function SocialSection({
           setPickerOpen(true);
         }}
         onCloseAll={() => {
+          discardAndClose();
+        }}
+        onDone={() => {
+          onChange(normalizeRank(localItems));
           setFormOpen(false);
           setPickerOpen(false);
         }}
         onUpdate={update}
         onRemove={remove}
         onReorder={(newItems: any[]) => {
-          onChange(normalizeRank(newItems));
+          setLocalItems(normalizeRank(newItems));
         }}
       />
     </>
@@ -256,6 +278,7 @@ function SocialLinksModal({
   items,
   onBack,
   onCloseAll,
+  onDone,
   onUpdate,
   onRemove,
   onReorder,
@@ -309,7 +332,7 @@ function SocialLinksModal({
     }
 
     setError(null);
-    onCloseAll();
+    onDone();
   };
 
   return createPortal(
