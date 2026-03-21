@@ -133,7 +133,7 @@ useEffect(() => {
       label: "Vendor POC Name",
       type: "text",
       required: true,
-      placeholder: "Enter point of contact name",
+      placeholder: "Enter POC name",
       minLength: 2,
     },
     {

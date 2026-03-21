@@ -132,7 +132,7 @@ export default function EditVendorModal({
       label: "Vendor POC Name",
       type: "text",
       required: true,
-      placeholder: "Enter point of contact name",
+      placeholder: "Enter POC name",
       minLength: 2,
     },
     {
@@ -143,22 +143,12 @@ export default function EditVendorModal({
       placeholder: "Enter price per card",
       min: 1,
     },
-    {
+      {
       name: "vendor_poc_email",
       label: "Vendor POC Email",
       type: "email",
       required: true,
       placeholder: "Enter POC email",
-      validate: (value, form) => {
-        if (
-          value &&
-          form.primary_email &&
-          value.trim().toLowerCase() === form.primary_email.trim().toLowerCase()
-        ) {
-          return "Vendor POC Email must be different from Primary Email";
-        }
-        return null;
-      },
     },
     {
       name: "subscription_end_date",
