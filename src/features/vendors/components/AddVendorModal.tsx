@@ -91,7 +91,7 @@ useEffect(() => {
       name: "gst",
       label: "GST Number",
       type: "text",
-      placeholder: "27AAPFU0939F1ZV",
+      placeholder: "Enter GST number",
       required: true,
       pattern:
         /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/,
@@ -102,7 +102,7 @@ useEffect(() => {
       name: "primary_email",
       label: "Primary Email",
       type: "email",
-      placeholder: "contact@company.com",
+      placeholder: "Enter primary contact email",
       required: true,
     },
     {
@@ -149,7 +149,7 @@ useEffect(() => {
       label: "Vendor POC Email",
       type: "email",
       required: true,
-      placeholder: "poc@company.com",
+      placeholder: "Enter POC email",
     },
     {
       name: "subscription_end_date",

@@ -125,6 +125,17 @@ export default function AddSocialModal({
             })}
           </div>
         </div>
+
+        {/* FOOTER */}
+        <div className="border-t pt-3 flex justify-end">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-2 rounded-lg bg-purple-600 text-white text-sm font-medium hover:bg-purple-700"
+          >
+            Next
+          </button>
+        </div>
       </div>
     </div>,
     document.body
