@@ -47,8 +47,9 @@ export function ProductsEditModal({
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   const update = (next: any) => onChange(next);
+  const items = Array.isArray(value?.items) ? value.items : [];
   const isSelected = (id: number) =>
-    value.items.some((i: any) => i.id === id);
+    items.some((i: any) => i.id === id);
 
   /* ---------- SENSORS (UNCHANGED) ---------- */
   const sensors = useSensors(
@@ -108,13 +109,13 @@ export function ProductsEditModal({
     update({
       ...value,
       items: [
-        ...value.items,
+        ...items,
         {
           id: p.id,
           name: p.name,
           price: p.price,
           image_url: p.product_img_url,
-          rank: value.items.length + 1,
+          rank: items.length + 1,
           enabled: true,
         },
       ],
@@ -162,7 +163,7 @@ export function ProductsEditModal({
 
           <Input
             placeholder="Enter a section title"
-            value={value.section_title}
+            value={value?.section_title ?? ""}
             onChange={(v: string) =>
               update({ ...value, section_title: v })
             }
@@ -171,7 +172,7 @@ export function ProductsEditModal({
 
         <Switch
           label="Show Prices"
-          value={value.toggle_price}
+          value={Boolean(value?.toggle_price)}
           onChange={(v: boolean) =>
             update({ ...value, toggle_price: v })
           }
@@ -242,15 +243,15 @@ export function ProductsEditModal({
             const { active, over } = e;
             if (!over || active.id === over.id) return;
 
-            const oldIndex = value.items.findIndex(
+            const oldIndex = items.findIndex(
               (i: any) => i.id === active.id
             );
-            const newIndex = value.items.findIndex(
+            const newIndex = items.findIndex(
               (i: any) => i.id === over.id
             );
 
             const reordered = arrayMove(
-              value.items,
+              items,
               oldIndex,
               newIndex
             ).map((i: any, idx: number) => ({
@@ -262,11 +263,11 @@ export function ProductsEditModal({
           }}
         >
           <SortableContext
-            items={value.items.map((i: any) => i.id)}
+            items={items.map((i: any) => i.id)}
             strategy={verticalListSortingStrategy}
           >
             <div className="pt-2 space-y-2 border-t max-h-48 overflow-y-auto overscroll-contain touch-pan-y">
-              {value.items.map((p: any) => (
+              {items.map((p: any) => (
                 <ProductRow
                   key={p.id}
                   p={p}
@@ -302,6 +303,7 @@ export function ProductsEditModal({
 
 /* ================= ROW ================= */
 function ProductRow({ p, value, update }: any) {
+  const items = Array.isArray(value?.items) ? value.items : [];
   const {
     attributes,
     listeners,
@@ -340,7 +342,7 @@ function ProductRow({ p, value, update }: any) {
         onClick={() =>
           update({
             ...value,
-            items: value.items
+            items: items
               .filter((i: any) => i.id !== p.id)
               .map((i: any, idx: number) => ({
                 ...i,

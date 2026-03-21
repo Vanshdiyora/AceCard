@@ -1267,14 +1267,14 @@ export default function VicePublicSetting({
                 const last =
                   sectionDraft.items[sectionDraft.items.length - 1];
 
-                if (!last || !last.url?.trim()) {
+                if (last && !last.url?.trim()) {
                   setYoutubeError(
                     "Please enter a valid Video link before adding another video."
                   );
                   return;
                 }
 
-                if (!isYoutubeRowComplete(last)) {
+                if (last && !isYoutubeRowComplete(last)) {
                   setYoutubeError(
                     "Please enter a valid Video URL."
                   );
@@ -2105,7 +2105,7 @@ export default function VicePublicSetting({
         const item = sectionDraft.items[i];
 
         if (!item.url?.trim()) {
-          setModalError(`Video ${i + 1} is missing a Video link.`);
+          setModalError(`Video ${i + 1} is missing a Video link/file.`);
           return false;
         }
 

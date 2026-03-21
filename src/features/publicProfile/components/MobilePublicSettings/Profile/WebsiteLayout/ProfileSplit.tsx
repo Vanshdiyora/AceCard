@@ -30,6 +30,12 @@ export function ProfileSplit({
   const t = resolveTheme(theme);
   const align =
     ALIGN_MAP[(layout?.card_alignment as CardAlign) || "center"];
+  const rawSizeBase = Number(layout?.profile_radius);
+  const sizeBase = Number.isFinite(rawSizeBase) && rawSizeBase > 0 ? rawSizeBase : 40;
+  const avatarSize = Math.min(
+    Math.max(sizeBase * 2, 48),
+    160
+  );
 
   return (
     <>
@@ -47,8 +53,13 @@ export function ProfileSplit({
             />
           ) : (
             <div
-              className="w-20 h-20 rounded-full flex items-center justify-center text-xs font-semibold"
-              style={{ backgroundColor: t.cardBg, color: t.text }}
+              className="rounded-full flex items-center justify-center text-xs font-semibold"
+              style={{
+                width: avatarSize,
+                height: avatarSize,
+                backgroundColor: t.cardBg,
+                color: t.text,
+              }}
             >
               No Profile
             </div>

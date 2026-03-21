@@ -24,6 +24,7 @@ export function Banner({
   autoOpen = false,
 }: Props) {
   const t = resolveTheme(theme);
+  const hasBannerImage = Boolean(image?.trim());
 
   const [isEditing, setIsEditing] = useState(Boolean(autoOpen));
   const [isCropping, setIsCropping] = useState(false);
@@ -129,7 +130,7 @@ export function Banner({
       )}
 
       {/* EDIT BUTTON */}
-      {editable && (
+      {editable && hasBannerImage && (
         <button
           type="button"
           onClick={openEditor}

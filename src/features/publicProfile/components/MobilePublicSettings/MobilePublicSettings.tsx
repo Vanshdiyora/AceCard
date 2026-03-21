@@ -40,7 +40,6 @@ import { ConnectModal } from "../ConnectModal";
 import { ProfileActions } from "../../components/MobilePublicSettings/Profile/WebsiteLayout/ProfileActions";
 import { ProfileWrapper } from "../../components/MobilePublicSettings/Profile/WebsiteLayout/ProfileWrapper";
 import { Banner } from "./Banner/Banner";
-import { EditableMeetingCTA } from "./Meeting/EditableMeetingCTA";
 import PhotoGallerySection from "./sections/PhotoGallerySection";
 import { ProductsEditModal } from "./sections/ProductsEditModal";
 
@@ -90,6 +89,22 @@ const getYouTubeId = (url?: string) => {
 const sortByRank = (arr: any[]) => {
   if (!Array.isArray(arr)) return [];
   return [...arr].sort((a, b) => (a.rank ?? 0) - (b.rank ?? 0));
+};
+
+const filterOutMeetingSections = (sections: any[] = []) =>
+  sections.filter((s: any) => s?.type !== "meeting");
+
+const stripMeetingFromConfig = (cfg: any) => {
+  if (!cfg) return cfg;
+
+  const { meeting, ...rest } = cfg;
+  return {
+    ...rest,
+    sections: {
+      ...rest.sections,
+      items: filterOutMeetingSections(rest.sections?.items || []),
+    },
+  };
 };
 
 
@@ -184,8 +199,6 @@ export default function MobilePublicSettings({
   const [editProducts, setEditProducts] = useState(false);
 
   const {
-    banner = {},
-    meeting = {},
     // sections = { items: [] },
   } = config;
 
@@ -197,7 +210,7 @@ export default function MobilePublicSettings({
 
   const handleSave = async () => {
     try {
-      await dispatch(savePublicProfile({ config: draft })).unwrap();
+      await dispatch(savePublicProfile({ config: stripMeetingFromConfig(draft) })).unwrap();
 
       setResultModal({
         type: "success",
@@ -213,14 +226,15 @@ export default function MobilePublicSettings({
 
   useEffect(() => {
     if (!config || !Object.keys(config).length) return;
+    const cleanedConfig = stripMeetingFromConfig(config);
 
     setDraft((prev: any) => ({
       ...prev,
-      ...config,
-      contact: { ...prev.contact, ...config.contact },
-      youtube: config.youtube || prev.youtube || { items: [] },
-      links_files: config.links_files || prev.links_files || { items: [] },
-      social_links: config.social_links || prev.social_links || { items: [] },
+      ...cleanedConfig,
+      contact: { ...prev.contact, ...cleanedConfig.contact },
+      youtube: cleanedConfig.youtube || prev.youtube || { items: [] },
+      links_files: cleanedConfig.links_files || prev.links_files || { items: [] },
+      social_links: cleanedConfig.social_links || prev.social_links || { items: [] },
     }));
   }, [config]);
 
@@ -245,7 +259,9 @@ export default function MobilePublicSettings({
   const [contactDraft, setContactDraft] = useState<any | null>(null);
 
 
-  const orderedSections = sortByRank(draft.sections?.items || []);
+  const orderedSections = sortByRank(
+    filterOutMeetingSections(draft.sections?.items || [])
+  );
   const shapeClass = resolveShape(draft.layout?.button_style);
 
   useEffect(() => {
@@ -423,14 +439,6 @@ export default function MobilePublicSettings({
             return `Dropdown field "${field.label}" has an empty option. Please fill it in or remove it.`;
         }
       }
-      return null;
-    },
-
-    meeting: (draft) => {
-      if (!draft.enabled) return null;
-      if (!draft.meeting_url?.trim()) return "Please enter a meeting URL.";
-      if (!isValidUrl(draft.meeting_url.trim()))
-        return "Meeting URL is invalid. Make sure it starts with https:// or http://";
       return null;
     },
 
@@ -657,24 +665,8 @@ export default function MobilePublicSettings({
           />
         );
 
-      case "meeting":
-        return meeting?.enabled ? (
-          <EditableMeetingCTA
-            meeting={draft.meeting}
-            theme={draft.theme}
-            shapeClass={shapeClass}
-            autoOpen={autoEditSection === "meeting"}
-            editable={!draft.meeting?.locked}
-            onMeetingChange={(updater: any) =>
-              setDraft((prev: any) =>
-                typeof updater === "function" ? updater(prev) : updater
-              )
-            }
-          />
-        ) : null;
-
       case "banner":
-        return banner?.enabled && banner?.image_url ? (
+        return (
           <Banner
             image={draft.banner.image_url}
             ctaText={draft.banner.cta_text}
@@ -688,9 +680,7 @@ export default function MobilePublicSettings({
               )
             }
           />
-
-
-        ) : null;
+        );
 
       case "photo_gallery": {
         const pg = draft.photo_gallery;
@@ -975,7 +965,6 @@ export default function MobilePublicSettings({
       case "about":
       case "social_links":
       case "links_files":
-      case "meeting":
       case "banner":
         setAutoEditSection(type);
         break;
@@ -1001,6 +990,8 @@ export default function MobilePublicSettings({
   };
 
   const enableSectionByType = (type: string) => {
+    if (type === "meeting") return;
+
     setDraft((prev: any) => {
       const items = prev.sections?.items || [];
       const existing = items.find((s: any) => s.type === type);
@@ -1476,14 +1467,14 @@ export default function MobilePublicSettings({
           Reorder Sections
         </h3>
         <SectionsReorder
-          sections={draft.sections?.items || []}
+          sections={filterOutMeetingSections(draft.sections?.items || [])}
           groupLocked={false}
           onChange={(items: any) =>
             setDraft((prev: any) => ({
               ...prev,
               sections: {
                 ...prev.sections,
-                items,
+                items: filterOutMeetingSections(items),
               },
             }))
           }
@@ -1543,17 +1534,21 @@ export default function MobilePublicSettings({
 
       <AddSectionModal
         open={openAddSection}
-        sections={draft.sections?.items || []}
+        sections={filterOutMeetingSections(draft.sections?.items || [])}
         onClose={() => setOpenAddSection(false)}
 
         onAdd={(type: string) => {
           setOpenAddSection(false);
+
+          if (type === "meeting") return;
 
           enableSectionByType(type);
           openSectionEditor(type);
         }}
 
         onToggle={(type: string) => {
+          if (type === "meeting") return;
+
           const items = draft.sections.items;
           const existing = items.find((s: any) => s.type === type);
 

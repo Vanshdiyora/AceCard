@@ -194,12 +194,14 @@ export function normalizeProfile(api: any) {
       lock_mode: cfg.sections?.lock_mode ?? undefined,
       locked_by: cfg?.sections?.locked_by ?? "",
       items: Array.isArray(cfg.sections?.items)
-        ? cfg.sections.items.map((s: any, i: number) => ({
-          id: s.id,
-          type: s.type,
-          rank: s.rank ?? i + 1,
-          enabled: s.enabled ?? true,
-        }))
+        ? cfg.sections.items
+          .filter((s: any) => s?.type !== "meeting")
+          .map((s: any, i: number) => ({
+            id: s.id,
+            type: s.type,
+            rank: s.rank ?? i + 1,
+            enabled: s.enabled ?? true,
+          }))
         : [],
     },
   };
@@ -310,6 +312,7 @@ export function denormalizeProfile(
   baseApi: any
 ) {
   const baseConfig = baseApi.configuration ?? {};
+  const { meeting: _meeting, ...baseConfigWithoutMeeting } = baseConfig;
 
   return {
     ...baseApi,
@@ -320,7 +323,7 @@ export function denormalizeProfile(
     custom_job_role: cfg.profile.custom_job_role,
 
     configuration: {
-      ...baseConfig,
+      ...baseConfigWithoutMeeting,
 
       /* ================= PROFILE ================= */
       profile: {
@@ -554,12 +557,14 @@ export function denormalizeProfile(
         lock_mode: cfg.sections.lock_mode ?? null,
         locked_by: cfg.sections.locked_by,
 
-        items: cfg.sections.items.map((s: any) => ({
-          id: s.id,
-          type: s.type,
-          rank: s.rank,
-          enabled: s.enabled,
-        })),
+        items: cfg.sections.items
+          .filter((s: any) => s?.type !== "meeting")
+          .map((s: any) => ({
+            id: s.id,
+            type: s.type,
+            rank: s.rank,
+            enabled: s.enabled,
+          })),
       },
     },
   };

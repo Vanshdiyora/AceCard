@@ -34,14 +34,16 @@ export function ProfileClassic({
     ALIGN_MAP[(layout?.card_alignment as CardAlign) || "center"];
 
   /* ================= AVATAR SIZE LOGIC ================= */
-  const sizeBase = layout?.profile_radius ?? 40;
+  const rawSizeBase = Number(layout?.profile_radius);
+  const sizeBase = Number.isFinite(rawSizeBase) && rawSizeBase > 0 ? rawSizeBase : 40;
 
   const avatarSize = Math.min(
     Math.max(sizeBase * 2, 48),
     160
   );
 
-  const ring = Number(layout?.profile_width ?? 6);
+  const rawRing = Number(layout?.profile_width);
+  const ring = Number.isFinite(rawRing) && rawRing > 0 ? rawRing : 8;
   const BORDER_RADIUS = 999; // always circular
 
   const [cropFile, setCropFile] = useState<File | null>(null);
