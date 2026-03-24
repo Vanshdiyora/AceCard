@@ -9,9 +9,9 @@ const ALIGN_MAP = {
 };
 
 const resolveTheme = (theme: any) => ({
-  cardBg: theme.card_background || "#6B6E93",
+  cardBg: theme.card_background || "#FDE68A",
   buttonBg: theme.button_color || "#A5A6AB",
-  text: theme.card_text || "#EA3636",
+  text: theme.card_text || "#000000",
   buttonText: theme.button_text || "#5F29F5",
 });
 

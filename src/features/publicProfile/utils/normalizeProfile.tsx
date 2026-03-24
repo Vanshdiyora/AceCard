@@ -88,17 +88,17 @@ export function normalizeProfile(api: any) {
         ["solid", "gradient", "image", "video", "waves", "polka", "stripes", "zigzag"]
           .includes(cfg.layout?.use_background)
           ? cfg.layout.use_background
-          : "gradient",
+          : "zigzag",
 
-      color1: cfg.layout?.color1 || "#2f343a",   // 👈 base / pattern bg
-      color2: cfg.layout?.color2 || "#6366f1",
+      color1: cfg.layout?.color1 || "#6EE7B7",   // 👈 base / pattern bg
+      color2: cfg.layout?.color2 || "#6EE7B7",
       direction: ["to-r", "to-l", "to-b", "to-t"].includes(cfg.layout?.direction)
         ? cfg.layout.direction
         : "to-r",
 
       background_image: cfg.layout?.background_image || "",
       background_video: cfg.layout?.background_video || "",   // 👈 NEW
-      background_color: cfg.layout?.background_color || "",
+      background_color: cfg.layout?.background_color || "#6EE7B7",
       custom_font: cfg.layout?.custom_font || "",
       use_custom_font: Boolean(cfg.layout?.use_custom_font),
       profile_width: Number(cfg.layout?.profile_width) || 2,
@@ -113,11 +113,11 @@ export function normalizeProfile(api: any) {
       locked: Boolean(cfg.theme?.locked),
       lock_mode: cfg.theme?.lock_mode ?? undefined,
       locked_by: cfg?.theme?.locked_by ?? "",
-      card_background: cfg.theme?.card_background ?? "#BB3500",
-      button_color: cfg.theme?.button_color ?? "#251F31",
-      card_text: cfg.theme?.card_text ?? "#9F9F9F",
-      button_text: cfg.theme?.button_text ?? "#B79A8A",
-      image_text_color: cfg.theme?.image_text_color ?? "#000000",
+      card_background: cfg.theme?.card_background || "#FDE68A",
+      button_color: cfg.theme?.button_color || "#FDBA74",
+      card_text: cfg.theme?.card_text || "#000000",
+      button_text: cfg.theme?.button_text || "#000000",
+      image_text_color: cfg.theme?.image_text_color || "#000000",
     },
 
     /* ================= BANNER ================= */
@@ -399,11 +399,11 @@ export function denormalizeProfile(
         lock_mode: cfg.theme.lock_mode ?? null,
         locked_by: cfg.theme.locked_by,
 
-        card_background: cfg.theme.card_background,
-        button_color: cfg.theme.button_color,
-        card_text: cfg.theme.card_text,
-        button_text: cfg.theme.button_text,
-        image_text_color: cfg.theme.image_text_color,
+        card_background: cfg.theme.card_background || "#FDE68A",
+        button_color: cfg.theme.button_color || "#FDBA74",
+        card_text: cfg.theme.card_text || "#000000",
+        button_text: cfg.theme.button_text || "#000000",
+        image_text_color: cfg.theme.image_text_color || "#000000",
       },
 
       /* ================= BANNER ================= */
