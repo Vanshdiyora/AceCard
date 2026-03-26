@@ -1662,7 +1662,10 @@ export default function MobilePublicSettings({
       </div>
 
       {/* BOTTOM ACTION BAR — Floating, mobile-safe */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 px-4 pb-safe">
+      <div
+        className="fixed bottom-0 left-0 right-0 z-50 px-4"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom, 8px)' }}
+      >
         {/* Backdrop blur pill */}
         <div className="mb-3 rounded-2xl bg-white/90 backdrop-blur-md border border-gray-200/80 shadow-[0_-2px_24px_rgba(0,0,0,0.10)] px-3 py-3">
           <div className="flex gap-2 items-stretch">
@@ -1688,7 +1691,7 @@ export default function MobilePublicSettings({
       </div>
 
       {/* Spacer so content doesn't hide under the floating bar */}
-      <div className="h-24" />
+      <div className="h-32" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }} />
 
       <ProfileLayoutModal
         open={openLayoutEditor}

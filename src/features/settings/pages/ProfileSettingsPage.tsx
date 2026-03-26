@@ -47,7 +47,7 @@ export default function ProfileSettingsPage() {
         isPreview not passed (defaults false) → component renders its own
         BackgroundLayer with positionClass="fixed" inside itself.
       */}
-      <div className="sm:hidden h-screen bg-white">
+      <div className="sm:hidden bg-white" style={{ height: '100dvh' }}>
         <div
           ref={scrollRef}
           className="h-full overflow-y-auto no-scrollbar"
