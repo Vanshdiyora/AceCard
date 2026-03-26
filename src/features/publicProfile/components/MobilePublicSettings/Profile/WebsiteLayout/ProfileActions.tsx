@@ -32,8 +32,8 @@ export function ProfileActions({
           onClick={() => saveContact(user)}
           className={`h-11 border text-sm font-medium ${shapeClass}`}
           style={{
-            color: theme.card_text,
-            borderColor: theme.button_color,
+            color: theme.card_text || "#000000",
+            borderColor: theme.button_color || "#FDBA74",
           }}
         >
           {contact?.contact_title || "Save Contact"}
@@ -43,8 +43,8 @@ export function ProfileActions({
           onClick={() => onConnect?.()}
           className={`h-11 text-sm font-semibold shadow-md ${shapeClass}`}
           style={{
-            backgroundColor: theme.button_color,
-            color: theme.button_text,
+            backgroundColor: theme.button_color || "#FDBA74",
+            color: theme.button_text || "#5F29F5",
           }}
         >
           {contact?.connect_title || "Connect"}

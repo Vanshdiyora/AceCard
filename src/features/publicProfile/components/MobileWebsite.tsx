@@ -119,7 +119,7 @@ function injectScript(id: string, src?: string, inner?: string) {
 
 const resolveTheme = (theme: ThemeLike = {}) => ({
   cardBg: theme.card_background || "#FDE68A",
-  buttonBg: theme.button_color || "#A5A6AB",
+  buttonBg: theme.button_color || "#FDBA74",
   text: theme.card_text || "#000000",
   buttonText: theme.button_text || "#5F29F5",
   imageText: theme.image_text_color,
