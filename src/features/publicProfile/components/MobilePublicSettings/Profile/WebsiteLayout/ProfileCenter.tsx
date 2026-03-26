@@ -75,7 +75,7 @@ export function ProfileCenter({
     }
   };
   return (
-    <div className="flex justify-center mt-6">
+    <div className="flex justify-center">
       <div
         className={`w-full max-w-[300px] px-6 pt-10 pb-6 flex flex-col ${align}`}
       >

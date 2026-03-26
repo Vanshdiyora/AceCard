@@ -1691,7 +1691,7 @@ export default function MobilePublicSettings({
       </div>
 
       {/* Spacer so content doesn't hide under the floating bar */}
-      <div className="h-32" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }} />
+      <div className="h-24" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }} />
 
       <ProfileLayoutModal
         open={openLayoutEditor}
